@@ -1,7 +1,3 @@
-import ctypes
-from ctypes import byref
-import forcedimension.runtime as runtime
-
 from enum import Enum
 
 MAX_DOF = 8
@@ -110,23 +106,3 @@ class ThreadPriority(Enum):
     DEFAULT = 0
     HIGH = 1
     LOW = 2
-
-
-libdhd = runtime.load("libdhd")
-
-
-def getSDKVersion():
-    major = ctypes.c_int32()
-    minor = ctypes.c_int32()
-    release = ctypes.c_int32()
-    revision = ctypes.c_int32()
-
-    libdhd.dhdGetSDKVersion(
-        byref(major),
-        byref(minor),
-        byref(release),
-        byref(revision)
-    )
-
-    return (major.value, minor.value, release.value, revision.value)
-
