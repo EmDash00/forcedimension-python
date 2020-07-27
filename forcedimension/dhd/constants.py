@@ -4,13 +4,15 @@ MAX_DOF = 8
 MAX_BUTTONS = 16
 TIMEGUARD = 1
 
-DHD_VELOCITY_WINDOWING = 0
-DHD_VELOCITY_WINDOW = 20
+VELOCITY_WINDOWING = 0
+VELOCITY_WINDOW = 20
+
+MAX_STATUS = 16
+
+MOTOR_SATURATED = 2
 
 
-class Device(Enum):
-    """Enum that contains various units the Timer class can be set to"""
-
+class DeviceType(Enum):
     NONE = 0
     OMEGA3 = 33
     OMEGA33 = 34
@@ -60,7 +62,7 @@ class DeltaEncID(Enum):
     ENC2 = 2
 
 
-class WristMotor(Enum):
+class WristMotorID(Enum):
     MOTOR0 = 3
     MOTOR1 = 4
     MOTOR2 = 5
@@ -72,12 +74,12 @@ class WristEncID(Enum):
     ENC2 = 5
 
 
-class StateID(Enum):
+class State(Enum):
     ON = 1
     OFF = 0
 
 
-class Status(Enum):
+class StatusIndex(Enum):
     POWER = 0
     CONNECTED = 1
     STARTED = 2
@@ -91,7 +93,7 @@ class Status(Enum):
     GRAVITY = 10
     TIMEGUARD = 11
     WRIST_INIT = 12
-    REDUNDANCY = 14
+    REDUNDANCY = 13
     FORCEOFFCAUSE = 14
 
 

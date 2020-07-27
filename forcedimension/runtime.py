@@ -85,10 +85,10 @@ def load(lib_name, search_dirs=(), silent=False):
                                        "Ensure you have libusb-1.")
 
             if (lib_name == "libdhd"):
-                major = ctypes.c_int32()
-                minor = ctypes.c_int32()
-                release = ctypes.c_int32()
-                revision = ctypes.c_int32()
+                major = ctypes.c_int()
+                minor = ctypes.c_int()
+                release = ctypes.c_int()
+                revision = ctypes.c_int()
 
                 lib.dhdGetSDKVersion(ctypes.byref(major),
                                      ctypes.byref(minor),
