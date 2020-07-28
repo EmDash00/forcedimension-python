@@ -1,9 +1,7 @@
-from typing import Tuple, Union, Optional
-
-import ctypes
+from typing import Tuple, List, Union, Optional, cast
 
 from ctypes import (
-    c_int, c_uint, c_bool, c_byte, c_ubyte, c_ushort, c_char_p, c_double
+    c_int, c_uint, c_bool, c_byte, c_ushort, c_char_p, c_double
 )
 
 from ctypes import byref, POINTER
@@ -448,7 +446,7 @@ def getStatus(ID: int = -1) -> Tuple[StatusTuple, int]: # NOQA
     status_vec = (c_int * MAX_STATUS)()
     err = _libdhd.dhdGetStatus(status_vec, ID)
 
-    return (tuple(status_vec), err)
+    return (cast(StatusTuple, tuple(status_vec)), err)
 
 
 _libdhd.dhdGetDeviceAngleRad.argtypes = [POINTER(c_double), c_byte]
@@ -935,7 +933,7 @@ _libdhd.dhdGetPosition.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetPosition.restype = c_int
-def getPosition(ID: int = -1) -> Tuple[list(float), int]:  # NOQA
+def getPosition(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     """
     Retrieve the position of the end-effector in Cartesian coordinates. Please
     refer to your device user manual for more information on your device
@@ -947,7 +945,7 @@ def getPosition(ID: int = -1) -> Tuple[list(float), int]:  # NOQA
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: A tuple in the form ([px, py, pz], err) where err is either 0
-    or dhd.constants.TIMEGUARD on success, -1 otherwise.
+    or dhd.constants.TIMEGUARD on success, -1 otherwise. px, py, pz are in [m]
 
     :rtype: Tuple[list(float), int]
     """
@@ -968,7 +966,7 @@ _libdhd.dhdGetForce.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetForce.restype = c_int
-def getForce(ID: int = -1) -> Tuple[list(float), int]:  # NOQA
+def getForce(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     """
     Retrieve the force vector applied to the end-effector in Cartesian
     coordinates. Please refer to your device user manual for more information
@@ -1017,7 +1015,7 @@ def setForce(f: Tuple[float, float, float], ID: int = -1) -> int:  # NOQA
 
 _libdhd.dhdGetOrientationRad.argtypes = [c_byte]
 _libdhd.dhdGetOrientationRad.restype = c_int
-def getOrientationRad(ID: int = -1) -> Tuple[list(float), int]:  # NOQA
+def getOrientationRad(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate. For
@@ -1057,7 +1055,7 @@ def getOrientationRad(ID: int = -1) -> Tuple[list(float), int]:  # NOQA
 
 _libdhd.dhdGetOrientationDeg.argtypes = [c_byte]
 _libdhd.dhdGetOrientationDeg.restype = c_int
-def getOrientationDeg(ID: int = -1) -> Tuple[list(float), int]:  # NOQA
+def getOrientationDeg(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate. For
@@ -1081,9 +1079,9 @@ def getOrientationDeg(ID: int = -1) -> Tuple[list(float), int]:  # NOQA
 
     :returns: Tuple of ([oa, ob, og], err) where err is 0 or dhd.TIMEGUARD on
     success, -1 otherwise. oa, ob, and og refer to the device orientation
-    around the first, second, and third wrist joints, respectively, in [rdeg]
+    around the first, second, and third wrist joints, respectively, in [deg]
 
-    :rtype: Tuple[list(float), int]
+    :rtype: Tuple[List[float], int]
     """
 
     oa = c_double()
@@ -1092,5 +1090,123 @@ def getOrientationDeg(ID: int = -1) -> Tuple[list(float), int]:  # NOQA
 
     return ([oa.value, ob.value, og.value],
             _libdhd.dhdGetOrientationDeg(byref(oa), byref(ob), byref(og), ID))
+
+
+_libdhd.dhdGetPositionAndOrientationRad.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdGetPositionAndOrientationRad.restype = c_int
+def getPositionAndOrientationRad(ID: int = -1) -> Tuple[List[float], # NOQA
+                                                        List[float],
+                                                        int]:
+    """
+    For devices with a wrist structure, retrieve individual angle of each
+    joint, starting with the one located nearest to the wrist base plate. For
+    the DHD_DEVICE_OMEGA33 and DHD_DEVICE_OMEGA33_LEFT devices, angles are
+    computed with respect to their internal reference frame, which is rotated
+    pi/4 radians around the Y axis. Please refer to your device user manual for
+    more information on your device coordinate system.
+
+    This feature only applies to the following devices:
+        dhd.DeviceType.OMEGA33
+        dhd.DeviceType.OMEGA33_LEFT
+        dhd.DeviceType.OMEGA331
+        dhd.DeviceType.OMEGA331_LEFT
+        dhd.DeviceType.SIGMA331
+        dhd.DeviceType.SIGMA331_LEFT
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: Tuple of ([px, py, pyz], [oa, ob, og], err) where err is 0 or
+    dhd.TIMEGUARD on success, -1 otherwise. oa, ob, and og refer to the
+    device orientation around the first, second, and third wrist joints,
+    respectively, in [rad]. px, py, pz are in [m].
+
+    :rtype: Tuple[List[float], List[float], int]
+    """
+
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    oa = c_double()
+    ob = c_double()
+    og = c_double()
+
+    return ([px.value, py.value, pz.value], [oa.value, ob.value, og.value],
+            _libdhd.dhdGetPositionAndOrientationRad(byref(px),
+                                                    byref(py),
+                                                    byref(pz),
+                                                    byref(oa),
+                                                    byref(ob),
+                                                    byref(og)))
+
+
+_libdhd.dhdGetPositionAndOrientationDeg.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdGetPositionAndOrientationDeg.restype = c_int
+def getPositionAndOrientationDeg(ID: int = -1) -> Tuple[List[float], # NOQA
+                                                        List[float],
+                                                        int]:
+    """
+    For devices with a wrist structure, retrieve individual angle of each
+    joint, starting with the one located nearest to the wrist base plate. For
+    the DHD_DEVICE_OMEGA33 and DHD_DEVICE_OMEGA33_LEFT devices, angles are
+    computed with respect to their internal reference frame, which is rotated
+    45 degrees around the Y axis. Please refer to your device user manual for
+    more information on your device coordinate system.
+
+    This feature only applies to the following devices:
+        dhd.DeviceType.OMEGA33
+        dhd.DeviceType.OMEGA33_LEFT
+        dhd.DeviceType.OMEGA331
+        dhd.DeviceType.OMEGA331_LEFT
+        dhd.DeviceType.SIGMA331
+        dhd.DeviceType.SIGMA331_LEFT
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: Tuple of ([px, py, pyz], [oa, ob, og], err) where err is 0 or
+    dhd.TIMEGUARD on success, -1 otherwise. oa, ob, and og refer to the
+    device orientation around the first, second, and third wrist joints,
+    respectively, in [deg]. px, py, pz are in [m].
+
+    :rtype: Tuple[List[float], List[float], int]
+    """
+
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    oa = c_double()
+    ob = c_double()
+    og = c_double()
+
+    return ([px.value, py.value, pz.value], [oa.value, ob.value, og.value],
+            _libdhd.dhdGetPositionAndOrientationDeg(byref(px),
+                                                    byref(py),
+                                                    byref(pz),
+                                                    byref(oa),
+                                                    byref(ob),
+                                                    byref(og)))
 
 
