@@ -929,7 +929,6 @@ _libdhd.dhdGetPosition.argtypes = [
     POINTER(c_double),
     POINTER(c_double),
     POINTER(c_double),
-    POINTER(c_double),
     c_byte
 ]
 _libdhd.dhdGetPosition.restype = c_int
@@ -962,7 +961,6 @@ _libdhd.dhdGetForce.argtypes = [
     POINTER(c_double),
     POINTER(c_double),
     POINTER(c_double),
-    POINTER(c_double),
     c_byte
 ]
 _libdhd.dhdGetForce.restype = c_int
@@ -991,13 +989,15 @@ def getForce(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
             _libdhd.dhdGetPosition(byref(fx), byref(fy), byref(fz), ID))
 
 
-_libdhd.dhdSetForce.argtypes = [c_double, c_double, c_double, c_double, c_byte]
+_libdhd.dhdSetForce.argtypes = [c_double, c_double, c_double, c_byte]
 _libdhd.dhdSetForce.restype = c_int
 def setForce(f: Tuple[float, float, float], ID: int = -1) -> int:  # NOQA
     """
     Set the desired force vector in Cartesian coordinates to be applied
     to the end-effector of the device.
 
+    :param Tuple[float, float, float] f: Translation force vector (fx, fy, fz)
+    in [N].
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
@@ -1148,7 +1148,8 @@ def getPositionAndOrientationRad(ID: int = -1) -> Tuple[List[float], # NOQA
                                                     byref(pz),
                                                     byref(oa),
                                                     byref(ob),
-                                                    byref(og)))
+                                                    byref(og),
+                                                    ID))
 
 
 _libdhd.dhdGetPositionAndOrientationDeg.argtypes = [
@@ -1185,7 +1186,7 @@ def getPositionAndOrientationDeg(ID: int = -1) -> Tuple[List[float], # NOQA
 
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
-    :returns: Tuple of ([px, py, pyz], [oa, ob, og], err) where err is 0 or
+    :returns: Tuple of ([px, py, pz], [oa, ob, og], err) where err is 0 or
     dhd.TIMEGUARD on success, -1 otherwise. oa, ob, and og refer to the
     device orientation around the first, second, and third wrist joints,
     respectively, in [deg]. px, py, pz are in [m].
@@ -1207,6 +1208,452 @@ def getPositionAndOrientationDeg(ID: int = -1) -> Tuple[List[float], # NOQA
                                                     byref(pz),
                                                     byref(oa),
                                                     byref(ob),
-                                                    byref(og)))
+                                                    byref(og),
+                                                    ID))
+
+
+_libdhd.dhdGetPositionAndOrientationFrame.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    (c_double * 3) * 3,
+    c_byte
+]
+_libdhd.dhdGetPositionAndOrientationFrame.restype = c_int
+def getPositionAndOrientationFrame(ID: int = -1) -> Tuple[List[float], # NOQA
+                                                          List[List[float]],
+                                                          int]:
+    """
+    Retrieve the position and orientation matrix of the end-effector in
+    Cartesian coordinates. Please refer to your device user manual for more
+    information on your device coordinate system.
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: Tuple of ([px, py, pz], frame, err) where err is 0 or
+    dhd.TIMEGUARD on success, -1 otherwise. px, py, pz are in [m]. And matrix
+    is a 3x3 rotation matrix that describes the orientation of your device.
+
+    :rtype: Tuple[List[float], List[List[float]], int]
+    """
+
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    matrix = ((c_double * 3) * 3)()
+
+    err = _libdhd.dhdGetPositionAndOrientationFrame(byref(px),
+                                                    byref(py),
+                                                    byref(pz),
+                                                    matrix,
+                                                    ID)
+
+    return ([px.value, py.value, pz.value],
+            [list(row) for row in matrix],
+            err)
+
+
+_libdhd.dhdGetForceAndTorque.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdGetForceAndTorque.restype = c_int
+def getForceAndTorque(ID: int = -1) -> Tuple[List[float], # NOQA
+                                             List[float],
+                                             int]:
+    """
+    Retrieve the force and torque vectors applied to the device end-effector.
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: Tuple of ([fx, fy, fz], [tx, ty, tz], err) where err is 0, on
+    success, -1 otherwise.
+
+    :rtype: Tuple[List[float], List[float], int]
+    """
+
+    fx = c_double()
+    fy = c_double()
+    fz = c_double()
+
+    tx = c_double()
+    ty = c_double()
+    tz = c_double()
+
+    return ([fx.value, fy.value, fz.value], [tx.value, ty.value, tz.value],
+            _libdhd.dhdGetForceAndTorque(byref(fx), byref(fy), byref(fz),
+                                         byref(tx), byref(ty), byref(tz),
+                                         ID))
+
+
+_libdhd.dhdSetForceAndTorque.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_byte
+]
+_libdhd.dhdSetForceAndTorque.restype = c_int
+def setForceAndTorque(f: Tuple[float, float, float], # NOQA
+                      t: Tuple[float, float, float],
+                      ID: int = -1) -> int:
+    """
+    Set the desired force and torque vectors to be applied to the device
+    end-effector.
+
+    :param Tuple[float, float, float] f: Translational force vector
+    (fx, fy, fz) in [N]
+
+    :param Tuple[float, float, float] t: Torque vector (tx, ty, tz) in [Nm]
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises ValueError: if a member of f is not implicitly to a C double type
+    :raises ValueError: if a member of t is not implicitly to a C double type
+
+    :returns: 0 or dhd.MOTOR_SATURATED on success, -1 otherwise
+    :rtype: int
+    """
+
+    return _libdhd.dhdSetForceAndTorque(f[0], f[1], f[2], t[0], t[1], t[2], ID)
+
+
+_libdhd.dhdGetOrientationFrame.argtypes = [
+    (c_double * 3) * 3,
+    c_byte
+]
+_libdhd.dhdGetOrientationFrame.restype = c_int
+def getOrientationFrame(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
+    """
+    Retrieve the rotation matrix of the wrist structure. The identity matrix
+    is returned for devices that do not support orientations.
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: Tuple of (frame, err) where err is 0 or dhd.TIMEGUARD on success,
+    -1 otherwise. px, py, pz are in [m]. And is the frame is a 3x3 rotation
+    matrix that describes the device's orientation. If the device doesn't
+    support orientations, the identity matrix is returned.
+
+    :rtype: Tuple[List[List[float]], int]
+    """
+
+    matrix = ((c_double * 3) * 3)()
+
+    err = _libdhd.dhdGetPositionAndOrientationFrame(matrix, ID)
+
+    return ([list(row) for row in matrix],
+            err)
+
+
+_libdhd.dhdGetGripperAngleDeg.argtypes = [POINTER(c_double), c_byte]
+_libdhd.dhdGetGripperAngleDeg.restype = c_int
+def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
+    """
+    Get the gripper opening angle in degrees.
+
+    This feature only applies to the following devices:
+        dhd.DeviceType.OMEGA331
+        dhd.DeviceType.OMEGA331_LEFT
+        dhd.DeviceType.SIGMA331
+        dhd.DeviceType.SIGMA331_LEFT
+
+    See also dhd.getGripperAngleRad()
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: Tuple of (angle, err) where err is 0 or dhd.TIMEGUARD on success,
+    -1 otherwise. angle is in [deg]
+
+    :rtype: Tuple[float, int]
+    """
+
+    angle = c_double()
+    return (angle.value, _libdhd.dhdGetGripperAngleDeg(byref(angle), ID))
+
+
+_libdhd.dhdGetGripperAngleRad.argtypes = [POINTER(c_double), c_byte]
+_libdhd.dhdGetGripperAngleRad.restype = c_int
+def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]: # NOQA
+    """
+    Get the gripper opening angle in degrees.
+
+    This feature only applies to the following devices:
+        dhd.DeviceType.OMEGA331
+        dhd.DeviceType.OMEGA331_LEFT
+        dhd.DeviceType.SIGMA331
+        dhd.DeviceType.SIGMA331_LEFT
+
+   See also dhd.getGripperAngleRad()
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: Tuple of (angle, err) where err is 0 or dhd.TIMEGUARD on success,
+    -1 otherwise. angle is in [rad]
+
+    :rtype: Tuple[float, int]
+    """
+
+    angle = c_double()
+    return (angle.value, _libdhd.dhdGetGripperAngleRad(byref(angle), ID))
+
+
+_libdhd.dhdGetGripperGap.argtypes = [POINTER(c_double), c_byte]
+_libdhd.dhdGetGripperGap.restype = c_int
+def getGripperGap(ID: int = -1) -> Tuple[float, int]: # NOQA
+    """
+    Get the gripper opening distance in meters.
+
+    This feature only applies to the following devices:
+        dhd.DeviceType.OMEGA331
+        dhd.DeviceType.OMEGA331_LEFT
+        dhd.DeviceType.SIGMA331
+        dhd.DeviceType.SIGMA331_LEFT
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: Tuple of (gap, err) where err is 0 or dhd.TIMEGUARD on success,
+    -1 otherwise. gap is in [m]
+
+    :rtype: Tuple[float, int]
+    """
+
+    gap = c_double()
+    return (gap.value, _libdhd.dhdGetGripperGap(byref(gap), ID))
+
+
+_libdhd.dhdGetGripperThumbPos.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdGetGripperThumbPos.restype = c_int
+def getGripperThumbPos(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+    """
+    Read the position in Cartesian coordinates of thumb rest location of the
+    force gripper structure if present.
+
+    This feature only applies to the following devices:
+        dhd.DeviceType.OMEGA331
+        dhd.DeviceType.OMEGA331_LEFT
+        dhd.DeviceType.SIGMA331
+        dhd.DeviceType.SIGMA331_LEFT
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: Tuple of ([px, py, pz], err) where err is 0 or dhd.TIMEGUARD on
+    success, -1 otherwise and px, py, pz are in [m]
+
+    :rtype: Tuple[float, int]
+    """
+
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    return ([px.value, py.value, pz.value],
+            _libdhd.dhdGetThumbPos(byref(px), byref(py), byref(pz), ID))
+
+
+_libdhd.dhdGetGripperFingerPos.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdGetGripperFingerPos.restype = c_int
+def getGripperFingerPos(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+    """
+    Read the position in Cartesian coordinates of forefinger rest location of
+    the force gripper structure if present.
+
+    This feature only applies to the following devices:
+        dhd.DeviceType.OMEGA331
+        dhd.DeviceType.OMEGA331_LEFT
+        dhd.DeviceType.SIGMA331
+        dhd.DeviceType.SIGMA331_LEFT
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: Tuple of ([px, py, pz], err) where err is 0 or dhd.TIMEGUARD on
+    success, -1 otherwise and px, py, pz are in [m]
+
+    :rtype: Tuple[float, int]
+    """
+
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    return ([px.value, py.value, pz.value],
+            _libdhd.dhdGetGripperFingerPos(byref(px),
+                                           byref(py),
+                                           byref(pz),
+                                           ID))
+
+
+_libdhd.dhdGetComFreq.argtypes = [c_byte]
+_libdhd.dhdGetComFreq.restype = c_double
+def getComFreq(ID: int = -1) -> float: # NOQA
+    """
+    Read the position in Cartesian coordinates of forefinger rest location of
+    the force gripper structure if present.
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: the refresh rate in [kHz], 0.0 otherwise
+    :rtype: float
+    """
+
+    return _libdhd.dhdGetComFreq(ID)
+
+
+_libdhd.dhdSetAndGripperForce.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_byte
+]
+_libdhd.dhdSetForce.restype = c_int
+def setForceAndGripperForce(f: Tuple[float, float, float],  # NOQA
+                            fg: float,
+                            ID: int = -1) -> int:
+    """
+    Set the desired force vector in Cartesian coordinates to be applied
+    to the end-effector and force gripper of the device.
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :param Tuple[float, float, float] f: Translational force vector
+    (fx, fy, fz) in [N]
+
+    :param float fg: Grasping force in [N]
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises ValueError: if any members of f are not implicitly convertible to a
+    C double type.
+
+    :returns: 0 or dhd.MOTOR_SATURATED on success -1 otherwise.
+
+    :rtype: Tuple[list(float), int]
+    """
+
+    return _libdhd.dhdSetForceAndGripperForce(f[0], f[1], f[2], fg, ID)
+
+
+_libdhd.dhdSetForceAndTorqueAndGripperForce.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_byte
+]
+_libdhd.dhdSetForceAndTorqueAndGripperForce.restype = c_int
+def setForceAndTorqueAndGripperForce(f: Tuple[float, float, float], # NOQA
+                                     t: Tuple[float, float, float],
+                                     fg: float,
+                                     ID: int = -1) -> int:
+    """
+    Set the desired force and torque vectors to be applied to the device
+    end-effector and gripper.
+
+    :param Tuple[float, float, float] f: Translational force vector
+    (fx, fy, fz) in [N]
+
+    :param Tuple[float, float, float] t: Torque vector (tx, ty, tz) in [Nm]
+
+    :param float fg: Grasping force in [N]
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises ValueError: if a member of f is not implicitly to a C double type
+    :raises ValueError: if a member of t is not implicitly to a C double type
+
+    :returns: 0 or dhd.MOTOR_SATURATED on success, -1 otherwise
+    :rtype: int
+    """
+
+    return _libdhd.dhdSetForceAndTorqueAndGripperForce(f[0],
+                                                       f[1],
+                                                       f[2],
+                                                       t[0],
+                                                       t[1],
+                                                       t[2],
+                                                       fg,
+                                                       ID)
+
+
+_libdhd.dhdConfigLinearVelocity.argtypes = [c_int, c_int, c_byte]
+_libdhd.dhdConfigLinearVelocity.restype = c_int
+def configLinearVelocity(ms: int, mode: int, # NOQA
+                                     ID: int = -1) -> int:
+    """
+    Configure the internal velocity computation estimator. This only applies to
+    the device base.
+
+    :param int ms: [default=dhd.VELOCITY_WINDOW] time interval used to
+    compute velocity in [ms]
+
+    :param int mode: [default=dhd.VELOCITY_WINDOWING] velocity estimator mode
+    (see velocity estimator modes section for details)
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises ValueError: if ms is not implicitly convertible to a C int type
+    :raises ValueError: if mode is not implicitly convertible to a C int type
+
+
+    :returns: 0 on success, -1 otherwise
+    :rtype: int
+    """
+
+    return _libdhd.dhdSetForceAndTorqueAndGripperForce(ms, mode, ID)
 
 
