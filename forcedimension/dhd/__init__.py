@@ -946,7 +946,7 @@ def getPosition(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     :returns: A tuple in the form ([px, py, pz], err) where err is either 0
     or dhd.constants.TIMEGUARD on success, -1 otherwise. px, py, pz are in [m]
 
-    :rtype: Tuple[list(float), int]
+    :rtype: Tuple[List[float], int]
     """
 
     px = c_double()
@@ -978,7 +978,7 @@ def getForce(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     :returns: A tuple in the form ([fx, fy, fz], err) where err is either 0,
     -1 otherwise.
 
-    :rtype: Tuple[list(float), int]
+    :rtype: Tuple[List[float], int]
     """
 
     fx = c_double()
@@ -1007,7 +1007,7 @@ def setForce(f: Tuple[float, float, float], ID: int = -1) -> int:  # NOQA
 
     :returns: 0 or dhd.MOTOR_SATURATED on success -1 otherwise.
 
-    :rtype: Tuple[list(float), int]
+    :rtype: Tuple[List[float], int]
     """
 
     return _libdhd.dhdSetForce(f[0], f[1], f[2], ID)
@@ -1042,7 +1042,7 @@ def getOrientationRad(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     success, -1 otherwise. oa, ob, and og refer to the device orientation
     around the first, second, and third wrist joints, respectively, in [rad]
 
-    :rtype: Tuple[list(float), int]
+    :rtype: Tuple[List[float], int]
     """
 
     oa = c_double()
@@ -1575,7 +1575,7 @@ def setForceAndGripperForce(f: Tuple[float, float, float],  # NOQA
 
     :returns: 0 or dhd.MOTOR_SATURATED on success -1 otherwise.
 
-    :rtype: Tuple[list(float), int]
+    :rtype: int
     """
 
     return _libdhd.dhdSetForceAndGripperForce(f[0], f[1], f[2], fg, ID)
@@ -1633,8 +1633,8 @@ _libdhd.dhdConfigLinearVelocity.restype = c_int
 def configLinearVelocity(ms: int, mode: int, # NOQA
                                      ID: int = -1) -> int:
     """
-    Configure the internal velocity computation estimator. This only applies to
-    the device base.
+    Configure the internal linear velocity computation estimator.
+    This only applies to the device base.
 
     :param int ms: [default=dhd.VELOCITY_WINDOW] time interval used to
     compute velocity in [ms]
@@ -1654,6 +1654,123 @@ def configLinearVelocity(ms: int, mode: int, # NOQA
     :rtype: int
     """
 
-    return _libdhd.dhdSetForceAndTorqueAndGripperForce(ms, mode, ID)
+    return _libdhd.dhdConfigLinearVelocity(ms, mode, ID)
 
 
+_libdhd.dhdConfigAngularVelocity.argtypes = [c_int, c_int, c_byte]
+_libdhd.dhdConfigAngularVelocity.restype = c_int
+def configAngularVelocity(ms: int, mode: int, # NOQA
+                          ID: int = -1) -> int:
+    """
+    Configure the internal velocity computation estimator. This only applies to
+    the device wrist.
+
+    :param int ms: [default=dhd.VELOCITY_WINDOW] time interval used to
+    compute velocity in [ms]
+
+    :param int mode: [default=dhd.VELOCITY_WINDOWING] velocity estimator mode
+    (see velocity estimator modes section for details)
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises ValueError: if ms is not implicitly convertible to a C int type
+    :raises ValueError: if mode is not implicitly convertible to a C int type
+
+
+    :returns: 0 on success, -1 otherwise
+    :rtype: int
+    """
+
+    return _libdhd.dhdConfigAngularVelocity(ms, mode, ID)
+
+
+_libdhd.dhdGetAngularVelocityRad.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdGetAngularVelocityRad.restype = c_int
+def getAngularVelocityRad(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
+    """
+    Retrieve the estimated instanteous angular velocity in [rad/s]. Velocity
+    computation can be figured by calling dhd.configAngularVelocity(). By
+    default dhd.VELOCITY_WINDOW and dhd.VELOCITY_WINDOWING are used. See
+    velocity estimator for details.
+
+    Please note that the velocity estimator requires at least 2 position
+    updates during the time interval defined in dhd.configAngularVelocity()
+    in order to be able to compute the estimate. Otherwise, e.g. if there are
+    no calls to dhd.getPosition(), dhd.getAngularVelocityRad(), or
+    dhd.getAngularVelocityDeg() within the time interval window,
+    dhd.getAngularVelocityRad() will set an error (dhd.Error.TIMEOUT).
+
+    See also getAngularVelocityDeg().
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: A tuple in the form ([wx, wy, wz], err) where err is either 0
+    or on success, -1 otherwise and wx, wy, wz are in [rad/s]
+
+    :rtype: Tuple[List[float], int]
+    """
+
+    wx = c_double()
+    wy = c_double()
+    wz = c_double()
+
+    return ([wx.value, wy.value, wz.value],
+            _libdhd.dhdGetAngularVelocityRad(byref(wx),
+                                             byref(wy),
+                                             byref(wz),
+                                             ID))
+
+
+_libdhd.dhdGetAngularVelocityDeg.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdGetAngularVelocityDeg.restype = c_int
+def getAngularVelocityDeg(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
+    """
+    Retrieve the estimated instanteous angular velocity in [deg/s]. Velocity
+    computation can be figured by calling dhd.configAngularVelocity(). By
+    default dhd.VELOCITY_WINDOW and dhd.VELOCITY_WINDOWING are used. See
+    velocity estimator for details.
+
+    Please note that the velocity estimator requires at least 2 position
+    updates during the time interval defined in dhd.configAngularVelocity()
+    in order to be able to compute the estimate. Otherwise, e.g. if there are
+    no calls to dhd.getPosition(), dhd.getAngularVelocityRad(), or
+    dhd.getAngularVelocityDeg() within the time interval window,
+    dhd.getAngularVelocityRad() will set an error (dhd.Error.TIMEOUT).
+
+    See also getAngularVelocityRad().
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: A tuple in the form ([wx, wy, wz], err) where err is either 0
+    or on success, -1 otherwise and wx, wy, wz are in [deg/s]
+
+    :rtype: Tuple[List[float], int]
+    """
+
+    wx = c_double()
+    wy = c_double()
+    wz = c_double()
+
+    return ([wx.value, wy.value, wz.value],
+            _libdhd.dhdGetAngularVelocityRad(byref(wx),
+                                             byref(wy),
+                                             byref(wz),
+                                             ID))
