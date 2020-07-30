@@ -26,7 +26,6 @@ from forcedimension.dhd.bindings.constants import (  # NOQA
 )
 
 
-
 # Load the runtime from the backend
 _libdhd = runtime.load("libdhd")
 
@@ -35,14 +34,14 @@ _libdhd.dhdEnableSimulator.argtypes = [c_bool]
 _libdhd.dhdEnableSimulator.restype = None
 
 
-def enableSimulator(on: bool) -> None:  # NOQA
+def enableSimulator(enable: bool) -> None:  # NOQA
     """
     Enable device simulator support.
     This enables network access on the loopback interface.
 
-    :param on: True to enable, False to disable
+    :param : True to enable, False to disable
     """
-    _libdhd.dhdEnableSimulator(on)
+    _libdhd.dhdEnableSimulator(enable)
 
 
 _libdhd.dhdGetDeviceCount.argtypes = []
@@ -292,11 +291,11 @@ def getComMode(ID: int = -1) -> int:  # NOQA
 
 _libdhd.dhdEnableForce.argtypes = [c_bool, c_byte]
 _libdhd.dhdEnableForce.restype = c_int
-def enableForce(val: bool, ID: int = -1) -> int: # NOQA
+def enableForce(enable: bool, ID: int = -1) -> int: # NOQA
     """
     Enable the force mode in the device controller.
 
-    :param bool val: True to enable force, False to disable it.
+    :param bool enable: True to enable force, False to disable it.
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
@@ -307,7 +306,7 @@ def enableForce(val: bool, ID: int = -1) -> int: # NOQA
     :returns: 0 on success, -1 otherwise.
     """
 
-    return _libdhd.dhdEnableForce(val, c_byte)
+    return _libdhd.dhdEnableForce(enable, c_byte)
 
 
 _libdhd.dhdEnableGripperForce.argtypes = [c_bool, c_byte]
@@ -1659,6 +1658,51 @@ def configLinearVelocity(ms: int, mode: int, # NOQA
     return _libdhd.dhdConfigLinearVelocity(ms, mode, ID)
 
 
+_libdhd.dhdGetLinearVelocity.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdGetLinearVelocity.restype = c_int
+def getLinearVelocity(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
+    """
+    Retrieve the estimated instanteous linear velocity in [m/s]. Velocity
+    computation can be figured by calling dhd.bindings.configAngularVelocity().
+    By default dhd.bindings.VELOCITY_WINDOW and dhd.bindings.VELOCITY_WINDOWING
+    are used. See velocity estimator for details.
+
+    Please note that the velocity estimator requires at least 2 position
+    updates during the time interval defined in
+    dhd.bindings.configLinearVelocity() in order to be able to compute the
+    estimate. Otherwise, e.g. if there are no calls to
+    dhd.bindings.getPosition(), dhd.bindings.getLinearVelocity(), or
+    dhd.bindings.getLinearVelocity() will set an error
+    (dhd.bindings.Error.TIMEOUT).
+
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: A tuple in the form ([wx, wy, wz], err) where err is either 0
+    or on success, -1 otherwise and wx, wy, wz are in [rad/s]
+
+    :rtype: Tuple[List[float], int]
+    """
+
+    vx = c_double()
+    vy = c_double()
+    vz = c_double()
+
+    return ([vx.value, vy.value, vz.value],
+            _libdhd.dhdGetLinearVelocityRad(byref(vx),
+                                            byref(vy),
+                                            byref(vz),
+                                            ID))
+
+
 _libdhd.dhdConfigAngularVelocity.argtypes = [c_int, c_int, c_byte]
 _libdhd.dhdConfigAngularVelocity.restype = c_int
 def configAngularVelocity(ms: int, mode: int, # NOQA
@@ -1667,11 +1711,11 @@ def configAngularVelocity(ms: int, mode: int, # NOQA
     Configure the internal velocity computation estimator. This only applies to
     the device wrist.
 
-    :param int ms: [default=dhd.VELOCITY_WINDOW] time interval used to
+    :param int ms: [default=dhd.bindings.VELOCITY_WINDOW] time interval used to
     compute velocity in [ms]
 
-    :param int mode: [default=dhd.VELOCITY_WINDOWING] velocity estimator mode
-    (see velocity estimator modes section for details)
+    :param int mode: [default=dhd.bindings.VELOCITY_WINDOWING] velocity
+    estimator mode (see velocity estimator modes section for details)
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1698,18 +1742,20 @@ _libdhd.dhdGetAngularVelocityRad.restype = c_int
 def getAngularVelocityRad(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     """
     Retrieve the estimated instanteous angular velocity in [rad/s]. Velocity
-    computation can be figured by calling dhd.configAngularVelocity(). By
-    default dhd.VELOCITY_WINDOW and dhd.VELOCITY_WINDOWING are used. See
-    velocity estimator for details.
+    computation can be figured by calling dhd.bindings.configAngularVelocity().
+    By default dhd.bindings.VELOCITY_WINDOW and dhd.bindings.VELOCITY_WINDOWING
+    are used. See velocity estimator for details.
 
     Please note that the velocity estimator requires at least 2 position
-    updates during the time interval defined in dhd.configAngularVelocity()
-    in order to be able to compute the estimate. Otherwise, e.g. if there are
-    no calls to dhd.getPosition(), dhd.getAngularVelocityRad(), or
-    dhd.getAngularVelocityDeg() within the time interval window,
-    dhd.getAngularVelocityRad() will set an error (dhd.Error.TIMEOUT).
+    updates during the time interval defined in
+    dhd.bindings.configAngularVelocity() in order to be able to compute the
+    estimate. Otherwise, e.g. if there are no calls to
+    dhd.bindings.getPosition(), dhd.bindings.getAngularVelocityRad(), or
+    dhd.bindings.getAngularVelocityDeg() within the time interval window,
+    dhd.bindings.getAngularVelocityRad() will set an error
+    (dhd.bindings.Error.TIMEOUT).
 
-    See also getAngularVelocityDeg().
+    See also dhd.bidnings.getAngularVelocityDeg().
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1743,18 +1789,20 @@ _libdhd.dhdGetAngularVelocityDeg.restype = c_int
 def getAngularVelocityDeg(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     """
     Retrieve the estimated instanteous angular velocity in [deg/s]. Velocity
-    computation can be figured by calling dhd.configAngularVelocity(). By
-    default dhd.VELOCITY_WINDOW and dhd.VELOCITY_WINDOWING are used. See
-    velocity estimator for details.
+    computation can be figured by calling dhd.bindings.configAngularVelocity().
+    By default dhd.bindings.VELOCITY_WINDOW and dhd.bindings.VELOCITY_WINDOWING
+    are used. See velocity estimator for details.
 
     Please note that the velocity estimator requires at least 2 position
-    updates during the time interval defined in dhd.configAngularVelocity()
-    in order to be able to compute the estimate. Otherwise, e.g. if there are
-    no calls to dhd.getPosition(), dhd.getAngularVelocityRad(), or
-    dhd.getAngularVelocityDeg() within the time interval window,
-    dhd.getAngularVelocityRad() will set an error (dhd.Error.TIMEOUT).
+    updates during the time interval defined in
+    dhd.bindings.configAngularVelocity() in order to be able to compute the
+    estimate. Otherwise, e.g. if there are no calls to
+    dhd.bindings.getPosition(), dhd.bindings.getAngularVelocityRad(), or
+    dhd.bindings.getAngularVelocityDeg() within the time interval window,
+    dhd.bindings.getAngularVelocityRad() will set an error
+    (dhd.bindings.Error.TIMEOUT).
 
-    See also getAngularVelocityRad().
+    See also dhd.bidnings.getAngularVelocityRad().
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1766,7 +1814,6 @@ def getAngularVelocityDeg(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
 
     :rtype: Tuple[List[float], int]
     """
-
     wx = c_double()
     wy = c_double()
     wz = c_double()
@@ -1776,3 +1823,603 @@ def getAngularVelocityDeg(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
                                              byref(wy),
                                              byref(wz),
                                              ID))
+
+
+_libdhd.dhdConfigGripperVelocity.argtypes = [c_int, c_int, c_byte]
+_libdhd.dhdConfigGripperVelocity.restype = c_int
+def configGripperVelocity(ms: int, mode: int, # NOQA
+                          ID: int = -1) -> int:
+    """
+    Configure the internal velocity computation estimator. This only applies to
+    the device gripper. See velocity estimator for details.
+
+    See also:
+        dhd.bindings.getGripperLinearVelocity()
+        dhd.bindings.getGripperAngularVelocityRad()
+        dhd.bindings.getGripperAngularVelocityDeg()
+
+    :param int ms: [default=dhd.bindings.VELOCITY_WINDOW] time interval used to
+    compute velocity in [ms]
+
+    :param int mode: [default=dhd.bindings.VELOCITY_WINDOWING] velocity
+    estimator mode (see velocity estimator modes section for details)
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises ValueError: if ms is not implicitly convertible to a C int type
+    :raises ValueError: if mode is not implicitly convertible to a C int type
+
+
+    :returns: 0 on success, -1 otherwise
+    :rtype: int
+    """
+
+    return _libdhd.dhdConfigAngularVelocity(ms, mode, ID)
+
+
+_libdhd.dhdGetGripperLinearVelocity.argtypes = [POINTER(c_double), c_byte]
+_libdhd.dhdGetGripperLinearVelocity.restype = c_int
+def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]: # NOQA
+    """
+    Retrieve the estimated instanteous linear velocity of the gripper in [m/s].
+    Velocity computation can be configured by calling
+    dhd.bindings.ConfigGripperVelocity(). By default
+    dhd.bindings.VELOCITY_WINDOW and dhd.VELOCITY_WINDOWING are used. See
+    velocity estimator for details.
+
+    Please note that the velocity estimator requires at least 2 position
+    updates during the time interval defined in
+    dhd.bindings.configLinearVelocity() in order to be able to compute the
+    estimate. Otherwise, e.g. if there are no calls to
+    dhd.bindings.getPosition(), dhd.bindings.getLinearVelocity(), or
+    dhd.bindings.getLinearVelocity() will set an error
+    (dhd.bindings.Error.TIMEOUT).
+
+    See also:
+        dhd.bindings.configGripperVelocity()
+        dhd.bindings.getGripperAngularVelocityRad()
+        dhd.bindings.getGripperAngularVelocityDeg()
+
+    :param int ms: [default=dhd.bindings.VELOCITY_WINDOW] time interval used to
+    compute velocity in [ms]
+
+    :param int mode: [default=dhd.bindings.VELOCITY_WINDOWING] velocity
+    estimator mode (see velocity estimator modes section for details)
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: tuple of (vg, err) where err is 0 on success, -1 otherwise and
+    vg is the gripper estimated instanteous linear velocity in [m/s]
+
+    :rtype: Tuple[float, int]
+    """
+
+    vg = c_double()
+    return (vg.value, _libdhd.dhdGetGripperLinearVelocity(byref(vg), ID))
+
+
+_libdhd.dhdGetGripperAngularVelocityRad.argtypes = [POINTER(c_double), c_byte]
+_libdhd.dhdGetGripperAngularVelocityRad.restype = c_int
+def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]: # NOQA
+    """
+    Retrieve the estimated instanteous linear velocity of the gripper in
+    [rad/s]. Velocity computation can be configured by calling
+    dhd.bindings.ConfigGripperVelocity(). By default
+    dhd.bindings.VELOCITY_WINDOW and dhd.VELOCITY_WINDOWING are used. See
+    velocity estimator for details.
+
+    Please note that the velocity estimator requires at least 2 position
+    updates during the time interval defined in
+    dhd.bindings.configLinearVelocity() in order to be able to compute the
+    estimate. Otherwise, e.g. if there are no calls to
+    dhd.bindings.getPosition(), dhd.bindings.getLinearVelocity(), or
+    dhd.bindings.getLinearVelocity() will set an error
+    (dhd.bindings.Error.TIMEOUT).
+
+    See also:
+        dhd.bindings.configGripperVelocity()
+        dhd.bindings.getGripperLinearVelocity()
+        dhd.bindings.getGripperAngularVelocityDeg()
+
+    :param int ms: [default=dhd.bindings.VELOCITY_WINDOW] time interval used to
+    compute velocity in [ms]
+
+    :param int mode: [default=dhd.bindings.VELOCITY_WINDOWING] velocity
+    estimator mode (see velocity estimator modes section for details)
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: tuple of (wg, err) where err is 0 on success, -1 otherwise and
+    wg is the gripper estimated instanteous linear velocity in [rad/s]
+
+    :rtype: Tuple[float, int]
+    """
+
+    wg = c_double()
+    return (wg.value, _libdhd.dhdGetGripperAngularVelocityRad(byref(wg), ID))
+
+
+_libdhd.dhdGetGripperAngularVelocityDeg.argtypes = [POINTER(c_double), c_byte]
+_libdhd.dhdGetGripperAngularVelocityDeg.restype = c_int
+def getGripperAngularVelocityDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
+    """
+    Retrieve the estimated instanteous angular velocity of the gripper in
+    [deg/s]. Velocity computation can be configured by calling
+    dhd.bindings.ConfigGripperVelocity(). By default
+    dhd.bindings.VELOCITY_WINDOW and dhd.VELOCITY_WINDOWING are used. See
+    velocity estimator for details.
+
+    Please note that the velocity estimator requires at least 2 position
+    updates during the time interval defined in
+    dhd.bindings.configLinearVelocity() in order to be able to compute the
+    estimate. Otherwise, e.g. if there are no calls to
+    dhd.bindings.getPosition(), dhd.bindings.getLinearVelocity(), or
+    dhd.bindings.getLinearVelocity() will set an error
+    (dhd.bindings.Error.TIMEOUT).
+
+    See also:
+        dhd.bindings.configGripperVelocity()
+        dhd.bindings.getGripperLinearVelocity()
+        dhd.bindings.getGripperAngularVelocityRad()
+
+    :param int ms: [default=dhd.bindings.VELOCITY_WINDOW] time interval used to
+    compute velocity in [ms]
+
+    :param int mode: [default=dhd.bindings.VELOCITY_WINDOWING] velocity
+    estimator mode (see velocity estimator modes section for details)
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :returns: tuple of (wg, err) where err is 0 on success, -1 otherwise and
+    wg is the gripper estimated instanteous linear velocity in [deg/s]
+
+    :rtype: Tuple[float, int]
+    """
+
+    wg = c_double()
+    return (wg.value, _libdhd.dhdGetGripperAngularelocityDeg(byref(wg), ID))
+
+
+_libdhd.dhdEmulateButton.argtypes = [c_bool, c_byte]
+_libdhd.dhdEmulateButton.restype = c_int
+def emulateButton(enable: bool, ID: int = -1) -> int: # NOQA
+    """
+    Enable the button behavior emulation in devices that feature a gripper.
+
+    This feature only applies to the following devices:
+        dhd.DeviceType.OMEGA331
+        dhd.DeviceType.OMEGA331_LEFT
+        dhd.DeviceType.SIGMA331
+        dhd.DeviceType.SIGMA331_LEFT
+
+    For omega.7 devices with firmware versions 2.x, forces need to be enabled
+    for the button emulation to report the emulated button status.
+
+    :param enable: True to enable, False to disable
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise.
+    """
+
+    return _libdhd.dhdEmulateButton(enable, ID)
+
+
+_libdhd.dhdGetBaseAngleXRad.argtypes = [POINTER(c_double), c_byte]
+_libdhd.dhdGetBaseAngleXRad.argtypes = c_int
+def getBaseAngleXRad(ID: int = -1) -> Tuple[float, int]: # NOQA
+    """
+    Get the device base plate angle around the X axis.
+
+    See also:
+        dhd.bindings.getBaseAngleXDeg()
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: Tuple[float, int]
+    :returns: tuple of (angle, err) where err is 0 on success, -1 otherwise
+    and angle is the device angle in [rad]
+    """
+
+    angle = c_double()
+    return (angle.value, _libdhd.dhdGetBaseAngleXRad(byref(angle), ID))
+
+
+_libdhd.dhdGetBaseAngleXDeg.argtypes = [POINTER(c_double), c_byte]
+_libdhd.dhdGetBaseAngleXDeg.argtypes = c_int
+def getBaseAngleXDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
+    """
+    Get the device base plate angle around the X axis.
+
+    See also:
+        dhd.bindings.getBaseAngleXRad()
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: Tuple[float, int]
+    :returns: tuple of (angle, err) where err is 0 on success, -1 otherwise
+    and angle is the device angle in [deg]
+    """
+
+    angle = c_double()
+    return (angle.value, _libdhd.dhdGetBaseAngleXDeg(byref(angle), ID))
+
+
+_libdhd.dhdSetBaseAngleXRad.argtypes = [c_double, c_byte]
+_libdhd.dhdSetBaseAngleXRad.restype = c_int
+def setBaseAngleXRad(angle: float, ID: int = -1) -> int: # NOQA
+    """
+    Set the device base plate angle around the X axis. Please refer to your
+    device user manual for more information on your device coordinate system.
+
+    See also:
+        dhd.bindings.setBaseAngleXDeg()
+
+    :param float angle: device base plate angle around the X axis in [rad]
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+
+    return _libdhd.dhdSetBaseAngleXRad(angle, ID)
+
+
+_libdhd.dhdSetBaseAngleXDeg.argtypes = [c_double, c_byte]
+_libdhd.dhdSetBaseAngleXDeg.restype = c_int
+def setBaseAngleXDeg(angle: float, ID: int = -1) -> int: # NOQA
+    """
+    Set the device base plate angle around the X axis. Please refer to your
+    device user manual for more information on your device coordinate system.
+
+    See also:
+        dhd.bindings.setBaseAngleXRad()
+
+    :param float angle: device base plate angle around the X axis in [deg]
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+
+    return _libdhd.dhdSetBaseAngleXDeg(angle, ID)
+
+
+_libdhd.dhdGetBaseAngleXRad.argtypes = [POINTER(c_double), c_byte]
+_libdhd.dhdGetBaseAngleXRad.argtypes = c_int
+def getBaseAngleZRad(ID: int = -1) -> Tuple[float, int]: # NOQA
+    """
+    Get the device base plate angle around the Z axis.
+
+    See also:
+        dhd.bindings.getBaseAngleZDeg()
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: Tuple[float, int]
+    :returns: tuple of (angle, err) where err is 0 on success, -1 otherwise
+    and angle is the device angle in [rad]
+    """
+
+    angle = c_double()
+    return (angle.value, _libdhd.dhdGetBaseAngleZRad(byref(angle), ID))
+
+
+_libdhd.dhdGetBaseAngleZDeg.argtypes = [POINTER(c_double), c_byte]
+_libdhd.dhdGetBaseAngleZDeg.argtypes = c_int
+def getBaseAngleZDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
+    """
+    Get the device base plate angle around the Z axis.
+
+    See also:
+        dhd.bindings.getBaseAngleZRad()
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: Tuple[float, int]
+    :returns: tuple of (angle, err) where err is 0 on success, -1 otherwise
+    and angle is the device angle in [deg]
+    """
+
+    angle = c_double()
+    return (angle.value, _libdhd.dhdGetBaseAngleZDeg(byref(angle), ID))
+
+
+_libdhd.dhdSetBaseAngleZRad.argtypes = [c_double, c_byte]
+_libdhd.dhdSetBaseAngleZRad.restype = c_int
+def setBaseAngleZRad(angle: float, ID: int = -1) -> int: # NOQA
+    """
+    Set the device base plate angle around the Z axis. Please refer to your
+    device user manual for more information on your device coordinate system.
+
+    See also:
+        dhd.bindings.setBaseAngleZDeg()
+
+    :param float angle: device base plate angle around the Z axis in [rad]
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+
+    return _libdhd.dhdSetBaseAngleZRad(angle, ID)
+
+
+_libdhd.dhdSetBaseAngleZDeg.argtypes = [c_double, c_byte]
+_libdhd.dhdSetBaseAngleZDeg.restype = c_int
+def setBaseAngleZDeg(angle: float, ID: int = -1) -> int: # NOQA
+    """
+    Set the device base plate angle around the Z axis. Please refer to your
+    device user manual for more information on your device coordinate system.
+
+    See also:
+        dhd.bindings.setBaseAngleZRad()
+
+    :param float angle: device base plate angle around the Z axis in [deg]
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if angle is not implicitly convertible to a C double
+    type
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+
+    return _libdhd.dhdSetBaseAngleZDeg(angle, ID)
+
+
+_libdhd.dhdSetVibration.argtypes = [c_double, c_double, c_int, c_byte]
+_libdhd.dhdSetVibration.restype = c_int
+def setVibration(f: float, A: float, # NOQA
+                 device_type: DeviceType, ID: int = -1) -> int:
+    """
+    Apply a vibration to the end-effector. The vibration is added to the force
+    requested by dhd.bindings.setForce()
+
+    :param float f: vibration frequency in [Hz]
+    :param float A: vibration amplitude in [m]
+    :param DeviceType device_type: the type of device
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if f is not implicitly convertible to a C double type
+    :raises ValueError: if A is not implicitly convertible to a C double type
+    :raises ValueError: if device_type is not implicitly convertible to a C int
+    type
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+
+    return _libdhd.dhdSetVibration(f, A, device_type, ID)
+
+
+_libdhd.dhdSetMaxForce.argtypes = [c_double, c_byte]
+_libdhd.dhdSetMaxForce.restype = c_int
+def setMaxForce(limit: float, ID: int = -1) -> int: # NOQA
+    """
+    Define a limit (in N) to the magnitude of the force that can be applied to
+    the haptic device. The limit applies to all dhd.bindings.setForce() and
+    related calls, and ensures the force applied to the device end-effector
+    remains below the requested value. If a negative limit is set, there is no
+    max force and the full range of force can be applied.
+
+    Note that the force limit enforced only applies to forces set
+    programatically by dhd.bindings.setForce(). Setting DAC values directly
+    will bypass this limit.
+
+    See also:
+        dhd.bindings.getMaxForce()
+        dhd.bindings.setMaxTorque()
+        dhd.bindings.setMaxGripperForce()
+        dhd.bindings.expert.setMaxPower()
+        dhd.bindings.expert.setMaxUsablePower()
+
+    :param float limit: max magnitude of force that can be applied in [N]
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if limit is not implicitly convertible to a C double
+    type
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+
+    return _libdhd.dhdSetMaxForce(limit, ID)
+
+
+_libdhd.dhdSetMaxTorque.argtypes = [c_double, c_byte]
+_libdhd.dhdSetMaxTorque.restype = c_int
+def setMaxTorque(limit: float, ID: int = -1) -> int: # NOQA
+    """
+    Define a limit (in Nm) to the magnitude of the torque that can be applied
+    to the haptic device. The limit applies to all dhd.bindings.setForce() and
+    related calls, and ensures the force applied to the device end-effector
+    remains below the requested value. If a negative limit is set, there is no
+    max force and the full range of force can be applied.
+
+    Note that the force limit enforced only applies to torques set
+    programatically by dhd.bindings.setTorque(). Setting DAC values directly
+    will bypass this limit.
+
+    See also:
+        dhd.bindings.getMaxTorque()
+        dhd.bindings.setMaxForce()
+        dhd.bindings.setMaxGripperForce()
+        dhd.bindings.expert.setMaxPower()
+        dhd.bindings.expert.setMaxUsablePower()
+
+    :param float limit: max magnitude of torque that can be applied in [Nm]
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if limit is not implicitly convertible to a C double
+    type
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+
+    return _libdhd.dhdSetMaxTorque(limit, ID)
+
+
+_libdhd.dhdSetMaxGripperForce.argtypes = [c_double, c_byte]
+_libdhd.dhdSetMaxGripperForce.restype = c_int
+def setMaxGripperForce(limit: float, ID: int = -1) -> int: # NOQA
+    """
+    Define a limit (in N) to the magnitude of the force that can be applied to
+    the haptic device gripper. The limit applies to all
+    dhd.bindings.setForceAndTorqueAndGripperForce() and related calls, and
+    ensures the force applied to the device gripper remains below the
+    requested value. If a negative limit is set, there is no max force and the
+    full range of force can be applied.
+
+    Note that the force limit enforced only applies to forces set
+    programatically by dhd.bindings.setForceAndTorqueAndGripperForce. Setting
+    DAC values directly will bypass this limit.
+
+    See also:
+        dhd.bindings.getMaxGripperForce()
+        dhd.bindings.getMaxForce()
+        dhd.bindings.setMaxTorque()
+        dhd.bindings.expert.setMaxPower()
+        dhd.bindings.expert.setMaxUsablePower()
+
+    :param float limit: max magnitude of force that can be applied in [N]
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if limit is not implicitly convertible to a C double
+    type
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+
+    return _libdhd.dhdSetMaxGripperForce(limit, ID)
+
+
+_libdhd.dhdGetMaxForce.argtypes = [c_byte]
+_libdhd.dhdGetMaxForce.restype = c_double
+def getMaxForce(ID: int = -1) -> float: # NOQA
+    """
+    Retrieve the current limit (in N) to the force magnitude that can be
+    appliedby the haptic device. If the return value if negative, the limit is
+    disabled and the full range of force available can be applied.
+
+    See also:
+        dhd.bindings.setMaxForce()
+        dhd.bindings.getMaxTorque()
+        dhd.bindings.getMaxGripperForce()
+        dhd.bindings.expert.getMaxPower()
+        dhd.bindings.expert.getMaxUsablePower()
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: float
+    :returns: The current force limit (in N) if set, -1.0 if no limit is
+    enforced
+    """
+
+    return _libdhd.dhdGetMaxForce(ID)
+
+
+_libdhd.dhdGetMaxForce.argtypes = [c_byte]
+_libdhd.dhdGetMaxForce.restype = c_double
+def getMaxTorque(ID: int = -1) -> float: # NOQA
+    """
+    Retrieve the current limit (in Nm) to the force magnitude that can be
+    appliedby the haptic device. If the return value if negative, the limit is
+    disabled and the full range of force available can be applied.
+
+    See also:
+        dhd.bindings.setMaxTorque()
+        dhd.bindings.getMaxForce()
+        dhd.bindings.getMaxGripperForce()
+        dhd.bindings.expert.getMaxPower()
+        dhd.bindings.expert.getMaxUsablePower()
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: float
+    :returns: The current torque limit (in Nm) if set, -1.0 if no limit is
+    enforced
+    """
+
+    return _libdhd.dhdGetMaxTorque(ID)
+
+
+_libdhd.dhdGetMaxGripperForce.argtypes = [c_byte]
+_libdhd.dhdGetMaxGripperForce.restype = c_double
+def getMaxGripperForce(ID: int = -1) -> float: # NOQA
+    """
+    Retrieve the current limit (in N) to the force magnitude that can be
+    appliedby the haptic device gripper. If the return value if negative, the
+    limit is disabled and the full range of force available can be applied.
+
+    See also:
+        dhd.bindings.setMaxGripperForce()
+        dhd.bindings.getMaxForce()
+        dhd.bindings.getMaxTorque()
+        dhd.bindings.expert.getMaxPower()
+        dhd.bindings.expert.getMaxUsablePower()
+
+    :param int ID: [default=-1] device ID (see multiple devices section for
+    details)
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :rtype: float
+    :returns: The current force limit (in N) if set, -1.0 if no limit is
+    enforced
+    """
+
+    return _libdhd.dhdGetMaxGripperForce(ID)
