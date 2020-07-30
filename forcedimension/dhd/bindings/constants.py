@@ -1,3 +1,11 @@
+"""
+.. module::constants
+   :platform: Windows, Unix
+   :synopsis: libdhd constants
+
+.. moduleauthor:: Drason Chow <drasonchow@gmail.com>
+"""
+
 from enum import Enum
 
 MAX_DOF = 8

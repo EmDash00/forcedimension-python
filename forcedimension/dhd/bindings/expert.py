@@ -1,9 +1,8 @@
 """
-.. module::dhd
+.. module::expert
    :platform: Windows, Unix
-   :synopsis: libdhd Python bindings
+   :synopsis: libdhd "Expert SDK" Python bindings
 
 .. moduleauthor:: Drason Chow <drasonchow@gmail.com>
 """
 
-__all__ = ['bindings']
