@@ -1,7 +1,7 @@
 """
 .. module::standard
    :platform: Windows, Unix
-   :synopsis: libdhd stanard SDK Python bindings
+   :synopsis: libdhd Standard SDK Python bindings
 
 .. moduleauthor:: Drason Chow <drasonchow@gmail.com>
 """
