@@ -1285,3 +1285,72 @@ def getEncRange(ID: int = -1) -> Tuple[List[int], List[int], int]: # NOQA
 
     return ([val for val in encMin], [val for val in encMax], err)
 
+
+_libdhd.dhdSetBrk.argtypes = [c_ubyte, c_byte]
+_libdhd.dhdSetBrk.restype = c_int
+def setBrk(mask: int = 0xff, ID: int = -1) -> int: # NOQA
+    """
+    Set electromagnetic braking status on selective motor groups. Only applies
+    when using the generic controller directly, without a device model
+    attached.
+
+    The motors on the generic controller are grouped as follows:
+        group1 - [mot0, mot1, mot2]
+        group2 - [mot3, mot4, mot5]
+        group3 - [mot6]
+        group4 - [mot7]
+
+    The mask parameter addresses all 8 motors bitwise. If a single bit within
+    the motor group is enabled, the entire motor group's electromagnetic
+    brakes will be activated.
+
+    :param mask: [default=0xff] bitwise mask of which motor groups should have
+    their electromagnetic brakes be set on.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if mask is not implicitly convertible to C uchar
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+
+    return _libdhd.dhdSetBrk(mask, ID)
+
+
+_libdhd.dhdGetDeltaJointAngles.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdGetDeltaJointAngles.restype = c_int
+def getDeltaJointAngles(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+    """
+    Retrieve the joint angles in [rad] for the DELTA structure.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[float], int]
+    :returns: tuple of ([j0, j1, j2], err) where err is 0 or
+    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and
+    [j0, j1, j2] are the joint angles for axes 0, 1, and 2, respectively
+    """
+
+    j0 = c_double()
+    j1 = c_double()
+    j2 = c_double()
+
+    return ([j0.value, j1.value, j2.value],
+            _libdhd.dhdGetDeltaJointAngles(
+                byref(j0),
+                byref(j1),
+                byref(j2),
+                ID
+        )
+    )
