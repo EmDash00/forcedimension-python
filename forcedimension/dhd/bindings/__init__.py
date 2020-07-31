@@ -7,3 +7,10 @@
 """
 
 __all__ = ['constants', 'standard', 'expert']
+
+
+import forcedimension.runtime as runtime
+
+
+# Load the runtime from the backend
+_libdhd = runtime.load("libdhd")

@@ -13,7 +13,6 @@ from ctypes import (
 )
 
 from ctypes import byref, POINTER
-import forcedimension.runtime as runtime
 
 # It's better to import everything like this,
 # so linters can have an easier time.
@@ -25,9 +24,7 @@ from forcedimension.dhd.bindings.constants import (  # NOQA
     MAX_STATUS, MOTOR_SATURATED
 )
 
-
-# Load the runtime from the backend
-_libdhd = runtime.load("libdhd")
+from forcedimension.dhd.bindings import _libdhd
 
 
 _libdhd.dhdEnableSimulator.argtypes = [c_bool]
