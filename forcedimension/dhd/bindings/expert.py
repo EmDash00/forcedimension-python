@@ -326,4 +326,77 @@ def setMotor(index: int, output: int, ID: int = -1) -> int: # NOQA
     return _libdhd.dhdSetMotor(index, output, ID)
 
 
+_libdhd.dhdSetDeltaMotor.argtypes = [c_ushort, c_ushort, c_ushort, c_byte]
+_libdhd.dhdSetDeltaMotor.restype = c_int
+def setDeltaMotor(output: Tuple[int, int, int], ID: int = -1) -> int: # NOQA
+    """
+    Set desired motor commands to the amplifier channels commanding the DELTA
+    motors.
 
+    :param Tuple[int, int, int] output: Tuple of (motor0, motor1, motor2) where
+    motor0, motor1, and motor2 are the axis 0, 1, and 2 DELTA motor commands,
+    respectively.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of output is not implicitly convertible
+    to C ushort.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise.
+
+    """
+    return _libdhd.dhdSetDeltaMotor(output[0], output[1], output[2], ID)
+
+
+_libdhd.dhdSetWristMotor.argtypes = [c_ushort, c_ushort, c_ushort, c_byte]
+_libdhd.dhdSetWristMotor.restype = c_int
+def setWristMotor(output: Tuple[int, int, int], ID: int = -1) -> int: # NOQA
+    """
+    Set desired motor commands to the amplifier channels commanding the wrist
+    motors.
+
+    :param Tuple[int, int, int] output: Tuple of (motor0, motor1, motor2) where
+    motor0, motor1, and motor2 are the axis 0, 1, and 2 wrist motor commands,
+    respectively.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of output is not implicitly convertible
+    to C ushort.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise.
+
+    """
+    return _libdhd.dhdSetWristMotor(output[0], output[1], output[2], ID)
+
+
+_libdhd.dhdSetWristMotor.argtypes = [c_ushort, c_byte]
+_libdhd.dhdSetWristMotor.restype = c_int
+def setGripperMotor(output: int, ID: int = -1) -> int: # NOQA
+    """
+    Set desired motor commands to the amplifier channels commanding the force
+    gripper.
+
+    :param int output: gripper motor command
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of output is not implicitly convertible
+    to C ushort.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise.
+
+    """
+    return _libdhd.dhdSetWristMotor(output, ID)
