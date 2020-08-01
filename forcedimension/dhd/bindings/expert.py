@@ -1354,3 +1354,114 @@ def getDeltaJointAngles(ID: int = -1) -> Tuple[List[float], int]: # NOQA
                 ID
         )
     )
+
+
+_libdhd.dhdGetDeltaJacobian.argtypes = [(c_double * 3) * 3, c_byte]
+_libdhd.dhdGetDeltaJacobian.restype = c_int
+def getDeltaJacobian(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
+    """
+    Retrieve the 3x3 jacobian matrix for the DELTA structure based on the
+    current end-effector position. Please refer to your device user manual for
+    more information on your device coordinate system.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[List[float]], int]
+    :returns: tuple of (J, err) where err is 0 or
+    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and J is the 3x3
+    jacobian matrix.
+
+    """
+
+    J = ((c_double * 3) * 3)()
+
+    return ([list(row) for row in J], _libdhd.dhdGetDeltaJointAngles(J, ID))
+
+
+_libdhd.dhdDeltaJointAnglesToJacobian.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    (c_double * 3) * 3,
+    c_byte
+]
+_libdhd.dhdDeltaJointAnglesToJacobian.restype = c_int
+def DeltaJointAnglesToJacobian(joint_angles: Tuple[float, float, float], # NOQA
+                               ID: int = -1) -> Tuple[List[List[float]], int]:
+    """
+    Retrieve the 3x3 jacobian matrix for the DELTA structure
+    based on a given joint configuration. Please refer to your device user
+    manual for more information on your device coordinate system.
+
+    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    (j0, j1, j2) refer to the joint angles for axis 0, 1, and 2, respectively.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of joint_angles is not implicitly
+    convertible to C double.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[List[float]], int]
+    :returns: tuple of (J, err) where err is 0 on success, -1 otherwise and
+    J is the 3x3 jacobian matrix.
+    """
+
+    J = ((c_double * 3) * 3)()
+    return ([list(row) for row in J],
+            _libdhd.dhdGetDeltaJointAngles(joint_angles[0],
+                                           joint_angles[1],
+                                           joint_angles[2],
+                                           J,
+                                           ID))
+
+
+_libdhd.dhdDeltaJointTorquesExtrema.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    c_double * 3,
+    c_double * 3,
+    c_byte
+]
+_libdhd.dhdDeltaJointTorquesExtrema.restype = c_int
+def deltaJointTorquesExtrema(joint_angles: Tuple[float, float, float], # NOQA
+                              ID: int = -1) -> Tuple[List[float],
+                                                     List[float],
+                                                     int]:
+    """
+    Compute the range of applicable DELTA joint torques for a given DELTA joint
+    angle configuration. Please refer to your device user manual for more
+    information on your device coordinate system.
+
+    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    (j0, j1, j2) refer to the joint angles for axis 0, 1, and 2, respectively.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of joint_angles is not implicitly
+    convertible to C double.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[float], List[float], int]
+    :returns: tuple of (minq, maxq, err) where err is 0 on success, -1
+    otherwise, minq is a list of floats [minq1, minq2, minq3] which correspond
+    to the minimum applicable joint torque to axes 0, 1, and 2, respectively,
+    and maxq is a list of floats [maxq1, maxq2, maxq3] which correspond to the
+    maximium applicable joint torque to axes 0, 1, and 2, respectively.
+    """
+
+    minq = (c_double * 3)()
+    maxq = (c_double * 3)()
+
+    return ([v for v in minq],
+            [v for v in maxq],
+            _libdhd(joint_angles[0], joint_angles[1], joint_angles[2],
+                    minq, maxq, ID))
