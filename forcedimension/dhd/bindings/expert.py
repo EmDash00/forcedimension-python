@@ -1378,7 +1378,7 @@ def getDeltaJacobian(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
 
     J = ((c_double * 3) * 3)()
 
-    return ([list(row) for row in J], _libdhd.dhdGetDeltaJointAngles(J, ID))
+    return ([list(row) for row in J], _libdhd.dhdGetDeltaJacobian(J, ID))
 
 
 _libdhd.dhdDeltaJointAnglesToJacobian.argtypes = [
@@ -1389,7 +1389,7 @@ _libdhd.dhdDeltaJointAnglesToJacobian.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaJointAnglesToJacobian.restype = c_int
-def DeltaJointAnglesToJacobian(joint_angles: Tuple[float, float, float], # NOQA
+def deltaJointAnglesToJacobian(joint_angles: Tuple[float, float, float], # NOQA
                                ID: int = -1) -> Tuple[List[List[float]], int]:
     """
     Retrieve the 3x3 jacobian matrix for the DELTA structure
@@ -1414,11 +1414,14 @@ def DeltaJointAnglesToJacobian(joint_angles: Tuple[float, float, float], # NOQA
 
     J = ((c_double * 3) * 3)()
     return ([list(row) for row in J],
-            _libdhd.dhdGetDeltaJointAngles(joint_angles[0],
-                                           joint_angles[1],
-                                           joint_angles[2],
-                                           J,
-                                           ID))
+            _libdhd.dhdDeltaJointAnglesToJacobian(
+                    joint_angles[0],
+                    joint_angles[1],
+                    joint_angles[2],
+                    J,
+                    ID
+                )
+            )
 
 
 _libdhd.dhdDeltaJointTorquesExtrema.argtypes = [
@@ -1453,9 +1456,10 @@ def deltaJointTorquesExtrema(joint_angles: Tuple[float, float, float], # NOQA
     :rtype: Tuple[List[float], List[float], int]
     :returns: tuple of (minq, maxq, err) where err is 0 on success, -1
     otherwise, minq is a list of floats [minq1, minq2, minq3] which correspond
-    to the minimum applicable joint torque to axes 0, 1, and 2, respectively,
-    and maxq is a list of floats [maxq1, maxq2, maxq3] which correspond to the
-    maximium applicable joint torque to axes 0, 1, and 2, respectively.
+    to the minimum applicable joint torque to axes 0, 1, and 2, respectively in
+    [Nm], and maxq is a list of floats [maxq1, maxq2, maxq3] which correspond
+    to the maximium applicable joint torque to axes 0, 1, and 2, respectively
+    in [Nm]
     """
 
     minq = (c_double * 3)()
@@ -1463,5 +1467,647 @@ def deltaJointTorquesExtrema(joint_angles: Tuple[float, float, float], # NOQA
 
     return ([v for v in minq],
             [v for v in maxq],
-            _libdhd(joint_angles[0], joint_angles[1], joint_angles[2],
-                    minq, maxq, ID))
+            _libdhd.dhdDeltaJointTorquesExtrema(
+                    joint_angles[0],
+                    joint_angles[1],
+                    joint_angles[2],
+                    minq,
+                    maxq,
+                    ID
+                )
+            )
+
+
+_libdhd.dhdDeltaGravityJointTorques.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdDeltaGravityJointTorques.retype = c_int
+def deltaGravityJointTorques(joint_angles: Tuple[float, float, float], # NOQA
+                               ID: int = -1) -> Tuple[List[float], int]:
+    """
+    Compute the DELTA joint torques required to compensate for gravity in a
+    given DELTA joint angle configuration. Please refer to your device user
+    manual for more information on your device coordinate system.
+
+    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    (j0, j1, j2) refer to the joint angles for axis 0, 1, and 2, respectively.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of joint_angles is not implicitly
+    convertible to C double.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[float], int]
+    :returns: tuple of ([q0, q1, q2], err) where err is 0 on success, -1
+    otherwise and [q0, q1, q2] are the gravity compensation joint torques for
+    axes 0, 1, and 2, respectively in [Nm]
+    """
+
+    q0 = c_double()
+    q1 = c_double()
+    q2 = c_double()
+
+    return ([q0.value, q1.value, q2.value],
+            _libdhd.dhdDeltaGravityJointTorques(
+                    joint_angles[0],
+                    joint_angles[1],
+                    joint_angles[2],
+                    byref(q0),
+                    byref(q1),
+                    byref(q2),
+                    ID
+                )
+            )
+
+
+_libdhd.dhdSetDeltaJointTorques.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    c_byte
+]
+_libdhd.dhdSetDeltaJointTorques.restype = c_int
+def setDeltaJointTorques(t: Tuple[float, float, float], # NOQA
+                         ID: int = -1) -> int:
+    """
+    Set all joint torques of the DELTA structure.
+
+    :param Tuple[float, float, float] t: tuple of (t0, t1, t2) where
+    (t0, t1, t2) are the DELTA axis torque commands for axes 0, 1, and 2,
+    respectively in [Nm].
+
+    :raises ValueError: if any member of t is not implicitly convertible to
+    c_double
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+    return _libdhd.dhdSetDeltaJointTorques(t[0], t[1], t[2], ID)
+
+
+_libdhd.dhdDeltaEncodersToJointAngles.argtypes = [
+    c_int,
+    c_int,
+    c_int,
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdDeltaEncodersToJointAngles.restype = c_int
+def deltaEncodersToJointAngles(enc: Tuple[int, int, int], # NOQA
+                           ID: int = -1) -> Tuple[List[float], int]:
+    """
+    This routine computes and returns the DELTA joint angles for a given set of
+    encoder readings.
+
+    :param Tuple[int, int, int] enc: tuple of (enc0, enc1, enc2) where enc0,
+    enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
+    respectively.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of enc is not implicitly convertible
+    to C int.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[float], int]
+    :returns: tuple of ([j0, j1, j2], err) where err is 0 on success,
+    -1 otherwise and [j0, j1, j1] is a list of floats corresponding to the
+    DELTA joint angles on axes 0, 1, and 2, respectively in [rad].
+    """
+
+    j0 = c_double()
+    j1 = c_double()
+    j2 = c_double()
+
+    return ([j0.value, j1.value, j2.value],
+            _libdhd.dhdDeltaEncodersToJointAngles(
+                    enc[0],
+                    enc[1],
+                    enc[2],
+                    byref(j0),
+                    byref(j1),
+                    byref(j2),
+                    ID
+                )
+            )
+
+
+_libdhd.dhdDeltaJointAnglesToEncoders.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    POINTER(c_int),
+    POINTER(c_int),
+    POINTER(c_int),
+    c_byte
+]
+_libdhd.dhdDeltaJointAnglesToEncoders.restype = c_int
+def deltaJointAnglesToEncoders(joint_angles: Tuple[float, float, float], # NOQA
+                               ID: int = -1) -> Tuple[List[int], int]:
+    """
+    This routine computes and returns the DELTA encoder readings for a given
+    set of joint angles.
+
+    :param Tuple[float, float, float] enc: tuple of (j0, j1, j1) where j0,
+    j1, and j2 coresspond to DELTA joint angles for axes 0, 1, and 2,
+    respectively, in [rad].
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of joint_angles is not implicitly
+    convertible to C double.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[int], int]
+    :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 on success,
+    -1 otherwise and [enc0, enc1, enc2] correspond to the DELTA joint angles
+    on axes 0, 1, and 2, respectively in [rad].
+    """
+
+    enc0 = c_int()
+    enc1 = c_int()
+    enc2 = c_int()
+
+    return ([enc0.value, enc1.value, enc2.value],
+            _libdhd.dhdDeltaJointAnglesToEncoders(
+                    joint_angles[0],
+                    joint_angles[1],
+                    joint_angles[2],
+                    byref(enc0),
+                    byref(enc1),
+                    byref(enc2),
+                    ID
+                )
+            )
+
+
+_libdhd.dhdGetWristJointAngles.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdGetWristJointAngles.restype = c_int
+def getWristJointAngles(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+    """
+    Retrieve the joint angles in [rad] for the wrist structure.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[float], int]
+
+    :returns: tuple of ([j0, j1, j2], err) where err is 0 or
+    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and [j0, j1, j2]
+    correspond to the joint angle for joint angles for joint 0, 1, and 2,
+    respectively.
+    """
+
+    j0 = c_double()
+    j1 = c_double()
+    j2 = c_double()
+
+    return ([j0.value, j1.value, j2.value],
+            _libdhd.dhdGetWristJointAngles(
+                    byref(j0),
+                    byref(j1),
+                    byref(j2),
+                    ID
+                )
+            )
+
+
+_libdhd.dhdGetWristJacobian.argtypes = [(c_double * 3) * 3, c_byte]
+_libdhd.dhdGetWristJacobian.restype = c_int
+def getWristJacobian(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
+    """
+    Retrieve the 3x3 jacobian matrix for the wrist structure based on the
+    current end-effector position. Please refer to your device user manual for
+    more information on your device coordinate system.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[List[float]], int]
+    :returns: tuple of (J, err) where err is 0 or
+    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and J is the 3x3
+    jacobian matrix.
+
+    """
+
+    J = ((c_double * 3) * 3)()
+
+    return ([list(row) for row in J], _libdhd.dhdGetWristJacobian(J, ID))
+
+
+_libdhd.dhdWristJointAnglesToJacobian.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    (c_double * 3) * 3,
+    c_byte
+]
+_libdhd.dhdWristJointAnglesToJacobian.restype = c_int
+def wristJointAnglesToJacobian(joint_angles: Tuple[float, float, float], # NOQA
+                               ID: int = -1) -> Tuple[List[List[float]], int]:
+    """
+    Retrieve the 3x3 jacobian matrix for the wrist structure
+    based on a given joint configuration. Please refer to your device user
+    manual for more information on your device coordinate system.
+
+    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    (j0, j1, j2) refer to the joint angles for wrist axis 0, 1, and 2,
+    respectively.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of joint_angles is not implicitly
+    convertible to C double.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[List[float]], int]
+    :returns: tuple of (J, err) where err is 0 on success, -1 otherwise and
+    J is the 3x3 jacobian matrix.
+    """
+
+    J = ((c_double * 3) * 3)()
+    return ([list(row) for row in J],
+            _libdhd.dhdWristJointAnglesToJacobian(
+                    joint_angles[0],
+                    joint_angles[1],
+                    joint_angles[2],
+                    J,
+                    ID
+                )
+            )
+
+
+_libdhd.dhdWristJointTorquesExtrema.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    c_double * 3,
+    c_double * 3,
+    c_byte
+]
+_libdhd.dhdWristJointTorquesExtrema.restype = c_int
+def wristJointTorquesExtrema(joint_angles: Tuple[float, float, float], # NOQA
+                              ID: int = -1) -> Tuple[List[float],
+                                                     List[float],
+                                                     int]:
+    """
+    Compute the range of applicable wrist joint torques for a given wrist joint
+    angle configuration. Please refer to your device user manual for more
+    information on your device coordinate system.
+
+    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    (j0, j1, j2) refer to the joint angles for wrist axes 0, 1, and 2,
+    respectively.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of joint_angles is not implicitly
+    convertible to C double.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[float], List[float], int]
+
+    :returns: tuple of (minq, maxq, err) where err is 0 on success, -1
+    otherwise, minq is a list of floats [minq1, minq2, minq3] which correspond
+    to the minimum applicable joint torque to axes 0, 1, and 2, respectively in
+    [Nm], and maxq is a list of floats [maxq1, maxq2, maxq3] which correspond
+    to the maximium applicable joint torque to axes 0, 1, and 2, respectively
+    in [Nm]
+    """
+
+    minq = (c_double * 3)()
+    maxq = (c_double * 3)()
+
+    return ([v for v in minq],
+            [v for v in maxq],
+            _libdhd.dhdWristJointTorquesExtrema(
+                    joint_angles[0],
+                    joint_angles[1],
+                    joint_angles[2],
+                    minq,
+                    maxq,
+                    ID
+                )
+            )
+
+
+_libdhd.dhdWristGravityJointTorques.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdWristGravityJointTorques.retype = c_int
+def wristGravityJointTorques(joint_angles: Tuple[float, float, float], # NOQA
+                               ID: int = -1) -> Tuple[List[float], int]:
+    """
+    Compute the wrist joint torques required to compensate for gravity in a
+    given wrist joint angle configuration. Please refer to your device user
+    manual for more information on your device coordinate system.
+
+    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    (j0, j1, j2) refer to the joint angles for wrist axes 0, 1, and 2,
+    respectively.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of joint_angles is not implicitly
+    convertible to C double.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[float], int]
+    :returns: tuple of ([q0, q1, q2], err) where err is 0 on success, -1
+    otherwise and [q0, q1, q2] are the gravity compensation joint torques for
+    axes 0, 1, and 2, respectively in [Nm]
+    """
+
+    q0 = c_double()
+    q1 = c_double()
+    q2 = c_double()
+
+    return ([q0.value, q1.value, q2.value],
+            _libdhd.dhdWristGravityJointTorques(
+                    joint_angles[0],
+                    joint_angles[1],
+                    joint_angles[2],
+                    byref(q0),
+                    byref(q1),
+                    byref(q2),
+                    ID
+                )
+            )
+
+
+_libdhd.dhdSetWristJointTorques.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    c_byte
+]
+_libdhd.dhdSetWristJointTorques.restype = c_int
+def setWristJointTorques(t: Tuple[float, float, float], # NOQA
+                         ID: int = -1) -> int:
+    """
+    Set all joint torques of the wrist structure.
+
+    :param Tuple[float, float, float] t: tuple of (t0, t1, t2) where
+    (t0, t1, t2) are the wrist axis torque commands for axes 0, 1, and 2,
+    respectively in [Nm].
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of t is not implicitly convertible to
+    c_double
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+    return _libdhd.dhdSetWristJointTorques(t[0], t[1], t[2], ID)
+
+
+_libdhd.dhdSetForceAndWristJointTorques.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_byte
+]
+_libdhd.dhdSetForceAndWristJointTorques.restype = c_int
+def setForceAndWristJointTorques(f: Tuple[float, float, float], # NOQA
+                                 t: Tuple[float, float, float],
+                                 ID: int = -1) -> int:
+    """
+    Set Cartesian force and wrist joint torques
+
+    :param Tuple[float, float, float] f: Tuple of (fx, fy, fz) where fx, fy,
+    and fz are the force on the DELTA end-effector on the X, Y, and Z axes,
+    respectively in [N]
+
+    :param Tuple[float, float, float] t: tuple of (t0, t1, t2) where
+    (t0, t1, t2) are the wrist axis torque commands for axes 0, 1, and 2,
+    respectively in [Nm].
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of f is not implicitly convertible to
+    c_double
+
+    :raises ValueError: if any member of t is not implicitly convertible to
+    c_double
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+    return _libdhd.dhdSetForceAndWristJointTorques(
+        f[0],
+        f[1],
+        f[2],
+        t[0],
+        t[1],
+        t[2],
+        ID
+    )
+
+
+_libdhd.dhdSetForceAndWristJointTorques.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_byte
+]
+_libdhd.dhdSetForceAndWristJointTorquesAndGripperForce.restype = c_int
+def setForceAndWristJointTorquesAndGripperForce( # NOQA
+                                 f: Tuple[float, float, float],
+                                 t: Tuple[float, float, float],
+                                 fg: float,
+                                 ID: int = -1) -> int:
+    """
+    Set Cartesian force, wrist joint torques, and gripper force
+
+    :param Tuple[float, float, float] f: Tuple of (fx, fy, fz) where fx, fy,
+    and fz are the force on the DELTA end-effector on the X, Y, and Z axes,
+    respectively in [N]
+
+    :param Tuple[float, float, float] t: tuple of (t0, t1, t2) where
+    (t0, t1, t2) are the wrist axis torque commands for axes 0, 1, and 2,
+    respectively in [Nm].
+
+    :param float fg: gripper force in [N]
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of f is not implicitly convertible to
+    c_double
+
+    :raises ValueError: if any member of t is not implicitly convertible to
+    c_double
+
+    :raises ValueError: if gripper_force is not implicitly convertible to C
+    double
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: int
+    :returns: 0 on success, -1 otherwise
+    """
+    return _libdhd.dhdSetForceAndWristJointTorquesAndGripperForce(
+        f[0],
+        f[1],
+        f[2],
+        t[0],
+        t[1],
+        t[2],
+        fg,
+        ID
+    )
+
+
+_libdhd.dhdWristEncodersToJointAngles.argtypes = [
+    c_int,
+    c_int,
+    c_int,
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdWristEncodersToJointAngles.restype = c_int
+def wristEncodersToJointAngles(enc: Tuple[int, int, int], # NOQA
+                               ID: int = -1) -> Tuple[List[float], int]:
+    """
+    This routine computes and returns the wrist joint angles for a given set of
+    encoder readings.
+
+    :param Tuple[int, int, int] enc: tuple of (enc0, enc1, enc2) where enc0,
+    enc1, and enc2 coresspond to encoder readings on wrist axes 0, 1, and 2,
+    respectively.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of enc is not implicitly convertible
+    to C int.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[float], int]
+    :returns: tuple of ([j0, j1, j2], err) where err is 0 on success,
+    -1 otherwise and [j0, j1, j1] is a list of floats corresponding to the
+    wrist joint angles on axes 0, 1, and 2, respectively in [rad].
+    """
+
+    j0 = c_double()
+    j1 = c_double()
+    j2 = c_double()
+
+    return ([j0.value, j1.value, j2.value],
+            _libdhd.dhdWristEncodersToJointAngles(
+                    enc[0],
+                    enc[1],
+                    enc[2],
+                    byref(j0),
+                    byref(j1),
+                    byref(j2),
+                    ID
+                )
+            )
+
+
+_libdhd.dhdWristJointAnglesToEncoders.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    POINTER(c_int),
+    POINTER(c_int),
+    POINTER(c_int),
+    c_byte
+]
+_libdhd.dhdWristJointAnglesToEncoders.restype = c_int
+def wristJointAnglesToEncoders(joint_angles: Tuple[float, float, float], # NOQA
+                               ID: int = -1) -> Tuple[List[int], int]:
+    """
+    This routine computes and returns the wrist encoder readings for a given
+    set of wrist joint angles.
+
+    :param Tuple[float, float, float] enc: tuple of (j0, j1, j1) where j0,
+    j1, and j2 coresspond to wrist joint angles for axes 0, 1, and 2,
+    respectively, in [rad].
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if any member of joint_angles is not implicitly
+    convertible to C double.
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[int], int]
+    :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 on success,
+    -1 otherwise and [enc0, enc1, enc2] correspond to the wrist joint angles
+    on axes 0, 1, and 2, respectively in [rad].
+    """
+
+    enc0 = c_int()
+    enc1 = c_int()
+    enc2 = c_int()
+
+    return ([enc0.value, enc1.value, enc2.value],
+            _libdhd.dhdWristJointAnglesToEncoders(
+                    joint_angles[0],
+                    joint_angles[1],
+                    joint_angles[2],
+                    byref(enc0),
+                    byref(enc1),
+                    byref(enc2),
+                    ID
+                )
+            )
+
