@@ -7,23 +7,15 @@
 """
 
 
-from typing import Tuple, List, Union, Optional, cast
+from typing import Tuple, List
 
-from ctypes import (
-    c_int, c_uint, c_bool, c_byte, c_ubyte, c_ushort, c_char_p, c_double
-)
+from ctypes import c_int, c_uint, c_byte, c_ubyte, c_ushort, c_double
 
 from ctypes import byref, POINTER
 
 from forcedimension.dhd.bindings import _libdhd
 
-from forcedimension.dhd.bindings.constants import (  # NOQA
-    DeviceType, ComMode, StatusIndex, Error, ThreadPriority,
-    DeltaMotorID, DeltaEncID, WristMotorID, WristEncID,
-    State, MAX_BUTTONS, MAX_DOF, TIMEGUARD,
-    VELOCITY_WINDOW, VELOCITY_WINDOWING,
-    MAX_STATUS, MOTOR_SATURATED
-)
+from forcedimension.dhd.bindings.constants import ComMode, MAX_DOF
 
 
 _libdhd.dhdEnableExpertMode.argtypes = []
@@ -116,7 +108,7 @@ def setVelocityThreshold(thresh: int, ID: int = -1) -> int: # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
 
-    :raises ValueError: if thresh  is not implicitly convertible to C uint.
+    :raises ValueError: if thresh is not implicitly convertible to C uint.
     :raises ValueError: if ID is not implicitly convertible to C char
 
     :rtype: int
@@ -235,8 +227,7 @@ def getWristEncoders(ID: int = -1) -> Tuple[List[int], int]: # NOQA
     :rtype: Tuple[List[int], int]
     :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 or
     dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and
-    enc0, enc1, and enc2 are the axis 0, axis 1, and axis 2 encoder readings,
-    respectively.
+    [enc0, enc1, enc2] are the axes 0, 1, and 2 encoder readings, respectively
     """
 
     enc0 = c_int()
@@ -1254,9 +1245,7 @@ def getEnc(mask: int, ID: int = -1) -> Tuple[List[int], int]: # NOQA
     """
     enc = (c_int * MAX_DOF)()
 
-    err = _libdhd.dhdGetEnc(enc, mask, ID)
-
-    return ([val for val in enc], err)
+    return ([val for val in enc], _libdhd.dhdGetEnc(enc, mask, ID))
 
 
 _libdhd.dhdGetEncRange.argtypes = [c_int * MAX_DOF, c_int * MAX_DOF, c_byte]
@@ -1281,9 +1270,11 @@ def getEncRange(ID: int = -1) -> Tuple[List[int], List[int], int]: # NOQA
     encMin = (c_int * MAX_DOF)()
     encMax = (c_int * MAX_DOF)()
 
-    err = _libdhd.dhdGetEncRange(encMin, encMax, ID)
-
-    return ([val for val in encMin], [val for val in encMax], err)
+    return (
+                [val for val in encMin],
+                [val for val in encMax],
+                _libdhd.dhdGetEncRange(encMin, encMax, ID)
+           )
 
 
 _libdhd.dhdSetBrk.argtypes = [c_ubyte, c_byte]
@@ -2132,9 +2123,8 @@ def getJointAngles(ID: int = -1) -> Tuple[List[float], int]: # NOQA
 
     joint_angles = (c_int * MAX_DOF)()
 
-    err = _libdhd.dhdGetJointAngles(joint_angles, ID)
-
-    return ([val for val in joint_angles], err)
+    return ([val for val in joint_angles],
+            _libdhd.dhdGetJointAngles(joint_angles, ID))
 
 
 _libdhd.dhdGetJointVelocities.argtypes = [c_double * MAX_DOF, c_byte]
@@ -2157,9 +2147,7 @@ def getJointVelocities(ID: int = -1) -> Tuple[List[float], int]: # NOQA
 
     w = (c_int * MAX_DOF)()
 
-    err = _libdhd.dhdGetJointVelocities(w, ID)
-
-    return ([val for val in w], err)
+    return ([val for val in w], _libdhd.dhdGetJointVelocities(w, ID))
 
 
 _libdhd.dhdGetEncVelocities.argtypes = [c_double * MAX_DOF, c_byte]
@@ -2183,9 +2171,8 @@ def getEncVelocities(ID: int = -1) -> Tuple[List[float], int]: # NOQA
 
     v = (c_int * MAX_DOF)()
 
-    err = _libdhd.dhdGetEncVelocities(v, ID)
 
-    return ([val for val in v], err)
+    return ([val for val in v], _libdhd.dhdGetEncVelocities(v, ID))
 
 
 _libdhd.dhdJointAnglesToInertiaMatrix.argtypes = [
@@ -2217,9 +2204,15 @@ def jointAnglesToIntertiaMatrix(joint_angles: DofTuple,  # NOQA
     """
 
     inertia = ((c_double * 6) * 6)()
-    err = _libdhd.dhdJointAnglesToInertiaMatrix(joint_angles, inertia, ID)
 
-    return ([list(row) for row in inertia], err)
+    return (
+                [list(row) for row in inertia],
+                _libdhd.dhdJointAnglesToInertiaMatrix(
+                    joint_angles,
+                    inertia,
+                    ID
+                )
+            )
 
 
 # TODO add a page for COM operation mode.
