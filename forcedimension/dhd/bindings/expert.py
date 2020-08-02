@@ -1254,7 +1254,7 @@ def getEnc(mask: int, ID: int = -1) -> Tuple[List[int], int]: # NOQA
     """
     enc = (c_int * MAX_DOF)()
 
-    err = _libdhd.dhdGetEncoder(enc, mask, ID)
+    err = _libdhd.dhdGetEnc(enc, mask, ID)
 
     return ([val for val in enc], err)
 
@@ -2111,3 +2111,188 @@ def wristJointAnglesToEncoders(joint_angles: Tuple[float, float, float], # NOQA
                 )
             )
 
+
+_libdhd.dhdGetJointAngles.argtypes = [c_double * MAX_DOF, c_byte]
+_libdhd.dhdGetJointAngles.restype = c_int
+def getJointAngles(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+    """
+    Retrieve the joint angles in [rad] for all sensed degrees-of-freedom of the
+    current device.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[float], int]
+    :returns: tuple of (joint_angles, err) where err is 0 or
+    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and joint_angles
+    is a list of joint angles in [rad].
+    """
+
+    joint_angles = (c_int * MAX_DOF)()
+
+    err = _libdhd.dhdGetJointAngles(joint_angles, ID)
+
+    return ([val for val in joint_angles], err)
+
+
+_libdhd.dhdGetJointVelocities.argtypes = [c_double * MAX_DOF, c_byte]
+_libdhd.dhdGetJointVelocities.restype = c_int
+def getJointVelocities(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+    """
+    Retrieve the joint angle velocities in [rad/s] for all sensed
+    degrees-of-freedom of the current device
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[float], int]
+    :returns: tuple of (w, err) where err is 0 or
+    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and v is a list
+    of joint angle velocities in [rad/s].
+    """
+
+    w = (c_int * MAX_DOF)()
+
+    err = _libdhd.dhdGetJointVelocities(w, ID)
+
+    return ([val for val in w], err)
+
+
+_libdhd.dhdGetEncVelocities.argtypes = [c_double * MAX_DOF, c_byte]
+_libdhd.dhdGetEncVelocities.restype = c_int
+def getEncVelocities(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+    """
+    Retrieve the joint angle velocities in [increments/s] for all sensed
+    degrees-of-freedom of the current device
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[float], int]
+
+    :returns: tuple of (v, err) where err is 0 or
+    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and v is a list
+    of joint angle velocities in [increments/s].
+    """
+
+    v = (c_int * MAX_DOF)()
+
+    err = _libdhd.dhdGetEncVelocities(v, ID)
+
+    return ([val for val in v], err)
+
+
+_libdhd.dhdJointAnglesToInertiaMatrix.argtypes = [
+    c_double * MAX_DOF,
+    (c_double * 6) * 6,
+    c_byte
+]
+_libdhd.dhdJointAnglesToInertiaMatrix.restype = c_int
+def jointAnglesToIntertiaMatrix(joint_angles: DofTuple,  # NOQA
+                                ID: int = -1) -> Tuple[List[List[float]], int]:
+
+    """
+    Retrieve the (Cartesian) inertia matrix based on a given joint
+    configuration. Please refer to your device user manual for more information
+    on your device coordinate system.
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if joint_angles is not implicitly convertible to C
+    double[MAX_DOF]
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[List[List[float]], int]
+
+    :returns: tuple of (inertia, err) where err is 0 on success, -1 otherwise
+    and inertia is the 6x6 Cartesian inertia matrix.
+    """
+
+    inertia = ((c_double * 6) * 6)()
+    err = _libdhd.dhdJointAnglesToInertiaMatrix(joint_angles, inertia, ID)
+
+    return ([list(row) for row in inertia], err)
+
+
+# TODO add a page for COM operation mode.
+_libdhd.dhdSetComMode.argtypes = [c_int, c_byte]
+_libdhd.dhdSetComMode.restype = c_int
+def setComMode(mode: ComMode, ID: int = -1) -> int: # NOQA
+    """
+    Set the COM operation mode on compatible devices.
+
+    :param ComMode mode: desired COM operation mode
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if mode is not implicitly convertible to C int
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: int
+
+    :returns: 0 on success, -1 otherwise
+    """
+
+    return _libdhd.dhdSetComMode(mode, ID)
+
+
+_libdhd.dhdSetWatchdog.argtypes = [c_ubyte, c_byte]
+_libdhd.dhdSetWatchdog.restype = c_int
+def setWatchdog(duration: int, ID: int = -1) -> int: # NOQA
+    """
+    Set the watchdog duration in multiples of 125 microseconds on compatible
+    devices. If the watchdog duration is exceeded before the device recieves a
+    new force command, the device firmware will disable forces.
+
+    A value of 0 disables the watchdog feature.
+
+    See also dhd.bindings.expert.getWatchdog()
+
+    :param int duration: watchdog duration in multiples of 125 [us]
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if duration is not implicitly convertible to C uchar
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: int
+
+    :returns: 0 on success, -1 otherwise
+    """
+
+    return _libdhd.dhdSetWatchdog(duration, ID)
+
+
+_libdhd.dhdGetWatchdog.argtypes = [POINTER(c_ubyte), c_byte]
+_libdhd.dhdGetWatchdog.restype = c_int
+def getWatchdog(ID: int = -1) -> Tuple[int, int]: # NOQA
+    """
+    Get the watchdog duration in multiples of 125 microseconds on compatible
+    devices.
+
+    See also dhd.bindings.expert.setWatchdog()
+
+    :param int ID: [default=-1] device ID (see multiple devices section
+    for details)
+
+    :raises ValueError: if ID is not implicitly convertible to C char
+
+    :rtype: Tuple[int, int]
+
+    :returns: tuple of (duration, err) where err is 0 on success, -1 otherwise
+    and duration is in multiples of 125 [us]
+    """
+
+    duration = c_int()
+
+    return (duration.value, _libdhd.dhdSetWatchdog(byref(duration), ID))
