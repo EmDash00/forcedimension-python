@@ -15,7 +15,7 @@ from forcedimension.dhd.bindings.constants import DeviceType, State, MAX_STATUS
 from forcedimension.dhd.bindings import _libdhd
 
 
-class VersionTuple:
+class VersionTuple(NamedTuple):
     major: int
     minor: int
     release: int
