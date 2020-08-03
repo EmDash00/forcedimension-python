@@ -53,6 +53,17 @@ class CartesianTuple(NamedTuple):
     z: float
 
 
+class DeviceTuple(NamedTuple):
+    """
+    Named tuple adapting an immutable triple of (axis0, axis1, axis2) ints.
+
+    Used to meaningfully talk about device motors or encoders as a group.
+    """
+    axis0: int
+    axis1: int
+    axis2: int
+
+
 class DOFTuple(NamedTuple):
     """
     Named tuple adapting a way to specify an int assignment to the device
