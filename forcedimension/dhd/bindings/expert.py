@@ -14,8 +14,10 @@ from ctypes import c_int, c_uint, c_byte, c_ubyte, c_ushort, c_double
 from ctypes import byref, POINTER
 
 from forcedimension.dhd.bindings import _libdhd
-
 from forcedimension.dhd.bindings.constants import ComMode, MAX_DOF
+from forcedimension.dhd.bindings.adaptors import (
+    DeviceTuple, DOFTuple, CartesianTuple
+)
 
 
 _libdhd.dhdEnableExpertMode.argtypes = []
@@ -46,13 +48,12 @@ def disableExpertMode() -> int: # NOQA
 # TODO add a page for multiple devices
 _libdhd.dhdPreset.argtypes = [c_int * MAX_DOF, c_ubyte, c_byte]
 _libdhd.dhdPreset.restype = c_int
-DofTuple = Tuple[int, int, int, int, int, int, int, int]
-def preset(val: DofTuple, mask: int, ID: int = -1) -> int: # NOQA
+def preset(val: DOFTuple, mask: int, ID: int = -1) -> int: # NOQA
     """
     Set selected encoder offsets to a given value. Intended for use with the
     generic controller when no RESET button is available.
 
-    :param DofTuple val: motor values array
+    :param DOFTuple val: motor values array
     :param int mask: bitwise mask of which encoder should be set.
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
@@ -320,12 +321,12 @@ def setMotor(index: int, output: int, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdSetDeltaMotor.argtypes = [c_ushort, c_ushort, c_ushort, c_byte]
 _libdhd.dhdSetDeltaMotor.restype = c_int
-def setDeltaMotor(output: Tuple[int, int, int], ID: int = -1) -> int: # NOQA
+def setDeltaMotor(output: DeviceTuple, ID: int = -1) -> int: # NOQA
     """
     Set desired motor commands to the amplifier channels commanding the DELTA
     motors.
 
-    :param Tuple[int, int, int] output: Tuple of (motor0, motor1, motor2) where
+    :param DeviceTuple output: Tuple of (motor0, motor1, motor2) where
     motor0, motor1, and motor2 are the axis 0, 1, and 2 DELTA motor commands,
     respectively.
 
@@ -346,12 +347,12 @@ def setDeltaMotor(output: Tuple[int, int, int], ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdSetWristMotor.argtypes = [c_ushort, c_ushort, c_ushort, c_byte]
 _libdhd.dhdSetWristMotor.restype = c_int
-def setWristMotor(output: Tuple[int, int, int], ID: int = -1) -> int: # NOQA
+def setWristMotor(output: DeviceTuple, ID: int = -1) -> int: # NOQA
     """
     Set desired motor commands to the amplifier channels commanding the wrist
     motors.
 
-    :param Tuple[int, int, int] output: Tuple of (motor0, motor1, motor2) where
+    :param DeviceTuple output: Tuple of (motor0, motor1, motor2) where
     motor0, motor1, and motor2 are the axis 0, 1, and 2 wrist motor commands,
     respectively.
 
@@ -402,13 +403,13 @@ _libdhd.dhdDeltaEncoderToPosition.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaEncoderToPosition.restype = c_int
-def deltaEncoderToPosition(enc: Tuple[int, int, int], # NOQA
+def deltaEncoderToPosition(enc: DeviceTuple, # NOQA
                            ID: int = -1) -> Tuple[List[float], int]:
     """
     This routine computes and returns the position of the end-effector for a
     given set of encoder readings.
 
-    :param Tuple[int, int, int] enc: tuple of (enc0, enc1, enc2) where enc0,
+    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
     enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
     respectively.
 
@@ -452,13 +453,13 @@ _libdhd.dhdDeltaPositionToEncoder.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaPositionToEncoder.restype = c_int
-def deltaPositionToEncoder(pos: Tuple[float, float, float], # NOQA
+def deltaPositionToEncoder(pos: CartesianTuple, # NOQA
                            ID: int = -1) -> Tuple[List[int], int]:
     """
     This routine computes and returns the encoder values of the end-effector
     for a given Cartesian end-effector position.
 
-    :param Tuple[float, float, float] pos: tuple of (px, py, pz) where px, py,
+    :param CartesianTuple pos: tuple of (px, py, pz) where px, py,
     and pz correspond to the end-effector position on the X, Y, and Z axes,
     respectively in [m].
 
@@ -505,19 +506,19 @@ _libdhd.dhdDeltaMotorToForce.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaMotorToForce.restype = c_int
-def deltaMotorToForce(output: Tuple[int, int, int], # NOQA
-                      enc: Tuple[int, int, int],
+def deltaMotorToForce(output: DeviceTuple, # NOQA
+                      enc: DeviceTuple,
                       ID: int = -1) -> Tuple[List[float], int]:
     """
     This routine computes and returns the force applied to the end-effector for
     a given set of motor commands at a given position (defined by encoder
     readings)
 
-    :param Tuple[int, int, int] output: Tuple of (motor0, motor1, motor2) where
+    :param DeviceTuple output: Tuple of (motor0, motor1, motor2) where
     motor0, motor1, and motor2 are the axis 0, 1, and 2 DELTA motor commands,
     respectively.
 
-    :param Tuple[int, int, int] enc: tuple of (enc0, enc1, enc2) where enc0,
+    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
     enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
     respectively.
 
@@ -570,19 +571,19 @@ _libdhd.dhdDeltaForceToMotor.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaForceToMotor.restype = c_int
-def deltaForceToMotor(f: Tuple[float, float, float], # NOQA
-                      enc: Tuple[int, int, int],
+def deltaForceToMotor(f: CartesianTuple, # NOQA
+                      enc: DeviceTuple,
                       ID: int = -1) -> Tuple[List[int], int]:
     """
     This routine computes and returns the motor commands necessary to obtain a
     given force on the end-effector at a given position (defined by encoder
     readings).
 
-    :param Tuple[float, float, float] f: Tuple of (fx, fy, fz) where fx, fy,
+    :param CartesianTuple f: Tuple of (fx, fy, fz) where fx, fy,
     and fz are the force on the DELTA end-effector on the X, Y, and Z axes,
     respectively in [N]
 
-    :param Tuple[int, int, int] enc: tuple of (enc0, enc1, enc2) where enc0,
+    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
     enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
     respectively.
 
@@ -633,7 +634,7 @@ _libdhd.dhdWristEncoderToOrientation.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristEncoderToOrientation.restype = c_int
-def wristEncoderToOrientation(enc: Tuple[int, int, int], # NOQA
+def wristEncoderToOrientation(enc: DeviceTuple, # NOQA
                               ID: int = -1) -> Tuple[List[float], int]:
     """
     For devices with a wrist structure, compute the individual angle of each
@@ -652,7 +653,7 @@ def wristEncoderToOrientation(enc: Tuple[int, int, int], # NOQA
         dhd.bindings.constants.DeviceType.SIGMA331
         dhd.bindings.constants.DeviceType.SIGMA331_LEFT
 
-    :param Tuple[int, int, int] enc: tuple of (enc0, enc1, enc2) where enc0,
+    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
     enc1, and enc2 coresspond to wrist encoder readings on the first, second,
     and third joint, respectively
 
@@ -697,7 +698,7 @@ _libdhd.dhdWristOrientationToEncoder.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristOrientationToEncoder.restype = c_int
-def wristOrientationToEncoder(orientation: Tuple[float, float, float], # NOQA
+def wristOrientationToEncoder(orientation: CartesianTuple, # NOQA
                               ID: int = -1) -> Tuple[List[int], int]:
     """
     For devices with a wrist structure, compute the encoder values from the
@@ -716,7 +717,7 @@ def wristOrientationToEncoder(orientation: Tuple[float, float, float], # NOQA
         dhd.bindings.constants.DeviceType.SIGMA331
         dhd.bindings.constants.DeviceType.SIGMA331_LEFT
 
-    :param Tuple[float, float, float] orientation: tuple of (oa, ob, og) where
+    :param CartesianTuple orientation: tuple of (oa, ob, og) where
     (oa, ob, og) coresspond to wrist end effector orientation around the X, Y,
     and Z axes, respectively in [rad].
 
@@ -764,19 +765,19 @@ _libdhd.dhdWristMotorToTorque.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristMotorToTorque.restype = c_int
-def wristMotorToTorque(output: Tuple[int, int, int], # NOQA
-                       enc: Tuple[int, int, int],
+def wristMotorToTorque(output: DeviceTuple, # NOQA
+                       enc: DeviceTuple,
                        ID: int = -1) -> Tuple[List[float], int]:
     """
     This routine computes and returns the torque applied to the wrist
     end-effector for a given set of motor commands at a given orientation
     (defined by encoder readings)
 
-    :param Tuple[int, int, int] output: Tuple of (motor0, motor1, motor2) where
+    :param DeviceTuple output: Tuple of (motor0, motor1, motor2) where
     motor0, motor1, and motor2 are the axis 0, 1, and 2 DELTA motor commands,
     respectively.
 
-    :param Tuple[int, int, int] enc: tuple of (enc0, enc1, enc2) where enc0,
+    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
     enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
     respectively.
 
@@ -829,19 +830,19 @@ _libdhd.dhdWristTorqueToMotor.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristTorqueToMotor.restype = c_int
-def wristTorqueToMotor(t: Tuple[float, float, float], # NOQA
-                       enc: Tuple[int, int, int],
+def wristTorqueToMotor(t: CartesianTuple, # NOQA
+                       enc: DeviceTuple,
                        ID: int = -1) -> Tuple[List[int], int]:
     """
     This routine computes and returns the wrist motor commands necessary to
     obtain a given torque on the wrist end-effector at a given orientation
     (defined by encoder readings)
 
-    :param Tuple[int, int, int] output: Tuple of (motor0, motor1, motor2) where
+    :param DeviceTuple output: Tuple of (motor0, motor1, motor2) where
     motor0, motor1, and motor2 are the axis 0, 1, and 2 DELTA motor commands,
     respectively.
 
-    :param Tuple[int, int, int] enc: tuple of (enc0, enc1, enc2) where enc0,
+    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
     enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
     respectively.
 
@@ -1055,7 +1056,7 @@ _libdhd.dhdGripperMotorToForce.argtypes = [
 ]
 _libdhd.dhdGripperMotorToForce.restype = c_int
 def gripperMotorToForce(output: int,  # NOQA
-                        enc_wrist: Tuple[int, int, int],
+                        enc_wrist: DeviceTuple,
                         enc_gripper: int,
                         ID: int = -1) -> Tuple[float, int]:
     """
@@ -1071,7 +1072,7 @@ def gripperMotorToForce(output: int,  # NOQA
 
     :param int output: motor command on gripper axis
 
-    :param Tuple[int, int, int] enc_wrist: tuple of (enc0, enc1, enc2) where
+    :param DeviceTuple enc_wrist: tuple of (enc0, enc1, enc2) where
     (enc0, enc1, enc2) are encoder readings about joint 0, 1, and 2,
     respectively.
 
@@ -1115,7 +1116,7 @@ _libdhd.dhdGripperForceToMotor.argtypes = [
 ]
 _libdhd.dhdGripperForceToMotor.restype = c_int
 def gripperForceToMotor(force: float,  # NOQA
-                        enc_wrist: Tuple[int, int, int],
+                        enc_wrist: DeviceTuple,
                         enc_gripper: int,
                         ID: int = -1) -> Tuple[int, int]:
     """
@@ -1131,7 +1132,7 @@ def gripperForceToMotor(force: float,  # NOQA
 
     :param int force: force on the gripper end-effector in [N]
 
-    :param Tuple[int, int, int] enc_wrist: tuple of (enc0, enc1, enc2) where
+    :param DeviceTuple enc_wrist: tuple of (enc0, enc1, enc2) where
     (enc0, enc1, enc2) are encoder readings about joint 0, 1, and 2,
     respectively.
 
@@ -1170,13 +1171,13 @@ def gripperForceToMotor(force: float,  # NOQA
 
 _libdhd.dhdSetMot.argtypes = [c_ushort * MAX_DOF, c_ubyte, c_byte]
 _libdhd.dhdSetMot.restype = c_int
-def setMot(outputs: DofTuple, mask: int = 0xff, ID: int = -1) -> int: # NOQA
+def setMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int: # NOQA
     """
     Program motor commands to a selection of motor channels. Particularly
     useful when using the generic controller directly, without a device model
     attached.
 
-    :param DofTuple outputs: list of motor command values
+    :param DOFTuple outputs: list of motor command values
     :param int mask: [default=0xff] bitwise mask of which motor should be set
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
@@ -1197,14 +1198,14 @@ def setMot(outputs: DofTuple, mask: int = 0xff, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdPreloadMot.argtypes = [c_ushort * MAX_DOF, c_ubyte, c_byte]
 _libdhd.dhdPreloadMot.restype = c_int
-def preloadMot(outputs: DofTuple, mask: int = 0xff, ID: int = -1) -> int: # NOQA
+def preloadMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int: # NOQA
     """
     Program motor commands to a selection of motor channels. Unlike
     dhd.bindings.expert.setMot, this function saves the requested commands
     internally for later application by calling dhd.bindings.standard.setForce
     and the likes.
 
-    :param DofTuple outputs: list of motor command values
+    :param DOFTuple outputs: list of motor command values
     :param int mask: [default=0xff] bitwise mask of which motor should be set
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
@@ -1380,14 +1381,14 @@ _libdhd.dhdDeltaJointAnglesToJacobian.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaJointAnglesToJacobian.restype = c_int
-def deltaJointAnglesToJacobian(joint_angles: Tuple[float, float, float], # NOQA
+def deltaJointAnglesToJacobian(joint_angles: CartesianTuple, # NOQA
                                ID: int = -1) -> Tuple[List[List[float]], int]:
     """
     Retrieve the 3x3 jacobian matrix for the DELTA structure
     based on a given joint configuration. Please refer to your device user
     manual for more information on your device coordinate system.
 
-    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
     (j0, j1, j2) refer to the joint angles for axis 0, 1, and 2, respectively.
 
     :param int ID: [default=-1] device ID (see multiple devices section
@@ -1424,7 +1425,7 @@ _libdhd.dhdDeltaJointTorquesExtrema.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaJointTorquesExtrema.restype = c_int
-def deltaJointTorquesExtrema(joint_angles: Tuple[float, float, float], # NOQA
+def deltaJointTorquesExtrema(joint_angles: CartesianTuple, # NOQA
                               ID: int = -1) -> Tuple[List[float],
                                                      List[float],
                                                      int]:
@@ -1433,7 +1434,7 @@ def deltaJointTorquesExtrema(joint_angles: Tuple[float, float, float], # NOQA
     angle configuration. Please refer to your device user manual for more
     information on your device coordinate system.
 
-    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
     (j0, j1, j2) refer to the joint angles for axis 0, 1, and 2, respectively.
 
     :param int ID: [default=-1] device ID (see multiple devices section
@@ -1479,14 +1480,14 @@ _libdhd.dhdDeltaGravityJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaGravityJointTorques.retype = c_int
-def deltaGravityJointTorques(joint_angles: Tuple[float, float, float], # NOQA
+def deltaGravityJointTorques(joint_angles: CartesianTuple, # NOQA
                                ID: int = -1) -> Tuple[List[float], int]:
     """
     Compute the DELTA joint torques required to compensate for gravity in a
     given DELTA joint angle configuration. Please refer to your device user
     manual for more information on your device coordinate system.
 
-    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
     (j0, j1, j2) refer to the joint angles for axis 0, 1, and 2, respectively.
 
     :param int ID: [default=-1] device ID (see multiple devices section
@@ -1527,12 +1528,12 @@ _libdhd.dhdSetDeltaJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdSetDeltaJointTorques.restype = c_int
-def setDeltaJointTorques(t: Tuple[float, float, float], # NOQA
+def setDeltaJointTorques(t: CartesianTuple, # NOQA
                          ID: int = -1) -> int:
     """
     Set all joint torques of the DELTA structure.
 
-    :param Tuple[float, float, float] t: tuple of (t0, t1, t2) where
+    :param CartesianTuple t: tuple of (t0, t1, t2) where
     (t0, t1, t2) are the DELTA axis torque commands for axes 0, 1, and 2,
     respectively in [Nm].
 
@@ -1557,13 +1558,13 @@ _libdhd.dhdDeltaEncodersToJointAngles.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaEncodersToJointAngles.restype = c_int
-def deltaEncodersToJointAngles(enc: Tuple[int, int, int], # NOQA
+def deltaEncodersToJointAngles(enc: DeviceTuple, # NOQA
                            ID: int = -1) -> Tuple[List[float], int]:
     """
     This routine computes and returns the DELTA joint angles for a given set of
     encoder readings.
 
-    :param Tuple[int, int, int] enc: tuple of (enc0, enc1, enc2) where enc0,
+    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
     enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
     respectively.
 
@@ -1608,13 +1609,13 @@ _libdhd.dhdDeltaJointAnglesToEncoders.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaJointAnglesToEncoders.restype = c_int
-def deltaJointAnglesToEncoders(joint_angles: Tuple[float, float, float], # NOQA
+def deltaJointAnglesToEncoders(joint_angles: CartesianTuple, # NOQA
                                ID: int = -1) -> Tuple[List[int], int]:
     """
     This routine computes and returns the DELTA encoder readings for a given
     set of joint angles.
 
-    :param Tuple[float, float, float] enc: tuple of (j0, j1, j1) where j0,
+    :param CartesianTuple enc: tuple of (j0, j1, j1) where j0,
     j1, and j2 coresspond to DELTA joint angles for axes 0, 1, and 2,
     respectively, in [rad].
 
@@ -1720,14 +1721,14 @@ _libdhd.dhdWristJointAnglesToJacobian.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristJointAnglesToJacobian.restype = c_int
-def wristJointAnglesToJacobian(joint_angles: Tuple[float, float, float], # NOQA
+def wristJointAnglesToJacobian(joint_angles: CartesianTuple, # NOQA
                                ID: int = -1) -> Tuple[List[List[float]], int]:
     """
     Retrieve the 3x3 jacobian matrix for the wrist structure
     based on a given joint configuration. Please refer to your device user
     manual for more information on your device coordinate system.
 
-    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
     (j0, j1, j2) refer to the joint angles for wrist axis 0, 1, and 2,
     respectively.
 
@@ -1765,7 +1766,7 @@ _libdhd.dhdWristJointTorquesExtrema.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristJointTorquesExtrema.restype = c_int
-def wristJointTorquesExtrema(joint_angles: Tuple[float, float, float], # NOQA
+def wristJointTorquesExtrema(joint_angles: CartesianTuple, # NOQA
                               ID: int = -1) -> Tuple[List[float],
                                                      List[float],
                                                      int]:
@@ -1774,7 +1775,7 @@ def wristJointTorquesExtrema(joint_angles: Tuple[float, float, float], # NOQA
     angle configuration. Please refer to your device user manual for more
     information on your device coordinate system.
 
-    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
     (j0, j1, j2) refer to the joint angles for wrist axes 0, 1, and 2,
     respectively.
 
@@ -1822,14 +1823,14 @@ _libdhd.dhdWristGravityJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristGravityJointTorques.retype = c_int
-def wristGravityJointTorques(joint_angles: Tuple[float, float, float], # NOQA
+def wristGravityJointTorques(joint_angles: CartesianTuple, # NOQA
                                ID: int = -1) -> Tuple[List[float], int]:
     """
     Compute the wrist joint torques required to compensate for gravity in a
     given wrist joint angle configuration. Please refer to your device user
     manual for more information on your device coordinate system.
 
-    :param Tuple[float, float, float] joint_angles: tuple of (j0, j1, j2) where
+    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
     (j0, j1, j2) refer to the joint angles for wrist axes 0, 1, and 2,
     respectively.
 
@@ -1871,12 +1872,12 @@ _libdhd.dhdSetWristJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdSetWristJointTorques.restype = c_int
-def setWristJointTorques(t: Tuple[float, float, float], # NOQA
+def setWristJointTorques(t: CartesianTuple, # NOQA
                          ID: int = -1) -> int:
     """
     Set all joint torques of the wrist structure.
 
-    :param Tuple[float, float, float] t: tuple of (t0, t1, t2) where
+    :param CartesianTuple t: tuple of (t0, t1, t2) where
     (t0, t1, t2) are the wrist axis torque commands for axes 0, 1, and 2,
     respectively in [Nm].
 
@@ -1904,17 +1905,17 @@ _libdhd.dhdSetForceAndWristJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdSetForceAndWristJointTorques.restype = c_int
-def setForceAndWristJointTorques(f: Tuple[float, float, float], # NOQA
-                                 t: Tuple[float, float, float],
+def setForceAndWristJointTorques(f: CartesianTuple, # NOQA
+                                 t: CartesianTuple,
                                  ID: int = -1) -> int:
     """
     Set Cartesian force and wrist joint torques
 
-    :param Tuple[float, float, float] f: Tuple of (fx, fy, fz) where fx, fy,
+    :param CartesianTuple f: Tuple of (fx, fy, fz) where fx, fy,
     and fz are the force on the DELTA end-effector on the X, Y, and Z axes,
     respectively in [N]
 
-    :param Tuple[float, float, float] t: tuple of (t0, t1, t2) where
+    :param CartesianTuple t: tuple of (t0, t1, t2) where
     (t0, t1, t2) are the wrist axis torque commands for axes 0, 1, and 2,
     respectively in [Nm].
 
@@ -1955,18 +1956,18 @@ _libdhd.dhdSetForceAndWristJointTorques.argtypes = [
 ]
 _libdhd.dhdSetForceAndWristJointTorquesAndGripperForce.restype = c_int
 def setForceAndWristJointTorquesAndGripperForce( # NOQA
-                                 f: Tuple[float, float, float],
-                                 t: Tuple[float, float, float],
+                                 f: CartesianTuple,
+                                 t: CartesianTuple,
                                  fg: float,
                                  ID: int = -1) -> int:
     """
     Set Cartesian force, wrist joint torques, and gripper force
 
-    :param Tuple[float, float, float] f: Tuple of (fx, fy, fz) where fx, fy,
+    :param CartesianTuple f: Tuple of (fx, fy, fz) where fx, fy,
     and fz are the force on the DELTA end-effector on the X, Y, and Z axes,
     respectively in [N]
 
-    :param Tuple[float, float, float] t: tuple of (t0, t1, t2) where
+    :param CartesianTuple t: tuple of (t0, t1, t2) where
     (t0, t1, t2) are the wrist axis torque commands for axes 0, 1, and 2,
     respectively in [Nm].
 
@@ -2011,13 +2012,13 @@ _libdhd.dhdWristEncodersToJointAngles.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristEncodersToJointAngles.restype = c_int
-def wristEncodersToJointAngles(enc: Tuple[int, int, int], # NOQA
+def wristEncodersToJointAngles(enc: DeviceTuple, # NOQA
                                ID: int = -1) -> Tuple[List[float], int]:
     """
     This routine computes and returns the wrist joint angles for a given set of
     encoder readings.
 
-    :param Tuple[int, int, int] enc: tuple of (enc0, enc1, enc2) where enc0,
+    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
     enc1, and enc2 coresspond to encoder readings on wrist axes 0, 1, and 2,
     respectively.
 
@@ -2062,13 +2063,13 @@ _libdhd.dhdWristJointAnglesToEncoders.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristJointAnglesToEncoders.restype = c_int
-def wristJointAnglesToEncoders(joint_angles: Tuple[float, float, float], # NOQA
+def wristJointAnglesToEncoders(joint_angles: CartesianTuple, # NOQA
                                ID: int = -1) -> Tuple[List[int], int]:
     """
     This routine computes and returns the wrist encoder readings for a given
     set of wrist joint angles.
 
-    :param Tuple[float, float, float] enc: tuple of (j0, j1, j1) where j0,
+    :param CartesianTuple enc: tuple of (j0, j1, j1) where j0,
     j1, and j2 coresspond to wrist joint angles for axes 0, 1, and 2,
     respectively, in [rad].
 
@@ -2171,7 +2172,6 @@ def getEncVelocities(ID: int = -1) -> Tuple[List[float], int]: # NOQA
 
     v = (c_int * MAX_DOF)()
 
-
     return ([val for val in v], _libdhd.dhdGetEncVelocities(v, ID))
 
 
@@ -2181,7 +2181,7 @@ _libdhd.dhdJointAnglesToInertiaMatrix.argtypes = [
     c_byte
 ]
 _libdhd.dhdJointAnglesToInertiaMatrix.restype = c_int
-def jointAnglesToIntertiaMatrix(joint_angles: DofTuple,  # NOQA
+def jointAnglesToIntertiaMatrix(joint_angles: DOFTuple,  # NOQA
                                 ID: int = -1) -> Tuple[List[List[float]], int]:
 
     """
