@@ -51,3 +51,19 @@ class CartesianTuple(NamedTuple):
     x: float
     y: float
     z: float
+
+
+class DOFTuple(NamedTuple):
+    """
+    Named tuple adapting a way to specify an int assignment to the device
+    associated with that degree-of-freedom up to but not including
+    dhd.bindings.MAX_DOF
+    """
+    dof0: int
+    dof1: int
+    dof2: int
+    dof3: int
+    dof4: int
+    dof5: int
+    dof6: int
+    dof7: int
