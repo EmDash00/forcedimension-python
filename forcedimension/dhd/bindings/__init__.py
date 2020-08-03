@@ -451,8 +451,10 @@ def getDeviceAngleRad(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
 
     angle_rad = c_double()
-    return (angle_rad.value,
-            _libdhd.dhdGetDeviceAngleRad(byref(angle_rad), ID))
+    return (
+            angle_rad.value,
+            _libdhd.dhdGetDeviceAngleRad(byref(angle_rad), ID)
+    )
 
 
 _libdhd.dhdGetDeviceAngleDeg.argtypes = [POINTER(c_double), c_byte]
@@ -471,8 +473,10 @@ def getDeviceAngleDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
 
     angle_deg = c_double()
-    return (angle_deg.value,
-            _libdhd.dhdGetDeviceAngleDeg(byref(angle_deg), ID))
+    return (
+        angle_deg.value,
+        _libdhd.dhdGetDeviceAngleDeg(byref(angle_deg), ID)
+    )
 
 
 _libdhd.dhdGetEffectorMass.argtypes = [POINTER(c_double), c_byte]
@@ -754,8 +758,8 @@ def waitForReset(timeout: Optional[int] = None, ID: int = -1) -> int: # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :raises ValueError: if timeout is not implicitly convertible to C int type
-    if set
+    :raises ValueError: if timeout is specified and not implicitly convertible
+    to C int type
 
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
@@ -918,7 +922,8 @@ _libdhd.dhdGetPosition.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetPosition.restype = c_int
-def getPosition(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
+def getPosition(ID: int = -1, # NOQA
+                out: Optional[List[float]] = None) -> Tuple[List[float], int]:
     """
     Retrieve the position of the end-effector in Cartesian coordinates. Please
     refer to your device user manual for more information on your device
@@ -927,6 +932,14 @@ def getPosition(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
+    :param Optional[List[float]] out: list to use instead of generating a new
+    list. If this is specified, the list provided will be updated with the new
+    values and the return will be a reference to the same list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: A tuple in the form ([px, py, pz], err) where err is either 0
@@ -941,8 +954,16 @@ def getPosition(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     py = c_double()
     pz = c_double()
 
-    return ([px.value, py.value, pz.value],
-            _libdhd.dhdGetPosition(byref(px), byref(py), byref(pz), ID))
+    if out is None:
+        return ([px.value, py.value, pz.value],
+                _libdhd.dhdGetPosition(byref(px), byref(py), byref(pz), ID))
+    else:
+        err = _libdhd.dhdGetPosition(byref(px), byref(py), byref(pz), ID)
+
+        out[0] = px.value
+        out[1] = py.value
+        out[2] = pz.value
+        return (out, err)
 
 
 _libdhd.dhdGetForce.argtypes = [
@@ -952,7 +973,8 @@ _libdhd.dhdGetForce.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetForce.restype = c_int
-def getForce(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
+def getForce(ID: int = -1, # NOQA
+             out: Optional[List[float]] = None) -> Tuple[List[float], int]:
     """
     Retrieve the force vector applied to the end-effector in Cartesian
     coordinates. Please refer to your device user manual for more information
@@ -960,6 +982,17 @@ def getForce(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
@@ -972,9 +1005,23 @@ def getForce(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     fx = c_double()
     fy = c_double()
     fz = c_double()
+    if out is None:
+        return ([fx.value, fy.value, fz.value],
+                _libdhd.dhdGetForce(
+                        byref(fx),
+                        byref(fy),
+                        byref(fz),
+                        ID
+                    )
+                )
+    else:
+        err = _libdhd.dhdGetForce(byref(fx), byref(fy), byref(fz), ID)
 
-    return ([fx.value, fy.value, fz.value],
-            _libdhd.dhdGetPosition(byref(fx), byref(fy), byref(fz), ID))
+        out[0] = fx.value
+        out[1] = fy.value
+        out[2] = fz.value
+
+        return (out, err)
 
 
 _libdhd.dhdSetForce.argtypes = [c_double, c_double, c_double, c_byte]
@@ -1003,7 +1050,10 @@ def setForce(f: CartesianTuple, ID: int = -1) -> int:  # NOQA
 
 _libdhd.dhdGetOrientationRad.argtypes = [c_byte]
 _libdhd.dhdGetOrientationRad.restype = c_int
-def getOrientationRad(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
+def getOrientationRad( # NOQA
+                        ID: int = -1,
+                        out: Optional[List[float]] = None
+                     ) -> Tuple[List[float], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1029,6 +1079,17 @@ def getOrientationRad(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of ([oa, ob, og], err) where err is 0 or
@@ -1043,13 +1104,36 @@ def getOrientationRad(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     ob = c_double()
     og = c_double()
 
-    return ([oa.value, ob.value, og.value],
-            _libdhd.dhdGetOrientationRad(byref(oa), byref(ob), byref(og), ID))
+    if out is None:
+        return ([oa.value, ob.value, og.value],
+                _libdhd.dhdGetOrientationRad(
+                        byref(oa),
+                        byref(ob),
+                        byref(og),
+                        ID
+                    )
+                )
+    else:
+        err = _libdhd.dhdGetOrientationRad(
+                        byref(oa),
+                        byref(ob),
+                        byref(og),
+                        ID
+                )
+
+        out[0] = oa.value
+        out[1] = ob.value
+        out[2] = og.value
+
+        return (out, err)
 
 
 _libdhd.dhdGetOrientationDeg.argtypes = [c_byte]
 _libdhd.dhdGetOrientationDeg.restype = c_int
-def getOrientationDeg(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
+def getOrientationDeg( # NOQA
+                        ID: int = -1,
+                        out: Optional[List[float]] = None
+                     ) -> Tuple[List[float], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1074,6 +1158,17 @@ def getOrientationDeg(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of ([oa, ob, og], err) where err is 0 or
@@ -1088,8 +1183,28 @@ def getOrientationDeg(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     ob = c_double()
     og = c_double()
 
-    return ([oa.value, ob.value, og.value],
-            _libdhd.dhdGetOrientationDeg(byref(oa), byref(ob), byref(og), ID))
+    if out is None:
+        return ([oa.value, ob.value, og.value],
+                _libdhd.dhdGetOrientationDeg(
+                        byref(oa),
+                        byref(ob),
+                        byref(og),
+                        ID
+                    )
+                )
+    else:
+        err = _libdhd.dhdGetOrientationDeg(
+                        byref(oa),
+                        byref(ob),
+                        byref(og),
+                        ID
+                )
+
+        out[0] = oa.value
+        out[1] = ob.value
+        out[2] = og.value
+
+        return (out, err)
 
 
 _libdhd.dhdGetPositionAndOrientationRad.argtypes = [
@@ -1102,9 +1217,11 @@ _libdhd.dhdGetPositionAndOrientationRad.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetPositionAndOrientationRad.restype = c_int
-def getPositionAndOrientationRad(ID: int = -1) -> Tuple[List[float], # NOQA
-                                                        List[float],
-                                                        int]:
+def getPositionAndOrientationRad( # NOQA
+        ID: int = -1,
+        p_out: Optional[List[float]] = None,
+        o_out: Optional[List[float]] = None
+    ) -> Tuple[List[float], List[float], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1128,6 +1245,24 @@ def getPositionAndOrientationRad(ID: int = -1) -> Tuple[List[float], # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
+
+    :param Optional[List[float]] p_out: OPTIONAL list to use for position
+    output instead of generating a new list. If this is specified, the list
+    provided will be updated with the new values and the force return will be a
+    reference to the same list.
+
+    :param Optional[List[float]] o_out: OPTIONAL list to use for orientation
+    output instead of generating a new list. If this is specified, the list
+    provided will be updated with the new values and the force return will be a
+    reference to the same list.
+
+    :raises TypeError: if p_out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+    :raises TypeError: if o_out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if p_out is specified and len(p_out) < 3
+    :raises IndexError: if o_out is specified and len(p_out) < 3
 
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
@@ -1148,14 +1283,27 @@ def getPositionAndOrientationRad(ID: int = -1) -> Tuple[List[float], # NOQA
     ob = c_double()
     og = c_double()
 
-    return ([px.value, py.value, pz.value], [oa.value, ob.value, og.value],
-            _libdhd.dhdGetPositionAndOrientationRad(byref(px),
-                                                    byref(py),
-                                                    byref(pz),
-                                                    byref(oa),
-                                                    byref(ob),
-                                                    byref(og),
-                                                    ID))
+    err = _libdhd.dhdGetPositionAndOrientationRad(
+                byref(px), byref(py), byref(pz),
+                byref(oa), byref(ob), byref(og),
+                ID
+          )
+
+    if p_out is None:
+        p_out = [px.value, py.value, pz.value]
+    else:
+        p_out[0] = px.value
+        p_out[1] = py.value
+        p_out[2] = pz.value
+
+    if o_out is None:
+        o_out = [oa.value, ob.value, og.value]
+    else:
+        o_out[0] = oa.value
+        o_out[1] = ob.value
+        o_out[2] = og.value
+
+    return (p_out, o_out, err)
 
 
 _libdhd.dhdGetPositionAndOrientationDeg.argtypes = [
@@ -1168,9 +1316,11 @@ _libdhd.dhdGetPositionAndOrientationDeg.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetPositionAndOrientationDeg.restype = c_int
-def getPositionAndOrientationDeg(ID: int = -1) -> Tuple[List[float], # NOQA
-                                                        List[float],
-                                                        int]:
+def getPositionAndOrientationDeg( # NOQA
+        ID: int = -1,
+        p_out: Optional[List[float]] = None,
+        o_out: Optional[List[float]] = None
+    ) -> Tuple[List[float], List[float], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1195,6 +1345,24 @@ def getPositionAndOrientationDeg(ID: int = -1) -> Tuple[List[float], # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
+    :param Optional[List[float]] p_out: OPTIONAL list to use for position
+    output instead of generating a new list. If this is specified, the list
+    provided will be updated with the new values and the force return will be a
+    reference to the same list.
+
+    :param Optional[List[float]] t_out: OPTIONAL list to use for orientation
+    output instead of generating a new list. If this is specified, the list
+    provided will be updated with the new values and the force return will be a
+    reference to the same list.
+
+    :raises TypeError: if p_out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+    :raises TypeError: if o_out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if p_out is specified and len(p_out) < 3
+    :raises IndexError: if o_out is specified and len(p_out) < 3
+
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of ([px, py, pz], [oa, ob, og], err) where err is 0 or
@@ -1214,14 +1382,27 @@ def getPositionAndOrientationDeg(ID: int = -1) -> Tuple[List[float], # NOQA
     ob = c_double()
     og = c_double()
 
-    return ([px.value, py.value, pz.value], [oa.value, ob.value, og.value],
-            _libdhd.dhdGetPositionAndOrientationDeg(byref(px),
-                                                    byref(py),
-                                                    byref(pz),
-                                                    byref(oa),
-                                                    byref(ob),
-                                                    byref(og),
-                                                    ID))
+    err = _libdhd.dhdGetPositionAndOrientationDeg(
+                byref(px), byref(py), byref(pz),
+                byref(oa), byref(ob), byref(og),
+                ID
+          )
+
+    if p_out is None:
+        p_out = [px.value, py.value, pz.value]
+    else:
+        p_out[0] = px.value
+        p_out[1] = py.value
+        p_out[2] = pz.value
+
+    if o_out is None:
+        o_out = [oa.value, ob.value, og.value]
+    else:
+        o_out[0] = oa.value
+        o_out[1] = ob.value
+        o_out[2] = og.value
+
+    return (p_out, o_out, err)
 
 
 _libdhd.dhdGetPositionAndOrientationFrame.argtypes = [
@@ -1232,16 +1413,30 @@ _libdhd.dhdGetPositionAndOrientationFrame.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetPositionAndOrientationFrame.restype = c_int
-def getPositionAndOrientationFrame(ID: int = -1) -> Tuple[List[float], # NOQA
-                                                          List[List[float]],
-                                                          int]:
+def getPositionAndOrientationFrame( # NOQA
+        ID: int = -1,
+        p_out: Optional[List[float]] = None,
+        matrix_out: Optional[List[List[float]]] = None
+    ) -> Tuple[List[float], List[List[float]], int]:
     """
     Retrieve the position and orientation matrix of the end-effector in
     Cartesian coordinates. Please refer to your device user manual for more
     information on your device coordinate system.
 
+    :raises TypeError: if matrix_out is specified and does not support item
+    assignment, either because it is not subscriptable or because it is not
+    mutable.
+
+    :raises IndexError: if matrix_out is specified any dimension is less than
+    length 3.
+
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
+
+    :raises TypeError: if p_out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if p_out is specified and len(out) < 3
 
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
@@ -1260,17 +1455,27 @@ def getPositionAndOrientationFrame(ID: int = -1) -> Tuple[List[float], # NOQA
 
     matrix = ((c_double * 3) * 3)()
 
-    return (
-                [px.value, py.value, pz.value],
-                [list(row) for row in matrix],
-                _libdhd.dhdGetPositionAndOrientationFrame(
-                    byref(px),
-                    byref(py),
-                    byref(pz),
-                    matrix,
-                    ID
-                )
-            )
+    err = _libdhd.dhdGetPositionAndOrientationFrame(
+                byref(px), byref(py), byref(pz),
+                byref(matrix),
+                ID
+          )
+
+    if p_out is None:
+        p_out = [px.value, py.value, pz.value]
+    else:
+        p_out[0] = px.value
+        p_out[1] = py.value
+        p_out[2] = pz.value
+
+    if matrix_out is None:
+        matrix_out = [list(row) for row in matrix]
+    else:
+        for i in range(3):
+            for j in range(3):
+                matrix_out[i][j] = matrix[i][j]
+
+    return (p_out, matrix_out, err)
 
 
 _libdhd.dhdGetForceAndTorque.argtypes = [
@@ -1283,14 +1488,26 @@ _libdhd.dhdGetForceAndTorque.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetForceAndTorque.restype = c_int
-def getForceAndTorque(ID: int = -1) -> Tuple[List[float], # NOQA
-                                             List[float],
-                                             int]:
+def getForceAndTorque( # NOQA
+    ID: int = -1,
+    f_out: Optional[List[float]] = None,
+    t_out: Optional[List[float]] = None) -> Tuple[List[float], List[float],
+                                                  int]:
     """
     Retrieve the force and torque vectors applied to the device end-effector.
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
+
+    :param Optional[List[float]] f_out: OPTIONAL list to use for force output
+    instead of generating a new list. If this is specified, the list provided
+    will be updated with the new values and the force return will be a
+    reference to the same list.
+
+    :param Optional[List[float]] t_out: OPTIONAL list to use for force output
+    instead of generating a new list. If this is specified, the list provided
+    will be updated with the new values and the force return will be a
+    reference to the same list.
 
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
@@ -1308,10 +1525,27 @@ def getForceAndTorque(ID: int = -1) -> Tuple[List[float], # NOQA
     ty = c_double()
     tz = c_double()
 
-    return ([fx.value, fy.value, fz.value], [tx.value, ty.value, tz.value],
-            _libdhd.dhdGetForceAndTorque(byref(fx), byref(fy), byref(fz),
-                                         byref(tx), byref(ty), byref(tz),
-                                         ID))
+    err = _libdhd.dhdGetForceAndTorque(
+                byref(fx), byref(fy), byref(fz),
+                byref(tx), byref(ty), byref(tz),
+                ID
+          )
+
+    if f_out is None:
+        f_out = [fx.value, fy.value, fz.value]
+    else:
+        f_out[0] = fx.value
+        f_out[1] = fy.value
+        f_out[2] = fz.value
+
+    if t_out is None:
+        t_out = [tx.value, ty.value, tz.value]
+    else:
+        t_out[0] = tx.value
+        t_out[1] = ty.value
+        t_out[2] = tz.value
+
+    return (f_out, t_out, err)
 
 
 _libdhd.dhdSetForceAndTorque.argtypes = [
@@ -1355,7 +1589,11 @@ _libdhd.dhdGetOrientationFrame.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetOrientationFrame.restype = c_int
-def getOrientationFrame(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
+def getOrientationFrame( # NOQA
+            ID: int = -1,
+            out: Optional[List[List[float]]] = None
+        ) -> Tuple[List[List[float]], int]:
+
     """
     Retrieve the rotation matrix of the wrist structure. The identity matrix
     is returned for devices that do not support orientations.
@@ -1363,7 +1601,16 @@ def getOrientationFrame(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
+    :param Optional[List[List[float]]]: OPTIONAL list of list of floats to use
+    for output instead of generating a new 3x3 matrix.
+
     :raises ValueError: if ID is not implicitly convertible to a C char type
+
+    :raises TypeError: if out is specified and does not support item
+    assignment, either because it is not subscriptable or because it is not
+    mutable.
+
+    :raises IndexError: if out any dimension of out is less than length 3.
 
     :returns: Tuple of (frame, err) where err is 0 or
     dhd.bindings.TIMEGUARD on success, -1 otherwise. and frame is a
@@ -1375,10 +1622,18 @@ def getOrientationFrame(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
 
     matrix = ((c_double * 3) * 3)()
 
-    return (
-                [list(row) for row in matrix],
-                _libdhd.dhdGetOrientationFrame(matrix, ID)
-           )
+    if out is None:
+        return (
+                    [list(row) for row in matrix],
+                    _libdhd.dhdGetOrientationFrame(matrix, ID)
+               )
+    else:
+        err = _libdhd.dhdGetOrientationFrame(matrix, ID)
+        for i in range(3):
+            for j in range(3):
+                out[i][j] = matrix[i][j]
+
+        return (out, err)
 
 
 _libdhd.dhdGetGripperAngleDeg.argtypes = [POINTER(c_double), c_byte]
@@ -1513,7 +1768,10 @@ _libdhd.dhdGetGripperFingerPos.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetGripperFingerPos.restype = c_int
-def getGripperFingerPos(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+def getGripperFingerPos( # NOQA
+    ID: int = -1,
+    out: Optional[List[float]] = None
+) -> Tuple[List[float], int]:
     """
     Read the position in Cartesian coordinates of forefinger rest location of
     the force gripper structure if present.
@@ -1526,6 +1784,17 @@ def getGripperFingerPos(ID: int = -1) -> Tuple[List[float], int]: # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+
 
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
@@ -1540,11 +1809,25 @@ def getGripperFingerPos(ID: int = -1) -> Tuple[List[float], int]: # NOQA
     py = c_double()
     pz = c_double()
 
-    return ([px.value, py.value, pz.value],
-            _libdhd.dhdGetGripperFingerPos(byref(px),
-                                           byref(py),
-                                           byref(pz),
-                                           ID))
+    if out is None:
+        return ([px.value, py.value, pz.value],
+                _libdhd.dhdGetGripperFingerPos(byref(px),
+                                               byref(py),
+                                               byref(pz),
+                                               ID))
+    else:
+        err = _libdhd.dhdGetGripperFingerPos(
+                    byref(px),
+                    byref(py),
+                    byref(pz),
+                    ID
+                )
+
+        out[0] = px.value
+        out[1] = py.value
+        out[2] = pz.value
+
+        return (out, err)
 
 
 _libdhd.dhdGetComFreq.argtypes = [c_byte]
@@ -1684,7 +1967,10 @@ _libdhd.dhdGetLinearVelocity.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetLinearVelocity.restype = c_int
-def getLinearVelocity(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
+def getLinearVelocity( # NOQA
+        ID: int = -1,
+        out: Optional[List[float]] = None
+    ) -> Tuple[List[float], int]:
     """
     Retrieve the estimated instanteous linear velocity in [m/s]. Velocity
     computation can be figured by calling dhd.bindings.configAngularVelocity().
@@ -1703,6 +1989,17 @@ def getLinearVelocity(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+
+
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: A tuple in the form ([wx, wy, wz], err) where err is either 0
@@ -1715,11 +2012,25 @@ def getLinearVelocity(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     vy = c_double()
     vz = c_double()
 
-    return ([vx.value, vy.value, vz.value],
-            _libdhd.dhdGetLinearVelocityRad(byref(vx),
-                                            byref(vy),
-                                            byref(vz),
-                                            ID))
+    if out is None:
+        return ([vx.value, vy.value, vz.value],
+                _libdhd.dhdGetLinearVelocityRad(byref(vx),
+                                                byref(vy),
+                                                byref(vz),
+                                                ID))
+    else:
+        err = _libdhd.dhdGetLinearVelocityRad(
+                   byref(vx),
+                   byref(vy),
+                   byref(vz),
+                   ID
+               )
+
+        out[0] = vx.value
+        out[1] = vy.value
+        out[2] = vz.value
+
+        return (out, err)
 
 
 _libdhd.dhdConfigAngularVelocity.argtypes = [c_int, c_int, c_byte]
@@ -1758,7 +2069,10 @@ _libdhd.dhdGetAngularVelocityRad.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetAngularVelocityRad.restype = c_int
-def getAngularVelocityRad(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
+def getAngularVelocityRad( # NOQA
+        ID: int = -1,
+        out: Optional[List[float]] = None
+    ) -> Tuple[List[float], int]:
     """
     Retrieve the estimated instanteous angular velocity in [rad/s]. Velocity
     computation can be figured by calling:
@@ -1782,8 +2096,19 @@ def getAngularVelocityRad(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
         dhd.bindings.Error.TIMEOUT
 
     See also dhd.bindings.getAngularVelocityDeg().
+
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
 
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
@@ -1797,11 +2122,28 @@ def getAngularVelocityRad(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     wy = c_double()
     wz = c_double()
 
-    return ([wx.value, wy.value, wz.value],
-            _libdhd.dhdGetAngularVelocityRad(byref(wx),
-                                             byref(wy),
-                                             byref(wz),
-                                             ID))
+    if out is None:
+        return ([wx.value, wy.value, wz.value],
+                _libdhd.dhdGetLinearVelocityRad(
+                        byref(wx),
+                        byref(wy),
+                        byref(wz),
+                        ID
+                    )
+                )
+    else:
+        err = _libdhd.dhdGetLinearVelocityRad(
+                   byref(wx),
+                   byref(wy),
+                   byref(wz),
+                   ID
+               )
+
+        out[0] = wx.value
+        out[1] = wy.value
+        out[2] = wz.value
+
+        return (out, err)
 
 
 _libdhd.dhdGetAngularVelocityDeg.argtypes = [
@@ -1811,7 +2153,11 @@ _libdhd.dhdGetAngularVelocityDeg.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetAngularVelocityDeg.restype = c_int
-def getAngularVelocityDeg(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
+def getAngularVelocityDeg( # NOQA
+        ID: int = -1,
+        out: Optional[List[float]] = None
+    ) -> Tuple[List[float], int]:
+
     """
     Retrieve the estimated instanteous angular velocity in [deg/s]. Velocity
     computation can be figured by calling:
@@ -1839,6 +2185,17 @@ def getAngularVelocityDeg(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+
+
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: A tuple in the form ([wx, wy, wz], err) where err is either 0
@@ -1846,15 +2203,33 @@ def getAngularVelocityDeg(ID: int = -1) -> Tuple[List[float], int]:  # NOQA
 
     :rtype: Tuple[List[float], int]
     """
+
     wx = c_double()
     wy = c_double()
     wz = c_double()
 
-    return ([wx.value, wy.value, wz.value],
-            _libdhd.dhdGetAngularVelocityRad(byref(wx),
-                                             byref(wy),
-                                             byref(wz),
-                                             ID))
+    if out is None:
+        return ([wx.value, wy.value, wz.value],
+                _libdhd.dhdGetLinearVelocityRad(
+                        byref(wx),
+                        byref(wy),
+                        byref(wz),
+                        ID
+                    )
+                )
+    else:
+        err = _libdhd.dhdGetLinearVelocityRad(
+                   byref(wx),
+                   byref(wy),
+                   byref(wz),
+                   ID
+               )
+
+        out[0] = wx.value
+        out[1] = wy.value
+        out[2] = wz.value
+
+        return (out, err)
 
 
 _libdhd.dhdConfigGripperVelocity.argtypes = [c_int, c_int, c_byte]
