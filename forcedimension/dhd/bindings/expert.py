@@ -7,7 +7,7 @@
 """
 
 
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 from ctypes import c_int, c_uint, c_byte, c_ubyte, c_ushort, c_double
 
@@ -170,12 +170,26 @@ _libdhd.dhdGetDeltaEncoders.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetDeltaEncoders.restypes = c_int
-def getDeltaEncoders(ID: int = -1) -> Tuple[List[int], int]: # NOQA
+def getDeltaEncoders( # NOQA
+        ID: int = -1,
+        out: Optional[List[int]] = None
+    ) -> Tuple[List[int], int]:
     """
     Read all encoders values of the DELTA structure
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[int]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
@@ -191,14 +205,28 @@ def getDeltaEncoders(ID: int = -1) -> Tuple[List[int], int]: # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    return ([enc0.value, enc1.value, enc2.value],
-            _libdhd.dhdGetDeltaEncoders(
-                byref(enc0),
-                byref(enc1),
-                byref(enc2),
-                ID
+    if out is None:
+        return ([enc0.value, enc1.value, enc2.value],
+                _libdhd.dhdGetDeltaEncoders(
+                    byref(enc0),
+                    byref(enc1),
+                    byref(enc2),
+                    ID
+            )
         )
-    )
+    else:
+        err = _libdhd.dhdGetDeltaEncoders(
+                    byref(enc0),
+                    byref(enc1),
+                    byref(enc2),
+                    ID
+               )
+
+        out[0] = enc0.value
+        out[1] = enc1.value
+        out[2] = enc2.value
+
+        return (out, err)
 
 
 _libdhd.dhdGetWristEncoders.argtypes = [
@@ -208,7 +236,10 @@ _libdhd.dhdGetWristEncoders.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetWristEncoders.restypes = c_int
-def getWristEncoders(ID: int = -1) -> Tuple[List[int], int]: # NOQA
+def getWristEncoders( # NOQA
+        ID: int = -1,
+        out: Optional[List[int]] = None
+    ) -> Tuple[List[int], int]:
     """
     Read all encoders values of the wrist structure.
 
@@ -225,6 +256,17 @@ def getWristEncoders(ID: int = -1) -> Tuple[List[int], int]: # NOQA
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
+    :param Optional[List[int]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
     :rtype: Tuple[List[int], int]
     :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 or
     dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and
@@ -235,14 +277,28 @@ def getWristEncoders(ID: int = -1) -> Tuple[List[int], int]: # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    return ([enc0.value, enc1.value, enc2.value],
-            _libdhd.dhdGetWristEncoders(
-                byref(enc0),
-                byref(enc1),
-                byref(enc2),
-                ID
+    if out is None:
+        return ([enc0.value, enc1.value, enc2.value],
+                _libdhd.dhdGetWristEncoders(
+                    byref(enc0),
+                    byref(enc1),
+                    byref(enc2),
+                    ID
+            )
         )
-    )
+    else:
+        err = _libdhd.dhdGetWristEncoders(
+                    byref(enc0),
+                    byref(enc1),
+                    byref(enc2),
+                    ID
+               )
+
+        out[0] = enc0.value
+        out[1] = enc1.value
+        out[2] = enc2.value
+
+        return (out, err)
 
 
 _libdhd.dhdGetGripperEncoder.argtypes = [POINTER(c_int), c_byte]
@@ -403,8 +459,11 @@ _libdhd.dhdDeltaEncoderToPosition.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaEncoderToPosition.restype = c_int
-def deltaEncoderToPosition(enc: DeviceTuple, # NOQA
-                           ID: int = -1) -> Tuple[List[float], int]:
+def deltaEncoderToPosition( # NOQA
+        enc: DeviceTuple,
+        ID: int = -1,
+        out: Optional[List[float]] = None
+    ) -> Tuple[List[float], int]:
     """
     This routine computes and returns the position of the end-effector for a
     given set of encoder readings.
@@ -415,6 +474,17 @@ def deltaEncoderToPosition(enc: DeviceTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :raises ValueError: if any member of enc is not implicitly convertible
     to C int.
@@ -431,16 +501,32 @@ def deltaEncoderToPosition(enc: DeviceTuple, # NOQA
     py = c_double()
     pz = c_double()
 
-    return ([px.value, py.value, pz.value],
-            _libdhd.dhdDeltaEncoderToPosition(
-                    enc[0],
-                    enc[1],
-                    enc[2],
-                    byref(px),
-                    byref(py),
-                    byref(pz)
+    if out is None:
+        return ([px.value, py.value, pz.value],
+                _libdhd.dhdDeltaEncoderToPosition(
+                        enc[0],
+                        enc[1],
+                        enc[2],
+                        byref(px),
+                        byref(py),
+                        byref(pz)
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdDeltaEncoderToPosition(
+                  enc[0],
+                  enc[1],
+                  enc[2],
+                  byref(px),
+                  byref(py),
+                  byref(pz)
+              )
+
+        out[0] = px.value
+        out[1] = py.value
+        out[2] = pz.value
+
+        return (out, err)
 
 
 _libdhd.dhdDeltaPositionToEncoder.argtypes = [
@@ -453,8 +539,11 @@ _libdhd.dhdDeltaPositionToEncoder.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaPositionToEncoder.restype = c_int
-def deltaPositionToEncoder(pos: CartesianTuple, # NOQA
-                           ID: int = -1) -> Tuple[List[int], int]:
+def deltaPositionToEncoder( # NOQA
+        pos: CartesianTuple,
+        ID: int = -1,
+        out: Optional[List[int]] = None
+    ) -> Tuple[List[int], int]:
     """
     This routine computes and returns the encoder values of the end-effector
     for a given Cartesian end-effector position.
@@ -465,6 +554,17 @@ def deltaPositionToEncoder(pos: CartesianTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[int]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :raises ValueError: if any member of pos is not implicitly convertible
     to C double
@@ -481,16 +581,32 @@ def deltaPositionToEncoder(pos: CartesianTuple, # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    return ([enc0.value, enc1.value, enc2.value],
-            _libdhd.dhdDeltaEncoderToPosition(
-                    pos[0],
-                    pos[1],
-                    pos[2],
-                    byref(enc0),
-                    byref(enc1),
-                    byref(enc2)
+    if out is None:
+        return ([enc0.value, enc1.value, enc2.value],
+                _libdhd.dhdDeltaEncoderToPosition(
+                        pos[0],
+                        pos[1],
+                        pos[2],
+                        byref(enc0),
+                        byref(enc1),
+                        byref(enc2)
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdDeltaEncoderToPosition(
+                   pos[0],
+                   pos[1],
+                   pos[2],
+                   byref(enc0),
+                   byref(enc1),
+                   byref(enc2)
+               )
+
+        out[0] = enc0.value
+        out[1] = enc1.value
+        out[2] = enc2.value
+
+        return (out, err)
 
 
 _libdhd.dhdDeltaMotorToForce.argtypes = [
@@ -506,9 +622,12 @@ _libdhd.dhdDeltaMotorToForce.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaMotorToForce.restype = c_int
-def deltaMotorToForce(output: DeviceTuple, # NOQA
-                      enc: DeviceTuple,
-                      ID: int = -1) -> Tuple[List[float], int]:
+def deltaMotorToForce( # NOQA
+        output: DeviceTuple,
+        enc: DeviceTuple,
+        ID: int = -1,
+        out: Optional[List[float]] = None
+    ) -> Tuple[List[float], int]:
     """
     This routine computes and returns the force applied to the end-effector for
     a given set of motor commands at a given position (defined by encoder
@@ -524,6 +643,17 @@ def deltaMotorToForce(output: DeviceTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :raises ValueError: if any member of output is not implicitly convertible
     to C ushort.
@@ -543,19 +673,38 @@ def deltaMotorToForce(output: DeviceTuple, # NOQA
     fy = c_double()
     fz = c_double()
 
-    return ([fx.value, fy.value, fz.value],
-            _libdhd.dhdDeltaMotorToForce(
-                output[0],
-                output[1],
-                output[2],
-                enc[0],
-                enc[1],
-                enc[2],
-                byref(fx),
-                byref(fy),
-                byref(fz)
+    if out is None:
+        return ([fx.value, fy.value, fz.value],
+                _libdhd.dhdDeltaMotorToForce(
+                    output[0],
+                    output[1],
+                    output[2],
+                    enc[0],
+                    enc[1],
+                    enc[2],
+                    byref(fx),
+                    byref(fy),
+                    byref(fz)
+            )
         )
-    )
+    else:
+        err = _libdhd.dhdDeltaMotorToForce(
+                 output[0],
+                 output[1],
+                 output[2],
+                 enc[0],
+                 enc[1],
+                 enc[2],
+                 byref(fx),
+                 byref(fy),
+                 byref(fz)
+             )
+
+        out[0] = fx.value
+        out[1] = fy.value
+        out[2] = fz.value
+
+        return (out, err)
 
 
 _libdhd.dhdDeltaForceToMotor.argtypes = [
@@ -571,9 +720,12 @@ _libdhd.dhdDeltaForceToMotor.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaForceToMotor.restype = c_int
-def deltaForceToMotor(f: CartesianTuple, # NOQA
-                      enc: DeviceTuple,
-                      ID: int = -1) -> Tuple[List[int], int]:
+def deltaForceToMotor( # NOQA
+    f: CartesianTuple,
+    enc: DeviceTuple,
+    ID: int = -1,
+    out: Optional[List[int]] = None
+) -> Tuple[List[int], int]:
     """
     This routine computes and returns the motor commands necessary to obtain a
     given force on the end-effector at a given position (defined by encoder
@@ -589,6 +741,18 @@ def deltaForceToMotor(f: CartesianTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[int]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :raises ValueError: if any member of f is not implicitly convertible to C
     double
@@ -609,19 +773,38 @@ def deltaForceToMotor(f: CartesianTuple, # NOQA
     output1 = c_ushort()
     output2 = c_ushort()
 
-    return ([output0.value, output1.value, output2.value],
-            _libdhd.dhdDeltaMotorToForce(
-                f[0],
-                f[1],
-                f[2],
-                enc[0],
-                enc[1],
-                enc[2],
-                byref(output0),
-                byref(output1),
-                byref(output2)
+    if out is None:
+        return ([output0.value, output1.value, output2.value],
+                _libdhd.dhdDeltaMotorToForce(
+                    f[0],
+                    f[1],
+                    f[2],
+                    enc[0],
+                    enc[1],
+                    enc[2],
+                    byref(output0),
+                    byref(output1),
+                    byref(output2)
+            )
         )
-    )
+    else:
+        err = _libdhd.dhdDeltaMotorToForce(
+                  f[0],
+                  f[1],
+                  f[2],
+                  enc[0],
+                  enc[1],
+                  enc[2],
+                  byref(output0),
+                  byref(output1),
+                  byref(output2)
+              )
+
+        out[0] = output0.value
+        out[1] = output1.value
+        out[2] = output2.value
+
+        return (out, err)
 
 
 _libdhd.dhdWristEncoderToOrientation.argtypes = [
@@ -634,8 +817,11 @@ _libdhd.dhdWristEncoderToOrientation.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristEncoderToOrientation.restype = c_int
-def wristEncoderToOrientation(enc: DeviceTuple, # NOQA
-                              ID: int = -1) -> Tuple[List[float], int]:
+def wristEncoderToOrientation( # NOQA
+    enc: DeviceTuple,
+    ID: int = -1,
+    out: Optional[List[float]] = None,
+) -> Tuple[List[float], int]:
     """
     For devices with a wrist structure, compute the individual angle of each
     joint, starting with the one located nearest to the wrist base plate. For
@@ -657,8 +843,20 @@ def wristEncoderToOrientation(enc: DeviceTuple, # NOQA
     enc1, and enc2 coresspond to wrist encoder readings on the first, second,
     and third joint, respectively
 
+
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+
 
     :raises ValueError: if any member of enc is not implicitly convertible
     to C int.
@@ -671,21 +869,36 @@ def wristEncoderToOrientation(enc: DeviceTuple, # NOQA
     wrist end-effector's orientation about the first, second, and third wrist
     joint, respectively in [rad].
     """
-
     px = c_double()
     py = c_double()
     pz = c_double()
 
-    return ([px.value, py.value, pz.value],
-            _libdhd.dhdDeltaEncoderToPosition(
-                    enc[0],
-                    enc[1],
-                    enc[2],
-                    byref(px),
-                    byref(py),
-                    byref(pz)
+    if out is None:
+        return ([px.value, py.value, pz.value],
+                _libdhd.dhdDeltaEncoderToPosition(
+                        enc[0],
+                        enc[1],
+                        enc[2],
+                        byref(px),
+                        byref(py),
+                        byref(pz)
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdDeltaEncoderToPosition(
+                  enc[0],
+                  enc[1],
+                  enc[2],
+                  byref(px),
+                  byref(py),
+                  byref(pz)
+              )
+
+        out[0] = px.value
+        out[1] = py.value
+        out[2] = pz.value
+
+        return (out, err)
 
 
 _libdhd.dhdWristOrientationToEncoder.argtypes = [
@@ -698,8 +911,11 @@ _libdhd.dhdWristOrientationToEncoder.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristOrientationToEncoder.restype = c_int
-def wristOrientationToEncoder(orientation: CartesianTuple, # NOQA
-                              ID: int = -1) -> Tuple[List[int], int]:
+def wristOrientationToEncoder( # NOQA
+    orientation: CartesianTuple,
+    ID: int = -1,
+    out: Optional[List[int]] = None,
+) -> Tuple[List[int], int]:
     """
     For devices with a wrist structure, compute the encoder values from the
     individual angle of each joint, starting witht he one located nearest to
@@ -724,6 +940,16 @@ def wristOrientationToEncoder(orientation: CartesianTuple, # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
 
+    :param Optional[List[int]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+
     :raises ValueError: if any member of enc is not implicitly convertible
     to C int.
 
@@ -740,16 +966,32 @@ def wristOrientationToEncoder(orientation: CartesianTuple, # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    return ([enc0.value, enc1.value, enc2.value],
-            _libdhd.dhdDeltaEncoderToPosition(
-                    orientation[0],
-                    orientation[1],
-                    orientation[2],
-                    byref(enc0),
-                    byref(enc1),
-                    byref(enc2)
+    if out is None:
+        return ([enc0.value, enc1.value, enc2.value],
+                _libdhd.dhdDeltaEncoderToPosition(
+                        orientation[0],
+                        orientation[1],
+                        orientation[2],
+                        byref(enc0),
+                        byref(enc1),
+                        byref(enc2)
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdDeltaEncoderToPosition(
+                  orientation[0],
+                  orientation[1],
+                  orientation[2],
+                  byref(enc0),
+                  byref(enc1),
+                  byref(enc2)
+              )
+
+        out[0] = enc0.value
+        out[1] = enc1.value
+        out[2] = enc2.value
+
+        return (out, err)
 
 
 _libdhd.dhdWristMotorToTorque.argtypes = [
@@ -765,15 +1007,18 @@ _libdhd.dhdWristMotorToTorque.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristMotorToTorque.restype = c_int
-def wristMotorToTorque(output: DeviceTuple, # NOQA
-                       enc: DeviceTuple,
-                       ID: int = -1) -> Tuple[List[float], int]:
+def wristMotorToTorque( # NOQA
+    cmd: DeviceTuple,
+    enc: DeviceTuple,
+    ID: int = -1,
+    out: Optional[List[float]] = None,
+) -> Tuple[List[float], int]:
     """
     This routine computes and returns the torque applied to the wrist
     end-effector for a given set of motor commands at a given orientation
     (defined by encoder readings)
 
-    :param DeviceTuple output: Tuple of (motor0, motor1, motor2) where
+    :param DeviceTuple cmd: Tuple of (motor0, motor1, motor2) where
     motor0, motor1, and motor2 are the axis 0, 1, and 2 DELTA motor commands,
     respectively.
 
@@ -783,6 +1028,17 @@ def wristMotorToTorque(output: DeviceTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+
 
     :raises ValueError: if any member of output is not implicitly convertible
     to C ushort.
@@ -802,19 +1058,38 @@ def wristMotorToTorque(output: DeviceTuple, # NOQA
     ty = c_double()
     tz = c_double()
 
-    return ([tx.value, ty.value, tz.value],
-            _libdhd.dhdDeltaMotorToForce(
-                output[0],
-                output[1],
-                output[2],
-                enc[0],
-                enc[1],
-                enc[2],
-                byref(tx),
-                byref(ty),
-                byref(tz)
+    if out is None:
+        return ([tx.value, ty.value, tz.value],
+                _libdhd.dhdDeltaMotorToForce(
+                    cmd[0],
+                    cmd[1],
+                    cmd[2],
+                    enc[0],
+                    enc[1],
+                    enc[2],
+                    byref(tx),
+                    byref(ty),
+                    byref(tz)
+            )
         )
-    )
+    else:
+        err = _libdhd.dhdDeltaMotorToForce(
+                   cmd[0],
+                   cmd[1],
+                   cmd[2],
+                   enc[0],
+                   enc[1],
+                   enc[2],
+                   byref(tx),
+                   byref(ty),
+                   byref(tz)
+              )
+
+        out[0] = tx.value
+        out[1] = ty.value
+        out[2] = tz.value
+
+        return (out, err)
 
 
 _libdhd.dhdWristTorqueToMotor.argtypes = [
@@ -830,9 +1105,12 @@ _libdhd.dhdWristTorqueToMotor.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristTorqueToMotor.restype = c_int
-def wristTorqueToMotor(t: CartesianTuple, # NOQA
-                       enc: DeviceTuple,
-                       ID: int = -1) -> Tuple[List[int], int]:
+def wristTorqueToMotor(  # NOQA
+    t: CartesianTuple,
+    enc: DeviceTuple,
+    ID: int = -1,
+    out: Optional[List[int]] = None,
+) -> Tuple[List[int], int]:
     """
     This routine computes and returns the wrist motor commands necessary to
     obtain a given torque on the wrist end-effector at a given orientation
@@ -848,6 +1126,16 @@ def wristTorqueToMotor(t: CartesianTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[int]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
 
     :raises ValueError: if any member of t is not implicitly convertible
     to C double.
@@ -868,19 +1156,38 @@ def wristTorqueToMotor(t: CartesianTuple, # NOQA
     output1 = c_ushort()
     output2 = c_ushort()
 
-    return ([output0.value, output1.value, output2.value],
-            _libdhd.dhdDeltaMotorToForce(
-                t[0],
-                t[1],
-                t[2],
-                enc[0],
-                enc[1],
-                enc[2],
-                byref(output0),
-                byref(output1),
-                byref(output2)
+    if out is None:
+        return ([output0.value, output1.value, output2.value],
+                _libdhd.dhdDeltaMotorToForce(
+                    t[0],
+                    t[1],
+                    t[2],
+                    enc[0],
+                    enc[1],
+                    enc[2],
+                    byref(output0),
+                    byref(output1),
+                    byref(output2)
+            )
         )
-    )
+    else:
+        err = _libdhd.dhdDeltaMotorToForce(
+                    t[0],
+                    t[1],
+                    t[2],
+                    enc[0],
+                    enc[1],
+                    enc[2],
+                    byref(output0),
+                    byref(output1),
+                    byref(output2)
+             )
+
+        out[0] = output0.value
+        out[1] = output1.value
+        out[2] = output2.value
+
+        return (out, err)
 
 
 _libdhd.dhdGripperEncoderToAngleRad.argtypes = [
@@ -1226,7 +1533,11 @@ def preloadMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdGetEnc.argtypes = [c_int * MAX_DOF, c_ubyte, c_byte]
 _libdhd.dhdGetEnc.restype = c_int
-def getEnc(mask: int, ID: int = -1) -> Tuple[List[int], int]: # NOQA
+def getEnc( # NOQA
+    mask: int,
+    ID: int = -1,
+    out: Optional[List[int]] = None,
+) -> Tuple[List[int], int]:
     """
     Get a selective list of encoder values. Particularly useful when using the
     generic controller directly, without a device model attached.
@@ -1235,6 +1546,18 @@ def getEnc(mask: int, ID: int = -1) -> Tuple[List[int], int]: # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[int]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and
+    len(out) < dhd.bindings.MAX_DOF
+
 
     :raises ValueError: if mask is not implicitly convertible to C uchar
     :raises ValueError: if ID is not implicitly convertible to C char
@@ -1246,12 +1569,24 @@ def getEnc(mask: int, ID: int = -1) -> Tuple[List[int], int]: # NOQA
     """
     enc = (c_int * MAX_DOF)()
 
-    return ([val for val in enc], _libdhd.dhdGetEnc(enc, mask, ID))
+    if out is None:
+        return ([val for val in enc], _libdhd.dhdGetEnc(enc, mask, ID))
+    else:
+        err = _libdhd.dhdGetEnc(enc, mask, ID)
+
+        for i in range(MAX_DOF):
+            out[i] = enc[i]
+
+        return (out, err)
 
 
 _libdhd.dhdGetEncRange.argtypes = [c_int * MAX_DOF, c_int * MAX_DOF, c_byte]
 _libdhd.dhdGetEncRange.restype = c_int
-def getEncRange(ID: int = -1) -> Tuple[List[int], List[int], int]: # NOQA
+def getEncRange( # NOQA
+    ID: int = -1,
+    encMin_out: Optional[List[int]] = None,
+    encMax_out: Optional[List[int]] = None,
+) -> Tuple[List[int], List[int], int]:
     """
     Get the expected min and max encoder values for all axes present on the
     current device. Axis indices that do not exist on the device will return
@@ -1259,6 +1594,30 @@ def getEncRange(ID: int = -1) -> Tuple[List[int], List[int], int]: # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[int]] encMin_out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+    :param Optional[List[int]] encMan_out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if encMan_out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises TypeError: if encMin_out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if encMin_out is specified and
+    len(out) < dhd.bindings.MAX_DOF
+
+    :raises IndexError: if encMin_out is specified and
+    len(encMin_out) < dhd.bindings.MAX_DOF
+
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
@@ -1271,11 +1630,20 @@ def getEncRange(ID: int = -1) -> Tuple[List[int], List[int], int]: # NOQA
     encMin = (c_int * MAX_DOF)()
     encMax = (c_int * MAX_DOF)()
 
-    return (
-                [val for val in encMin],
-                [val for val in encMax],
-                _libdhd.dhdGetEncRange(encMin, encMax, ID)
-           )
+    err = _libdhd.dhdGetEncRange(encMin, encMax, ID)
+
+    if encMin_out is None:
+        encMin_out = [val for val in encMin]
+    else:
+        for i in range(MAX_DOF):
+            encMin_out[i] = encMin[i]
+
+    if encMax_out is None:
+        encMax_out = [val for val in encMax]
+    else:
+        encMax_out[i] = encMax[i]
+
+    return (encMin_out, encMax_out, err)
 
 
 _libdhd.dhdSetBrk.argtypes = [c_ubyte, c_byte]
@@ -1319,12 +1687,26 @@ _libdhd.dhdGetDeltaJointAngles.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetDeltaJointAngles.restype = c_int
-def getDeltaJointAngles(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+def getDeltaJointAngles( # NOQA
+    ID: int = -1,
+    out: Optional[List[float]] = None
+) -> Tuple[List[float], int]:
     """
     Retrieve the joint angles in [rad] for the DELTA structure.
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
@@ -1338,19 +1720,36 @@ def getDeltaJointAngles(ID: int = -1) -> Tuple[List[float], int]: # NOQA
     j1 = c_double()
     j2 = c_double()
 
-    return ([j0.value, j1.value, j2.value],
-            _libdhd.dhdGetDeltaJointAngles(
-                byref(j0),
-                byref(j1),
-                byref(j2),
-                ID
+    if out is None:
+        return ([j0.value, j1.value, j2.value],
+                _libdhd.dhdGetDeltaJointAngles(
+                    byref(j0),
+                    byref(j1),
+                    byref(j2),
+                    ID
+            )
         )
-    )
+    else:
+        err = _libdhd.dhdGetDeltaJointAngles(
+                   byref(j0),
+                   byref(j1),
+                   byref(j2),
+                   ID
+             )
+
+        out[0] = j0.value
+        out[1] = j1.value
+        out[2] = j2.value
+
+        return (out, err)
 
 
 _libdhd.dhdGetDeltaJacobian.argtypes = [(c_double * 3) * 3, c_byte]
 _libdhd.dhdGetDeltaJacobian.restype = c_int
-def getDeltaJacobian(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
+def getDeltaJacobian( # NOQA
+    ID: int = -1,
+    out: Optional[List[List[float]]] = None
+) -> Tuple[List[List[float]], int]:
     """
     Retrieve the 3x3 jacobian matrix for the DELTA structure based on the
     current end-effector position. Please refer to your device user manual for
@@ -1358,6 +1757,18 @@ def getDeltaJacobian(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[List[float]]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if any dimension of out is less than 3
+
+    :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
@@ -1370,7 +1781,16 @@ def getDeltaJacobian(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
 
     J = ((c_double * 3) * 3)()
 
-    return ([list(row) for row in J], _libdhd.dhdGetDeltaJacobian(J, ID))
+    if out is None:
+        return ([list(row) for row in J], _libdhd.dhdGetDeltaJacobian(J, ID))
+    else:
+        err = _libdhd.dhdGetDeltaJacobian(J, ID)
+
+        for i in range(3):
+            for j in range(3):
+                out[i][j] = J[i][j]
+
+        return (out, err)
 
 
 _libdhd.dhdDeltaJointAnglesToJacobian.argtypes = [
@@ -1381,8 +1801,11 @@ _libdhd.dhdDeltaJointAnglesToJacobian.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaJointAnglesToJacobian.restype = c_int
-def deltaJointAnglesToJacobian(joint_angles: CartesianTuple, # NOQA
-                               ID: int = -1) -> Tuple[List[List[float]], int]:
+def deltaJointAnglesToJacobian( # NOQA
+    joint_angles: CartesianTuple,
+    ID: int = -1,
+    out: Optional[List[List[float]]] = None
+) -> Tuple[List[List[float]], int]:
     """
     Retrieve the 3x3 jacobian matrix for the DELTA structure
     based on a given joint configuration. Please refer to your device user
@@ -1393,6 +1816,17 @@ def deltaJointAnglesToJacobian(joint_angles: CartesianTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :raises ValueError: if any member of joint_angles is not implicitly
     convertible to C double.
@@ -1405,15 +1839,31 @@ def deltaJointAnglesToJacobian(joint_angles: CartesianTuple, # NOQA
     """
 
     J = ((c_double * 3) * 3)()
-    return ([list(row) for row in J],
-            _libdhd.dhdDeltaJointAnglesToJacobian(
-                    joint_angles[0],
-                    joint_angles[1],
-                    joint_angles[2],
-                    J,
-                    ID
+
+    if out is None:
+        return ([list(row) for row in J],
+                _libdhd.dhdDeltaJointAnglesToJacobian(
+                        joint_angles[0],
+                        joint_angles[1],
+                        joint_angles[2],
+                        J,
+                        ID
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdDeltaJointAnglesToJacobian(
+                  joint_angles[0],
+                  joint_angles[1],
+                  joint_angles[2],
+                  J,
+                  ID
+              )
+
+        for i in range(3):
+            for j in range(3):
+                out[i][j] = J[i][j]
+
+        return (out, err)
 
 
 _libdhd.dhdDeltaJointTorquesExtrema.argtypes = [
@@ -1425,10 +1875,12 @@ _libdhd.dhdDeltaJointTorquesExtrema.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaJointTorquesExtrema.restype = c_int
-def deltaJointTorquesExtrema(joint_angles: CartesianTuple, # NOQA
-                              ID: int = -1) -> Tuple[List[float],
-                                                     List[float],
-                                                     int]:
+def deltaJointTorquesExtrema( # NOQA
+    joint_angles: CartesianTuple,
+    ID: int = -1,
+    minq_out: Optional[List[float]] = None,
+    maxq_out: Optional[List[float]] = None,
+) -> Tuple[List[float], List[float], int]:
     """
     Compute the range of applicable DELTA joint torques for a given DELTA joint
     angle configuration. Please refer to your device user manual for more
@@ -1439,6 +1891,28 @@ def deltaJointTorquesExtrema(joint_angles: CartesianTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] minq_out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if minq_out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if minq_out is specified and
+    len(encMin_out) < dhd.bindings.MAX_DOF
+
+    :param Optional[List[float]] maxq_out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if maxq_out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if maxq_out is specified and
+    len(out) < dhd.bindings.MAX_DOF
 
     :raises ValueError: if any member of joint_angles is not implicitly
     convertible to C double.
@@ -1457,17 +1931,30 @@ def deltaJointTorquesExtrema(joint_angles: CartesianTuple, # NOQA
     minq = (c_double * 3)()
     maxq = (c_double * 3)()
 
-    return ([v for v in minq],
-            [v for v in maxq],
-            _libdhd.dhdDeltaJointTorquesExtrema(
-                    joint_angles[0],
-                    joint_angles[1],
-                    joint_angles[2],
-                    minq,
-                    maxq,
-                    ID
-                )
-            )
+    err = _libdhd.dhdDeltaJointTorquesExtrema(
+              joint_angles[0],
+              joint_angles[1],
+              joint_angles[2],
+              minq,
+              maxq,
+              ID
+          )
+
+    if minq_out is None:
+        minq_out = [v for v in minq]
+    else:
+        minq_out[0] = minq[0]
+        minq_out[1] = minq[1]
+        minq_out[2] = minq[2]
+
+    if maxq_out is None:
+        maxq_out = [v for v in minq]
+    else:
+        maxq_out[0] = maxq[0]
+        maxq_out[1] = maxq[1]
+        maxq_out[2] = maxq[2]
+
+    return (minq_out, maxq_out, err)
 
 
 _libdhd.dhdDeltaGravityJointTorques.argtypes = [
@@ -1480,8 +1967,11 @@ _libdhd.dhdDeltaGravityJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaGravityJointTorques.retype = c_int
-def deltaGravityJointTorques(joint_angles: CartesianTuple, # NOQA
-                               ID: int = -1) -> Tuple[List[float], int]:
+def deltaGravityJointTorques( # NOQA
+    joint_angles: CartesianTuple,
+    ID: int = -1,
+    out: Optional[List[float]] = None
+) -> Tuple[List[float], int]:
     """
     Compute the DELTA joint torques required to compensate for gravity in a
     given DELTA joint angle configuration. Please refer to your device user
@@ -1492,6 +1982,17 @@ def deltaGravityJointTorques(joint_angles: CartesianTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+
 
     :raises ValueError: if any member of joint_angles is not implicitly
     convertible to C double.
@@ -1508,17 +2009,34 @@ def deltaGravityJointTorques(joint_angles: CartesianTuple, # NOQA
     q1 = c_double()
     q2 = c_double()
 
-    return ([q0.value, q1.value, q2.value],
-            _libdhd.dhdDeltaGravityJointTorques(
-                    joint_angles[0],
-                    joint_angles[1],
-                    joint_angles[2],
-                    byref(q0),
-                    byref(q1),
-                    byref(q2),
-                    ID
+    if out is None:
+        return ([q0.value, q1.value, q2.value],
+                _libdhd.dhdDeltaGravityJointTorques(
+                        joint_angles[0],
+                        joint_angles[1],
+                        joint_angles[2],
+                        byref(q0),
+                        byref(q1),
+                        byref(q2),
+                        ID
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdDeltaGravityJointTorques(
+                  joint_angles[0],
+                  joint_angles[1],
+                  joint_angles[2],
+                  byref(q0),
+                  byref(q1),
+                  byref(q2),
+                  ID
+              )
+
+        out[0] = q0.value
+        out[1] = q1.value
+        out[2] = q2.value
+
+        return (out, err)
 
 
 _libdhd.dhdSetDeltaJointTorques.argtypes = [
@@ -1558,8 +2076,11 @@ _libdhd.dhdDeltaEncodersToJointAngles.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaEncodersToJointAngles.restype = c_int
-def deltaEncodersToJointAngles(enc: DeviceTuple, # NOQA
-                           ID: int = -1) -> Tuple[List[float], int]:
+def deltaEncodersToJointAngles( # NOQA
+    enc: DeviceTuple,
+    ID: int = -1,
+    out: Optional[List[float]] = None
+) -> Tuple[List[float], int]:
     """
     This routine computes and returns the DELTA joint angles for a given set of
     encoder readings.
@@ -1570,6 +2091,16 @@ def deltaEncodersToJointAngles(enc: DeviceTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
 
     :raises ValueError: if any member of enc is not implicitly convertible
     to C int.
@@ -1609,8 +2140,11 @@ _libdhd.dhdDeltaJointAnglesToEncoders.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaJointAnglesToEncoders.restype = c_int
-def deltaJointAnglesToEncoders(joint_angles: CartesianTuple, # NOQA
-                               ID: int = -1) -> Tuple[List[int], int]:
+def deltaJointAnglesToEncoders( # NOQA
+    joint_angles: CartesianTuple,
+    ID: int = -1,
+    out: Optional[List[int]] = None
+) -> Tuple[List[int], int]:
     """
     This routine computes and returns the DELTA encoder readings for a given
     set of joint angles.
@@ -1621,6 +2155,16 @@ def deltaJointAnglesToEncoders(joint_angles: CartesianTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[int]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
 
     :raises ValueError: if any member of joint_angles is not implicitly
     convertible to C double.
@@ -1637,17 +2181,34 @@ def deltaJointAnglesToEncoders(joint_angles: CartesianTuple, # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    return ([enc0.value, enc1.value, enc2.value],
-            _libdhd.dhdDeltaJointAnglesToEncoders(
-                    joint_angles[0],
-                    joint_angles[1],
-                    joint_angles[2],
-                    byref(enc0),
-                    byref(enc1),
-                    byref(enc2),
-                    ID
+    if out is None:
+        return ([enc0.value, enc1.value, enc2.value],
+                _libdhd.dhdDeltaJointAnglesToEncoders(
+                        joint_angles[0],
+                        joint_angles[1],
+                        joint_angles[2],
+                        byref(enc0),
+                        byref(enc1),
+                        byref(enc2),
+                        ID
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdDeltaJointAnglesToEncoders(
+                  joint_angles[0],
+                  joint_angles[1],
+                  joint_angles[2],
+                  byref(enc0),
+                  byref(enc1),
+                  byref(enc2),
+                  ID
+              )
+
+        out[0] = enc0.value
+        out[1] = enc1.value
+        out[2] = enc2.value
+
+        return (out, err)
 
 
 _libdhd.dhdGetWristJointAngles.argtypes = [
@@ -1657,12 +2218,25 @@ _libdhd.dhdGetWristJointAngles.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetWristJointAngles.restype = c_int
-def getWristJointAngles(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+def getWristJointAngles( # NOQA
+    ID: int = -1,
+    out: Optional[List[float]] = None
+) -> Tuple[List[float], int]:
     """
     Retrieve the joint angles in [rad] for the wrist structure.
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
@@ -1678,19 +2252,36 @@ def getWristJointAngles(ID: int = -1) -> Tuple[List[float], int]: # NOQA
     j1 = c_double()
     j2 = c_double()
 
-    return ([j0.value, j1.value, j2.value],
-            _libdhd.dhdGetWristJointAngles(
-                    byref(j0),
-                    byref(j1),
-                    byref(j2),
-                    ID
+    if out is None:
+        return ([j0.value, j1.value, j2.value],
+                _libdhd.dhdGetWristJointAngles(
+                        byref(j0),
+                        byref(j1),
+                        byref(j2),
+                        ID
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdGetWristJointAngles(
+                  byref(j0),
+                  byref(j1),
+                  byref(j2),
+                  ID
+              )
+
+        out[0] = j0.value
+        out[1] = j1.value
+        out[2] = j2.value
+
+        return (out, err)
 
 
 _libdhd.dhdGetWristJacobian.argtypes = [(c_double * 3) * 3, c_byte]
 _libdhd.dhdGetWristJacobian.restype = c_int
-def getWristJacobian(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
+def getWristJacobian( # NOQA
+    ID: int = -1,
+    out: Optional[List[List[float]]] = None
+) -> Tuple[List[List[float]], int]:
     """
     Retrieve the 3x3 jacobian matrix for the wrist structure based on the
     current end-effector position. Please refer to your device user manual for
@@ -1698,6 +2289,17 @@ def getWristJacobian(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[List[float]]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if any dimensinon of out is less than 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
@@ -1710,7 +2312,16 @@ def getWristJacobian(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
 
     J = ((c_double * 3) * 3)()
 
-    return ([list(row) for row in J], _libdhd.dhdGetWristJacobian(J, ID))
+    if out is None:
+        return ([list(row) for row in J], _libdhd.dhdGetWristJacobian(J, ID))
+    else:
+        err = _libdhd.dhdGetWristJacobian(J, ID)
+
+        for i in range(3):
+            for j in range(3):
+                out[i][j] = J[i][j]
+
+        return (out, err)
 
 
 _libdhd.dhdWristJointAnglesToJacobian.argtypes = [
@@ -1721,8 +2332,11 @@ _libdhd.dhdWristJointAnglesToJacobian.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristJointAnglesToJacobian.restype = c_int
-def wristJointAnglesToJacobian(joint_angles: CartesianTuple, # NOQA
-                               ID: int = -1) -> Tuple[List[List[float]], int]:
+def wristJointAnglesToJacobian( # NOQA
+    joint_angles: CartesianTuple,
+    ID: int = -1,
+    out: Optional[List[List[float]]] = None
+) -> Tuple[List[List[float]], int]:
     """
     Retrieve the 3x3 jacobian matrix for the wrist structure
     based on a given joint configuration. Please refer to your device user
@@ -1735,6 +2349,17 @@ def wristJointAnglesToJacobian(joint_angles: CartesianTuple, # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
 
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+    :raises ValueError: if ID is not implicitly convertible to a C char type
+
     :raises ValueError: if any member of joint_angles is not implicitly
     convertible to C double.
 
@@ -1746,15 +2371,31 @@ def wristJointAnglesToJacobian(joint_angles: CartesianTuple, # NOQA
     """
 
     J = ((c_double * 3) * 3)()
-    return ([list(row) for row in J],
-            _libdhd.dhdWristJointAnglesToJacobian(
-                    joint_angles[0],
-                    joint_angles[1],
-                    joint_angles[2],
-                    J,
-                    ID
+
+    if out is None:
+        return ([list(row) for row in J],
+                _libdhd.dhdWristJointAnglesToJacobian(
+                        joint_angles[0],
+                        joint_angles[1],
+                        joint_angles[2],
+                        J,
+                        ID
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdWristJointAnglesToJacobian(
+                  joint_angles[0],
+                  joint_angles[1],
+                  joint_angles[2],
+                  J,
+                  ID
+              )
+
+        for i in range(3):
+            for j in range(3):
+                out[i][j] = J[i][j]
+
+        return (out, err)
 
 
 _libdhd.dhdWristJointTorquesExtrema.argtypes = [
@@ -1766,10 +2407,12 @@ _libdhd.dhdWristJointTorquesExtrema.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristJointTorquesExtrema.restype = c_int
-def wristJointTorquesExtrema(joint_angles: CartesianTuple, # NOQA
-                              ID: int = -1) -> Tuple[List[float],
-                                                     List[float],
-                                                     int]:
+def wristJointTorquesExtrema( # NOQA
+    joint_angles: CartesianTuple,
+    ID: int = -1,
+    minq_out: Optional[List[float]] = None,
+    maxq_out: Optional[List[float]] = None,
+) -> Tuple[List[float], List[float], int]:
     """
     Compute the range of applicable wrist joint torques for a given wrist joint
     angle configuration. Please refer to your device user manual for more
@@ -1781,6 +2424,29 @@ def wristJointTorquesExtrema(joint_angles: CartesianTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] minq_out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if minq_out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if minq_out is specified and
+    len(encMin_out) < dhd.bindings.MAX_DOF
+
+    :param Optional[List[float]] maxq_out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if maxq_out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if maxq_out is specified and
+    len(out) < dhd.bindings.MAX_DOF
+
 
     :raises ValueError: if any member of joint_angles is not implicitly
     convertible to C double.
@@ -1800,17 +2466,30 @@ def wristJointTorquesExtrema(joint_angles: CartesianTuple, # NOQA
     minq = (c_double * 3)()
     maxq = (c_double * 3)()
 
-    return ([v for v in minq],
-            [v for v in maxq],
-            _libdhd.dhdWristJointTorquesExtrema(
-                    joint_angles[0],
-                    joint_angles[1],
-                    joint_angles[2],
-                    minq,
-                    maxq,
-                    ID
-                )
-            )
+    err = _libdhd.dhdWristJointTorquesExtrema(
+        joint_angles[0],
+        joint_angles[1],
+        joint_angles[2],
+        minq,
+        maxq,
+        ID
+    )
+
+    if minq_out is None:
+        minq_out = [v for v in minq]
+    else:
+        minq_out[0] = minq[0]
+        minq_out[1] = minq[1]
+        minq_out[2] = minq[2]
+
+    if maxq_out is None:
+        maxq_out = [v for v in minq]
+    else:
+        maxq_out[0] = maxq[0]
+        maxq_out[1] = maxq[1]
+        maxq_out[2] = maxq[2]
+
+    return (minq_out, maxq_out, err)
 
 
 _libdhd.dhdWristGravityJointTorques.argtypes = [
@@ -1823,8 +2502,11 @@ _libdhd.dhdWristGravityJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristGravityJointTorques.retype = c_int
-def wristGravityJointTorques(joint_angles: CartesianTuple, # NOQA
-                               ID: int = -1) -> Tuple[List[float], int]:
+def wristGravityJointTorques( # NOQA
+    joint_angles: CartesianTuple,
+    ID: int = -1,
+    out: Optional[List[float]] = None
+) -> Tuple[List[float], int]:
     """
     Compute the wrist joint torques required to compensate for gravity in a
     given wrist joint angle configuration. Please refer to your device user
@@ -1836,6 +2518,17 @@ def wristGravityJointTorques(joint_angles: CartesianTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
+
 
     :raises ValueError: if any member of joint_angles is not implicitly
     convertible to C double.
@@ -1852,17 +2545,34 @@ def wristGravityJointTorques(joint_angles: CartesianTuple, # NOQA
     q1 = c_double()
     q2 = c_double()
 
-    return ([q0.value, q1.value, q2.value],
-            _libdhd.dhdWristGravityJointTorques(
-                    joint_angles[0],
-                    joint_angles[1],
-                    joint_angles[2],
-                    byref(q0),
-                    byref(q1),
-                    byref(q2),
-                    ID
+    if out is None:
+        return ([q0.value, q1.value, q2.value],
+                _libdhd.dhdWristGravityJointTorques(
+                        joint_angles[0],
+                        joint_angles[1],
+                        joint_angles[2],
+                        byref(q0),
+                        byref(q1),
+                        byref(q2),
+                        ID
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdWristGravityJointTorques(
+                  joint_angles[0],
+                  joint_angles[1],
+                  joint_angles[2],
+                  byref(q0),
+                  byref(q1),
+                  byref(q2),
+                  ID
+              )
+
+        out[0] = q0.value
+        out[1] = q1.value
+        out[2] = q2.value
+
+        return (out, err)
 
 
 _libdhd.dhdSetWristJointTorques.argtypes = [
@@ -2012,8 +2722,11 @@ _libdhd.dhdWristEncodersToJointAngles.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristEncodersToJointAngles.restype = c_int
-def wristEncodersToJointAngles(enc: DeviceTuple, # NOQA
-                               ID: int = -1) -> Tuple[List[float], int]:
+def wristEncodersToJointAngles( # NOQA
+    enc: DeviceTuple,
+    ID: int = -1,
+    out: Optional[List[float]] = None
+) -> Tuple[List[float], int]:
     """
     This routine computes and returns the wrist joint angles for a given set of
     encoder readings.
@@ -2040,17 +2753,34 @@ def wristEncodersToJointAngles(enc: DeviceTuple, # NOQA
     j1 = c_double()
     j2 = c_double()
 
-    return ([j0.value, j1.value, j2.value],
-            _libdhd.dhdWristEncodersToJointAngles(
-                    enc[0],
-                    enc[1],
-                    enc[2],
-                    byref(j0),
-                    byref(j1),
-                    byref(j2),
-                    ID
+    if out is None:
+        return ([j0.value, j1.value, j2.value],
+                _libdhd.dhdWristEncodersToJointAngles(
+                        enc[0],
+                        enc[1],
+                        enc[2],
+                        byref(j0),
+                        byref(j1),
+                        byref(j2),
+                        ID
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdWristEncodersToJointAngles(
+                  enc[0],
+                  enc[1],
+                  enc[2],
+                  byref(j0),
+                  byref(j1),
+                  byref(j2),
+                  ID
+               )
+
+        out[0] = j0.value
+        out[1] = j1.value
+        out[2] = j2.value
+
+        return (out, err)
 
 
 _libdhd.dhdWristJointAnglesToEncoders.argtypes = [
@@ -2063,8 +2793,11 @@ _libdhd.dhdWristJointAnglesToEncoders.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristJointAnglesToEncoders.restype = c_int
-def wristJointAnglesToEncoders(joint_angles: CartesianTuple, # NOQA
-                               ID: int = -1) -> Tuple[List[int], int]:
+def wristJointAnglesToEncoders( # NOQA
+    joint_angles: CartesianTuple,
+    ID: int = -1,
+    out: Optional[List[int]] = None
+) -> Tuple[List[int], int]:
     """
     This routine computes and returns the wrist encoder readings for a given
     set of wrist joint angles.
@@ -2075,6 +2808,16 @@ def wristJointAnglesToEncoders(joint_angles: CartesianTuple, # NOQA
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[int]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and len(out) < 3
 
     :raises ValueError: if any member of joint_angles is not implicitly
     convertible to C double.
@@ -2091,28 +2834,59 @@ def wristJointAnglesToEncoders(joint_angles: CartesianTuple, # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    return ([enc0.value, enc1.value, enc2.value],
-            _libdhd.dhdWristJointAnglesToEncoders(
-                    joint_angles[0],
-                    joint_angles[1],
-                    joint_angles[2],
-                    byref(enc0),
-                    byref(enc1),
-                    byref(enc2),
-                    ID
+    if out is None:
+        return ([enc0.value, enc1.value, enc2.value],
+                _libdhd.dhdWristJointAnglesToEncoders(
+                        joint_angles[0],
+                        joint_angles[1],
+                        joint_angles[2],
+                        byref(enc0),
+                        byref(enc1),
+                        byref(enc2),
+                        ID
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdWristJointAnglesToEncoders(
+                  joint_angles[0],
+                  joint_angles[1],
+                  joint_angles[2],
+                  byref(enc0),
+                  byref(enc1),
+                  byref(enc2),
+                  ID
+              )
+
+        out[0] = enc0.value
+        out[1] = enc1.value
+        out[2] = enc2.value
+
+        return (out, err)
 
 
 _libdhd.dhdGetJointAngles.argtypes = [c_double * MAX_DOF, c_byte]
 _libdhd.dhdGetJointAngles.restype = c_int
-def getJointAngles(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+def getJointAngles( # NOQA
+    ID: int = -1,
+    out: Optional[List[float]] = None
+) -> Tuple[List[float], int]:
     """
     Retrieve the joint angles in [rad] for all sensed degrees-of-freedom of the
     current device.
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[int]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and
+    len(out) < dhd.bindings.MAX_DOF
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
@@ -2124,19 +2898,41 @@ def getJointAngles(ID: int = -1) -> Tuple[List[float], int]: # NOQA
 
     joint_angles = (c_int * MAX_DOF)()
 
-    return ([val for val in joint_angles],
-            _libdhd.dhdGetJointAngles(joint_angles, ID))
+    if out is None:
+        return ([val for val in joint_angles],
+                _libdhd.dhdGetJointAngles(joint_angles, ID))
+    else:
+        err = _libdhd.dhdGetJointAngles(joint_angles, ID)
+
+        for i in range(MAX_DOF):
+            out[i] = joint_angles[i]
+
+        return (out, err)
 
 
 _libdhd.dhdGetJointVelocities.argtypes = [c_double * MAX_DOF, c_byte]
 _libdhd.dhdGetJointVelocities.restype = c_int
-def getJointVelocities(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+def getJointVelocities( # NOQA
+    ID: int = -1,
+    out: Optional[List[float]] = None
+) -> Tuple[List[float], int]:
     """
     Retrieve the joint angle velocities in [rad/s] for all sensed
     degrees-of-freedom of the current device
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and
+    len(out) < dhd.bindings.MAX_DOF
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
@@ -2148,18 +2944,40 @@ def getJointVelocities(ID: int = -1) -> Tuple[List[float], int]: # NOQA
 
     w = (c_int * MAX_DOF)()
 
-    return ([val for val in w], _libdhd.dhdGetJointVelocities(w, ID))
+    if out is None:
+        return ([val for val in w], _libdhd.dhdGetJointVelocities(w, ID))
+    else:
+        err = _libdhd.dhdGetJointVelocities(w, ID)
+
+        for i in range(MAX_DOF):
+            out[i] = w[i]
+
+        return (out, err)
 
 
 _libdhd.dhdGetEncVelocities.argtypes = [c_double * MAX_DOF, c_byte]
 _libdhd.dhdGetEncVelocities.restype = c_int
-def getEncVelocities(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+def getEncVelocities( # NOQA
+    ID: int = -1,
+    out: Optional[List[float]] = None
+) -> Tuple[List[float], int]:
     """
     Retrieve the joint angle velocities in [increments/s] for all sensed
     degrees-of-freedom of the current device
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
+
+    :param Optional[List[float]] out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and
+    len(out) < dhd.bindings.MAX_DOF
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
@@ -2172,7 +2990,15 @@ def getEncVelocities(ID: int = -1) -> Tuple[List[float], int]: # NOQA
 
     v = (c_int * MAX_DOF)()
 
-    return ([val for val in v], _libdhd.dhdGetEncVelocities(v, ID))
+    if out is None:
+        return ([val for val in v], _libdhd.dhdGetEncVelocities(v, ID))
+    else:
+        err = _libdhd.dhdGetEncVelocities(v, ID)
+
+        for i in range(MAX_DOF):
+            out[i] = v[i]
+
+        return (out, err)
 
 
 _libdhd.dhdJointAnglesToInertiaMatrix.argtypes = [
@@ -2181,8 +3007,11 @@ _libdhd.dhdJointAnglesToInertiaMatrix.argtypes = [
     c_byte
 ]
 _libdhd.dhdJointAnglesToInertiaMatrix.restype = c_int
-def jointAnglesToIntertiaMatrix(joint_angles: DOFTuple,  # NOQA
-                                ID: int = -1) -> Tuple[List[List[float]], int]:
+def jointAnglesToIntertiaMatrix( # NOQA
+    joint_angles: DOFTuple,
+    ID: int = -1,
+    out: Optional[List[List[float]]] = None
+) -> Tuple[List[List[float]], int]:
 
     """
     Retrieve the (Cartesian) inertia matrix based on a given joint
@@ -2195,6 +3024,17 @@ def jointAnglesToIntertiaMatrix(joint_angles: DOFTuple,  # NOQA
     :raises ValueError: if joint_angles is not implicitly convertible to C
     double[MAX_DOF]
 
+    :param Optional[List[float]] minq_out: OPTIONAL list to use instead of
+    generating a new list. If this is specified, the list provided will be
+    updated with the new values and the return will be a reference to the same
+    list.
+
+    :raises TypeError: if out is specified and does not support item
+    assignment either because its immutable or not subscriptable.
+
+    :raises IndexError: if out is specified and the length of any dimension of
+    out is less than 6.
+
     :raises ValueError: if ID is not implicitly convertible to C char
 
     :rtype: Tuple[List[List[float]], int]
@@ -2205,14 +3045,23 @@ def jointAnglesToIntertiaMatrix(joint_angles: DOFTuple,  # NOQA
 
     inertia = ((c_double * 6) * 6)()
 
-    return (
-                [list(row) for row in inertia],
-                _libdhd.dhdJointAnglesToInertiaMatrix(
-                    joint_angles,
-                    inertia,
-                    ID
+    if out is None:
+        return (
+                    [list(row) for row in inertia],
+                    _libdhd.dhdJointAnglesToInertiaMatrix(
+                        joint_angles,
+                        inertia,
+                        ID
+                    )
                 )
-            )
+    else:
+        err = _libdhd.dhdJointAnglesToInertiaMatrix(joint_angles, inertia, ID)
+
+        for i in range(6):
+            for j in range(6):
+                out[i][j] = inertia[i][j]
+
+        return (out, err)
 
 
 # TODO add a page for COM operation mode.
