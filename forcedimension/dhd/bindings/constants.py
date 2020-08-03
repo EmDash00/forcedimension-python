@@ -6,7 +6,8 @@
 .. moduleauthor:: Drason Chow <drasonchow@gmail.com>
 """
 
-from enum import Enum
+from enum import IntEnum
+from typing import NamedTuple
 
 MAX_DOF: int = 8
 MAX_BUTTONS: int = 16
@@ -20,7 +21,7 @@ MAX_STATUS: int = 16
 MOTOR_SATURATED: int = 2
 
 
-class DeviceType(Enum):
+class DeviceType(IntEnum):
     NONE = 0
     OMEGA3 = 33
     OMEGA33 = 34
@@ -36,7 +37,7 @@ class DeviceType(Enum):
     DELTA3 = 63
 
 
-class Error(Enum):
+class Error(IntEnum):
     NO_ERROR = 0
     ERROR = 1
     COM = 2
@@ -58,36 +59,31 @@ class Error(Enum):
     DEVICE_IN_USE = 18
 
 
-class DeltaMotorID(Enum):
+class DeltaMotorID(IntEnum):
     MOTOR0 = 0
     MOTOR1 = 1
     MOTOR2 = 2
 
 
-class DeltaEncID(Enum):
+class DeltaEncID(IntEnum):
     ENC0 = 0
     ENC1 = 1
     ENC2 = 2
 
 
-class WristMotorID(Enum):
+class WristMotorID(IntEnum):
     MOTOR0 = 3
     MOTOR1 = 4
     MOTOR2 = 5
 
 
-class WristEncID(Enum):
+class WristEncID(IntEnum):
     ENC0 = 3
     ENC1 = 4
     ENC2 = 5
 
 
-class State(Enum):
-    ON = 1
-    OFF = 0
-
-
-class StatusIndex(Enum):
+class StatusIndex(IntEnum):
     POWER = 0
     CONNECTED = 1
     STARTED = 2
@@ -105,14 +101,19 @@ class StatusIndex(Enum):
     FORCEOFFCAUSE = 14
 
 
-class ComMode(Enum):
+class State(IntEnum):
+    OFF = 0
+    ON = 1
+
+
+class ComMode(IntEnum):
     SYNC = 0
     ASYNC = 1
     VIRTUAL = 3
     NETWORK = 4
 
 
-class ThreadPriority(Enum):
+class ThreadPriority(IntEnum):
     DEFAULT = 0
     HIGH = 1
     LOW = 2
