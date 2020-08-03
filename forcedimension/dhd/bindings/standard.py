@@ -1378,7 +1378,7 @@ def getOrientationFrame(ID: int = -1) -> Tuple[List[List[float]], int]: # NOQA
 
     return (
                 [list(row) for row in matrix],
-                _libdhd.dhdGetPositionAndOrientationFrame(matrix, ID)
+                _libdhd.dhdGetOrientationFrame(matrix, ID)
            )
 
 
@@ -1567,14 +1567,14 @@ def getComFreq(ID: int = -1) -> float: # NOQA
     return _libdhd.dhdGetComFreq(ID)
 
 
-_libdhd.dhdSetAndGripperForce.argtypes = [
+_libdhd.dhdSetForceAndGripperForce.argtypes = [
     c_double,
     c_double,
     c_double,
     c_double,
     c_byte
 ]
-_libdhd.dhdSetForce.restype = c_int
+_libdhd.dhdSetForceAndGripperForce.restype = c_int
 def setForceAndGripperForce(f: Tuple[float, float, float],  # NOQA
                             fg: float,
                             ID: int = -1) -> int:
@@ -2068,7 +2068,7 @@ def emulateButton(enable: bool, ID: int = -1) -> int: # NOQA
 
 
 _libdhd.dhdGetBaseAngleXRad.argtypes = [POINTER(c_double), c_byte]
-_libdhd.dhdGetBaseAngleXRad.argtypes = c_int
+_libdhd.dhdGetBaseAngleXRad.restype = c_int
 def getBaseAngleXRad(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
     Get the device base plate angle around the X axis.
@@ -2091,7 +2091,7 @@ def getBaseAngleXRad(ID: int = -1) -> Tuple[float, int]: # NOQA
 
 
 _libdhd.dhdGetBaseAngleXDeg.argtypes = [POINTER(c_double), c_byte]
-_libdhd.dhdGetBaseAngleXDeg.argtypes = c_int
+_libdhd.dhdGetBaseAngleXDeg.restype = c_int
 def getBaseAngleXDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
     Get the device base plate angle around the X axis.
@@ -2160,7 +2160,7 @@ def setBaseAngleXDeg(angle: float, ID: int = -1) -> int: # NOQA
 
 
 _libdhd.dhdGetBaseAngleXRad.argtypes = [POINTER(c_double), c_byte]
-_libdhd.dhdGetBaseAngleXRad.argtypes = c_int
+_libdhd.dhdGetBaseAngleXRad.restype = c_int
 def getBaseAngleZRad(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
     Get the device base plate angle around the Z axis.
@@ -2183,7 +2183,7 @@ def getBaseAngleZRad(ID: int = -1) -> Tuple[float, int]: # NOQA
 
 
 _libdhd.dhdGetBaseAngleZDeg.argtypes = [POINTER(c_double), c_byte]
-_libdhd.dhdGetBaseAngleZDeg.argtypes = c_int
+_libdhd.dhdGetBaseAngleZDeg.restype = c_int
 def getBaseAngleZDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
     Get the device base plate angle around the Z axis.
