@@ -6,7 +6,7 @@
 .. moduleauthor:: Drason Chow <drasonchow@gmail.com>
 """
 
-__all__ = ['constants', 'expert']
+__all__ = ['expert']
 
 
 import forcedimension.runtime as runtime
@@ -16,7 +16,7 @@ from typing import Tuple, List, Union, Optional
 from ctypes import c_int, c_uint, c_bool, c_byte, c_ushort, c_char_p, c_double
 from ctypes import byref, POINTER
 
-from forcedimension.dhd.bindings.constants import (
+from forcedimension.dhd.bindings.constants import ( # NOQA
     MAX_DOF, MAX_BUTTONS, TIMEGUARD,
     VELOCITY_WINDOWING, VELOCITY_WINDOW,
     MAX_STATUS,
@@ -42,7 +42,7 @@ def enableSimulator(enable: bool) -> None:  # NOQA
     Enable device simulator support.
     This enables network access on the loopback interface.
 
-    :param : True to enable, False to disable
+    :param enable: True to enable, False to disable
     """
     _libdhd.dhdEnableSimulator(enable)
 
@@ -137,7 +137,7 @@ def open() -> int:  # NOQA
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
-    See also dhd.openID()
+    See also dhd.bindings.openID()
 
     :rtype: int
     :returns: The device ID on success, -1 otherwise.
@@ -157,7 +157,7 @@ def openType(device_type: int) -> int:  # NOQA
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
-    See also dhd.openID()
+    See also dhd.bindings.openID()
 
     :param int device_type: requested system Device Type type
 
@@ -179,7 +179,7 @@ def openSerial(serial: int) -> int:  # NOQA
     device. See the multiple device section for more information on using
     multiple devices on the same computer.
 
-    See also dhd.openID()
+    See also dhd.bindings.openID()
 
     :param int serial: requested system serial number.
 
@@ -204,7 +204,7 @@ def openID(index: int) -> int:  # NOQA
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
-    See also dhd.open()
+    See also dhd.bindings.open()
 
     :param in index: the device enumeration index, as assigned by the
     underlying operating system (must be between 0 and the number of devices
@@ -386,7 +386,10 @@ def getSDKVersion() -> VersionTuple:  # NOQA
     Get the version of the ForceDimensionSDK. Versions of the ForceDimensionSDK
     are reported as major.minor.release-revision by ForceDimension.
 
-    :returns: A tuple in the form (major, minor, release, revision)
+    See also:
+        dhd.bindings.VersionTuple
+
+    :returns: A VersionTuple that represents the version.
     :rtype: VersionTuple
     """
     major = c_int()
@@ -842,7 +845,7 @@ def setDeviceAngleRad(angle: float, ID: int = -1) -> int: # NOQA
     with its base plate perpendicular to axis X. An angle value of pi/2
     corresponds to the device base plate resting horizontally.
 
-    See also dhd.setDeviceAngleDeg()
+    See also dhd.bindings.setDeviceAngleDeg()
 
     :param float angle: device base plate angle [rad]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -868,7 +871,7 @@ def setDeviceAngleDeg(angle: float, ID: int = -1) -> int: # NOQA
     with its base plate perpendicular to axis X. An angle value of 90
     corresponds to the device base plate resting horizontally.
 
-    See also dhd.setDeviceAngleRad()
+    See also dhd.bindings.setDeviceAngleRad()
 
     :param float angle: device base plate angle [deg]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -892,7 +895,7 @@ def setEffectorMass(mass: float, ID: int = -1) -> int: # NOQA
     accurate gravity compensation when custom-made or modified end-effectors
     are used.
 
-    See also dhd.getEffectorMass()
+    See also dhd.bindings.getEffectorMass()
 
     :param float mass: the actual end-effector mass in [kg]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -1390,7 +1393,7 @@ def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
         dhd.bindings.DeviceType.SIGMA331
         dhd.bindings.DeviceType.SIGMA331_LEFT
 
-    See also dhd.getGripperAngleRad()
+    See also dhd.bindings.getGripperAngleRad()
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1420,7 +1423,7 @@ def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]: # NOQA
         dhd.bindings.DeviceType.SIGMA331
         dhd.bindings.DeviceType.SIGMA331_LEFT
 
-   See also dhd.getGripperAngleRad()
+   See also dhd.bindings.getGripperAngleRad()
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
