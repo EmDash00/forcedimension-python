@@ -2845,3 +2845,50 @@ def getMaxGripperForce(ID: int = -1) -> float: # NOQA
     """
 
     return _libdhd.dhdGetMaxGripperForce(ID)
+
+
+_libdhd.dhdErrorGetLast.argtypes = []
+_libdhd.dhdErrorGetLast.restype = c_int
+def errorGetLast() -> Error: # NOQA
+    """
+    Returns the last error code encountered in the running thread.
+
+    See error management for details.
+
+    :rtype: Error
+    :returns: Error enum member corresponding to the last error encountered in
+    the current thread.
+    """
+    return Error(_libdhd.dhdErrorGetLast())
+
+
+_libdhd.dhdErrorGetLastStr.argtypes = []
+_libdhd.dhdErrorGetLastStr.restype = c_char_p
+def errorGetLastStr() -> str: # NOQA
+    """
+    Returns a brief string describing the last error encountered in the running
+    thread.
+
+    See error management for details.
+
+    :rtype: str
+    :returns: string describing the last error encountered in the running
+    thread
+    """
+    return _libdhd.dhdErrorGetLastStr().decode('utf-8')
+
+
+_libdhd.dhdErrorGetStr.argtypes = c_int
+_libdhd.dhdErrorGetStr.restype = c_char_p
+def errorGetStr(error: Error) -> str: # NOQA
+    """
+    Returns a brief string describing a given error code.
+
+    See error management for details.
+
+    :param error: the error code to describe.
+
+    :rtype: str
+    :returns: string describing error
+    """
+    return _libdhd.dhdErrorGetStr(error).decode('utf-8')
