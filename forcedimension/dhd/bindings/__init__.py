@@ -2014,12 +2014,12 @@ def getLinearVelocity( # NOQA
 
     if out is None:
         return ([vx.value, vy.value, vz.value],
-                _libdhd.dhdGetLinearVelocityRad(byref(vx),
-                                                byref(vy),
-                                                byref(vz),
-                                                ID))
+                _libdhd.dhdGetLinearVelocity(byref(vx),
+                                             byref(vy),
+                                             byref(vz),
+                                             ID))
     else:
-        err = _libdhd.dhdGetLinearVelocityRad(
+        err = _libdhd.dhdGetLinearVelocity(
                    byref(vx),
                    byref(vy),
                    byref(vz),
