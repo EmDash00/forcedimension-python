@@ -313,7 +313,7 @@ def enableGripperForce(enable: bool, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdGetSystemType.argtypes = [c_byte]
 _libdhd.dhdGetSystemType.restype = c_int
-def getSystemType(ID: int = -1) -> int:  # NOQA
+def getSystemType(ID: int = -1) -> DeviceType:  # NOQA
     """
     Retrive the COM operation mode on compatible devices.
 
@@ -326,7 +326,7 @@ def getSystemType(ID: int = -1) -> int:  # NOQA
     :returns: The device type on success, -1 otherwise.
     """
 
-    return _libdhd.dhdGetSystemType(ID)
+    return DeviceType(_libdhd.dhdGetSystemType(ID))
 
 
 _libdhd.dhdGetSystemName.argtypes = [c_byte]
@@ -2878,7 +2878,7 @@ def errorGetLastStr() -> str: # NOQA
     return _libdhd.dhdErrorGetLastStr().decode('utf-8')
 
 
-_libdhd.dhdErrorGetStr.argtypes = c_int
+_libdhd.dhdErrorGetStr.argtypes = [c_int]
 _libdhd.dhdErrorGetStr.restype = c_char_p
 def errorGetStr(error: Error) -> str: # NOQA
     """
