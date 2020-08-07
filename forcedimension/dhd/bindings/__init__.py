@@ -34,6 +34,8 @@ from forcedimension.dhd.bindings.adaptors import (
 # Load the runtime from the backend
 _libdhd = runtime.load("libdhd")
 
+if _libdhd is None:
+    raise ImportError("There were problems loading libdhd.")
 
 _libdhd.dhdEnableSimulator.argtypes = [c_bool]
 _libdhd.dhdEnableSimulator.restype = None
