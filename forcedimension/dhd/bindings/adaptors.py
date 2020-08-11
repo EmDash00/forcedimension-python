@@ -40,6 +40,7 @@ class StatusTuple(NamedTuple):
     wrist_init: int
     redundancy: int
     forceoffcause: int
+    unknown_status: int  # TODO: figure out what this is
 
 
 class CartesianTuple(NamedTuple):
