@@ -446,8 +446,10 @@ def getStatus(ID: int = -1) -> Tuple[StatusTuple, int]: # NOQA
 
     status_vec = (c_int * MAX_STATUS)()
 
-    return (StatusTuple._make(status_vec),
-            _libdhd.dhdGetStatus(status_vec, ID))
+    err = _libdhd.dhdGetStatus(status_vec, ID)
+    print(status_vec)
+
+    return (StatusTuple._make(status_vec), err)
 
 
 _libdhd.dhdGetDeviceAngleRad.argtypes = [POINTER(c_double), c_byte]
