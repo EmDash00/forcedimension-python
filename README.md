@@ -32,88 +32,91 @@ Not available at this time.
 
 ### Manually
 
-1. #### Install the [ForceDimensionSDK](https://www.forcedimension.com/download/sdk) for your computer. 
-    By default, the bindings will search in the following system-wide install locations.
-    * System-wide install locations (Linux):
-        - `/usr/local/lib`
-        - `/usr/lib`
-    * System-wide install location (Windows):
-        - `C:\Program Files\ForceDimension\sdk-X.X.X\lib`
+#### Install the [ForceDimensionSDK](https://www.forcedimension.com/download/sdk) for your computer. 
+By default, the bindings will search in the following system-wide install locations.
+* System-wide install locations (Linux):
+    - `/usr/local/lib`
+    - `/usr/lib`
+* System-wide install location (Windows):
+    - `C:\Program Files\ForceDimension\sdk-X.X.X\lib`
 
-    ##### System-wide install for Linux
+##### Non-system-wide Installs
 
-    This requires extra steps since the Makefile for the ForceDimensionSDK does not offer a `make install` target for a system-wide install; therefore you must manually copy from:  
-    
-    `lib/release/lin-*-gcc` to `/usr/local/lib`  
-    `include` to `/usr/local/include`  
+If you do not wish to make a system-wide installation set the FORCEDIM_SDK environment variable to the root folder of the ForceDimensionSDK installation (the `lib` folder should be one level under the root installation folder)
 
-     MAKE SURE the libraries have `755` level access using `chmod`. If they don't applications cannot link or load them.
+##### System-wide install for Linux
 
-    Finally, make a symbolic link  to libdhd and libdrd that drop the version so they end in `.so`. This can be automated and made reversible by adding the following targets to the ForceDimensionSDK Makefile.
+This requires extra steps since the Makefile for the ForceDimensionSDK does not offer a `make install` target for a system-wide install.
 
-        <!-- language: make -->
-        install:
-        	cp include/* /usr/local/include
-        	cp lib/release/lin-*-gcc/* /usr/local/lib
-        	chmod 755 /usr/local/lib/libdhd.so.3.9.1
-        	chmod 755 /usr/local/lib/libdrd.so.3.9.1
-        	chmod 755 /usr/local/lib/libdhd.a
-        	chmod 755 /usr/local/lib/libdrd.a
-        	ln -s /usr/local/lib/libdhd.so /usr/local/lib/libdhd.so.3.9.1
-        	ln -s /usr/local/lib/libdrd.so /usr/local/lib/libdrd.so.3.9.1
-        
-        
-        uninstall:
-        	rm /usr/local/include/dhdc.h
-        	rm /usr/local/include/drdc.h
-        	rm /usr/local/lib/libdhd.a
-        	rm /usr/local/lib/libdhd.so.3.9.1
-        	rm /usr/local/lib/libdhd.so
-        	rm /usr/local/lib/libdrd.a
-        	rm /usr/local/lib/libdrd.so.3.9.1
-        	rm /usr/local/lib/libdrd.so
- 
-2. (Optional) If you do not wish to make a system-wide installation set the FORCEDIM_SDK environment variable to the root folder of the ForceDimensionSDK installation (the `lib` folder should be one level under the root installation folder)
+1. Copy all files from `lib/release/lin-*-gcc` to `/usr/local/lib`  
+2. Copy all files from `include` to `/usr/local/include`  
 
+3. MAKE SURE the libraries have `755` level access using `chmod`. If they don't applications cannot link or load them.
 
-3. #### Driver installation
+4. Make a symbolic link to libdhd and libdrd that drop the version so they end in `.so`, so that the file names are `libdhd.so` and `libdrd.so`
 
-    ##### Windows
+These steps can be automated by adding these targets to the Makefile.
 
-    Device Manager is a Windows tool that can be used to see connected devices, their statuses, driver information, and driver installation.
-    
-    The easiest way to bring it up is to use the windows search bar on Windows 10 and search “Device Manager”. Regardless of the method used, you will need administrator level privileges to launch the Device Manager.
-    
-    Find your haptics device and right-click on it and open `Properities`. Do `Update driver>Browse my computer for driver software` and specify the drivers listed under the `drivers\usb` in the root install directory. Try restarting if drivers are not detected or changes do not take place.  
+```makefile
+install:
+	cp include/* /usr/local/include
+	cp lib/release/lin-*-gcc/* /usr/local/lib
+	chmod 755 /usr/local/lib/libdhd.so.3.9.1
+	chmod 755 /usr/local/lib/libdrd.so.3.9.1
+	chmod 755 /usr/local/lib/libdhd.a
+	chmod 755 /usr/local/lib/libdrd.a
+	ln -s /usr/local/lib/libdhd.so /usr/local/lib/libdhd.so.3.9.1
+	ln -s /usr/local/lib/libdrd.so /usr/local/lib/libdrd.so.3.9.1
+```
 
-    Your device should now be listed under `USB Haptic Devices`
+```makefile
+uninstall:
+	rm /usr/local/include/dhdc.h
+	rm /usr/local/include/drdc.h
+	rm /usr/local/lib/libdhd.a
+	rm /usr/local/lib/libdhd.so.3.9.1
+	rm /usr/local/lib/libdhd.so
+	rm /usr/local/lib/libdrd.a
+	rm /usr/local/lib/libdrd.so.3.9.1
+	rm /usr/local/lib/libdrd.so
+```
+#### Driver installation
 
-    ##### Linux
+##### Windows
 
-    Add a udev rule under `/etc/udev/rules.d` for your device. Here's an explaination from the [Arch Linux Wiki](https://wiki.archlinux.org/index.php/Udev#Waking_from_suspend_with_USB_device) about what they are and here's a good udev file for the [Novint Falcon](https://github.com/libnifalcon/libnifalcon/blob/master/linux/40-novint-falcon-udev.rules).
+Device Manager is a Windows tool that can be used to see connected devices, their statuses, driver information, and driver installation.
 
-    A good way to find the USB bus of the device is by unplugging the device, doing `ls -l /dev/bus/usb/00*`, replugging, the device and then performing it again. 
+The easiest way to bring it up is to use the windows search bar on Windows 10 and search “Device Manager”. Regardless of the method used, you will need administrator level privileges to launch the Device Manager.
 
-    MAKE SURE you unplug the USB and not just the power because the unpowering the device does not unpower the USB communications (which get power through the computer).
+Find your haptics device and right-click on it and open `Properities`. Do `Update driver>Browse my computer for driver software` and specify the drivers listed under the `drivers\usb` in the root install directory. Try restarting if drivers are not detected or changes do not take place.  
 
-    Then perform lsusb and note the ID of your device, which is in the format `idVendor:idPorduct`
+Your device should now be listed under `USB Haptic Devices`
 
- 
-4. #### Python Bindings Installation
+##### Linux
 
-    ##### System wide
-    
-    Clone this repository using `git clone https://github.com/EmDash00/forcedimension-python.git` or your choice in version control software.
-    
-    Add the folder you cloned the repo into to your `PYTHONPATH` environment variable.
+Add a udev rule under `/etc/udev/rules.d` for your device. Here's an explaination from the [Arch Linux Wiki](https://wiki.archlinux.org/index.php/Udev#Waking_from_suspend_with_USB_device) about what they are and here's a good udev file for the [Novint Falcon](https://github.com/libnifalcon/libnifalcon/blob/master/linux/40-novint-falcon-udev.rules).
 
-    ##### Locally (recommended)
+A good way to find the USB bus of the device is by unplugging the device, doing `ls -l /dev/bus/usb/00*`, replugging, the device and then performing it again. 
 
-    Add this repository as a submodule to a project
-    
-        <!-- language: bash -->
-        cd /path/to/project/folder
-        git submodule add https://github.com/EmDash00/forcedimension-python.git 
-        git commit -m "Added forcedimension to my project"
+MAKE SURE you unplug the USB and not just the power because the unpowering the device does not unpower the USB communications (which get power through the computer).
 
+Then perform `lsusb` and note the ID of your device, which is in the format `idVendor:idPorduct`
+
+#### Python Bindings Installation
+
+##### System wide
+
+Clone this repository using `git clone https://github.com/EmDash00/forcedimension-python.git` or your choice in version control software.
+
+Add the folder you cloned the repo into to your `PYTHONPATH` environment variable.
+
+##### Locally (recommended)
+
+Add this repository as a submodule to a project
+
+```bash
+cd /path/to/project/folder
+git submodule add https://github.com/EmDash00/forcedimension-python.git 
+git commit -m "Added forcedimension to my project"
+```
 
