@@ -108,6 +108,19 @@ def setDevice(ID: int = -1) -> int:  # NOQA
     return _libdhd.setDevice(ID)
 
 
+_libdhd.dhdGetDeviceID.argtypes = []
+_libdhd.dhdGetDeviceID.restype = c_int
+def getDeviceID() -> int: # NOQA
+    """
+    Get the ID of the current default device.
+
+    :rtype: int
+    :returns: the ID of the current default device
+    """
+
+    return _libdhd.dhdGetDeviceID()
+
+
 _libdhd.dhdGetSerialNumber.argtypes = [POINTER(c_ushort), c_byte]
 _libdhd.dhdGetSerialNumber.restype = c_int
 def getSerialNumber(ID: int = -1) -> Tuple[int, int]:  # NOQA
@@ -433,8 +446,10 @@ def getStatus(ID: int = -1) -> Tuple[StatusTuple, int]: # NOQA
 
     status_vec = (c_int * MAX_STATUS)()
 
-    return (StatusTuple._make(status_vec),
-            _libdhd.dhdGetStatus(status_vec, ID))
+    err = _libdhd.dhdGetStatus(status_vec, ID)
+    print(status_vec)
+
+    return (StatusTuple._make(status_vec), err)
 
 
 _libdhd.dhdGetDeviceAngleRad.argtypes = [POINTER(c_double), c_byte]
