@@ -6,7 +6,9 @@ Written and Mantained By: The Rothlab at IU: Bloomington
 
 * Drason Chow ([EmDash00](https://github.com/EmDash00))
     - forcedimension.runtime
-    - forcedimension.dhd.bindings.standard.py
+    - forcedimension.dhd.bindings
+    - forcedimension.dhd.bindings.expert
+    - forcedimension.dhd.bindings.adaptors
 
 ## About
 
