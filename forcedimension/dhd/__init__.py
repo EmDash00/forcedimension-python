@@ -8,12 +8,13 @@
 
 __all__ = ['bindings']
 
+from threading import Thread
 from collections import UserList
-from typing import List, Optional
-from abc import ABC, abstractmethod
+from typing import List, Iterable, Optional
 
 import forcedimension.dhd.bindings as libdhd
 from forcedimension.dhd.bindings import DeviceType
+from forcedimension.dhd.bindings.adaptors import StatusTuple
 
 
 class EuclideanVector(UserList):
@@ -49,7 +50,7 @@ class EuclideanVector(UserList):
 
 
 def NumpyVector():
-    import numpy as np
+    import numpy as np  # type: ignore
 
     return (np.zeros(3))
 
@@ -66,21 +67,13 @@ class Gripper:
         pass
 
 
-class EndEffector:
-    def __init__(self, ID: Optional[int] = None):
-        if ID is not None:
-            if (ID < 0):
-                raise ValueError("ID must be greater than 0.")
-
-            self.id = ID
-
-
 class HapticDevice:
     def __init__(
             self,
             ID: Optional[int] = None,
             devtype: Optional[DeviceType] = None,
-            vecgen=EuclideanVector):
+            vecgen=EuclideanVector,
+            safe=True):
         """
         Create a handle to a ForceDimension haptic device.
 
@@ -108,60 +101,87 @@ class HapticDevice:
 
         self._vecgen = vecgen
 
-        self._pos = None
-        self._w = None
-        self._v = None
-        self._f = None
-        self._t = None
+        self._pos: Optional[Iterable[float]] = None
+        self._w: Optional[Iterable[float]] = None
+        self._v: Optional[Iterable[float]] = None
+        self._f: Optional[Iterable[float]] = None
+        self._t: Optional[Iterable[float]] = None
 
         self.gripper = None
 
         self.devtype = devtype
 
+        self._thread_exception = None
+
     @property
     def ID(self):
+        self.check_threadex()
         return self._id
 
     @property
     def pos(self):
+        self.check_threadex()
         return self._pos
 
     @property
     def v(self):
+        self.check_threadex()
         return self._v
 
     @property
     def w(self):
+        self.check_threadex()
         return self._w
 
     @property
     def t(self):
+        self.check_threadex()
         return self._t
 
     @property
     def f(self):
+        self.check_threadex()
         return self._f
 
-    def get_status(self):
-        return libdhd.getStatus(ID=self._id)
+    def get_status(self) -> StatusTuple:
+        status, err = libdhd.getStatus(ID=self._id)
 
-    def update_position(self):
-        libdhd.getPosition(ID=self._id, out=self.pos)
+        if (err):
+            raise RuntimeError(libdhd.errorGetLastStr())
+
+        return status
+
+    def update_position(self) -> None:
+        if (libdhd.getPosition(ID=self._id, out=self._pos)):
+            raise RuntimeError(libdhd.errorGetLastStr())
 
     def update_velocity(self):
-        libdhd.getLinearVelocity(ID=self._id, out=self.v)
+        if (libdhd.getLinearVelocity(ID=self._id, out=self._v)):
+            raise RuntimeError(libdhd.errorGetLastStr())
 
     def update_angular_velocity(self):
-        libdhd.getAngularVelocityRad(ID=self._id, out=self.v)
+        if (libdhd.getAngularVelocityRad(ID=self._id, out=self._w)):
+            raise RuntimeError(libdhd.errorGetLastStr())
 
     def update_force(self):
-        libdhd.getForce(ID=self._id, out=self._f)
+        if (libdhd.getForce(ID=self._id, out=self._f)):
+            raise RuntimeError(libdhd.errorGetLastStr())
 
     def update_torque(self):
-        libdhd.getForce(ID=self._id, out=self._t)
+        if(libdhd.getForce(ID=self._id, out=self._t)):
+            raise RuntimeError(libdhd.errorGetLastStr())
 
     def update_force_and_torque(self):
-        libdhd.getForceAndTorque(ID=self._id, f_out=self._f, t_out=self._t)
+        if (libdhd.getForceAndTorque(ID=self._id,
+                                     f_out=self._f, t_out=self._t)):
+
+            raise RuntimeError(libdhd.errorGetLastStr())
+
+    def update_all(self):
+        self.update_position()
+        self.update_velocity()
+        self.update_angular_velocity()
+        self.update_force_and_torque()
 
     def __enter__(self):
         VecGen = self._vecgen
@@ -178,8 +198,11 @@ class HapticDevice:
 
         if (libdhd.getDeviceCount() > 0):
             if self._id is None:
-                self._id = libdhd.openType(self.devtype)
-                self.devtype = libdhd.getSystemType()
+                if (self.devtype is None):
+                    self._id = libdhd.open()
+                    self.devtype = libdhd.getSystemType()
+                else:
+                    self._id = libdhd.openType(self.devtype)
 
                 if (self.devtype == -1):
                     raise RuntimeError(libdhd.errorGetLastStr())
@@ -211,3 +234,13 @@ class HapticDevice:
         libdhd.close(self._id)
 
 
+class Poller(Thread):
+    def __init__(self, dev: HapticDevice, update_list=None):
+        self._dev = dev
+        self.daemon = True
+
+    def run(self):
+        try:
+            self._dev.update()
+        except RuntimeError as ex:
+            self._dev.thread_exception = ex
