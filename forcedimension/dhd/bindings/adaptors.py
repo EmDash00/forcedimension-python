@@ -6,7 +6,7 @@
 .. moduleauthor:: Drason Chow <drasonchow@gmail.com>
 """
 
-from typing import NamedTuple
+from typing import NamedTuple, Callable, Optional, Any
 
 
 class VersionTuple(NamedTuple):
@@ -79,3 +79,165 @@ class DOFTuple(NamedTuple):
     dof5: int
     dof6: int
     dof7: int
+
+
+class DHDErrorCom(IOError):
+    def __init__(self):
+        return super().__init__("Communication error between the HapticDevice "
+                                "and the host computer.")
+
+
+class DHDErrorBusy(IOError):
+    def __init__(self):
+        return super().__init__("The device controller is busy and cannot "
+                                "perform the required task")
+
+
+class DHDErrorNoDriverFound(IOError):
+    def __init__(self, ID: Optional[int] = None):
+        if (ID is not None):
+            specification = " for device ID {} ".format(ID)
+        else:
+            specification = " "
+
+        return super().__init__("A required device driver{}is not installed, "
+                                "please refer to your user manual's "
+                                "instalation section".format(specification))
+
+
+class DHDErrorNoDeviceFound(IOError):
+    def __init__(self):
+        return super().__init__("No compatible force dimension device was "
+                                "found. ")
+
+
+class DHDErrorNotAvailable(Exception):
+    def __init__(
+        self,
+        feature: Optional[Callable[[Any], Any]],
+        ID: Optional[int] = None
+    ):
+
+        if feature is not None:
+            feature_str = "{}".format(feature)
+        else:
+            feature_str = "The requested feature"
+
+        if ID is not None:
+            spec = "device ID {}".format(ID)
+        else:
+            spec = "the ."
+
+        return super().__init__("{} is not avaiable for "
+                                "{}.".format(feature_str, spec))
+
+
+class DHDErrorTimeout(IOError):
+    def __init__(
+        self,
+        operation: Optional[Callable[[Any], Any]],
+        ID: Optional[int] = None
+    ):
+        if (operation is not None):
+            op_str = "{}".format(operation)
+        else:
+            op_str = "The operation"
+
+        if (ID is not None):
+            spec = " on device ID {}".format(ID)
+        else:
+            spec = ""
+
+        return super().__init__("{} has timed out{}.".format(op_str, spec))
+
+
+class DHDErrorGeometry(IOError):
+    def __init__(self, ID: Optional[int] = None):
+
+        if (ID is not None):
+            spec = "device ID {}".format(ID)
+        else:
+            spec = "the device"
+
+        return super().__init__("An error has occured within {} "
+                                "geometric model".format(spec))
+
+
+class DHDErrorExpertModeDisabled(Exception):
+    def __init__(self, feature):
+        return super().__init__("{} is not available because expert mode is "
+                                "disabled.".format(feature))
+
+
+class DHDErrorDeviceNotReady(Exception):
+    def __init__(
+        self,
+        cmd: Optional[Callable[[Any], Any]],
+        ID: Optional[int] = None
+    ):
+
+        if cmd is not None:
+            cmd_str = "The {} feature".format(cmd)
+        else:
+            cmd_str = "The requested command"
+
+        if ID is not None:
+            spec = "device ID {} ".format(ID)
+        else:
+            spec = "the device"
+
+        return super().__init__("{} is not ready to process on "
+                                "{}.".format(cmd_str, spec))
+
+
+class DHDErrorConfiguration(IOError):
+    def __init__(self, ID: Optional[int] = None):
+        if ID is not None:
+            spec = "device ID {}'s ".format(ID)
+        else:
+            spec = "the device"
+
+        super().__init__("There was an error trying to read/write the "
+                         "calibration data into {} memory".format(spec))
+
+
+class DHDErrorRedundantFail(Exception):
+    def __init__(self, ID: Optional[int] = None):
+        if ID is not None:
+            spec = " on device ID {}".format(ID)
+        else:
+            spec = ""
+
+        super().__init__("The redundant encoder integrity "
+                         "test failed{}.".format(spec))
+
+
+class DHDErrorNotEnabled(Exception):
+    def __init__(
+        self,
+        cmd: Optional[Callable[[Any], Any]],
+        ID: Optional[int] = None
+    ):
+
+        if cmd is not None:
+            cmd_str = "The {} feature".format(cmd)
+        else:
+            cmd_str = "A particular feature"
+
+        if ID is not None:
+            spec = "device ID {} ".format(ID)
+        else:
+            spec = "the device."
+
+        return super().__init__("{} is not enabled on "
+                                "{}.".format(cmd_str, spec))
+
+
+class DHDErrorDeviceInUse(IOError):
+    def __init__(self, ID: Optional[int] = None):
+        if ID is not None:
+            spec = "Device ID {}".format(ID)
+        else:
+            spec = "The device"
+
+        super().__init__("{} is already in use".format(spec))
