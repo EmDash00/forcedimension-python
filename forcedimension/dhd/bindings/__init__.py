@@ -21,7 +21,7 @@ from forcedimension.dhd.bindings.constants import ( # NOQA
     VELOCITY_WINDOWING, VELOCITY_WINDOW,
     MAX_STATUS,
     MOTOR_SATURATED,
-    DeviceType, Error,
+    DeviceType, ErrorNum,
     DeltaMotorID, DeltaEncID,
     WristMotorID, WristEncID,
     State, StatusIndex, ComMode, ThreadPriority
@@ -2866,7 +2866,7 @@ def getMaxGripperForce(ID: int = -1) -> float: # NOQA
 
 _libdhd.dhdErrorGetLast.argtypes = []
 _libdhd.dhdErrorGetLast.restype = c_int
-def errorGetLast() -> Error: # NOQA
+def errorGetLast() -> ErrorNum: # NOQA
     """
     Returns the last error code encountered in the running thread.
 
@@ -2876,7 +2876,7 @@ def errorGetLast() -> Error: # NOQA
     :returns: Error enum member corresponding to the last error encountered in
     the current thread.
     """
-    return Error(_libdhd.dhdErrorGetLast())
+    return ErrorNum(_libdhd.dhdErrorGetLast())
 
 
 _libdhd.dhdErrorGetLastStr.argtypes = []
@@ -2897,7 +2897,7 @@ def errorGetLastStr() -> str: # NOQA
 
 _libdhd.dhdErrorGetStr.argtypes = [c_int]
 _libdhd.dhdErrorGetStr.restype = c_char_p
-def errorGetStr(error: Error) -> str: # NOQA
+def errorGetStr(error: ErrorNum) -> str: # NOQA
     """
     Returns a brief string describing a given error code.
 

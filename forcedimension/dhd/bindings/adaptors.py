@@ -7,6 +7,7 @@
 """
 
 from typing import NamedTuple, Callable, Optional, Any
+from forcedimension.dhd.bindings.constants import ErrorNum
 
 
 class VersionTuple(NamedTuple):
@@ -81,13 +82,18 @@ class DOFTuple(NamedTuple):
     dof7: int
 
 
+class DHDError(Exception):
+    def __init__(self, msg="Undocumented error."):
+        return super().__init__(msg)
+
+
 class DHDErrorCom(IOError):
     def __init__(self):
         return super().__init__("Communication error between the HapticDevice "
                                 "and the host computer.")
 
 
-class DHDErrorBusy(IOError):
+class DHDErrorDHCBusy(IOError):
     def __init__(self):
         return super().__init__("The device controller is busy and cannot "
                                 "perform the required task")
@@ -241,3 +247,30 @@ class DHDErrorDeviceInUse(IOError):
             spec = "The device"
 
         super().__init__("{} is already in use".format(spec))
+
+
+_error = [
+    None,
+    DHDError,
+    DHDErrorCom,
+    DHDErrorDHCBusy,
+    DHDErrorNoDriverFound,
+    DHDErrorNoDeviceFound,
+    DHDErrorNotAvailable,
+    DHDErrorTimeout,
+    DHDErrorGeometry,
+    DHDErrorExpertModeDisabled,
+    NotImplementedError,
+    MemoryError,
+    DHDErrorDeviceNotReady,
+    FileNotFoundError,
+    DHDErrorConfiguration,
+    ValueError,
+    DHDErrorRedundantFail,
+    DHDErrorNotEnabled,
+    DHDErrorDeviceInUse
+]
+
+
+def errno_to_exception(errno: ErrorNum):
+    return _error[errno]

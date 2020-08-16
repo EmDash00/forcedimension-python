@@ -37,7 +37,7 @@ class DeviceType(IntEnum):
     DELTA3 = 63
 
 
-class Error(IntEnum):
+class ErrorNum(IntEnum):
     NO_ERROR = 0
     ERROR = 1
     COM = 2
