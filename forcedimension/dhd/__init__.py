@@ -14,7 +14,11 @@ from typing import List, Iterable, Optional
 
 import forcedimension.dhd.bindings as libdhd
 from forcedimension.dhd.bindings import DeviceType
-from forcedimension.dhd.bindings.adaptors import StatusTuple
+from forcedimension.dhd.bindings.adaptors import (
+    StatusTuple,
+    DHDErrorNoDeviceFound,
+    errno_to_exception
+)
 
 
 class EuclideanVector(UserList):
@@ -72,8 +76,7 @@ class HapticDevice:
             self,
             ID: Optional[int] = None,
             devtype: Optional[DeviceType] = None,
-            vecgen=EuclideanVector,
-            safe=True):
+            vecgen=EuclideanVector):
         """
         Create a handle to a ForceDimension haptic device.
 
@@ -147,35 +150,35 @@ class HapticDevice:
         status, err = libdhd.getStatus(ID=self._id)
 
         if (err):
-            raise RuntimeError(libdhd.errorGetLastStr())
+            raise errno_to_exception(libdhd.errorGetLast())
 
         return status
 
     def update_position(self) -> None:
         if (libdhd.getPosition(ID=self._id, out=self._pos)):
-            raise RuntimeError(libdhd.errorGetLastStr())
+            raise errno_to_exception(libdhd.errorGetLast())
 
     def update_velocity(self):
         if (libdhd.getLinearVelocity(ID=self._id, out=self._v)):
-            raise RuntimeError(libdhd.errorGetLastStr())
+            raise errno_to_exception(libdhd.errorGetLast())
 
     def update_angular_velocity(self):
         if (libdhd.getAngularVelocityRad(ID=self._id, out=self._w)):
-            raise RuntimeError(libdhd.errorGetLastStr())
+            raise errno_to_exception(libdhd.errorGetLast())
 
     def update_force(self):
         if (libdhd.getForce(ID=self._id, out=self._f)):
-            raise RuntimeError(libdhd.errorGetLastStr())
+            raise errno_to_exception(libdhd.errorGetLast())
 
     def update_torque(self):
         if(libdhd.getForce(ID=self._id, out=self._t)):
-            raise RuntimeError(libdhd.errorGetLastStr())
+            raise errno_to_exception(libdhd.errorGetLast())
 
     def update_force_and_torque(self):
         if (libdhd.getForceAndTorque(ID=self._id,
                                      f_out=self._f, t_out=self._t)):
 
-            raise RuntimeError(libdhd.errorGetLastStr())
+            raise errno_to_exception(libdhd.errorGetLast())
 
     def update_all(self):
         self.update_position()
@@ -193,8 +196,8 @@ class HapticDevice:
         self._t = VecGen()
 
         if (len(self._pos) < 3):
-            raise ValueError("vecgen did not create a container with at least"
-                             " length 3.")
+            raise ValueError("vecgen did not create a container with at least "
+                             "length 3.")
 
         if (libdhd.getDeviceCount() > 0):
             if self._id is None:
@@ -205,20 +208,20 @@ class HapticDevice:
                     self._id = libdhd.openType(self.devtype)
 
                 if (self.devtype == -1):
-                    raise RuntimeError(libdhd.errorGetLastStr())
+                    raise errno_to_exception(libdhd.errorGetLast())
 
             else:
                 libdhd.openID(self._id)
                 if (self._id == -1):
-                    raise IOError(libdhd.errorGetLastStr())
+                    raise errno_to_exception(libdhd.errorGetLast())
 
                 devtype = libdhd.getSystemType()
 
                 if (devtype == -1):
-                    raise RuntimeError(libdhd.errorGetLastStr())
+                    raise errno_to_exception(libdhd.errorGetLast())
 
                 if (self.devtype != devtype):
-                    raise RuntimeError(
+                    raise Exception(
                         "Device is not of type {}".format(self.devtype))
 
             if (libdhd.hasGripper(self._id)):
@@ -226,7 +229,7 @@ class HapticDevice:
 
             self.update()
         else:
-            raise RuntimeError("There are no devices connected to the system.")
+            raise DHDErrorNoDeviceFound()
 
         return self
 
