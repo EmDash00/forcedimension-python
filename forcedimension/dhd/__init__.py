@@ -10,7 +10,7 @@ __all__ = ['bindings']
 
 from threading import Thread
 from collections import UserList
-from typing import List, Iterable, Optional
+from typing import List, MutableSequence, Optional
 
 import forcedimension.dhd.bindings as libdhd
 from forcedimension.dhd.bindings import DeviceType
@@ -104,11 +104,11 @@ class HapticDevice:
 
         self._vecgen = vecgen
 
-        self._pos: Optional[Iterable[float]] = None
-        self._w: Optional[Iterable[float]] = None
-        self._v: Optional[Iterable[float]] = None
-        self._f: Optional[Iterable[float]] = None
-        self._t: Optional[Iterable[float]] = None
+        self._pos: Optional[MutableSequence[float]] = None
+        self._w: Optional[MutableSequence[float]] = None
+        self._v: Optional[MutableSequence[float]] = None
+        self._f: Optional[MutableSequence[float]] = None
+        self._t: Optional[MutableSequence[float]] = None
 
         self.gripper = None
 
