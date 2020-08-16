@@ -7,7 +7,6 @@
 """
 
 from enum import IntEnum
-from typing import NamedTuple
 
 MAX_DOF: int = 8
 MAX_BUTTONS: int = 16

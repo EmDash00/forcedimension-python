@@ -11,7 +11,7 @@ __all__ = ['expert']
 
 import forcedimension.runtime as runtime
 
-from typing import Tuple, List, Union, Optional
+from typing import Tuple, MutableSequence, Union, Optional
 
 from ctypes import c_int, c_uint, c_bool, c_byte, c_ushort, c_char_p, c_double
 from ctypes import byref, POINTER
@@ -939,8 +939,10 @@ _libdhd.dhdGetPosition.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetPosition.restype = c_int
-def getPosition(ID: int = -1, # NOQA
-                out: Optional[List[float]] = None) -> Tuple[List[float], int]:
+def getPosition( # NOQA
+    ID: int = -1,
+    out: Optional[MutableSequence[float]] = None
+) -> Tuple[MutableSequence[float], int]:
     """
     Retrieve the position of the end-effector in Cartesian coordinates. Please
     refer to your device user manual for more information on your device
@@ -949,9 +951,10 @@ def getPosition(ID: int = -1, # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[float]] out: list to use instead of generating a new
-    list. If this is specified, the list provided will be updated with the new
-    values and the return will be a reference to the same list.
+    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
     :raises TypeError: if out is specified and does not support item
     assignment either because its immutable or not subscriptable.
@@ -964,7 +967,7 @@ def getPosition(ID: int = -1, # NOQA
     px, py, pz are the position of the end-effector about the X, Y, and Z axes,
     respectively in [m]
 
-    :rtype: Tuple[List[float], int]
+    :rtype: Tuple[MutableSequence[float], int]
     """
 
     px = c_double()
@@ -990,8 +993,10 @@ _libdhd.dhdGetForce.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetForce.restype = c_int
-def getForce(ID: int = -1, # NOQA
-             out: Optional[List[float]] = None) -> Tuple[List[float], int]:
+def getForce( # NOQA
+    ID: int = -1,
+    out: Optional[MutableSequence[float]] = None
+) -> Tuple[MutableSequence[float], int]:
     """
     Retrieve the force vector applied to the end-effector in Cartesian
     coordinates. Please refer to your device user manual for more information
@@ -1000,10 +1005,10 @@ def getForce(ID: int = -1, # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[float]] out: OPTIONAL list to use instead of
-    generating a new list. If this is specified, the list provided will be
-    updated with the new values and the return will be a reference to the same
-    list.
+    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
     :raises TypeError: if out is specified and does not support item
     assignment either because its immutable or not subscriptable.
@@ -1016,7 +1021,7 @@ def getForce(ID: int = -1, # NOQA
     :returns: A tuple in the form ([fx, fy, fz], err) where err is either 0,
     -1 otherwise.
 
-    :rtype: Tuple[List[float], int]
+    :rtype: Tuple[MutableSequence[float], int]
     """
 
     fx = c_double()
@@ -1059,7 +1064,7 @@ def setForce(f: CartesianTuple, ID: int = -1) -> int:  # NOQA
 
     :returns: 0 or dhd.MOTOR_SATURATED on success -1 otherwise.
 
-    :rtype: Tuple[List[float], int]
+    :rtype: Tuple[MutableSequence[float], int]
     """
 
     return _libdhd.dhdSetForce(f[0], f[1], f[2], ID)
@@ -1069,8 +1074,8 @@ _libdhd.dhdGetOrientationRad.argtypes = [c_byte]
 _libdhd.dhdGetOrientationRad.restype = c_int
 def getOrientationRad( # NOQA
                         ID: int = -1,
-                        out: Optional[List[float]] = None
-                     ) -> Tuple[List[float], int]:
+                        out: Optional[MutableSequence[float]] = None
+                     ) -> Tuple[MutableSequence[float], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1096,10 +1101,10 @@ def getOrientationRad( # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[float]] out: OPTIONAL list to use instead of
-    generating a new list. If this is specified, the list provided will be
-    updated with the new values and the return will be a reference to the same
-    list.
+    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
     :raises TypeError: if out is specified and does not support item
     assignment either because its immutable or not subscriptable.
@@ -1114,7 +1119,7 @@ def getOrientationRad( # NOQA
     success, -1 otherwise. oa, ob, and og refer to the device orientation
     around the first, second, and third wrist joints, respectively, in [rad]
 
-    :rtype: Tuple[List[float], int]
+    :rtype: Tuple[MutableSequence[float], int]
     """
 
     oa = c_double()
@@ -1149,8 +1154,8 @@ _libdhd.dhdGetOrientationDeg.argtypes = [c_byte]
 _libdhd.dhdGetOrientationDeg.restype = c_int
 def getOrientationDeg( # NOQA
                         ID: int = -1,
-                        out: Optional[List[float]] = None
-                     ) -> Tuple[List[float], int]:
+                        out: Optional[MutableSequence[float]] = None
+                     ) -> Tuple[MutableSequence[float], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1175,10 +1180,10 @@ def getOrientationDeg( # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[float]] out: OPTIONAL list to use instead of
-    generating a new list. If this is specified, the list provided will be
-    updated with the new values and the return will be a reference to the same
-    list.
+    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
     :raises TypeError: if out is specified and does not support item
     assignment either because its immutable or not subscriptable.
@@ -1193,7 +1198,7 @@ def getOrientationDeg( # NOQA
     refer to the device orientation around the first, second, and third wrist
     joints, respectively, in [deg]
 
-    :rtype: Tuple[List[float], int]
+    :rtype: Tuple[MutableSequence[float], int]
     """
 
     oa = c_double()
@@ -1236,9 +1241,9 @@ _libdhd.dhdGetPositionAndOrientationRad.argtypes = [
 _libdhd.dhdGetPositionAndOrientationRad.restype = c_int
 def getPositionAndOrientationRad( # NOQA
         ID: int = -1,
-        p_out: Optional[List[float]] = None,
-        o_out: Optional[List[float]] = None
-    ) -> Tuple[List[float], List[float], int]:
+        p_out: Optional[MutableSequence[float]] = None,
+        o_out: Optional[MutableSequence[float]] = None
+    ) -> Tuple[MutableSequence[float], MutableSequence[float], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1263,15 +1268,15 @@ def getPositionAndOrientationRad( # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[float]] p_out: OPTIONAL list to use for position
-    output instead of generating a new list. If this is specified, the list
-    provided will be updated with the new values and the force return will be a
-    reference to the same list.
+    :param Optional[MutableSequence[float]] p_out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
-    :param Optional[List[float]] o_out: OPTIONAL list to use for orientation
-    output instead of generating a new list. If this is specified, the list
-    provided will be updated with the new values and the force return will be a
-    reference to the same list.
+    :param Optional[MutableSequence[float]] o_out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
     :raises TypeError: if p_out is specified and does not support item
     assignment either because its immutable or not subscriptable.
@@ -1289,7 +1294,7 @@ def getPositionAndOrientationRad( # NOQA
     joints, respectively, in [rad], and [px, py, pz] is the position about the
     X, Y, and Z axes, respectively in [m].
 
-    :rtype: Tuple[List[float], List[float], int]
+    :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
     """
 
     px = c_double()
@@ -1335,9 +1340,9 @@ _libdhd.dhdGetPositionAndOrientationDeg.argtypes = [
 _libdhd.dhdGetPositionAndOrientationDeg.restype = c_int
 def getPositionAndOrientationDeg( # NOQA
         ID: int = -1,
-        p_out: Optional[List[float]] = None,
-        o_out: Optional[List[float]] = None
-    ) -> Tuple[List[float], List[float], int]:
+        p_out: Optional[MutableSequence[float]] = None,
+        o_out: Optional[MutableSequence[float]] = None
+    ) -> Tuple[MutableSequence[float], MutableSequence[float], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1362,15 +1367,16 @@ def getPositionAndOrientationDeg( # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[float]] p_out: OPTIONAL list to use for position
-    output instead of generating a new list. If this is specified, the list
-    provided will be updated with the new values and the force return will be a
-    reference to the same list.
+    :param Optional[MutableSequence[float]] p_out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
-    :param Optional[List[float]] t_out: OPTIONAL list to use for orientation
-    output instead of generating a new list. If this is specified, the list
-    provided will be updated with the new values and the force return will be a
-    reference to the same list.
+
+    :param Optional[MutableSequence[float]] t_out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
     :raises TypeError: if p_out is specified and does not support item
     assignment either because its immutable or not subscriptable.
@@ -1388,7 +1394,7 @@ def getPositionAndOrientationDeg( # NOQA
     joints, respectively, in [deg], and [px, py, pz] is the position about the
     X, Y, and Z axes, respectively in [m].
 
-    :rtype: Tuple[List[float], List[float], int]
+    :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
     """
 
     px = c_double()
@@ -1432,9 +1438,13 @@ _libdhd.dhdGetPositionAndOrientationFrame.argtypes = [
 _libdhd.dhdGetPositionAndOrientationFrame.restype = c_int
 def getPositionAndOrientationFrame( # NOQA
         ID: int = -1,
-        p_out: Optional[List[float]] = None,
-        matrix_out: Optional[List[List[float]]] = None
-    ) -> Tuple[List[float], List[List[float]], int]:
+        p_out: Optional[MutableSequence[float]] = None,
+        matrix_out: Optional[MutableSequence[MutableSequence[float]]] = None
+    ) -> Tuple[
+            MutableSequence[float],
+            MutableSequence[MutableSequence[float]],
+            int
+    ]:
     """
     Retrieve the position and orientation matrix of the end-effector in
     Cartesian coordinates. Please refer to your device user manual for more
@@ -1463,7 +1473,11 @@ def getPositionAndOrientationFrame( # NOQA
     [m] andmatrix is a 3x3 rotation matrix that describes the orientation
     of your device.
 
-    :rtype: Tuple[List[float], List[List[float]], int]
+    :rtype: Tuple[
+        MutableSequence[float],
+        MutableSequence[MutableSequence[float]],
+        int
+    ]
     """
 
     px = c_double()
@@ -1507,31 +1521,31 @@ _libdhd.dhdGetForceAndTorque.argtypes = [
 _libdhd.dhdGetForceAndTorque.restype = c_int
 def getForceAndTorque( # NOQA
     ID: int = -1,
-    f_out: Optional[List[float]] = None,
-    t_out: Optional[List[float]] = None) -> Tuple[List[float], List[float],
-                                                  int]:
+    f_out: Optional[MutableSequence[float]] = None,
+    t_out: Optional[MutableSequence[float]] = None
+) -> Tuple[MutableSequence[float], MutableSequence[float], int]:
     """
     Retrieve the force and torque vectors applied to the device end-effector.
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[float]] f_out: OPTIONAL list to use for force output
-    instead of generating a new list. If this is specified, the list provided
-    will be updated with the new values and the force return will be a
-    reference to the same list.
+    :param Optional[MutableSequence[float]] f_out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
-    :param Optional[List[float]] t_out: OPTIONAL list to use for force output
-    instead of generating a new list. If this is specified, the list provided
-    will be updated with the new values and the force return will be a
-    reference to the same list.
+    :param Optional[MutableSequence[float]] f_out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of ([fx, fy, fz], [tx, ty, tz], err) where err is 0, on
     success, -1 otherwise.
 
-    :rtype: Tuple[List[float], List[float], int]
+    :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
     """
 
     fx = c_double()
@@ -1608,8 +1622,8 @@ _libdhd.dhdGetOrientationFrame.argtypes = [
 _libdhd.dhdGetOrientationFrame.restype = c_int
 def getOrientationFrame( # NOQA
             ID: int = -1,
-            out: Optional[List[List[float]]] = None
-        ) -> Tuple[List[List[float]], int]:
+            out: Optional[MutableSequence[MutableSequence[float]]] = None
+        ) -> Tuple[MutableSequence[MutableSequence[float]], int]:
 
     """
     Retrieve the rotation matrix of the wrist structure. The identity matrix
@@ -1618,8 +1632,10 @@ def getOrientationFrame( # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[List[float]]]: OPTIONAL list of list of floats to use
-    for output instead of generating a new 3x3 matrix.
+    :param Optional[MutableSequence[MutableSequence[float]]] out: OPTIONAL
+    mutable sequence to use instead of generating a new List of Lists. If this
+    is specified, the list provided will be updated with the new values and the
+    return will be a reference to the same list.
 
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
@@ -1634,7 +1650,7 @@ def getOrientationFrame( # NOQA
     3x3 rotation matrix that describes the device's orientation. If the device
     doesn't support orientations, the identity matrix is returned.
 
-    :rtype: Tuple[List[List[float]], int]
+    :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
     """
 
     matrix = ((c_double * 3) * 3)()
@@ -1747,7 +1763,7 @@ _libdhd.dhdGetGripperThumbPos.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetGripperThumbPos.restype = c_int
-def getGripperThumbPos(ID: int = -1) -> Tuple[List[float], int]: # NOQA
+def getGripperThumbPos(ID: int = -1) -> Tuple[MutableSequence[float], int]: # NOQA
     """
     Read the position in Cartesian coordinates of thumb rest location of the
     force gripper structure if present.
@@ -1787,8 +1803,8 @@ _libdhd.dhdGetGripperFingerPos.argtypes = [
 _libdhd.dhdGetGripperFingerPos.restype = c_int
 def getGripperFingerPos( # NOQA
     ID: int = -1,
-    out: Optional[List[float]] = None
-) -> Tuple[List[float], int]:
+    out: Optional[MutableSequence[float]] = None
+) -> Tuple[MutableSequence[float], int]:
     """
     Read the position in Cartesian coordinates of forefinger rest location of
     the force gripper structure if present.
@@ -1802,10 +1818,10 @@ def getGripperFingerPos( # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[float]] out: OPTIONAL list to use instead of
-    generating a new list. If this is specified, the list provided will be
-    updated with the new values and the return will be a reference to the same
-    list.
+    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
     :raises TypeError: if out is specified and does not support item
     assignment either because its immutable or not subscriptable.
@@ -1986,8 +2002,8 @@ _libdhd.dhdGetLinearVelocity.argtypes = [
 _libdhd.dhdGetLinearVelocity.restype = c_int
 def getLinearVelocity( # NOQA
         ID: int = -1,
-        out: Optional[List[float]] = None
-    ) -> Tuple[List[float], int]:
+        out: Optional[MutableSequence[float]] = None
+    ) -> Tuple[MutableSequence[float], int]:
     """
     Retrieve the estimated instanteous linear velocity in [m/s]. Velocity
     computation can be figured by calling dhd.bindings.configAngularVelocity().
@@ -2006,10 +2022,10 @@ def getLinearVelocity( # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[float]] out: OPTIONAL list to use instead of
-    generating a new list. If this is specified, the list provided will be
-    updated with the new values and the return will be a reference to the same
-    list.
+    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
     :raises TypeError: if out is specified and does not support item
     assignment either because its immutable or not subscriptable.
@@ -2022,7 +2038,7 @@ def getLinearVelocity( # NOQA
     :returns: A tuple in the form ([wx, wy, wz], err) where err is either 0
     or on success, -1 otherwise and wx, wy, wz are in [rad/s]
 
-    :rtype: Tuple[List[float], int]
+    :rtype: Tuple[MutableSequence[float], int]
     """
 
     vx = c_double()
@@ -2088,8 +2104,8 @@ _libdhd.dhdGetAngularVelocityRad.argtypes = [
 _libdhd.dhdGetAngularVelocityRad.restype = c_int
 def getAngularVelocityRad( # NOQA
         ID: int = -1,
-        out: Optional[List[float]] = None
-    ) -> Tuple[List[float], int]:
+        out: Optional[MutableSequence[float]] = None
+    ) -> Tuple[MutableSequence[float], int]:
     """
     Retrieve the estimated instanteous angular velocity in [rad/s]. Velocity
     computation can be figured by calling:
@@ -2117,10 +2133,10 @@ def getAngularVelocityRad( # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[float]] out: OPTIONAL list to use instead of
-    generating a new list. If this is specified, the list provided will be
-    updated with the new values and the return will be a reference to the same
-    list.
+    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
     :raises TypeError: if out is specified and does not support item
     assignment either because its immutable or not subscriptable.
@@ -2132,7 +2148,7 @@ def getAngularVelocityRad( # NOQA
     :returns: A tuple in the form ([wx, wy, wz], err) where err is either 0
     or on success, -1 otherwise and wx, wy, wz are in [rad/s]
 
-    :rtype: Tuple[List[float], int]
+    :rtype: Tuple[MutableSequence[float], int]
     """
 
     wx = c_double()
@@ -2172,8 +2188,8 @@ _libdhd.dhdGetAngularVelocityDeg.argtypes = [
 _libdhd.dhdGetAngularVelocityDeg.restype = c_int
 def getAngularVelocityDeg( # NOQA
         ID: int = -1,
-        out: Optional[List[float]] = None
-    ) -> Tuple[List[float], int]:
+        out: Optional[MutableSequence[float]] = None
+    ) -> Tuple[MutableSequence[float], int]:
 
     """
     Retrieve the estimated instanteous angular velocity in [deg/s]. Velocity
@@ -2202,10 +2218,10 @@ def getAngularVelocityDeg( # NOQA
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
 
-    :param Optional[List[float]] out: OPTIONAL list to use instead of
-    generating a new list. If this is specified, the list provided will be
-    updated with the new values and the return will be a reference to the same
-    list.
+    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
+    use instead of generating a new List. If this is specified, the mutable
+    sequence provided will be updated with the new values and the return will
+    be a reference to the same mutable sequence passed in.
 
     :raises TypeError: if out is specified and does not support item
     assignment either because its immutable or not subscriptable.
@@ -2218,7 +2234,7 @@ def getAngularVelocityDeg( # NOQA
     :returns: A tuple in the form ([wx, wy, wz], err) where err is either 0
     or on success, -1 otherwise and wx, wy, wz are in [deg/s]
 
-    :rtype: Tuple[List[float], int]
+    :rtype: Tuple[MutableSequence[float], int]
     """
 
     wx = c_double()
