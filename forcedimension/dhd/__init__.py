@@ -505,7 +505,6 @@ class UpdateTuple(NamedTuple):
 
 
 class HapticDeviceDaemon(Thread):
-
     def __init__(
                 self,
                 dev: HapticDevice,
