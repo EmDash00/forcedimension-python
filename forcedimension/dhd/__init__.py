@@ -9,8 +9,9 @@
 __all__ = ['bindings']
 
 from threading import Thread
-from collections import UserList
-from typing import List, MutableSequence, Optional
+from typing import List, MutableSequence, Optional, Callable
+
+from time import monotonic
 
 import forcedimension.dhd.bindings as libdhd
 from forcedimension.dhd.bindings import DeviceType
@@ -20,55 +21,102 @@ from forcedimension.dhd.bindings.adaptors import (
     errno_to_exception
 )
 
+libdhd.expert.enableExpertMode()
 
-class EuclideanVector(UserList):
+
+class Euclidian(type):
+    def __new__(cls, name, bases, dct):
+
+        x = super().__new__(cls, name, bases, dct)
+
+        def mutable_accessor(i):
+            def getter(self):
+                return self.__getitem__(i)
+
+            def setter(self, value):
+                self.__setitem__(i, value)
+
+            return property(getter, setter)
+
+        for i, prop in enumerate(['x', 'y', 'z']):
+            setattr(x, prop, mutable_accessor(i))
+
+        return x
+
+
+class EuclidianVector(List[float], metaclass=Euclidian):
     def __init__(self, data: List[float] = [0, 0, 0]):
         if (len(data) != 3):
-            raise ValueError("EuclideanVector must take in a list of 3 floats")
+            raise ValueError
 
-        self.data = data
-
-    @property
-    def x(self):
-        return self.data[0]
-
-    @x.setter
-    def x(self, val):
-        self.data[0] = val
-
-    @property
-    def y(self):
-        return self.data[1]
-
-    @y.setter
-    def y(self, val):
-        self.data[1] = val
-
-    @property
-    def z(self):
-        return self.data[2]
-
-    @z.setter
-    def z(self, val):
-        self.data[2] = val
+        super().__init__(data)
 
 
-def NumpyVector():
-    import numpy as np  # type: ignore
+try:
+    from numpy import ndarray, array  # type: ignore
 
-    return (np.zeros(3))
+    class NumpyEuclidianView(ndarray, metaclass=Euclidian):
+        def __new__(cls, data: MutableSequence[float]):
+            if len(data) != 3:
+                raise ValueError
+
+            return array(data, dtype=float).view(cls)
+except ImportError:
+    pass
 
 
 class Gripper:
-    def __init__(self, ID: Optional[int] = None):
+    def __init__(
+            self,
+            ID: Optional[int] = None,
+            vecgen: Callable[[], MutableSequence[float]] = EuclidianVector
+    ):
+
         if ID is not None:
             if (ID < 0):
                 raise ValueError("ID must be greater than 0.")
 
-            self.id = ID
+            self._id = ID
 
-    def update(self):
-        pass
+        self.VecType = vecgen
+        VecType = vecgen
+
+        self.angle: MutableSequence[float] = VecType()
+        self.gap: Optional[MutableSequence[float]] = VecType()
+
+        self.thumb_pos: Optional[MutableSequence[float]] = VecType()
+        self.finger_pos: Optional[MutableSequence[float]] = VecType()
+
+        self.v: Optional[MutableSequence[float]] = VecType()
+        self.w: Optional[MutableSequence[float]] = VecType()
+
+    def update_linear_velocity(self):
+        libdhd.getAngularVelocityRad(self._id, out=self.v)
+
+    def update_angular_velocity(self):
+        libdhd.getAngularVelocityRad(self._id, out=self.w)
+
+    def update_angle(self):
+        libdhd.getGripperAngleRad(self._id, out=self.angle)
+
+    def update_gap(self):
+        libdhd.getGripperGap(self._id, out=self.gap)
+
+    def update_thumb_pos(self):
+        libdhd.getGripperThumbPos(self._id, out=self.thumb_pos)
+
+    def update_finger_pos(self):
+        libdhd.getGripperFingerPos(self._id, out=self.finger_pos)
+
+    def update_all(self):
+        self.update_angle()
+        self.update_gap()
+
+        self.update_thumb_pos()
+        self.update_finger_pos()
+
+        self.update_linear_velocity()
+        self.update_angular_velocity()
 
 
 class HapticDevice:
@@ -76,7 +124,8 @@ class HapticDevice:
             self,
             ID: Optional[int] = None,
             devtype: Optional[DeviceType] = None,
-            vecgen=EuclideanVector):
+            vecgen: Callable[[], MutableSequence[float]] = EuclidianVector
+    ):
         """
         Create a handle to a ForceDimension haptic device.
 
@@ -238,12 +287,38 @@ class HapticDevice:
 
 
 class Poller(Thread):
-    def __init__(self, dev: HapticDevice, update_list=None):
+
+    def __init__(
+                self,
+                dev: HapticDevice,
+                update_list=None,
+                max_freq: Optional[float] = 4000
+            ):
+
         self._dev = dev
         self.daemon = True
 
+        if (max_freq is not None):
+            self.min_period = 1 / max_freq
+
+    def sync(self):
+        self.t = monotonic()
+        while True:
+            while (monotonic() - self.t < self.min_period):
+                pass
+
+            self.t = monotonic()
+
     def run(self):
         try:
-            self._dev.update()
+
+            if self.min_period is not None:
+                while True:
+                    self.sync()
+                    self._dev.update_all()
+            else:
+                while True:
+                    self._dev.update_all()
+
         except RuntimeError as ex:
             self._dev.thread_exception = ex
