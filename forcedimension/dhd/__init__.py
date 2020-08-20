@@ -375,7 +375,7 @@ class HapticDevice:
 
         _, err = libdhd.getForce(ID=self._id, out=self._f)
 
-        if (err):
+        if (libdhd.getForce(ID=self._id, out=self._f)):
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_torque(self):
@@ -517,6 +517,7 @@ class HapticDeviceDaemon(Thread):
             raise TypeError("Poller acts on an instance of HapticDevice")
 
         self._dev = dev
+        self._update_list = update_list
         self.daemon = True
 
         self._set_funcs(update_list, gripper_update_list)
@@ -568,7 +569,7 @@ class HapticDeviceDaemon(Thread):
 
             funcs.append(self._dev.gripper.submit)
 
-        self._funcs = funcs
+            self._funcs = funcs
 
     def sync(self):
         self.t = monotonic()
@@ -619,12 +620,6 @@ class HapticDeviceDaemon(Thread):
 
                         for func in self._funcs:
                             future_map[func] = executor.submit(func)
-
-                        while True:
-                            for func in future_map:
-                                if future_map[func].done():
-                                    func = future_map[func]
-                                    future_map[func] = executor.submit(func)
 
         except DHDIOError as ex:
             self._dev.thread_exception = ex
