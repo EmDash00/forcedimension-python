@@ -83,24 +83,24 @@ class DOFTuple(NamedTuple):
 
 
 class DHDError(Exception):
-    def __init__(self, msg="Undocumented error."):
+    def __init__(self, msg="Undocumented error.", **kwargs):
         return super().__init__(msg)
 
 
 class DHDErrorCom(IOError):
-    def __init__(self):
+    def __init__(self, **kwargs):
         return super().__init__("Communication error between the HapticDevice "
                                 "and the host computer.")
 
 
 class DHDErrorDHCBusy(IOError):
-    def __init__(self):
+    def __init__(self, **kwargs):
         return super().__init__("The device controller is busy and cannot "
                                 "perform the required task")
 
 
 class DHDErrorNoDriverFound(IOError):
-    def __init__(self, ID: Optional[int] = None):
+    def __init__(self, ID: Optional[int] = None, **kwargs):
         if (ID is not None):
             specification = " for device ID {} ".format(ID)
         else:
@@ -112,7 +112,7 @@ class DHDErrorNoDriverFound(IOError):
 
 
 class DHDErrorNoDeviceFound(IOError):
-    def __init__(self):
+    def __init__(self, **kwargs):
         return super().__init__("No compatible force dimension device was "
                                 "found. ")
 
@@ -121,7 +121,8 @@ class DHDErrorNotAvailable(Exception):
     def __init__(
         self,
         feature: Optional[Callable[[Any], Any]],
-        ID: Optional[int] = None
+        ID: Optional[int] = None,
+        **kwargs
     ):
 
         if feature is not None:
@@ -141,8 +142,9 @@ class DHDErrorNotAvailable(Exception):
 class DHDErrorTimeout(IOError):
     def __init__(
         self,
-        operation: Optional[Callable[[Any], Any]],
-        ID: Optional[int] = None
+        operation: Optional[Callable[[Any], Any]] = None,
+        ID: Optional[int] = None,
+        **kwargs
     ):
         if (operation is not None):
             op_str = "{}".format(operation)
@@ -158,7 +160,7 @@ class DHDErrorTimeout(IOError):
 
 
 class DHDErrorGeometry(IOError):
-    def __init__(self, ID: Optional[int] = None):
+    def __init__(self, ID: Optional[int] = None, **kwargs):
 
         if (ID is not None):
             spec = "device ID {}".format(ID)
@@ -170,7 +172,9 @@ class DHDErrorGeometry(IOError):
 
 
 class DHDErrorExpertModeDisabled(Exception):
-    def __init__(self, feature):
+    def __init__(self,
+                 feature: Optional[Callable[[Any], Any]] = None,
+                 **kwargs):
         return super().__init__("{} is not available because expert mode is "
                                 "disabled.".format(feature))
 
@@ -179,7 +183,8 @@ class DHDErrorDeviceNotReady(Exception):
     def __init__(
         self,
         cmd: Optional[Callable[[Any], Any]],
-        ID: Optional[int] = None
+        ID: Optional[int] = None,
+        **kwargs
     ):
 
         if cmd is not None:
@@ -197,7 +202,7 @@ class DHDErrorDeviceNotReady(Exception):
 
 
 class DHDErrorConfiguration(IOError):
-    def __init__(self, ID: Optional[int] = None):
+    def __init__(self, ID: Optional[int] = None, **kwargs):
         if ID is not None:
             spec = "device ID {}'s ".format(ID)
         else:
@@ -208,7 +213,7 @@ class DHDErrorConfiguration(IOError):
 
 
 class DHDErrorRedundantFail(Exception):
-    def __init__(self, ID: Optional[int] = None):
+    def __init__(self, ID: Optional[int] = None, **kwargs):
         if ID is not None:
             spec = " on device ID {}".format(ID)
         else:
@@ -222,7 +227,8 @@ class DHDErrorNotEnabled(Exception):
     def __init__(
         self,
         cmd: Optional[Callable[[Any], Any]],
-        ID: Optional[int] = None
+        ID: Optional[int] = None,
+        **kwargs
     ):
 
         if cmd is not None:
@@ -240,7 +246,7 @@ class DHDErrorNotEnabled(Exception):
 
 
 class DHDErrorDeviceInUse(IOError):
-    def __init__(self, ID: Optional[int] = None):
+    def __init__(self, ID: Optional[int] = None, **kwargs):
         if ID is not None:
             spec = "Device ID {}".format(ID)
         else:
