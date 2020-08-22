@@ -375,7 +375,7 @@ class HapticDevice:
 
         _, err = libdhd.getForce(ID=self._id, out=self._f)
 
-        if (libdhd.getForce(ID=self._id, out=self._f)):
+        if (err):
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_torque(self):
