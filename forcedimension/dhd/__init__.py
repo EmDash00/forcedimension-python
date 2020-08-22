@@ -305,7 +305,9 @@ class HapticDevice:
         :rtype: None
         """
 
-        if (libdhd.getPosition(ID=self._id, out=self._pos)):
+        _, err = libdhd.getPosition(ID=self._id, out=self._pos)
+
+        if (err):
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_velocity(self) -> None:
@@ -316,7 +318,9 @@ class HapticDevice:
 
         :rtype: None
         """
-        if (libdhd.getLinearVelocity(ID=self._id, out=self._v)):
+        _, err = libdhd.getLinearVelocity(ID=self._id, out=self._v)
+
+        if (err):
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_angular_velocity(self):
@@ -327,7 +331,9 @@ class HapticDevice:
 
         :rtype: None
         """
-        if (libdhd.getAngularVelocityRad(ID=self._id, out=self._w)):
+        _, err = libdhd.getAngularVelocityRad(ID=self._id, out=self._w)
+
+        if (err):
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_force(self):
@@ -339,7 +345,9 @@ class HapticDevice:
         :rtype: None
         """
 
-        if (libdhd.getForce(ID=self._id, out=self._f)):
+        _, err = libdhd.getForce(ID=self._id, out=self._f)
+
+        if (err):
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_torque(self):
@@ -350,7 +358,9 @@ class HapticDevice:
 
         :rtype: None
         """
-        if(libdhd.getForce(ID=self._id, out=self._t)):
+        _, err = libdhd.getForce(ID=self._id, out=self._t)
+
+        if (err):
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_force_and_torque(self):
@@ -362,16 +372,14 @@ class HapticDevice:
         :rtype: None
         """
 
-        if (libdhd.getForceAndTorque(ID=self._id,
-                                     f_out=self._f, t_out=self._t)):
+        _, _, err = libdhd.getForceAndTorque(
+            ID=self._id,
+            f_out=self._f,
+            t_out=self._t
+        )
 
+        if (err):
             raise errno_to_exception(libdhd.errorGetLast())
-
-    def update_all(self):
-        self.update_position()
-        self.update_velocity()
-        self.update_angular_velocity()
-        self.update_force_and_torque()
 
     def __enter__(self):
         VecGen = self._vecgen
@@ -437,7 +445,7 @@ class Poller(Thread):
     def __init__(
                 self,
                 dev: HapticDevice,
-                update_list: Optional[UpdateTuple] = None,
+                update_list: UpdateTuple = UpdateTuple(),
                 max_freq: Optional[float] = 4000
             ):
 
@@ -496,28 +504,40 @@ class Poller(Thread):
                         func()
             else:
                 num = self._num_updates
-                future_map = {}
 
                 # poll each requested parameter in its own thread
                 with ThreadPoolExecutor(max_workers=num) as executor:
-                    for func in self._funcs:
-                        future_map[func] = executor.submit(func)
-
                     if self._min_period is not None:
+                        num_done = 0
+                        futures = []
+
+                        for func in self._funcs:
+                            futures.append(executor.submit(func))
+
+                        # max frequency one needs to synchronize
+                        # by waiting for each one to finish and then
+                        # synchronizing with the max frequency.
                         while True:
-                            self.sync()
+                            for future in futures:
+                                if future.done():
+                                    num_done += 1
 
-                            for func in future_map:
-                                if future_map[func].done():
-                                    func = future_map[func]
-                                    future_map[func] = executor.submit(func)
-
+                            if num_done == self._num_updates:
+                                futures.clear()
+                                self.sync()
+                                for func in self._funcs:
+                                    futures.append(executor.submit(func))
                     else:
+                        future_map = {}
+
+                        for func in self._funcs:
+                            future_map[func] = executor.submit(func)
+
                         while True:
                             for func in future_map:
                                 if future_map[func].done():
                                     func = future_map[func]
                                     future_map[func] = executor.submit(func)
 
-        except IOError as ex:  # TODO Make an exception class for libdhd
+        except IOError as ex:
             self._dev.thread_exception = ex
