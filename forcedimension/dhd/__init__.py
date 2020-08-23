@@ -517,7 +517,6 @@ class HapticDeviceDaemon(Thread):
             raise TypeError("Poller acts on an instance of HapticDevice")
 
         self._dev = dev
-        self._update_list = update_list
         self.daemon = True
 
         self._set_funcs(update_list, gripper_update_list)
@@ -548,7 +547,6 @@ class HapticDeviceDaemon(Thread):
                 funcs.append(self._dev.update_force)
             elif not update_list.f and update_list.t:
                 funcs.append(self._dev.update_torque)
-
             funcs.append(self._dev.submit)
 
         if gripper_update_list is not None:
@@ -557,6 +555,17 @@ class HapticDeviceDaemon(Thread):
 
             if gripper_update_list.w:
                 funcs.append(self._dev.gripper.update_angular_velocity)
+
+            if gripper_update_list.gap:
+                funcs.append(self._dev.gripper.update_gap)
+
+            if gripper_update_list.finger_pos:
+                funcs.append(self._dev.gripper.update_finger_pos)
+
+            if gripper_update_list.thumb_pos:
+                funcs.append(self._dev.gripper.update_thumb_pos)
+
+            funcs.append(self._dev.gripper.submit)
 
             if gripper_update_list.gap:
                 funcs.append(self._dev.gripper.update_gap)
@@ -620,6 +629,12 @@ class HapticDeviceDaemon(Thread):
 
                         for func in self._funcs:
                             future_map[func] = executor.submit(func)
+
+                        while True:
+                            for func in future_map:
+                                if future_map[func].done():
+                                    func = future_map[func]
+                                    future_map[func] = executor.submit(func)
 
         except DHDIOError as ex:
             self._dev.thread_exception = ex
