@@ -399,7 +399,6 @@ class HapticDevice:
 
         :rtype: None
         """
-
         _, _, err = libdhd.getForceAndTorque(
             ID=self._id,
             f_out=self._f,
@@ -547,6 +546,7 @@ class HapticDeviceDaemon(Thread):
                 funcs.append(self._dev.update_force)
             elif not update_list.f and update_list.t:
                 funcs.append(self._dev.update_torque)
+
             funcs.append(self._dev.submit)
 
         if gripper_update_list is not None:
@@ -567,18 +567,7 @@ class HapticDeviceDaemon(Thread):
 
             funcs.append(self._dev.gripper.submit)
 
-            if gripper_update_list.gap:
-                funcs.append(self._dev.gripper.update_gap)
-
-            if gripper_update_list.finger_pos:
-                funcs.append(self._dev.gripper.update_finger_pos)
-
-            if gripper_update_list.thumb_pos:
-                funcs.append(self._dev.gripper.update_thumb_pos)
-
-            funcs.append(self._dev.gripper.submit)
-
-            self._funcs = funcs
+        self._funcs = funcs
 
     def sync(self):
         self.t = monotonic()
