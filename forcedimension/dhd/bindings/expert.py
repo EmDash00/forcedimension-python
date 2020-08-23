@@ -48,13 +48,13 @@ def disableExpertMode() -> int: # NOQA
 # TODO add a page for multiple devices
 _libdhd.dhdPreset.argtypes = [c_int * MAX_DOF, c_ubyte, c_byte]
 _libdhd.dhdPreset.restype = c_int
-def preset(val: DOFTuple, mask: int, ID: int = -1) -> int: # NOQA
+def preset(val: DOFTuple, mask: int=0xff, ID: int = -1) -> int: # NOQA
     """
     Set selected encoder offsets to a given value. Intended for use with the
     generic controller when no RESET button is available.
 
     :param DOFTuple val: motor values array
-    :param int mask: bitwise mask of which encoder should be set.
+    :param int mask: [default=0xff] bitwise mask of which encoder should be set
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
 
