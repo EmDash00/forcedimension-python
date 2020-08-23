@@ -303,7 +303,7 @@ def getWristEncoders( # NOQA
 
 
 _libdhd.dhdGetGripperEncoder.argtypes = [POINTER(c_int), c_byte]
-_libdhd.dhdGetGripperEncoder.argtypes = c_int
+_libdhd.dhdGetGripperEncoder.argtypes = [c_int]
 def getGripperEncoder(ID: int = -1) -> Tuple[int, int]: # NOQA
     """
     Read the encoder value of the force gripper.
