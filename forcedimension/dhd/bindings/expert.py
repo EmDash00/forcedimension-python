@@ -510,7 +510,8 @@ def deltaEncoderToPosition( # NOQA
                         enc[2],
                         byref(px),
                         byref(py),
-                        byref(pz)
+                        byref(pz),
+                        ID
                     )
                 )
     else:
@@ -520,7 +521,8 @@ def deltaEncoderToPosition( # NOQA
                   enc[2],
                   byref(px),
                   byref(py),
-                  byref(pz)
+                  byref(pz),
+                  ID
               )
 
         out[0] = px.value
@@ -590,7 +592,8 @@ def deltaPositionToEncoder( # NOQA
                         pos[2],
                         byref(enc0),
                         byref(enc1),
-                        byref(enc2)
+                        byref(enc2),
+                        ID
                     )
                 )
     else:
@@ -600,7 +603,8 @@ def deltaPositionToEncoder( # NOQA
                    pos[2],
                    byref(enc0),
                    byref(enc1),
-                   byref(enc2)
+                   byref(enc2),
+                   ID
                )
 
         out[0] = enc0.value
@@ -882,7 +886,8 @@ def wristEncoderToOrientation( # NOQA
                         enc[2],
                         byref(px),
                         byref(py),
-                        byref(pz)
+                        byref(pz),
+                        ID
                     )
                 )
     else:
@@ -892,7 +897,8 @@ def wristEncoderToOrientation( # NOQA
                   enc[2],
                   byref(px),
                   byref(py),
-                  byref(pz)
+                  byref(pz),
+                  ID
               )
 
         out[0] = px.value
@@ -975,7 +981,8 @@ def wristOrientationToEncoder( # NOQA
                         orientation[2],
                         byref(enc0),
                         byref(enc1),
-                        byref(enc2)
+                        byref(enc2),
+                        ID
                     )
                 )
     else:
@@ -985,7 +992,8 @@ def wristOrientationToEncoder( # NOQA
                   orientation[2],
                   byref(enc0),
                   byref(enc1),
-                  byref(enc2)
+                  byref(enc2),
+                  ID
               )
 
         out[0] = enc0.value
