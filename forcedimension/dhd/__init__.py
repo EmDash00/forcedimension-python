@@ -16,12 +16,14 @@ from typing import NamedTuple
 
 from time import monotonic
 
+from forcedimension.dhd.bindings.adaptors import CartesianTuple
 import forcedimension.dhd.bindings as libdhd
 import forcedimension.dhd.bindings.expert  # NOQA
 
 from forcedimension.dhd.bindings import DeviceType
 from forcedimension.dhd.bindings.adaptors import (
     StatusTuple,
+    DHDIOError,
     DHDErrorNoDeviceFound,
     errno_to_exception
 )
@@ -101,6 +103,8 @@ class Gripper:
 
     def __init__(
             self,
+            parent_f_req,
+            parent_t_req,
             ID: Optional[int] = None,
             vecgen: Callable[[], MutableSequence[float]] = EuclidianVector
     ):
@@ -122,6 +126,26 @@ class Gripper:
 
         self._v: Optional[MutableSequence[float]] = VecType()
         self._w: Optional[MutableSequence[float]] = VecType()
+
+        self._parent_f_req = parent_f_req
+        self._parent_t_req = parent_t_req
+        self._fg_req: float = 0.0
+
+    def set(self, fg: float):
+        self._fg_req = fg
+
+    def submit(self):
+        if self.gripper is not None:
+            libdhd.setForceAndTorqueAndGripperForce(
+                f=self._parent_f_req,
+                t=self._parent_t_req,
+                fg=self
+            )
+        else:
+            libdhd.setForceAndTorque(
+                f=self._parent_f_req,
+                t=self._parent_t_req,
+            )
 
     def update_linear_velocity(self):
         libdhd.getAngularVelocityRad(self._id, out=self._v)
@@ -181,12 +205,16 @@ class HapticDevice:
             self._id = ID
 
         self._vecgen = vecgen
+        self._active_close_req: bool = False
 
         self._pos: Optional[MutableSequence[float]] = None
         self._w: Optional[MutableSequence[float]] = None
         self._v: Optional[MutableSequence[float]] = None
         self._f: Optional[MutableSequence[float]] = None
         self._t: Optional[MutableSequence[float]] = None
+
+        self._f_req = [0.0, 0.0, 0.0]
+        self._t_req = [0.0, 0.0, 0.0]
 
         self.gripper = None
 
@@ -381,6 +409,23 @@ class HapticDevice:
         if (err):
             raise errno_to_exception(libdhd.errorGetLast())
 
+    def submit(self):
+        libdhd.setForceAndTorque(self._f_req, self._t_req, self._id)
+
+    def set(self, f: CartesianTuple, t: CartesianTuple):
+        self._f_req[0:2] = f
+        self._t_req[0:2] = t
+
+    def neutral(self):
+        libdhd.setForceAndTorque(
+            f=CartesianTuple(x=0, y=0, z=0),
+            t=CartesianTuple(x=0, y=0, z=0),
+            ID=self._id
+        )
+
+    def brake(self):
+        libdhd.stop(self._id)
+
     def __enter__(self):
         VecGen = self._vecgen
 
@@ -420,7 +465,12 @@ class HapticDevice:
                         "Device is not of type {}".format(self.devtype))
 
             if (libdhd.hasGripper(self._id)):
-                self.gripper = Gripper(self._id, self._vecgen)
+                self.gripper = Gripper(
+                    self._f_req,
+                    self._t_req,
+                    self._id,
+                    self._vecgen
+                )
 
             self.update()
         else:
@@ -429,7 +479,21 @@ class HapticDevice:
         return self
 
     def __exit__(self):
+        self.neutral()
+        self._active_close_req = True
+
+        while self._active_close_req:
+            pass
+
         libdhd.close(self._id)
+
+
+class GripperUpdateTuple(NamedTuple):
+    gap: bool = True
+    thumb_pos: bool = True
+    finger_pos: bool = True
+    v: bool = True
+    w: bool = True
 
 
 class UpdateTuple(NamedTuple):
@@ -440,20 +504,23 @@ class UpdateTuple(NamedTuple):
     t: bool = True
 
 
-class Poller(Thread):
+class HapticDeviceDaemon(Thread):
 
     def __init__(
                 self,
                 dev: HapticDevice,
-                update_list: UpdateTuple = UpdateTuple(),
+                update_list: Optional[UpdateTuple] = UpdateTuple(),
+                gripper_update_list: Optional[GripperUpdateTuple] = None,
                 max_freq: Optional[float] = 4000
             ):
 
+        if not isinstance(dev, HapticDevice):
+            raise TypeError("Poller acts on an instance of HapticDevice")
+
         self._dev = dev
-        self._update_list = update_list
         self.daemon = True
 
-        self._set_funcs()
+        self._set_funcs(update_list, gripper_update_list)
         self._num_updates = len(self._funcs)
 
         if self._num_updates == 0:
@@ -462,24 +529,45 @@ class Poller(Thread):
         if (max_freq is not None):
             self._min_period = 1 / max_freq
 
-    def _set_funcs(self):
+    def _set_funcs(self, update_list, gripper_update_list):
         funcs = []
 
-        if self._update_list.pos:
-            funcs.append(self._dev.update_position)
+        if update_list is not None:
+            if update_list.pos:
+                funcs.append(self._dev.update_position)
 
-        if self._update_list.v:
-            funcs.append(self._dev.update_velocity)
+            if update_list.v:
+                funcs.append(self._dev.update_velocity)
 
-        if self._update_list.w:
-            funcs.append(self._dev.update_angular_velocity)
+            if update_list.w:
+                funcs.append(self._dev.update_angular_velocity)
 
-        if self._update_list.f and self._update_list.t:
-            funcs.append(self._dev.update_force_and_torque)
-        elif self._update_list.f and not self._update_list.t:
-            funcs.append(self._dev.update_force)
-        elif not self._update_list.f and self._update_list.t:
-            funcs.append(self._dev.update_torque)
+            if update_list.f and update_list.t:
+                funcs.append(self._dev.update_force_and_torque)
+            elif update_list.f and not update_list.t:
+                funcs.append(self._dev.update_force)
+            elif not update_list.f and update_list.t:
+                funcs.append(self._dev.update_torque)
+
+            funcs.append(self._dev.submit)
+
+        if gripper_update_list is not None:
+            if gripper_update_list.v:
+                funcs.append(self._dev.gripper.update_linear_velocity)
+
+            if gripper_update_list.w:
+                funcs.append(self._dev.gripper.update_angular_velocity)
+
+            if gripper_update_list.gap:
+                funcs.append(self._dev.gripper.update_gap)
+
+            if gripper_update_list.finger_pos:
+                funcs.append(self._dev.gripper.update_finger_pos)
+
+            if gripper_update_list.thumb_pos:
+                funcs.append(self._dev.gripper.update_thumb_pos)
+
+            funcs.append(self._dev.gripper.submit)
 
         self._funcs = funcs
 
@@ -539,5 +627,5 @@ class Poller(Thread):
                                     func = future_map[func]
                                     future_map[func] = executor.submit(func)
 
-        except IOError as ex:
+        except DHDIOError as ex:
             self._dev.thread_exception = ex
