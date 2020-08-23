@@ -975,8 +975,8 @@ def getPosition( # NOQA
     pz = c_double()
 
     if out is None:
-        return ([px.value, py.value, pz.value],
-                _libdhd.dhdGetPosition(byref(px), byref(py), byref(pz), ID))
+        err = _libdhd.dhdGetPosition(byref(px), byref(py), byref(pz), ID)
+        return ([px.value, py.value, pz.value], err)
     else:
         err = _libdhd.dhdGetPosition(byref(px), byref(py), byref(pz), ID)
 
@@ -1127,14 +1127,9 @@ def getOrientationRad( # NOQA
     og = c_double()
 
     if out is None:
-        return ([oa.value, ob.value, og.value],
-                _libdhd.dhdGetOrientationRad(
-                        byref(oa),
-                        byref(ob),
-                        byref(og),
-                        ID
-                    )
-                )
+        err = _libdhd.dhdGetOrientationRad(byref(oa), byref(ob), byref(og), ID)
+
+        return ([oa.value, ob.value, og.value], err)
     else:
         err = _libdhd.dhdGetOrientationRad(
                         byref(oa),
@@ -1206,14 +1201,9 @@ def getOrientationDeg( # NOQA
     og = c_double()
 
     if out is None:
-        return ([oa.value, ob.value, og.value],
-                _libdhd.dhdGetOrientationDeg(
-                        byref(oa),
-                        byref(ob),
-                        byref(og),
-                        ID
-                    )
-                )
+        err = _libdhd.dhdGetOrientationDeg(byref(oa), byref(ob), byref(og), ID)
+
+        return ([oa.value, ob.value, og.value], err)
     else:
         err = _libdhd.dhdGetOrientationDeg(
                         byref(oa),
@@ -1656,10 +1646,8 @@ def getOrientationFrame( # NOQA
     matrix = ((c_double * 3) * 3)()
 
     if out is None:
-        return (
-                    [list(row) for row in matrix],
-                    _libdhd.dhdGetOrientationFrame(matrix, ID)
-               )
+        err = _libdhd.dhdGetOrientationFrame(matrix, ID)
+        return ([list(row) for row in matrix], err)
     else:
         err = _libdhd.dhdGetOrientationFrame(matrix, ID)
         for i in range(3):
@@ -1696,7 +1684,8 @@ def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
 
     angle = c_double()
-    return (angle.value, _libdhd.dhdGetGripperAngleDeg(byref(angle), ID))
+    err = _libdhd.dhdGetGripperAngleDeg(byref(angle), ID)
+    return (angle.value, err)
 
 
 _libdhd.dhdGetGripperAngleRad.argtypes = [POINTER(c_double), c_byte]
@@ -1753,7 +1742,8 @@ def getGripperGap(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
 
     gap = c_double()
-    return (gap.value, _libdhd.dhdGetGripperGap(byref(gap), ID))
+    err = _libdhd.dhdGetGripperGap(byref(gap), ID)
+    return (gap.value, err)
 
 
 _libdhd.dhdGetGripperThumbPos.argtypes = [
@@ -1790,8 +1780,8 @@ def getGripperThumbPos(ID: int = -1) -> Tuple[MutableSequence[float], int]: # NO
     py = c_double()
     pz = c_double()
 
-    return ([px.value, py.value, pz.value],
-            _libdhd.dhdGetThumbPos(byref(px), byref(py), byref(pz), ID))
+    err = _libdhd.dhdGetThumbPos(byref(px), byref(py), byref(pz), ID)
+    return ([px.value, py.value, pz.value], err)
 
 
 _libdhd.dhdGetGripperFingerPos.argtypes = [
@@ -1843,11 +1833,13 @@ def getGripperFingerPos( # NOQA
     pz = c_double()
 
     if out is None:
-        return ([px.value, py.value, pz.value],
-                _libdhd.dhdGetGripperFingerPos(byref(px),
-                                               byref(py),
-                                               byref(pz),
-                                               ID))
+        err = _libdhd.dhdGetGripperFingerPos(
+                    byref(px),
+                    byref(py),
+                    byref(pz),
+                    ID
+            )
+        return ([px.value, py.value, pz.value], err)
     else:
         err = _libdhd.dhdGetGripperFingerPos(
                     byref(px),
@@ -2046,11 +2038,14 @@ def getLinearVelocity( # NOQA
     vz = c_double()
 
     if out is None:
-        return ([vx.value, vy.value, vz.value],
-                _libdhd.dhdGetLinearVelocity(byref(vx),
-                                             byref(vy),
-                                             byref(vz),
-                                             ID))
+        err = _libdhd.dhdGetLinearVelocity(
+                    byref(vx),
+                    byref(vy),
+                    byref(vz),
+                    ID
+                )
+
+        return ([vx.value, vy.value, vz.value], err)
     else:
         err = _libdhd.dhdGetLinearVelocity(
                    byref(vx),
@@ -2156,14 +2151,14 @@ def getAngularVelocityRad( # NOQA
     wz = c_double()
 
     if out is None:
-        return ([wx.value, wy.value, wz.value],
-                _libdhd.dhdGetLinearVelocityRad(
-                        byref(wx),
-                        byref(wy),
-                        byref(wz),
-                        ID
-                    )
+        err = _libdhd.dhdGetLinearVelocityRad(
+                    byref(wx),
+                    byref(wy),
+                    byref(wz),
+                    ID
                 )
+
+        return ([wx.value, wy.value, wz.value], err)
     else:
         err = _libdhd.dhdGetLinearVelocityRad(
                    byref(wx),
@@ -2242,16 +2237,16 @@ def getAngularVelocityDeg( # NOQA
     wz = c_double()
 
     if out is None:
-        return ([wx.value, wy.value, wz.value],
-                _libdhd.dhdGetLinearVelocityRad(
-                        byref(wx),
-                        byref(wy),
-                        byref(wz),
-                        ID
-                    )
+        err = _libdhd.dhdGetLinearVelocityDeg(
+                    byref(wx),
+                    byref(wy),
+                    byref(wz),
+                    ID
                 )
+
+        return ([wx.value, wy.value, wz.value], err)
     else:
-        err = _libdhd.dhdGetLinearVelocityRad(
+        err = _libdhd.dhdGetLinearVelocityDeg(
                    byref(wx),
                    byref(wy),
                    byref(wz),
@@ -2345,7 +2340,8 @@ def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
 
     vg = c_double()
-    return (vg.value, _libdhd.dhdGetGripperLinearVelocity(byref(vg), ID))
+    err = _libdhd.dhdGetGripperLinearVelocity(byref(vg), ID)
+    return (vg.value, err)
 
 
 _libdhd.dhdGetGripperAngularVelocityRad.argtypes = [POINTER(c_double), c_byte]
@@ -2394,7 +2390,8 @@ def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
 
     wg = c_double()
-    return (wg.value, _libdhd.dhdGetGripperAngularVelocityRad(byref(wg), ID))
+    err = _libdhd.dhdGetGripperAngularVelocityRad(byref(wg), ID)
+    return (wg.value, err)
 
 
 _libdhd.dhdGetGripperAngularVelocityDeg.argtypes = [POINTER(c_double), c_byte]
@@ -2443,7 +2440,8 @@ def getGripperAngularVelocityDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
 
     wg = c_double()
-    return (wg.value, _libdhd.dhdGetGripperAngularelocityDeg(byref(wg), ID))
+    err = _libdhd.dhdGetGripperAngularelocityDeg(byref(wg), ID)
+    return (wg.value, err)
 
 
 _libdhd.dhdEmulateButton.argtypes = [c_bool, c_byte]
@@ -2494,7 +2492,8 @@ def getBaseAngleXRad(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
 
     angle = c_double()
-    return (angle.value, _libdhd.dhdGetBaseAngleXRad(byref(angle), ID))
+    err = _libdhd.dhdGetBaseAngleXRad(byref(angle), ID)
+    return (angle.value, err)
 
 
 _libdhd.dhdGetBaseAngleXDeg.argtypes = [POINTER(c_double), c_byte]
@@ -2586,7 +2585,8 @@ def getBaseAngleZRad(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
 
     angle = c_double()
-    return (angle.value, _libdhd.dhdGetBaseAngleZRad(byref(angle), ID))
+    err = _libdhd.dhdGetBaseAngleZRad(byref(angle), ID)
+    return (angle.value, err)
 
 
 _libdhd.dhdGetBaseAngleZDeg.argtypes = [POINTER(c_double), c_byte]
@@ -2609,7 +2609,8 @@ def getBaseAngleZDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
 
     angle = c_double()
-    return (angle.value, _libdhd.dhdGetBaseAngleZDeg(byref(angle), ID))
+    err = _libdhd.dhdGetBaseAngleZDeg(byref(angle), ID)
+    return (angle.value, err)
 
 
 _libdhd.dhdSetBaseAngleZRad.argtypes = [c_double, c_byte]
