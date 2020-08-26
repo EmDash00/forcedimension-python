@@ -11,14 +11,26 @@ __all__ = ['bindings']
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 
-from typing import List, MutableSequence, Optional, Callable
-from typing import NamedTuple
+from typing import MutableSequence, Optional, Callable
 
 from time import monotonic
 
 from forcedimension.dhd.bindings.adaptors import CartesianTuple
 import forcedimension.dhd.bindings as libdhd
 import forcedimension.dhd.bindings.expert  # NOQA
+
+from forcedimension.dhd.util import ( # NOQA
+    Euclidian,
+    EuclidianVector,
+    ImmutableWrapper,
+    UpdateTuple,
+    GripperUpdateTuple
+)
+
+try:
+    from forcedimension.dhd.util import NumpyVector # NOQA
+except ImportError:
+    pass
 
 from forcedimension.dhd.bindings import DeviceType
 from forcedimension.dhd.bindings.adaptors import (
@@ -29,66 +41,6 @@ from forcedimension.dhd.bindings.adaptors import (
 )
 
 libdhd.expert.enableExpertMode()
-
-
-class Euclidian(type):
-    """
-    Euclidian metaclass for MutableSequence types. Using this metaclass will
-    automatically create convience 3 read-write properties "x", "y", and "z",
-    which correspond to the 0th, 1st, and 2nd elements of an object of the
-    MutableSequence class.
-    """
-    def __new__(cls, name, bases, dct):
-
-        x = super().__new__(cls, name, bases, dct)
-
-        def mutable_accessor(i):
-            def getter(self):
-                return self.__getitem__(i)
-
-            def setter(self, value):
-                self.__setitem__(i, value)
-
-            return property(getter, setter)
-
-        for i, prop in enumerate(['x', 'y', 'z']):
-            setattr(x, prop, mutable_accessor(i))
-
-        return x
-
-
-class EuclidianVector(List[float], metaclass=Euclidian):
-    """
-    A List[float] providing convience "x", "y", "z" read-write accessor
-    properties. This class subclasses List[float]; therefore, for all intents
-    and purposes, you can treat it as a list. This allows for it to be
-    compatible with Python's standard library functions.
-    """
-    def __init__(self, data: List[float] = [0, 0, 0]):
-        if (len(data) != 3):
-            raise ValueError
-
-        super().__init__(data)
-
-
-try:
-    from numpy import ndarray, array  # type: ignore
-
-    class NumpyEuclidianView(ndarray, metaclass=Euclidian):
-        """
-        A view over a numpy ndarry, which provides convience "x", "y", and "z"
-        read-write accessor properties. This class subclasses ndarray;
-        therefore, for all intents and purposes you can treat it as an ndarray.
-        This allows you to simply pass in this class to any and all numpy
-        methods.
-        """
-        def __new__(cls, data: MutableSequence[float]):
-            if len(data) != 3:
-                raise ValueError
-
-            return array(data, dtype=float).view(cls)
-except ImportError:
-    pass
 
 
 class Gripper:
@@ -166,6 +118,9 @@ class Gripper:
         libdhd.getGripperFingerPos(self._id, out=self._finger_pos)
 
 
+MutFSeq = MutableSequence[float]
+
+
 class HapticDevice:
     """
     A HapticDevice is a high-level wrapper for any compatible ForceDimension
@@ -207,11 +162,17 @@ class HapticDevice:
         self._vecgen = vecgen
         self._active_close_req: bool = False
 
-        self._pos: Optional[MutableSequence[float]] = None
-        self._w: Optional[MutableSequence[float]] = None
-        self._v: Optional[MutableSequence[float]] = None
-        self._f: Optional[MutableSequence[float]] = None
-        self._t: Optional[MutableSequence[float]] = None
+        self._pos: Optional[MutFSeq] = None
+        self._w: Optional[MutFSeq] = None
+        self._v: Optional[MutFSeq] = None
+        self._f: Optional[MutFSeq] = None
+        self._t: Optional[MutFSeq] = None
+
+        self._pos_view: Optional[ImmutableWrapper[MutFSeq]] = None
+        self._w_view: Optional[ImmutableWrapper[MutFSeq]] = None
+        self._v_view: Optional[ImmutableWrapper[MutFSeq]] = None
+        self._f_view: Optional[ImmutableWrapper[MutFSeq]] = None
+        self._t_view: Optional[ImmutableWrapper[MutFSeq]] = None
 
         self._f_req = [0.0, 0.0, 0.0]
         self._t_req = [0.0, 0.0, 0.0]
@@ -239,7 +200,7 @@ class HapticDevice:
         return self._id
 
     @property
-    def pos(self) -> Optional[MutableSequence[float]]:
+    def pos(self) -> Optional[ImmutableWrapper[MutFSeq]]:
         """
         Provides a read-only accessor to the last-known position of the
         HapticDevice's end effector. Thread-safe.
@@ -250,10 +211,10 @@ class HapticDevice:
         end-effector's position given in [m].
         """
         self.check_threadex()
-        return self._pos
+        return self._pos_view
 
     @property
-    def v(self) -> Optional[MutableSequence[float]]:
+    def v(self) -> Optional[ImmutableWrapper[MutFSeq]]:
         """
         Provides a read-only accessor to the last-known linear velocity of the
         HapticDevice's end-effector. Thread-safe.
@@ -264,10 +225,10 @@ class HapticDevice:
         the end-effector's linear velocity given in [m/s].
         """
         self.check_threadex()
-        return self._v
+        return self._v_view
 
     @property
-    def w(self) -> Optional[MutableSequence[float]]:
+    def w(self) -> Optional[ImmutableWrapper[MutFSeq]]:
         """
         Provides a read-only accessor to the last-known angular velocity of the
         HapticDevice's end-effector. Thread-safe.
@@ -278,10 +239,10 @@ class HapticDevice:
         the end-effector's linear velocity given in [rad/s].
         """
         self.check_threadex()
-        return self._w
+        return self._w_view
 
     @property
-    def t(self) -> Optional[MutableSequence[float]]:
+    def t(self) -> Optional[ImmutableWrapper[MutFSeq]]:
         """
         Provides a read-only accessor to the last-known torque experienced by
         the HapticDevice's end-effector. Thread-safe.
@@ -292,10 +253,10 @@ class HapticDevice:
         the torque experienced by the end-effector in [Nm]
         """
         self.check_threadex()
-        return self._t
+        return self._t_view
 
     @property
-    def f(self) -> Optional[MutableSequence[float]]:
+    def f(self) -> Optional[ImmutableWrapper[MutFSeq]]:
         """
         Provides a read-only accessor to the current linear force experienced
         by the HapticDevice's end-effector.
@@ -307,7 +268,7 @@ class HapticDevice:
         """
 
         self.check_threadex()
-        return self._f
+        return self._f_view
 
     def get_status(self) -> StatusTuple:
         """
@@ -434,6 +395,12 @@ class HapticDevice:
         self._f = VecGen()
         self._t = VecGen()
 
+        self._pos_view = ImmutableWrapper(data=self._pos)
+        self._w_view = ImmutableWrapper(data=self._w)
+        self._v_view = ImmutableWrapper(data=self._v)
+        self._f_view = ImmutableWrapper(data=self._f)
+        self._t_view = ImmutableWrapper(data=self._t)
+
         if (len(self._pos) < 3):
             raise ValueError("vecgen did not create a container with at least "
                              "length 3.")
@@ -485,22 +452,6 @@ class HapticDevice:
             pass
 
         libdhd.close(self._id)
-
-
-class GripperUpdateTuple(NamedTuple):
-    gap: bool = True
-    thumb_pos: bool = True
-    finger_pos: bool = True
-    v: bool = True
-    w: bool = True
-
-
-class UpdateTuple(NamedTuple):
-    pos: bool = True
-    v: bool = True
-    w: bool = True
-    f: bool = True
-    t: bool = True
 
 
 class HapticDeviceDaemon(Thread):
