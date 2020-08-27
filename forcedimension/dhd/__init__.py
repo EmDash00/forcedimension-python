@@ -11,7 +11,7 @@ __all__ = ['bindings']
 from threading import Thread
 from concurrent.futures import ThreadPoolExecutor
 
-from typing import MutableSequence, Optional, Callable
+from typing import MutableSequence, Optional, Callable, List
 from typing import cast
 from time import monotonic
 
@@ -38,127 +38,9 @@ from forcedimension.dhd.bindings.adaptors import (
     StatusTuple,
     DHDIOError,
     DHDErrorNoDeviceFound,
+    ErrorNum,
     errno_to_exception
 )
-
-
-class Gripper:
-    """
-    A high-level wrapper for methods and kinematic data of a Gripper on a
-    HapticDevice.
-
-    Certain kinds of HapticDevices opened will have grippers. If that is the
-    case, a Gripper object will be instantiated as well containing methods to
-    get kinematic information about the Gripper.
-    """
-
-    def __init__(
-            self,
-            parent_f_req,
-            parent_t_req,
-            parent_enc_req,
-            ID: Optional[int] = None,
-            vecgen: Callable[[], MutableSequence[float]] = EuclidianVector
-    ):
-
-        if ID is not None:
-            if (ID < 0):
-                raise ValueError("ID must be greater than 0.")
-
-            self._id = ID
-
-        self.VecType = vecgen
-        VecType = vecgen
-
-        self._enc = 0
-        self._angle: MutableSequence[float] = VecType()
-        self._gap: MutableSequence[float] = VecType()
-
-        self._thumb_pos: MutableSequence[float] = VecType()
-        self._finger_pos: MutableSequence[float] = VecType()
-
-        self._v: MutableSequence[float] = VecType()
-        self._w: MutableSequence[float] = VecType()
-        self._fg: float = 0
-
-        self._parent_f_req = parent_f_req
-        self._parent_t_req = parent_t_req
-        self._fg_req: float = 0.0
-
-    def request_ft(self, fg: float):
-        self._fg_req = fg
-
-    def submit_ft(self):
-        libdhd.setForceAndTorqueAndGripperForce(
-            f=self._parent_f_req,
-            t=self._parent_t_req,
-            fg=self
-        )
-
-    # def submit_enc(self) -> NoReturn:
-        """
-        _, err = libdhd.expert.getEnc(
-            ID=self._id,
-            mask=self._enc_req,
-            out=self._enc
-        )
-        """
-        # raise NotImplementedError
-
-    # def request_enc(self, enc_mask: int) -> NoReturn:
-        # self._enc_req &= enc_mask
-        # raise NotImplementedError
-
-    def calculate_gap(self):
-        if self._enc is not None:
-            self._gap = libdhd.expert.gripperEncoderToGap(
-                            ID=self._id,
-                            enc=self._enc
-                        )
-        else:
-            raise ValueError
-
-    def calculate_angle(self):
-        if self._enc is not None:
-            self._angle = libdhd.expert.gripperEncoderToAngleRad(
-                            ID=self._id,
-                            enc=self._enc
-                        )
-        else:
-            raise ValueError
-
-    def update_enc(self):
-        self._enc, err = libdhd.expert.getGripperEncoder(ID=self._id)
-
-    def update_enc_and_calculate(self):
-        self.update_enc()
-        self.calculate_angle()
-        self.calculate_gap()
-
-    def update_linear_velocity(self):
-        libdhd.getAngularVelocityRad(self._id, out=self._v)
-
-    def update_angular_velocity(self):
-        libdhd.getAngularVelocityRad(self._id, out=self._w)
-
-    def update_angle(self):
-        libdhd.getGripperAngleRad(self._id, out=self._angle)
-
-    def update_gap(self):
-        libdhd.getGripperGap(self._id, out=self._gap)
-
-    def update_thumb_pos(self):
-        libdhd.getGripperThumbPos(self._id, out=self._thumb_pos)
-
-    def update_finger_pos(self):
-        libdhd.getGripperFingerPos(self._id, out=self._finger_pos)
-
-    def update_force(self):
-        pass
-
-    def check_threadex(self):
-        if self._thread_exception is not None:
-            raise self._thread_exception
 
 
 MutFSeq = MutableSequence[float]
@@ -228,6 +110,8 @@ class HapticDevice:
         self._t_view: Optional[ImmutableWrapper[MutFSeq]] = None
         self._J_view: Optional[ImmutableWrapper[MutFSeqSeq]] = None
 
+        self._vibration_req: List[float] = [0, 0]
+
         self._left_handed = None
 
         self._f_req = [float('nan')] * 3
@@ -239,7 +123,7 @@ class HapticDevice:
 
         self.gripper = None
 
-        self.devtype = devtype
+        self._devtype = devtype
 
         self._thread_exception = None
 
@@ -258,6 +142,10 @@ class HapticDevice:
         """
         self.check_threadex()
         return self._id
+
+    @property
+    def devtype(self) -> Optional[DeviceType]:
+        return self._devtype
 
     @property
     def pos(self) -> Optional[ImmutableWrapper[MutFSeq]]:
@@ -429,7 +317,7 @@ class HapticDevice:
 
         _, err = libdhd.expert.getEnc(ID=self._id, mask=bitmask, out=self._enc)
 
-        if (err):
+        if err and err != libdhd.TIMEGUARD:
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_position(self) -> None:
@@ -443,7 +331,7 @@ class HapticDevice:
 
         _, err = libdhd.getPosition(ID=self._id, out=self._pos)
 
-        if (err):
+        if err and err != libdhd.TIMEGUARD:
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_velocity(self) -> None:
@@ -489,7 +377,7 @@ class HapticDevice:
 
         _, err = libdhd.getForce(ID=self._id, out=self._f)
 
-        if (err):
+        if err and err != libdhd.TIMEGUARD:
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_torque(self):
@@ -502,13 +390,13 @@ class HapticDevice:
         """
         _, err = libdhd.getForce(ID=self._id, out=self._t)
 
-        if (err):
+        if err and err != libdhd.TIMEGUARD:
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_force_and_torque(self):
         """
         Performs a blocking read to the HapticDevice, requesting in parallel
-        the current force and torque the end end-effector is experiencing and
+        the current force and torque applied to the end-effector and
         updates the last-known force and torque with the response.
 
         :rtype: None
@@ -523,6 +411,15 @@ class HapticDevice:
             raise errno_to_exception(libdhd.errorGetLast())
 
     def update_force_and_torque_and_gripper_force(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting in parallel
+        the force and torque applied to the end-effector as well as the force
+        applied to the gripper. Then, the last known force, torque, and gripper
+        force are updated.
+
+        The reason this is in HapticDevice is largely due to an implement
+        detail in libdhd and as a way to optimize requests to the device.
+        """
         if self.gripper is not None:
             _, _, fg, err = libdhd.getForceAndTorqueAndGripperForce(
                 ID=self._id,
@@ -530,7 +427,7 @@ class HapticDevice:
                 t_out=self._t
             )
             if (err):
-                raise errno_to_exception(err)
+                raise errno_to_exception(libdhd.ErrorNum(err))
             self.gripper._fg = fg
 
     def update_buttons(self):
@@ -544,8 +441,16 @@ class HapticDevice:
         libdhd.setForceAndTorque(self._f_req, self._t_req, self._id)
 
     def set(self, f: CartesianTuple, t: CartesianTuple):
-        self._f_req[0:2] = f
-        self._t_req[0:2] = t
+        self._f_req[0:3] = f
+        self._t_req[0:3] = t
+
+    def submit_vibration(self):
+        libdhd.setVibration(ID=self._id,
+                            f=self._vibration_req[0], A=self._vibration_req[1],
+                            device_type=self.devtype)
+
+    def set_vibration(self, f: float, A: float):
+        self._vibration_req[0:2] = [f, A]
 
     def submit_enc(self):
         _, err = libdhd.expert.getEnc(
@@ -558,14 +463,91 @@ class HapticDevice:
         self._enc_req &= enc_mask
 
     def enable_force(self, enabled: bool = True):
+        """
+        Enable/disable force on the end-effector.
+
+        :param bool enabled: [default=True] true to enable, false to disable
+        """
         libdhd.enableForce(enabled, ID=self._id)
+
+    def get_max_force(self) -> Optional[float]:
+        """
+        Retrieve the current limit (in N) to the force magnitude that can be
+        applied by the haptic device.
+
+        :returns: The current limit (in N) to the force magnitude that can be
+        applied by the haptic device to the end-effector. If there is no limit,
+        None is returned instead.
+
+        rtype: Optional[float]
+        """
+
+        limit = libdhd.getMaxForce(ID=self._id)
+
+        return limit if limit > 0 else None
+
+    def set_max_force(self, limit: Optional[float]) -> None:
+        """
+        Define or disable a limit (in N) to the force magnitude that can be
+        applied by the haptic device.
+
+        :param Optional[float] limit: The desired limit (in N) to the force
+        magnitude that can be applied. If the limit is None, the force limit is
+        disabled.
+        """
+        if limit is None:
+            err = libdhd.setMaxForce(ID=self._id, limit=-1.0)
+        else:
+            if limit < 0:
+                raise ValueError
+
+            err = libdhd.setMaxForce(ID=self._id, limit=limit)
+
+        if err:
+            raise errno_to_exception(ErrorNum(libdhd.errorGetLast()))
+
+    def get_max_torque(self) -> Optional[float]:
+        """
+        Retrieve the current limit (in Nm) to the torque magnitude that can be
+        applied by the haptic device.
+
+        :returns: The current limit (in Nm) to the force magnitude that can be
+        applied by the haptic device to the end-effector. If there is no limit,
+        None is returned instead.
+
+        rtype: Optional[float]
+        """
+
+        limit = libdhd.getMaxTorque(ID=self._id)
+
+        return limit if limit > 0 else None
+
+    def set_max_torque(self, limit: Optional[float]) -> None:
+        """
+        Define or disable a limit (in N) to the force magnitude that can be
+        applied by the haptic device.
+
+        :param Optional[float] limit: The desired limit (in N) to the force
+        magnitude that can be applied. If the limit is None, the force limit is
+        disabled.
+        """
+        if limit is None:
+            err = libdhd.setMaxTorque(ID=self._id, limit=-1.0)
+        else:
+            if limit < 0:
+                raise ValueError
+
+            err = libdhd.setMaxTorque(ID=self._id, limit=limit)
+
+        if err:
+            raise errno_to_exception(ErrorNum(libdhd.errorGetLast()))
 
     def enable_gravity_compensation(self, enabled: bool = False):
         libdhd.setGravityCompensation(enabled, ID=self._id)
 
     def neutral(self):
-        self._f_req[0:2] = [0.0, 0.0, 0.0]
-        self._t_req[0:2] = [0.0, 0.0, 0.0]
+        self._f_req[0:3] = [0.0, 0.0, 0.0]
+        self._t_req[0:3] = [0.0, 0.0, 0.0]
 
     def brake(self):
         libdhd.stop(self._id)
@@ -595,8 +577,8 @@ class HapticDevice:
             raise ValueError("vecgen did not create a container with at least "
                              "length 3.")
 
-        self._f_req[0:2] = [0.0, 0.0, 0.0]
-        self._t_req[0:2] = [0.0, 0.0, 0.0]
+        self._f_req[0:3] = [0.0, 0.0, 0.0]
+        self._t_req[0:3] = [0.0, 0.0, 0.0]
 
         if (libdhd.getDeviceCount() > 0):
             if self._id is None:
@@ -657,6 +639,217 @@ class HapticDevice:
             pass
 
         libdhd.close(self._id)
+
+
+class Gripper:
+    """
+    A high-level wrapper for methods and kinematic data of a Gripper on a
+    HapticDevice.
+
+    Certain kinds of HapticDevices opened will have grippers. If that is the
+    case, a Gripper object will be instantiated as well containing methods to
+    get kinematic information about the Gripper.
+    """
+
+    def __init__(
+            self,
+            parent: HapticDevice,
+            ID: Optional[int] = None,
+            vecgen: Callable[[], MutableSequence[float]] = EuclidianVector
+    ):
+
+        if ID is not None:
+            if (ID < 0):
+                raise ValueError("ID must be greater than 0.")
+
+            self._id = ID
+
+        self.VecType = vecgen
+        VecType = vecgen
+
+        self._enc: int = 0
+        self._angle: float = float('nan')
+        self._gap: float = float('nan')
+        self._v: float = float('nan')
+        self._w: float = float('nan')
+        self._fg: float = float('nan')
+
+        self._thumb_pos: MutFSeq = VecType()
+        self._finger_pos: MutFSeq = VecType()
+
+        self._parent: HapticDevice = parent
+
+        self._thumb_pos_view: ImmutableWrapper[MutFSeq] = (
+            ImmutableWrapper(self._thumb_pos)
+        )
+
+        self._finger_pos_view: ImmutableWrapper[MutFSeq] = (
+            ImmutableWrapper(self._finger_pos)
+        )
+
+        self._fg_req: float = 0.0
+
+    def request_ft(self, fg: float):
+        self._fg_req = fg
+
+    def submit_ft(self):
+        libdhd.setForceAndTorqueAndGripperForce(
+            f=self._parent._f_req,
+            t=self._parent._t_req,
+            fg=self
+        )
+
+    def set(self, fg: float):
+        self._fg_req = fg
+
+    # def submit_enc(self) -> NoReturn:
+        """
+        _, err = libdhd.expert.getEnc(
+            ID=self._id,
+            mask=self._enc_req,
+            out=self._enc
+        )
+        """
+        # raise NotImplementedError
+
+    # def request_enc(self, enc_mask: int) -> NoReturn:
+        # self._enc_req &= enc_mask
+        # raise NotImplementedError
+
+    def get_max_force(self) -> Optional[float]:
+        """
+        Retrieve the current limit (in N) to the force magnitude that can be
+        applied by the haptic device.
+
+        :returns: The current limit (in N) to the force magnitude that can be
+        applied by the haptic device to the end-effector. If there is no limit,
+        None is returned instead.
+
+        rtype: Optional[float]
+        """
+
+        limit = libdhd.getMaxGripperForce(ID=self._id)
+
+        return limit if limit > 0 else None
+
+    def set_max_force(self, limit: Optional[float]) -> None:
+        """
+        Define or disable a limit (in N) to the force magnitude that can be
+        applied by the haptic device.
+
+        :param Optional[float] limit: The desired limit (in N) to the force
+        magnitude that can be applied. If the limit is None, the force limit is
+        disabled.
+        """
+        if limit is None:
+            err = libdhd.setMaxGripperForce(ID=self._id, limit=-1.0)
+        else:
+            if limit < 0:
+                raise ValueError
+
+            err = libdhd.setMaxGripperForce(ID=self._id, limit=limit)
+
+        if err:
+            raise errno_to_exception(ErrorNum(libdhd.errorGetLast()))
+
+    @property
+    def thumb_pos(self):
+        self.check_threadex()
+        return self._thumb_pos_view
+
+    @property
+    def finger_pos(self):
+        self.check_threadex()
+        return self._finger_pos_view
+
+    @property
+    def gap(self):
+        self.check_threadex()
+        return self._gap
+
+    @property
+    def angle(self):
+        self.check_threadex()
+        return self._angle
+
+    @property
+    def v(self):
+        self.check_threadex()
+        return self._v
+
+    @property
+    def w(self):
+        self.check_threadex()
+        return self._w
+
+    @property
+    def fg(self):
+        self.check_threadex()
+        return self._fg
+
+    def calculate_gap(self):
+        if self._enc is not None:
+            self._gap = libdhd.expert.gripperEncoderToGap(
+                            ID=self._id,
+                            enc=self._enc
+                        )
+        else:
+            raise ValueError
+
+    def calculate_angle(self):
+        if self._enc is not None:
+            self._angle = libdhd.expert.gripperEncoderToAngleRad(
+                            ID=self._id,
+                            enc=self._enc
+                        )
+        else:
+            raise ValueError
+
+    def update_enc(self):
+        self._enc, err = libdhd.expert.getGripperEncoder(ID=self._id)
+        if err and err != libdhd.TIMEGUARD:
+            raise errno_to_exception(libdhd.errorGetLast())
+
+    def update_enc_and_calculate(self):
+        self.update_enc()
+        self.calculate_angle()
+        self.calculate_gap()
+
+    def update_linear_velocity(self):
+        self._v, err = libdhd.getGripperLinearVelocity(ID=self._id)
+        if err and err != libdhd.TIMEGUARD:
+            raise errno_to_exception(libdhd.errorGetLast())
+
+    def update_angular_velocity(self):
+        self._w, err = libdhd.getGripperAngularVelocityRad(
+                            ID=self._id
+                        )
+
+        if err and err != libdhd.TIMEGUARD:
+            raise errno_to_exception(libdhd.errorGetLast())
+
+    def update_angle(self):
+        self._angle, err = libdhd.getGripperAngleRad(self._id)
+        if err and err != libdhd.TIMEGUARD:
+            raise errno_to_exception(libdhd.errorGetLast())
+
+    def update_gap(self):
+        self._gap, err = libdhd.getGripperGap(self._id)
+        if err and err != libdhd.TIMEGUARD:
+            raise errno_to_exception(libdhd.errorGetLast())
+
+    def update_thumb_pos(self):
+        _, err = libdhd.getGripperThumbPos(self._id, out=self._thumb_pos)
+        if err and err != libdhd.TIMEGUARD:
+            raise errno_to_exception(libdhd.errorGetLast())
+
+    def update_finger_pos(self):
+        _, err = libdhd.getGripperFingerPos(self._id, out=self._finger_pos)
+        if err and err != libdhd.TIMEGUARD:
+            raise errno_to_exception(libdhd.errorGetLast())
+
+    def check_threadex(self):
+        self._parent.check_threadex()
 
 
 class HapticDeviceDaemon(Thread):
