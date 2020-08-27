@@ -54,8 +54,23 @@ class EuclidianVector(List[float], metaclass=Euclidian):
         super().__init__(data)
 
 
+class JacobianMatrix(List[List[float]]):
+    """
+    Used by the library backend to create the default type of the
+    3x3 jacobian matrix.
+    """
+    def __init__(self):
+        super().__init__(
+            [
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 0, 0]
+            ]
+        )
+
+
 try:
-    from numpy import ndarray, array  # type: ignore
+    from numpy import ndarray, array, zeros  # type: ignore
 
     class NumpyEuclidianView(ndarray, metaclass=Euclidian):
         """
@@ -70,6 +85,14 @@ try:
                 raise ValueError
 
             return array(data, dtype=float).view(cls)
+
+    class NumpyJacobianView(ndarray):
+        """
+        A view over a JacobianMatrix.
+        """
+        def __new__(cls):
+            return zeros(shape=(3, 3), dtype=float).view(cls)
+
 except ImportError:
     pass
 
@@ -274,7 +297,7 @@ class ImmutableWrapper(Generic[T]):
 
 
 class GripperUpdateTuple(NamedTuple):
-    gap: bool = True
+    enc: bool = True
     thumb_pos: bool = True
     finger_pos: bool = True
     v: bool = True
@@ -282,7 +305,7 @@ class GripperUpdateTuple(NamedTuple):
 
 
 class UpdateTuple(NamedTuple):
-    pos: bool = True
+    enc: bool = True
     v: bool = True
     w: bool = True
     f: bool = True

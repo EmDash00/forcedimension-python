@@ -82,6 +82,13 @@ class WristEncID(IntEnum):
     ENC2 = 5
 
 
+class NovintButtonID(IntEnum):
+    CENTER = 0
+    LEFT = 1
+    UP = 2
+    RIGHT = 3
+
+
 class StatusIndex(IntEnum):
     POWER = 0
     CONNECTED = 1
