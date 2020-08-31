@@ -2151,7 +2151,7 @@ def getAngularVelocityRad( # NOQA
     wz = c_double()
 
     if out is None:
-        err = _libdhd.dhdGetLinearVelocityRad(
+        err = _libdhd.dhdGetAngularVelocityRad(
                     byref(wx),
                     byref(wy),
                     byref(wz),
