@@ -232,24 +232,24 @@ class ImmutableWrapper(Generic[T]):
             namespace
         )
 
-    def __new__(cls, obj, *args, **kwargs):
+    def __new__(cls, data, *args, **kwargs):
 
         # TODO: manually override truth
         # TODO: manually overrride reverse
 
-        obj_cls = obj.__class__
+        data_cls = data.__class__
         try:
             cache = cls.__dict__["_class_proxy_cache"]
         except KeyError:
             cls._class_proxy_cache = cache = {}
         try:
-            generated_cls = cache[obj.__class__]
+            generated_cls = cache[data.__class__]
         except KeyError:
-            generated_cls = cls._generate_wrapper_cls(obj_cls)
-            cache[obj.__class__] = generated_cls
+            generated_cls = cls._generate_wrapper_cls(data_cls)
+            cache[data.__class__] = generated_cls
 
         instance = object.__new__(generated_cls)
-        generated_cls.__init__(instance, obj, *args, **kwargs)
+        generated_cls.__init__(instance, data, *args, **kwargs)
 
         return instance
 
