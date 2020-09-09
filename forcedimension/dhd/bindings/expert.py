@@ -205,28 +205,21 @@ def getDeltaEncoders( # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    if out is None:
-        return ([enc0.value, enc1.value, enc2.value],
-                _libdhd.dhdGetDeltaEncoders(
-                    byref(enc0),
-                    byref(enc1),
-                    byref(enc2),
-                    ID
-            )
-        )
-    else:
-        err = _libdhd.dhdGetDeltaEncoders(
-                    byref(enc0),
-                    byref(enc1),
-                    byref(enc2),
-                    ID
-               )
+    err = _libdhd.dhdGetDeltaEncoders(
+                byref(enc0),
+                byref(enc1),
+                byref(enc2),
+                ID
+           )
 
+    if out is None:
+        out = [enc0.value, enc1.value, enc2.value]
+    else:
         out[0] = enc0.value
         out[1] = enc1.value
         out[2] = enc2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdGetWristEncoders.argtypes = [
@@ -278,28 +271,21 @@ def getWristEncoders( # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    if out is None:
-        return ([enc0.value, enc1.value, enc2.value],
-                _libdhd.dhdGetWristEncoders(
-                    byref(enc0),
-                    byref(enc1),
-                    byref(enc2),
-                    ID
-            )
-        )
-    else:
-        err = _libdhd.dhdGetWristEncoders(
-                    byref(enc0),
-                    byref(enc1),
-                    byref(enc2),
-                    ID
-               )
+    err = _libdhd.dhdGetWristEncoders(
+                byref(enc0),
+                byref(enc1),
+                byref(enc2),
+                ID
+           )
 
+    if out is None:
+        out = [enc0.value, enc1.value, enc2.value]
+    else:
         out[0] = enc0.value
         out[1] = enc1.value
         out[2] = enc2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdGetGripperEncoder.argtypes = [POINTER(c_int), c_byte]
@@ -502,34 +488,24 @@ def deltaEncoderToPosition( # NOQA
     py = c_double()
     pz = c_double()
 
-    if out is None:
-        return ([px.value, py.value, pz.value],
-                _libdhd.dhdDeltaEncoderToPosition(
-                        enc[0],
-                        enc[1],
-                        enc[2],
-                        byref(px),
-                        byref(py),
-                        byref(pz),
-                        ID
-                    )
-                )
-    else:
-        err = _libdhd.dhdDeltaEncoderToPosition(
-                  enc[0],
-                  enc[1],
-                  enc[2],
-                  byref(px),
-                  byref(py),
-                  byref(pz),
-                  ID
-              )
+    err = _libdhd.dhdDeltaEncoderToPosition(
+              enc[0],
+              enc[1],
+              enc[2],
+              byref(px),
+              byref(py),
+              byref(pz),
+              ID
+          )
 
+    if out is None:
+        out = [px.value, py.value, pz.value]
+    else:
         out[0] = px.value
         out[1] = py.value
         out[2] = pz.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdDeltaPositionToEncoder.argtypes = [
@@ -584,34 +560,24 @@ def deltaPositionToEncoder( # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    if out is None:
-        return ([enc0.value, enc1.value, enc2.value],
-                _libdhd.dhdDeltaEncoderToPosition(
-                        pos[0],
-                        pos[1],
-                        pos[2],
-                        byref(enc0),
-                        byref(enc1),
-                        byref(enc2),
-                        ID
-                    )
-                )
-    else:
-        err = _libdhd.dhdDeltaEncoderToPosition(
-                   pos[0],
-                   pos[1],
-                   pos[2],
-                   byref(enc0),
-                   byref(enc1),
-                   byref(enc2),
-                   ID
-               )
+    err = _libdhd.dhdDeltaEncoderToPosition(
+               pos[0],
+               pos[1],
+               pos[2],
+               byref(enc0),
+               byref(enc1),
+               byref(enc2),
+               ID
+           )
 
+    if out is None:
+        out = [enc0.value, enc1.value, enc2.value]
+    else:
         out[0] = enc0.value
         out[1] = enc1.value
         out[2] = enc2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdDeltaMotorToForce.argtypes = [
@@ -678,38 +644,26 @@ def deltaMotorToForce( # NOQA
     fy = c_double()
     fz = c_double()
 
-    if out is None:
-        return ([fx.value, fy.value, fz.value],
-                _libdhd.dhdDeltaMotorToForce(
-                    output[0],
-                    output[1],
-                    output[2],
-                    enc[0],
-                    enc[1],
-                    enc[2],
-                    byref(fx),
-                    byref(fy),
-                    byref(fz)
-            )
-        )
-    else:
-        err = _libdhd.dhdDeltaMotorToForce(
-                 output[0],
-                 output[1],
-                 output[2],
-                 enc[0],
-                 enc[1],
-                 enc[2],
-                 byref(fx),
-                 byref(fy),
-                 byref(fz)
-             )
+    err = _libdhd.dhdDeltaMotorToForce(
+             output[0],
+             output[1],
+             output[2],
+             enc[0],
+             enc[1],
+             enc[2],
+             byref(fx),
+             byref(fy),
+             byref(fz)
+         )
 
+    if out is None:
+        out = [fx.value, fy.value, fz.value]
+    else:
         out[0] = fx.value
         out[1] = fy.value
         out[2] = fz.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdDeltaForceToMotor.argtypes = [
@@ -778,38 +732,26 @@ def deltaForceToMotor( # NOQA
     output1 = c_ushort()
     output2 = c_ushort()
 
-    if out is None:
-        return ([output0.value, output1.value, output2.value],
-                _libdhd.dhdDeltaMotorToForce(
-                    f[0],
-                    f[1],
-                    f[2],
-                    enc[0],
-                    enc[1],
-                    enc[2],
-                    byref(output0),
-                    byref(output1),
-                    byref(output2)
-            )
-        )
-    else:
-        err = _libdhd.dhdDeltaMotorToForce(
-                  f[0],
-                  f[1],
-                  f[2],
-                  enc[0],
-                  enc[1],
-                  enc[2],
-                  byref(output0),
-                  byref(output1),
-                  byref(output2)
-              )
+    err = _libdhd.dhdDeltaMotorToForce(
+              f[0],
+              f[1],
+              f[2],
+              enc[0],
+              enc[1],
+              enc[2],
+              byref(output0),
+              byref(output1),
+              byref(output2)
+          )
 
+    if out is None:
+        out = [output0.value, output1.value, output2.value]
+    else:
         out[0] = output0.value
         out[1] = output1.value
         out[2] = output2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdWristEncoderToOrientation.argtypes = [
@@ -878,34 +820,24 @@ def wristEncoderToOrientation( # NOQA
     py = c_double()
     pz = c_double()
 
-    if out is None:
-        return ([px.value, py.value, pz.value],
-                _libdhd.dhdDeltaEncoderToPosition(
-                        enc[0],
-                        enc[1],
-                        enc[2],
-                        byref(px),
-                        byref(py),
-                        byref(pz),
-                        ID
-                    )
-                )
-    else:
-        err = _libdhd.dhdDeltaEncoderToPosition(
-                  enc[0],
-                  enc[1],
-                  enc[2],
-                  byref(px),
-                  byref(py),
-                  byref(pz),
-                  ID
-              )
+    err = _libdhd.dhdDeltaEncoderToPosition(
+          enc[0],
+          enc[1],
+          enc[2],
+          byref(px),
+          byref(py),
+          byref(pz),
+          ID
+      )
 
+    if out is None:
+        out = [px.value, py.value, pz.value]
+    else:
         out[0] = px.value
         out[1] = py.value
         out[2] = pz.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdWristOrientationToEncoder.argtypes = [
@@ -973,34 +905,24 @@ def wristOrientationToEncoder( # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    if out is None:
-        return ([enc0.value, enc1.value, enc2.value],
-                _libdhd.dhdDeltaEncoderToPosition(
-                        orientation[0],
-                        orientation[1],
-                        orientation[2],
-                        byref(enc0),
-                        byref(enc1),
-                        byref(enc2),
-                        ID
-                    )
-                )
-    else:
-        err = _libdhd.dhdDeltaEncoderToPosition(
-                  orientation[0],
-                  orientation[1],
-                  orientation[2],
-                  byref(enc0),
-                  byref(enc1),
-                  byref(enc2),
-                  ID
-              )
+    err = _libdhd.dhdDeltaEncoderToPosition(
+              orientation[0],
+              orientation[1],
+              orientation[2],
+              byref(enc0),
+              byref(enc1),
+              byref(enc2),
+              ID
+          )
 
+    if out is None:
+        out = [enc0.value, enc1.value, enc2.value]
+    else:
         out[0] = enc0.value
         out[1] = enc1.value
         out[2] = enc2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdWristMotorToTorque.argtypes = [
@@ -1067,38 +989,26 @@ def wristMotorToTorque( # NOQA
     ty = c_double()
     tz = c_double()
 
-    if out is None:
-        return ([tx.value, ty.value, tz.value],
-                _libdhd.dhdDeltaMotorToForce(
-                    cmd[0],
-                    cmd[1],
-                    cmd[2],
-                    enc[0],
-                    enc[1],
-                    enc[2],
-                    byref(tx),
-                    byref(ty),
-                    byref(tz)
-            )
-        )
-    else:
-        err = _libdhd.dhdDeltaMotorToForce(
-                   cmd[0],
-                   cmd[1],
-                   cmd[2],
-                   enc[0],
-                   enc[1],
-                   enc[2],
-                   byref(tx),
-                   byref(ty),
-                   byref(tz)
-              )
+    err = _libdhd.dhdDeltaMotorToForce(
+               cmd[0],
+               cmd[1],
+               cmd[2],
+               enc[0],
+               enc[1],
+               enc[2],
+               byref(tx),
+               byref(ty),
+               byref(tz)
+          )
 
+    if out is None:
+        out = [tx.value, ty.value, tz.value]
+    else:
         out[0] = tx.value
         out[1] = ty.value
         out[2] = tz.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdWristTorqueToMotor.argtypes = [
@@ -1165,38 +1075,26 @@ def wristTorqueToMotor(  # NOQA
     output1 = c_ushort()
     output2 = c_ushort()
 
-    if out is None:
-        return ([output0.value, output1.value, output2.value],
-                _libdhd.dhdDeltaMotorToForce(
-                    t[0],
-                    t[1],
-                    t[2],
-                    enc[0],
-                    enc[1],
-                    enc[2],
-                    byref(output0),
-                    byref(output1),
-                    byref(output2)
-            )
-        )
-    else:
-        err = _libdhd.dhdDeltaMotorToForce(
-                    t[0],
-                    t[1],
-                    t[2],
-                    enc[0],
-                    enc[1],
-                    enc[2],
-                    byref(output0),
-                    byref(output1),
-                    byref(output2)
-             )
+    err = _libdhd.dhdDeltaMotorToForce(
+                t[0],
+                t[1],
+                t[2],
+                enc[0],
+                enc[1],
+                enc[2],
+                byref(output0),
+                byref(output1),
+                byref(output2)
+         )
 
+    if out is None:
+        out = [output0.value, output1.value, output2.value]
+    else:
         out[0] = output0.value
         out[1] = output1.value
         out[2] = output2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdGripperEncoderToAngleRad.argtypes = [
@@ -1232,13 +1130,13 @@ def gripperEncoderToAngleRad(enc: int, # NOQA
     """
 
     angle = c_double()
+    err = _libdhd.dhdGripperEncoderToAngleRad(
+        enc,
+        byref(angle),
+        ID
+    )
 
-    return (angle.value, _libdhd.dhdGripperEncoderToAngleRad(
-                            enc,
-                            byref(angle),
-                            ID
-                        )
-            )
+    return (angle.value, err)
 
 
 _libdhd.dhdGripperEncoderToGap.argtypes = [
@@ -1273,13 +1171,13 @@ def gripperEncoderToGap(enc: int, ID: int = -1) -> Tuple[float, int]: # NOQA
     """
 
     gap = c_double()
-
-    return (gap.value, _libdhd.dhdGripperEncoderToGap(
+    err = _libdhd.dhdGripperEncoderToGap(
                             enc,
                             byref(gap),
                             ID
                         )
-            )
+
+    return (gap.value, err)
 
 
 _libdhd.dhdGripperAngleRadToEncoder.argtypes = [
@@ -1315,12 +1213,12 @@ def gripperAngleRadToEncoder(angle: float, # NOQA
 
     enc = c_int()
 
-    return (enc.value, _libdhd.dhdGripperEncoderToAngleRad(
-                            angle,
-                            byref(enc),
-                            ID
-                        )
-            )
+    err = _libdhd.dhdGripperEncoderToAngleRad(
+                                    angle,
+                                    byref(enc),
+                                    ID
+                                )
+    return (enc.value, err)
 
 
 _libdhd.dhdGripperGapToEncoder.argtypes = [
@@ -1355,13 +1253,13 @@ def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]: # NOQA
     """
 
     enc = c_int()
+    err = _libdhd.dhdGripperEncoderToGap(
+                                gap,
+                                byref(enc),
+                                ID
+                            )
 
-    return (enc.value, _libdhd.dhdGripperEncoderToGap(
-                            gap,
-                            byref(enc),
-                            ID
-                        )
-            )
+    return (enc.value, err)
 
 
 _libdhd.dhdGripperMotorToForce.argtypes = [
@@ -1414,14 +1312,14 @@ def gripperMotorToForce(output: int,  # NOQA
     force = c_double()
 
     enc = [enc_wrist[0], enc_wrist[1], enc_wrist[2], enc_gripper]
+    err = _libdhd.dhdGripperMotorToForce(
+                                output,
+                                byref(force),
+                                enc,
+                                ID
+                            )
 
-    return (force.value, _libdhd.dhdGripperMotorToForce(
-                            output,
-                            byref(force),
-                            enc,
-                            ID
-                        )
-            )
+    return (force.value, err)
 
 
 _libdhd.dhdGripperForceToMotor.argtypes = [
@@ -1476,13 +1374,14 @@ def gripperForceToMotor(force: float,  # NOQA
 
     enc = [enc_wrist[0], enc_wrist[1], enc_wrist[2], enc_gripper]
 
-    return (output.value, _libdhd.dhdGripperMotorToForce(
-                            force,
-                            byref(output),
-                            enc,
-                            ID
-                        )
-            )
+    err = _libdhd.dhdGripperMotorToForce(
+                                force,
+                                byref(output),
+                                enc,
+                                ID
+                            )
+
+    return (output.value, err)
 
 
 _libdhd.dhdSetMot.argtypes = [c_ushort * MAX_DOF, c_ubyte, c_byte]
@@ -1730,28 +1629,21 @@ def getDeltaJointAngles( # NOQA
     j1 = c_double()
     j2 = c_double()
 
-    if out is None:
-        return ([j0.value, j1.value, j2.value],
-                _libdhd.dhdGetDeltaJointAngles(
-                    byref(j0),
-                    byref(j1),
-                    byref(j2),
-                    ID
-            )
-        )
-    else:
-        err = _libdhd.dhdGetDeltaJointAngles(
-                   byref(j0),
-                   byref(j1),
-                   byref(j2),
-                   ID
-             )
+    err = _libdhd.dhdGetDeltaJointAngles(
+               byref(j0),
+               byref(j1),
+               byref(j2),
+               ID
+         )
 
+    if out is None:
+        out = [j0.value, j1.value, j2.value]
+    else:
         out[0] = j0.value
         out[1] = j1.value
         out[2] = j2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdGetDeltaJacobian.argtypes = [(c_double * 3) * 3, c_byte]
@@ -1790,17 +1682,16 @@ def getDeltaJacobian( # NOQA
     """
 
     J = ((c_double * 3) * 3)()
+    err = _libdhd.dhdGetDeltaJacobian(J, ID)
 
     if out is None:
-        return ([list(row) for row in J], _libdhd.dhdGetDeltaJacobian(J, ID))
+        out = [list(row) for row in J]
     else:
-        err = _libdhd.dhdGetDeltaJacobian(J, ID)
-
         for i in range(3):
             for j in range(3):
                 out[i][j] = J[i][j]
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdDeltaJointAnglesToJacobian.argtypes = [
@@ -1850,30 +1741,22 @@ def deltaJointAnglesToJacobian( # NOQA
 
     J = ((c_double * 3) * 3)()
 
-    if out is None:
-        return ([list(row) for row in J],
-                _libdhd.dhdDeltaJointAnglesToJacobian(
-                        joint_angles[0],
-                        joint_angles[1],
-                        joint_angles[2],
-                        J,
-                        ID
-                    )
-                )
-    else:
-        err = _libdhd.dhdDeltaJointAnglesToJacobian(
-                  joint_angles[0],
-                  joint_angles[1],
-                  joint_angles[2],
-                  J,
-                  ID
-              )
+    err = _libdhd.dhdDeltaJointAnglesToJacobian(
+              joint_angles[0],
+              joint_angles[1],
+              joint_angles[2],
+              J,
+              ID
+          )
 
+    if out is None:
+        out = [list(row) for row in J]
+    else:
         for i in range(3):
             for j in range(3):
                 out[i][j] = J[i][j]
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdDeltaJointTorquesExtrema.argtypes = [
@@ -2019,34 +1902,24 @@ def deltaGravityJointTorques( # NOQA
     q1 = c_double()
     q2 = c_double()
 
-    if out is None:
-        return ([q0.value, q1.value, q2.value],
-                _libdhd.dhdDeltaGravityJointTorques(
-                        joint_angles[0],
-                        joint_angles[1],
-                        joint_angles[2],
-                        byref(q0),
-                        byref(q1),
-                        byref(q2),
-                        ID
-                    )
-                )
-    else:
-        err = _libdhd.dhdDeltaGravityJointTorques(
-                  joint_angles[0],
-                  joint_angles[1],
-                  joint_angles[2],
-                  byref(q0),
-                  byref(q1),
-                  byref(q2),
-                  ID
-              )
+    err = _libdhd.dhdDeltaGravityJointTorques(
+              joint_angles[0],
+              joint_angles[1],
+              joint_angles[2],
+              byref(q0),
+              byref(q1),
+              byref(q2),
+              ID
+          )
 
+    if out is None:
+        out = [q0.value, q1.value, q2.value]
+    else:
         out[0] = q0.value
         out[1] = q1.value
         out[2] = q2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdSetDeltaJointTorques.argtypes = [
@@ -2127,17 +2000,24 @@ def deltaEncodersToJointAngles( # NOQA
     j1 = c_double()
     j2 = c_double()
 
-    return ([j0.value, j1.value, j2.value],
-            _libdhd.dhdDeltaEncodersToJointAngles(
-                    enc[0],
-                    enc[1],
-                    enc[2],
-                    byref(j0),
-                    byref(j1),
-                    byref(j2),
-                    ID
-                )
-            )
+    err = _libdhd.dhdDeltaEncodersToJointAngles(
+            enc[0],
+            enc[1],
+            enc[2],
+            byref(j0),
+            byref(j1),
+            byref(j2),
+            ID
+        )
+
+    if out is None:
+        out = [j0.value, j1.value, j2.value]
+    else:
+        out[0] = j0.value
+        out[1] = j1.value
+        out[2] = j2.value
+
+    return (out, err)
 
 
 _libdhd.dhdDeltaJointAnglesToEncoders.argtypes = [
@@ -2191,34 +2071,24 @@ def deltaJointAnglesToEncoders( # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    if out is None:
-        return ([enc0.value, enc1.value, enc2.value],
-                _libdhd.dhdDeltaJointAnglesToEncoders(
-                        joint_angles[0],
-                        joint_angles[1],
-                        joint_angles[2],
-                        byref(enc0),
-                        byref(enc1),
-                        byref(enc2),
-                        ID
-                    )
-                )
-    else:
-        err = _libdhd.dhdDeltaJointAnglesToEncoders(
-                  joint_angles[0],
-                  joint_angles[1],
-                  joint_angles[2],
-                  byref(enc0),
-                  byref(enc1),
-                  byref(enc2),
-                  ID
-              )
+    err = _libdhd.dhdDeltaJointAnglesToEncoders(
+              joint_angles[0],
+              joint_angles[1],
+              joint_angles[2],
+              byref(enc0),
+              byref(enc1),
+              byref(enc2),
+              ID
+          )
 
+    if out is None:
+        out = [enc0.value, enc1.value, enc2.value]
+    else:
         out[0] = enc0.value
         out[1] = enc1.value
         out[2] = enc2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdGetWristJointAngles.argtypes = [
@@ -2261,29 +2131,21 @@ def getWristJointAngles( # NOQA
     j0 = c_double()
     j1 = c_double()
     j2 = c_double()
+    err = _libdhd.dhdGetWristJointAngles(
+              byref(j0),
+              byref(j1),
+              byref(j2),
+              ID
+          )
 
     if out is None:
-        return ([j0.value, j1.value, j2.value],
-                _libdhd.dhdGetWristJointAngles(
-                        byref(j0),
-                        byref(j1),
-                        byref(j2),
-                        ID
-                    )
-                )
+        out = [j0.value, j1.value, j2.value]
     else:
-        err = _libdhd.dhdGetWristJointAngles(
-                  byref(j0),
-                  byref(j1),
-                  byref(j2),
-                  ID
-              )
-
         out[0] = j0.value
         out[1] = j1.value
         out[2] = j2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdGetWristJacobian.argtypes = [(c_double * 3) * 3, c_byte]
@@ -2322,16 +2184,16 @@ def getWristJacobian( # NOQA
 
     J = ((c_double * 3) * 3)()
 
-    if out is None:
-        return ([list(row) for row in J], _libdhd.dhdGetWristJacobian(J, ID))
-    else:
-        err = _libdhd.dhdGetWristJacobian(J, ID)
+    err = _libdhd.dhdGetWristJacobian(J, ID)
 
+    if out is None:
+        out = [list(row) for row in J]
+    else:
         for i in range(3):
             for j in range(3):
                 out[i][j] = J[i][j]
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdWristJointAnglesToJacobian.argtypes = [
@@ -2382,18 +2244,7 @@ def wristJointAnglesToJacobian( # NOQA
 
     J = ((c_double * 3) * 3)()
 
-    if out is None:
-        return ([list(row) for row in J],
-                _libdhd.dhdWristJointAnglesToJacobian(
-                        joint_angles[0],
-                        joint_angles[1],
-                        joint_angles[2],
-                        J,
-                        ID
-                    )
-                )
-    else:
-        err = _libdhd.dhdWristJointAnglesToJacobian(
+    err = _libdhd.dhdWristJointAnglesToJacobian(
                   joint_angles[0],
                   joint_angles[1],
                   joint_angles[2],
@@ -2401,11 +2252,14 @@ def wristJointAnglesToJacobian( # NOQA
                   ID
               )
 
+    if out is None:
+        out = [list(row) for row in J]
+    else:
         for i in range(3):
             for j in range(3):
                 out[i][j] = J[i][j]
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdWristJointTorquesExtrema.argtypes = [
@@ -2554,34 +2408,24 @@ def wristGravityJointTorques( # NOQA
     q1 = c_double()
     q2 = c_double()
 
-    if out is None:
-        return ([q0.value, q1.value, q2.value],
-                _libdhd.dhdWristGravityJointTorques(
-                        joint_angles[0],
-                        joint_angles[1],
-                        joint_angles[2],
-                        byref(q0),
-                        byref(q1),
-                        byref(q2),
-                        ID
-                    )
-                )
-    else:
-        err = _libdhd.dhdWristGravityJointTorques(
-                  joint_angles[0],
-                  joint_angles[1],
-                  joint_angles[2],
-                  byref(q0),
-                  byref(q1),
-                  byref(q2),
-                  ID
-              )
+    err = _libdhd.dhdWristGravityJointTorques(
+              joint_angles[0],
+              joint_angles[1],
+              joint_angles[2],
+              byref(q0),
+              byref(q1),
+              byref(q2),
+              ID
+          )
 
+    if out is None:
+        out = [q0.value, q1.value, q2.value]
+    else:
         out[0] = q0.value
         out[1] = q1.value
         out[2] = q2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdSetWristJointTorques.argtypes = [
@@ -2767,34 +2611,24 @@ def wristEncodersToJointAngles( # NOQA
     j1 = c_double()
     j2 = c_double()
 
-    if out is None:
-        return ([j0.value, j1.value, j2.value],
-                _libdhd.dhdWristEncodersToJointAngles(
-                        enc[0],
-                        enc[1],
-                        enc[2],
-                        byref(j0),
-                        byref(j1),
-                        byref(j2),
-                        ID
-                    )
-                )
-    else:
-        err = _libdhd.dhdWristEncodersToJointAngles(
-                  enc[0],
-                  enc[1],
-                  enc[2],
-                  byref(j0),
-                  byref(j1),
-                  byref(j2),
-                  ID
-               )
+    err = _libdhd.dhdWristEncodersToJointAngles(
+              enc[0],
+              enc[1],
+              enc[2],
+              byref(j0),
+              byref(j1),
+              byref(j2),
+              ID
+           )
 
+    if out is None:
+        out = [j0.value, j1.value, j2.value]
+    else:
         out[0] = j0.value
         out[1] = j1.value
         out[2] = j2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdWristJointAnglesToEncoders.argtypes = [
@@ -2848,34 +2682,24 @@ def wristJointAnglesToEncoders( # NOQA
     enc1 = c_int()
     enc2 = c_int()
 
-    if out is None:
-        return ([enc0.value, enc1.value, enc2.value],
-                _libdhd.dhdWristJointAnglesToEncoders(
-                        joint_angles[0],
-                        joint_angles[1],
-                        joint_angles[2],
-                        byref(enc0),
-                        byref(enc1),
-                        byref(enc2),
-                        ID
-                    )
-                )
-    else:
-        err = _libdhd.dhdWristJointAnglesToEncoders(
-                  joint_angles[0],
-                  joint_angles[1],
-                  joint_angles[2],
-                  byref(enc0),
-                  byref(enc1),
-                  byref(enc2),
-                  ID
-              )
+    err = _libdhd.dhdWristJointAnglesToEncoders(
+              joint_angles[0],
+              joint_angles[1],
+              joint_angles[2],
+              byref(enc0),
+              byref(enc1),
+              byref(enc2),
+              ID
+          )
 
+    if out is None:
+        out = [enc0.value, enc1.value, enc2.value]
+    else:
         out[0] = enc0.value
         out[1] = enc1.value
         out[2] = enc2.value
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdGetJointAngles.argtypes = [c_double * MAX_DOF, c_byte]
@@ -2912,16 +2736,15 @@ def getJointAngles( # NOQA
 
     joint_angles = (c_int * MAX_DOF)()
 
-    if out is None:
-        return ([val for val in joint_angles],
-                _libdhd.dhdGetJointAngles(joint_angles, ID))
-    else:
-        err = _libdhd.dhdGetJointAngles(joint_angles, ID)
+    err = _libdhd.dhdGetJointAngles(joint_angles, ID)
 
+    if out is None:
+        out = [val for val in joint_angles]
+    else:
         for i in range(MAX_DOF):
             out[i] = joint_angles[i]
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdGetJointVelocities.argtypes = [c_double * MAX_DOF, c_byte]
@@ -2958,15 +2781,14 @@ def getJointVelocities( # NOQA
 
     w = (c_int * MAX_DOF)()
 
+    err = _libdhd.dhdGetJointVelocities(w, ID)
     if out is None:
-        return ([val for val in w], _libdhd.dhdGetJointVelocities(w, ID))
+        out = [val for val in w]
     else:
-        err = _libdhd.dhdGetJointVelocities(w, ID)
-
         for i in range(MAX_DOF):
             out[i] = w[i]
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdGetEncVelocities.argtypes = [c_double * MAX_DOF, c_byte]
@@ -3004,15 +2826,14 @@ def getEncVelocities( # NOQA
 
     v = (c_int * MAX_DOF)()
 
+    err = _libdhd.dhdGetEncVelocities(v, ID)
     if out is None:
-        return ([val for val in v], _libdhd.dhdGetEncVelocities(v, ID))
+        out = [val for val in v]
     else:
-        err = _libdhd.dhdGetEncVelocities(v, ID)
-
         for i in range(MAX_DOF):
             out[i] = v[i]
 
-        return (out, err)
+    return (out, err)
 
 
 _libdhd.dhdJointAnglesToInertiaMatrix.argtypes = [
@@ -3058,24 +2879,20 @@ def jointAnglesToIntertiaMatrix( # NOQA
     """
 
     inertia = ((c_double * 6) * 6)()
+    err = _libdhd.dhdJointAnglesToInertiaMatrix(
+                joint_angles,
+                inertia,
+                ID
+            )
 
     if out is None:
-        return (
-                    [list(row) for row in inertia],
-                    _libdhd.dhdJointAnglesToInertiaMatrix(
-                        joint_angles,
-                        inertia,
-                        ID
-                    )
-                )
+        out = [list(row) for row in inertia]
     else:
-        err = _libdhd.dhdJointAnglesToInertiaMatrix(joint_angles, inertia, ID)
-
         for i in range(6):
             for j in range(6):
                 out[i][j] = inertia[i][j]
 
-        return (out, err)
+    return (out, err)
 
 
 # TODO add a page for COM operation mode.
