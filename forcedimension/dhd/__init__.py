@@ -19,12 +19,11 @@ import forcedimension.dhd.bindings as libdhd
 import forcedimension.dhd.bindings.expert  # NOQA
 
 from forcedimension.dhd.util import ( # NOQA
-    Euclidian,
+    NamedSequence,
     EuclidianVector,
     JacobianMatrix,
     ImmutableWrapper,
-    UpdateTuple,
-    GripperUpdateTuple
+    UpdateOpts,
 )
 
 from forcedimension.dhd.bindings import DeviceType
@@ -120,7 +119,6 @@ class HapticDevice:
 
         self._f_req = [float('nan')] * 3
         self._t_req = [float('nan')] * 3
-        self._enc_req = 0
         self._buttons = 0
 
         self._mass = None
@@ -265,7 +263,7 @@ class HapticDevice:
         end-effector position.
         """
 
-        libdhd.expert.deltaEncodersToJointAngles(
+        libdhd.expert.deltaEncoderToPosition(
             ID=cast(int, self._id),
             enc=cast(DeviceTuple, self._enc),
             out=self._pos
@@ -327,8 +325,7 @@ class HapticDevice:
         :rtype: None
         """
 
-        _, err = libdhd.expert.getEnc(
-                    mask=0xff,
+        _, err = libdhd.expert.getDeltaEncoders(
                     ID=cast(int, self._id),
                     out=self._enc
                 )
@@ -454,7 +451,7 @@ class HapticDevice:
     def update_buttons(self):
         self._buttons = libdhd.getButtonMask(ID=self._id)
 
-    def submit_ft(self):
+    def submit(self):
         self._req = False
         err = libdhd.setForceAndTorque(
                 self._f_req,
@@ -469,7 +466,7 @@ class HapticDevice:
                     ID=cast(int, self._id)
                 )
 
-    def set(self, f: CartesianTuple,
+    def req(self, f: CartesianTuple,
             t: CartesianTuple = CartesianTuple(0, 0, 0)):
         self._req = True
         self._f_req[0:3] = f
@@ -506,9 +503,6 @@ class HapticDevice:
                     ID=cast(int, self._id),
                     feature=libdhd.getEnc
                 )
-
-    def request_enc(self, enc_mask: int = 0x07):  # 0...111
-        self._enc_req &= enc_mask
 
     def enable_force(self, enabled: bool = True):
         """
@@ -609,7 +603,7 @@ class HapticDevice:
 
         VecGen = self._vecgen
 
-        self._enc = [0] * libdhd.MAX_DOF
+        self._enc = [0, 0, 0]
         self._joint_angles = [0, 0, 0]
         self._pos = VecGen()
         self._w = VecGen()
@@ -748,7 +742,7 @@ class Gripper:
             fg=self
         )
 
-    def set(self, fg: float):
+    def req(self, fg: float):
         self._parent._req = True
         self._fg_req = fg
 
@@ -959,15 +953,14 @@ class HapticDaemon(Thread):
     def __init__(
                 self,
                 dev: HapticDevice,
-                update_list: Optional[UpdateTuple] = UpdateTuple(),
-                gripper_update_list: Optional[GripperUpdateTuple] = None,
+                update_list: UpdateOpts = UpdateOpts(),
                 max_freq: Optional[float] = 4000
             ):
 
         super().__init__()
 
         if not isinstance(dev, HapticDevice):
-            raise TypeError("Poller acts on an instance of HapticDevice")
+            raise TypeError("Daemon needs an instance of HapticDevice")
 
         self._paused = False
         self._dev = dev
@@ -979,14 +972,14 @@ class HapticDaemon(Thread):
         else:
             min_period = None
 
-        self._set_pollers(update_list, gripper_update_list, min_period)
+        self._set_pollers(update_list, min_period)
 
         if (self._dev.gripper is not None):
             self._req_func: Callable[[], None] = self._dev.gripper.submit_ft
         else:
-            self._req_func = self._dev.submit_ft
+            self._req_func = self._dev.submit
 
-    def _set_pollers(self, update_list, gripper_update_list, min_period):
+    def _set_pollers(self, update_list, min_period):
         pollers = []
 
         if update_list is not None:
@@ -997,8 +990,24 @@ class HapticDaemon(Thread):
                 funcs.append(self._dev.update_enc_and_calculate)
             """
 
-            if update_list.pos:
-                pollers.append(Poller(self._dev.update_position, min_period))
+            if update_list.enc is not None:
+                f = []
+                if update_list.enc.pos:
+                    f.append(self._dev.calculate_pos)
+
+                if update_list.enc.J:
+                    f.append(self._dev.calculate_jacobian)
+
+                if update_list.enc.joint_angles:
+                    f.append(self._dev.calculate_joint_angles)
+
+                def update_enc_and_calculate():
+                    self._dev.update_enc()
+
+                    for calc in f:
+                        calc()
+
+                pollers.append(Poller(update_enc_and_calculate, min_period))
 
             if update_list.v:
                 pollers.append(Poller(self._dev.update_velocity, min_period))
@@ -1026,8 +1035,8 @@ class HapticDaemon(Thread):
             if update_list.buttons:
                 pollers.append(Poller(self._dev.update_buttons, min_period))
 
-        if gripper_update_list is not None:
-            if gripper_update_list.v:
+        if update_list.gripper is not None:
+            if update_list.gripper.v:
                 pollers.append(
                     Poller(
                         self._dev.gripper.update_linear_velocity,
@@ -1035,7 +1044,7 @@ class HapticDaemon(Thread):
                     )
                 )
 
-            if gripper_update_list.w:
+            if update_list.gripper.w:
                 pollers.append(
                     Poller(
                         self._dev.gripper.update_angular_velocity,
@@ -1043,24 +1052,24 @@ class HapticDaemon(Thread):
                     )
                 )
 
-            if gripper_update_list.gap:
+            if update_list.gripper.gap:
                 pollers.append(
                     Poller(self._dev.gripper.update_gap, min_period)
                 )
 
-            if gripper_update_list.finger_pos:
+            if update_list.gripper.finger_pos:
                 pollers.append(
                     Poller(self._dev.gripper.update_finger_pos, min_period)
                 )
 
-            if gripper_update_list.thumb_pos:
+            if update_list.gripper.thumb_pos:
                 pollers.append(
                     Poller(self._dev.gripper.update_thumb_pos, min_period)
                 )
 
-            pollers.append(Poller(self._dev.gripper.submit_ft, min_period))
+            pollers.append(Poller(self._dev.gripper.submit, min_period))
         else:
-            pollers.append(Poller(self._dev.submit_ft, min_period))
+            pollers.append(Poller(self._dev.submit, min_period))
 
         self._pollers = pollers
 

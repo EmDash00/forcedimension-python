@@ -1,18 +1,18 @@
 from typing import List, NoReturn, Union, Any, MutableSequence, NamedTuple
-from typing import TypeVar, Generic
+from typing import TypeVar, Generic, Optional
 from copy import deepcopy
 
 T = TypeVar('T')
 
 
-class Euclidian(type):
+class NamedSequence(type):
     """
     Euclidian metaclass for MutableSequence types. Using this metaclass will
     automatically create convience 3 read-write properties "x", "y", and "z",
     which correspond to the 0th, 1st, and 2nd elements of an object of the
     MutableSequence class.
     """
-    def __new__(cls, name, bases, dct):
+    def __new__(cls, name, bases, dct, names=['x', 'y', 'z']):
 
         x = super().__new__(cls, name, bases, dct)
 
@@ -25,22 +25,28 @@ class Euclidian(type):
 
             return property(getter, setter)
 
-        for i, prop in enumerate(['x', 'y', 'z']):
+        for i, prop in enumerate(names):
             setattr(x, prop, mutable_accessor(i))
-
-        def magnitude(self):
-            return (
-                    (self.__getitem__(0))**2 +
-                    (self.__getitem__(1))**2 +
-                    (self.__getitem__(2))**2
-            )**(.5)
-
-        setattr(x, 'magnitude', property(magnitude, None))
 
         return x
 
 
-class EuclidianVector(List[float], metaclass=Euclidian):
+class EuclidianVector(List[float], metaclass=NamedSequence):
+    """
+    A List[float] providing convience "x", "y", "z" read-write accessor
+    properties. This class subclasses List[float]; therefore, for all intents
+    and purposes, you can treat it as a list. This allows for it to be
+    compatible with Python's standard library functions.
+    """
+    def __init__(self, data: List[float] = [0, 0, 0]):
+        if (len(data) != 3):
+            raise ValueError
+
+        super().__init__(data)
+
+
+class EncoderVector(List[float], metaclass=NamedSequence,
+                    names=['enc1', 'enc2', 'enc3']):
     """
     A List[float] providing convience "x", "y", "z" read-write accessor
     properties. This class subclasses List[float]; therefore, for all intents
@@ -72,13 +78,28 @@ class JacobianMatrix(List[List[float]]):
 try:
     from numpy import ndarray, array, zeros  # type: ignore
 
-    class NumpyVector(ndarray, metaclass=Euclidian):
+    class NumpyVector(ndarray, metaclass=NamedSequence):
         """
         A view over a numpy ndarry, which provides convience "x", "y", and "z"
         read-write accessor properties. This class subclasses ndarray;
         therefore, for all intents and purposes you can treat it as an ndarray.
         This allows you to simply pass in this class to any and all numpy
         methods.
+        """
+        def __new__(cls, data: MutableSequence[float] = [0, 0, 0]):
+            if len(data) != 3:
+                raise ValueError
+
+            return array(data, dtype=float).view(cls)
+
+    class NumpyEncVec(ndarray, metaclass=NamedSequence,
+                      names=['enc0', 'enc1', 'enc2']):
+        """
+        A view over a numpy ndarry, which provides convience "enc0", "enc1",
+        and "enc2" read-write accessor properties. This class subclasses
+        ndarray; therefore, for all intents and purposes you can treat it as an
+        ndarray. This allows you to simply pass in this class to any and all
+        numpy methods.
         """
         def __new__(cls, data: MutableSequence[float] = [0, 0, 0]):
             if len(data) != 3:
@@ -296,7 +317,7 @@ class ImmutableWrapper(Generic[T]):
         return (object.__getattribute__(self, '_data')).__str__()
 
 
-class GripperUpdateTuple(NamedTuple):
+class GripperUpdateOpts(NamedTuple):
     enc: bool = True
     thumb_pos: bool = True
     finger_pos: bool = True
@@ -304,11 +325,17 @@ class GripperUpdateTuple(NamedTuple):
     w: bool = True
 
 
-class UpdateTuple(NamedTuple):
-    enc: bool = False
+class EncUpdateOpts(NamedTuple):
     pos: bool = True
+    J: bool = True
+    joint_angles: bool = False
+
+
+class UpdateOpts(NamedTuple):
+    enc: Optional[EncUpdateOpts] = EncUpdateOpts()
     v: bool = True
     w: bool = False
     f: bool = True
     t: bool = False
     buttons: bool = True
+    gripper: Optional[GripperUpdateOpts] = None
