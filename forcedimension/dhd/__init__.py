@@ -27,11 +27,6 @@ from forcedimension.dhd.util import ( # NOQA
     GripperUpdateTuple
 )
 
-try:
-    from forcedimension.dhd.util import NumpyVector, NumpyJacobian  # NOQA
-except ImportError:
-    pass
-
 from forcedimension.dhd.bindings import DeviceType
 from forcedimension.dhd.bindings.adaptors import (
     StatusTuple,
@@ -40,6 +35,14 @@ from forcedimension.dhd.bindings.adaptors import (
     ErrorNum,
     errno_to_exception
 )
+
+DefaultVecType = EuclidianVector  # type: ignore
+
+try:
+    from forcedimension.dhd.util import NumpyVector, NumpyJacobian  # NOQA
+    DefaultVecType = NumpyVector  # type: ignore
+except ImportError:
+    pass
 
 
 MutFSeq = MutableSequence[float]
@@ -60,7 +63,7 @@ class HapticDevice:
             self,
             ID: Optional[int] = None,
             devtype: Optional[DeviceType] = None,
-            vecgen: Callable[[], MutFSeq] = EuclidianVector,
+            vecgen: Callable[[], MutFSeq] = DefaultVecType,
             matgen: Callable[[], MutFSeqSeq] = cast(Callable[[], MutFSeqSeq],
                                                     JacobianMatrix)
     ):
@@ -710,7 +713,6 @@ class Gripper:
 
             self._id = ID
 
-        self.VecType = vecgen
         VecType = vecgen
 
         self._enc: int = 0
