@@ -303,7 +303,7 @@ def enableForce(enable: bool, ID: int = -1) -> int: # NOQA
     :returns: 0 on success, -1 otherwise.
     """
 
-    return _libdhd.dhdEnableForce(enable, c_byte)
+    return _libdhd.dhdEnableForce(enable, ID)
 
 
 _libdhd.dhdEnableGripperForce.argtypes = [c_bool, c_byte]
