@@ -9,11 +9,10 @@
 __all__ = ['bindings']
 
 from threading import Thread
-from concurrent.futures import ThreadPoolExecutor
-
 from typing import MutableSequence, Optional, Callable, List
 from typing import cast
-from time import monotonic
+from timeit import default_timer
+
 
 from forcedimension.dhd.bindings.adaptors import CartesianTuple, DeviceTuple
 import forcedimension.dhd.bindings as libdhd
@@ -29,7 +28,7 @@ from forcedimension.dhd.util import ( # NOQA
 )
 
 try:
-    from forcedimension.dhd.util import NumpyVector # NOQA
+    from forcedimension.dhd.util import NumpyVector, NumpyJacobian  # NOQA
 except ImportError:
     pass
 
@@ -95,6 +94,7 @@ class HapticDevice:
             raise ValueError("vecgen did not create a container with at least "
                              "length 3.")
 
+        self._req = False
         self._enc: Optional[MutISeq] = None
         self._joint_angles: Optional[MutFSeq] = None
         self._pos: Optional[MutFSeq] = None
@@ -127,6 +127,10 @@ class HapticDevice:
         self._devtype = devtype
 
         self._thread_exception = None
+
+        self._open = False
+
+        self._haptic_deamon: Optional[HapticDaemon] = None
 
     def check_threadex(self):
         if self._thread_exception is not None:
@@ -172,6 +176,9 @@ class HapticDevice:
         :returns: the set mass of the end-effector in [kg]
         """
         return self._mass
+
+    def set_mass(self, m: float):
+        libdhd.setEffectorMass(m, ID=cast(int, self._id))
 
     @property
     def v(self) -> Optional[ImmutableWrapper[MutFSeq]]:
@@ -257,7 +264,7 @@ class HapticDevice:
 
         libdhd.expert.deltaEncodersToJointAngles(
             ID=cast(int, self._id),
-            enc=cast(DeviceTuple, self._enc[0:3]),
+            enc=cast(DeviceTuple, self._enc),
             out=self._pos
         )
 
@@ -268,7 +275,7 @@ class HapticDevice:
         """
         libdhd.expert.deltaEncodersToJointAngles(
             ID=cast(int, self._id),
-            enc=cast(DeviceTuple, self._enc[0:3]),
+            enc=cast(DeviceTuple, self._enc),
             out=self._joint_angles
         )
 
@@ -302,12 +309,13 @@ class HapticDevice:
         self.calculate_jacobian()
 
     """
-    def update_enc_and_calculate(self, bitmask: int = 0xff) -> None:
-        self.update_enc(bitmask)
+    def update_enc_and_calculate(self) -> None:
+        self.update_enc()
         self.calculate_joint_angles()
+        self.calculate_pos()
         self.calculate_jacobian()
 
-    def update_enc(self, bitmask: int = 0xff) -> None:
+    def update_enc(self) -> None:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         encoder readers of the (DELTA structure that controls the) end-effector
@@ -317,8 +325,8 @@ class HapticDevice:
         """
 
         _, err = libdhd.expert.getEnc(
+                    mask=0xff,
                     ID=cast(int, self._id),
-                    mask=bitmask,
                     out=self._enc
                 )
 
@@ -349,7 +357,7 @@ class HapticDevice:
         """
         _, err = libdhd.getLinearVelocity(ID=cast(int, self._id), out=self._v)
 
-        if (err):
+        if err and err != libdhd.TIMEGUARD:
             if libdhd.errorGetLast() != ErrorNum.TIMEOUT:
                 raise errno_to_exception(ErrorNum(libdhd.errorGetLast()))(
                     ID=cast(int, self._id)
@@ -444,6 +452,7 @@ class HapticDevice:
         self._buttons = libdhd.getButtonMask(ID=self._id)
 
     def submit_ft(self):
+        self._req = False
         err = libdhd.setForceAndTorque(
                 self._f_req,
                 self._t_req,
@@ -454,11 +463,12 @@ class HapticDevice:
             if err == libdhd.MOTOR_SATURATED:
                 pass
             raise errno_to_exception(ErrorNum(libdhd.errorGetLast()))(
-                    ID=cast(int, self._id),
-                    feature=libdhd.setForceAndTorque
+                    ID=cast(int, self._id)
                 )
 
-    def set(self, f: CartesianTuple, t: CartesianTuple):
+    def set(self, f: CartesianTuple,
+            t: CartesianTuple = CartesianTuple(0, 0, 0)):
+        self._req = True
         self._f_req[0:3] = f
         self._t_req[0:3] = t
 
@@ -581,6 +591,7 @@ class HapticDevice:
         libdhd.setGravityCompensation(enabled, ID=cast(int, self._id))
 
     def neutral(self):
+        self._req = True
         self._f_req[0:3] = [0.0, 0.0, 0.0]
         self._t_req[0:3] = [0.0, 0.0, 0.0]
 
@@ -591,6 +602,8 @@ class HapticDevice:
         return bool(self._buttons & cast(int, 1 << button_id))
 
     def __enter__(self):
+        self._open = True
+
         VecGen = self._vecgen
 
         self._enc = [0] * libdhd.MAX_DOF
@@ -669,6 +682,8 @@ class HapticDevice:
         return self
 
     def __exit__(self, t, value, traceback):
+        self.open = False
+        self._haptic_deamon.stop()
         libdhd.close(cast(int, self._id))
 
 
@@ -724,6 +739,7 @@ class Gripper:
         self._fg_req = fg
 
     def submit_ft(self):
+        self._req = False
         libdhd.setForceAndTorqueAndGripperForce(
             f=self._parent._f_req,
             t=self._parent._t_req,
@@ -731,6 +747,7 @@ class Gripper:
         )
 
     def set(self, fg: float):
+        self._parent._req = True
         self._fg_req = fg
 
     # def submit_enc(self) -> NoReturn:
@@ -896,7 +913,47 @@ class Gripper:
         self._parent.check_threadex()
 
 
-class HapticDeviceDaemon(Thread):
+class Poller(Thread):
+    def __init__(
+        self,
+        f: Callable[[], None],
+        min_period: Optional[float] = None,
+    ):
+        self._min_period = min_period
+        self.ex = None
+
+        self._paused = False
+        self._f = f
+
+        super().__init__()
+
+    def stop(self):
+        if not self._paused:
+            self._paused = True
+            self.join()
+
+    def run(self):
+        self._paused = False
+        try:
+            if self._min_period is not None:
+
+                while not self._paused:
+                    t = default_timer()
+
+                    self._f()
+
+                    while default_timer() - t < self._min_period:
+                        pass
+            else:
+                while not self._paused:
+                    self._f()
+
+        except DHDIOError as ex:
+            self.ex = ex
+            self._paused = True
+
+
+class HapticDaemon(Thread):
     def __init__(
                 self,
                 dev: HapticDevice,
@@ -905,123 +962,127 @@ class HapticDeviceDaemon(Thread):
                 max_freq: Optional[float] = 4000
             ):
 
+        super().__init__()
+
         if not isinstance(dev, HapticDevice):
             raise TypeError("Poller acts on an instance of HapticDevice")
 
+        self._paused = False
         self._dev = dev
+        self._dev._haptic_deamon = self
         self.daemon = True
 
-        self._set_funcs(update_list, gripper_update_list)
-        self._num_updates = len(self._funcs)
-
-        if self._num_updates == 0:
-            raise ValueError("There must be at least one parameter to update.")
-
         if (max_freq is not None):
-            self._min_period = 1 / max_freq
+            min_period: Optional[float] = 1 / max_freq
+        else:
+            min_period = None
 
-    def _set_funcs(self, update_list, gripper_update_list):
-        funcs = []
+        self._set_pollers(update_list, gripper_update_list, min_period)
+
+        if (self._dev.gripper is not None):
+            self._req_func: Callable[[], None] = self._dev.gripper.submit_ft
+        else:
+            self._req_func = self._dev.submit_ft
+
+    def _set_pollers(self, update_list, gripper_update_list, min_period):
+        pollers = []
 
         if update_list is not None:
+            """
+            not implemented yet.
+
             if update_list.enc:
                 funcs.append(self._dev.update_enc_and_calculate)
+            """
+
+            if update_list.pos:
+                pollers.append(Poller(self._dev.update_position, min_period))
 
             if update_list.v:
-                funcs.append(self._dev.update_velocity)
+                pollers.append(Poller(self._dev.update_velocity, min_period))
 
             if update_list.w:
-                funcs.append(self._dev.update_angular_velocity)
+                pollers.append(
+                    Poller(self._dev.update_angular_velocity, min_period)
+                )
 
             if update_list.f and update_list.t:
                 if self.gripper_update_list:
-                    funcs.append(self._dev.update_force_and_torque)
+                    pollers.append(
+                        Poller(self._dev.update_force_and_torque, min_period))
                 else:
-                    funcs.append(
-                        self._dev.update_force_and_torque_and_gripper_force
+                    f = self._dev.update_force_and_torque_and_gripper_force
+                    pollers.append(
+
+                        Poller(f, min_period)
                     )
             elif update_list.f and not update_list.t:
-                funcs.append(self._dev.update_force)
+                pollers.append(Poller(self._dev.update_force, min_period))
             elif not update_list.f and update_list.t:
-                funcs.append(self._dev.update_torque)
+                pollers.append(Poller(self._dev.update_torque, min_period))
+
+            if update_list.buttons:
+                pollers.append(Poller(self._dev.update_buttons, min_period))
 
         if gripper_update_list is not None:
             if gripper_update_list.v:
-                funcs.append(self._dev.gripper.update_linear_velocity)
+                pollers.append(
+                    Poller(
+                        self._dev.gripper.update_linear_velocity,
+                        min_period
+                    )
+                )
 
             if gripper_update_list.w:
-                funcs.append(self._dev.gripper.update_angular_velocity)
+                pollers.append(
+                    Poller(
+                        self._dev.gripper.update_angular_velocity,
+                        min_period
+                    )
+                )
 
             if gripper_update_list.gap:
-                funcs.append(self._dev.gripper.update_gap)
+                pollers.append(
+                    Poller(self._dev.gripper.update_gap, min_period)
+                )
 
             if gripper_update_list.finger_pos:
-                funcs.append(self._dev.gripper.update_finger_pos)
+                pollers.append(
+                    Poller(self._dev.gripper.update_finger_pos, min_period)
+                )
 
             if gripper_update_list.thumb_pos:
-                funcs.append(self._dev.gripper.update_thumb_pos)
+                pollers.append(
+                    Poller(self._dev.gripper.update_thumb_pos, min_period)
+                )
 
-            funcs.append(self._dev.gripper.submit)
+            pollers.append(Poller(self._dev.gripper.submit_ft, min_period))
         else:
-            funcs.append(self._dev.submit)
+            pollers.append(Poller(self._dev.submit_ft, min_period))
 
-        self._funcs = funcs
+        self._pollers = pollers
 
-    def sync(self):
-        self.t = monotonic()
-        while True:
-            while (monotonic() - self.t < self.min_period):
-                pass
+    def stop(self):
+        self._paused = True
 
-            self.t = monotonic()
+        for poller in self._pollers:
+            poller.stop()
+
+        self.join()
 
     def run(self):
+        self._paused = False
         try:
-            if self._num_updates == 1:
-                func = self.funcs[0]
-                if self.min_period is not None:
-                    while True:
-                        self.sync()
-                        func()
-                else:
-                    while True:
-                        func()
-            else:
-                num = self._num_updates
+            for poller in self._pollers:
+                poller.start()
 
-                # poll each requested parameter in its own thread
-                with ThreadPoolExecutor(max_workers=num) as executor:
-                    if self._min_period is not None:
-                        num_done = 0
-                        futures = []
-
-                        for func in self._funcs:
-                            futures.append(executor.submit(func))
-
-                        # max frequency one needs to synchronize
-                        # by waiting for each one to finish and then
-                        # synchronizing with the max frequency.
-                        while True:
-                            for future in futures:
-                                if future.done():
-                                    num_done += 1
-
-                            if num_done == self._num_updates:
-                                futures.clear()
-                                self.sync()
-                                for func in self._funcs:
-                                    futures.append(executor.submit(func))
-                    else:
-                        future_map = {}
-
-                        for func in self._funcs:
-                            future_map[func] = executor.submit(func)
-
-                        while True:
-                            for func in future_map:
-                                if future_map[func].done():
-                                    func = future_map[func]
-                                    future_map[func] = executor.submit(func)
-
+            while not self._paused:
+                for poller in self._pollers:
+                    if poller.ex is not None:
+                        raise poller.ex
         except DHDIOError as ex:
+            self._paused = True
+
+            for poller in self._pollers:
+                poller.stop()
             self._dev.thread_exception = ex

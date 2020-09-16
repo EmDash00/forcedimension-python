@@ -72,7 +72,7 @@ class JacobianMatrix(List[List[float]]):
 try:
     from numpy import ndarray, array, zeros  # type: ignore
 
-    class NumpyEuclidianView(ndarray, metaclass=Euclidian):
+    class NumpyVector(ndarray, metaclass=Euclidian):
         """
         A view over a numpy ndarry, which provides convience "x", "y", and "z"
         read-write accessor properties. This class subclasses ndarray;
@@ -86,7 +86,7 @@ try:
 
             return array(data, dtype=float).view(cls)
 
-    class NumpyJacobianView(ndarray):
+    class NumpyJacobian(ndarray):
         """
         A view over a JacobianMatrix.
         """
@@ -257,7 +257,7 @@ class ImmutableWrapper(Generic[T]):
         object.__setattr__(self, '_data', data)
 
     def __getattribute__(self, name: str):
-        return object.__getattribute__(self, name)
+        return getattr(object.__getattribute__(self, '_data'), name)
 
     def __setattr__(self, name: str, value: Any):
         raise TypeError(
@@ -305,8 +305,10 @@ class GripperUpdateTuple(NamedTuple):
 
 
 class UpdateTuple(NamedTuple):
-    enc: bool = True
+    enc: bool = False
+    pos: bool = True
     v: bool = True
-    w: bool = True
+    w: bool = False
     f: bool = True
-    t: bool = True
+    t: bool = False
+    buttons: bool = True
