@@ -680,7 +680,8 @@ class HapticDevice:
 
     def __exit__(self, t, value, traceback):
         self.open = False
-        self._haptic_deamon.stop()
+        if self._haptic_deamon is not None:
+            self._haptic_deamon.stop()
         libdhd.close(cast(int, self._id))
 
 
