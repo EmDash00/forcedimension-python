@@ -212,7 +212,6 @@ class DHDErrorCom(DHDIOError):
     def __init__(
         self,
         *,
-        err: str,
         ID: Optional[int] = None,
         **kwargs
     ):
