@@ -76,7 +76,7 @@ class JacobianMatrix(List[List[float]]):
 
 
 try:
-    from numpy import ndarray, array, zeros  # type: ignore
+    from numpy import ndarray, asarray, zeros  # type: ignore
 
     class NumpyVector(ndarray, metaclass=NamedSequence):
         """
@@ -90,9 +90,10 @@ try:
             if len(data) != 3:
                 raise ValueError
 
-            return array(data, dtype=float).view(cls)
+            return asarray(data, dtype=float).view(cls)
 
-    class NumpyEncVec(ndarray, metaclass=NamedSequence,
+    # not sure why but throws a call-arg error in mypy
+    class NumpyEncVec(ndarray, metaclass=NamedSequence,  # type: ignore
                       names=['enc0', 'enc1', 'enc2']):
         """
         A view over a numpy ndarry, which provides convience "enc0", "enc1",
@@ -105,7 +106,7 @@ try:
             if len(data) != 3:
                 raise ValueError
 
-            return array(data, dtype=float).view(cls)
+            return asarray(data, dtype=float).view(cls)
 
     class NumpyJacobian(ndarray):
         """
@@ -308,10 +309,9 @@ class ImmutableWrapper(Generic[T]):
         )
 
     def __repr__(self) -> str:
-        return ("ImmutableWrapper({})".format(
-                        (object.__getattribute__(self, '_data')).__repr__()
-                    )
-                )
+        return "ImmutableWrapper({})".format(
+            (object.__getattribute__(self, '_data')).__repr__()
+        )
 
     def __str__(self) -> str:
         return (object.__getattribute__(self, '_data')).__str__()

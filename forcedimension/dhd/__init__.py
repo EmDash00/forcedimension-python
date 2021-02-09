@@ -462,15 +462,27 @@ class HapticDevice:
         if err:
             if err == libdhd.MOTOR_SATURATED:
                 pass
-            raise errno_to_exception(ErrorNum(libdhd.errorGetLast()))(
-                    ID=cast(int, self._id)
-                )
+            else:
+                raise errno_to_exception(ErrorNum(libdhd.errorGetLast()))(
+                        ID=cast(int, self._id)
+                    )
 
     def req(self, f: CartesianTuple,
             t: CartesianTuple = CartesianTuple(0, 0, 0)):
         self._req = True
         self._f_req[0:3] = f
         self._t_req[0:3] = t
+
+    def req_vibration(self, f: float, A: float):
+        self._vibration_req[0:2] = [f, A]
+
+    def neutral(self):
+        self._req = True
+        self._f_req[0:3] = [0.0, 0.0, 0.0]
+        self._t_req[0:3] = [0.0, 0.0, 0.0]
+
+    def brake(self):
+        libdhd.stop(cast(int, self._id))
 
     def submit_vibration(self):
         err = libdhd.setVibration(
@@ -487,9 +499,6 @@ class HapticDevice:
                     ID=cast(int, self._id),
                     feature=libdhd.setVibration
                 )
-
-    def set_vibration(self, f: float, A: float):
-        self._vibration_req[0:2] = [f, A]
 
     def submit_enc(self):
         _, err = libdhd.expert.getEnc(
@@ -587,12 +596,10 @@ class HapticDevice:
     def enable_gravity_compensation(self, enabled: bool = False):
         libdhd.setGravityCompensation(enabled, ID=cast(int, self._id))
 
-    def neutral(self):
         self._req = True
         self._f_req[0:3] = [0.0, 0.0, 0.0]
         self._t_req[0:3] = [0.0, 0.0, 0.0]
 
-    def brake(self):
         libdhd.stop(cast(int, self._id))
 
     def get_button(self, button_id: int = 0) -> bool:
@@ -706,7 +713,7 @@ class Gripper:
             if (ID < 0):
                 raise ValueError("ID must be greater than 0.")
 
-            self._id = ID
+            self._id: int = ID
 
         VecType = vecgen
 
