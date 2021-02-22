@@ -12,7 +12,7 @@ from threading import Thread
 from typing import MutableSequence, Optional, Callable, List
 from typing import cast
 
-from timeit import default_timer
+from time import sleep, monotonic
 
 from forcedimension.dhd.bindings.adaptors import CartesianTuple, DeviceTuple
 import forcedimension.dhd.bindings as libdhd
@@ -951,18 +951,14 @@ class Poller(Thread):
     def run(self):
         self._paused = False
         try:
-            if self._min_period is not None:
-                while not self._paused:
-                    t = default_timer()
+            while not self._paused:
+                t = monotonic()
 
-                    self._f()
+                self._f()
 
-                    while (default_timer() - t) < self._min_period:
-                        pass
-            else:
-                while not self._paused:
-                    self._f()
-
+                sleep(self._min_period * 0.9)
+                while (monotonic() - t) < self._min_period:
+                    pass
         except DHDIOError as ex:
             self.ex = ex
             self._paused = True
@@ -973,7 +969,7 @@ class HapticDaemon(Thread):
                 self,
                 dev: HapticDevice,
                 update_list: UpdateOpts = UpdateOpts(),
-                max_freq: Optional[float] = 4000
+                max_freq: float = 4000
             ):
 
         super().__init__()
@@ -986,10 +982,7 @@ class HapticDaemon(Thread):
         self._dev._haptic_deamon = self
         self.daemon = True
 
-        if (max_freq is not None):
-            min_period: Optional[float] = 1 / max_freq
-        else:
-            min_period = None
+        min_period = 1 / max_freq
 
         self._set_pollers(update_list, min_period)
 
@@ -1110,6 +1103,8 @@ class HapticDaemon(Thread):
                 for poller in self._pollers:
                     if poller.ex is not None:
                         raise poller.ex
+
+                sleep(0.01)
 
         except DHDIOError as ex:
             self._paused = True
