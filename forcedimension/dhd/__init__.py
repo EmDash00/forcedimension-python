@@ -11,8 +11,8 @@ __all__ = ['bindings']
 from threading import Thread
 from typing import MutableSequence, Optional, Callable, List
 from typing import cast
-from timeit import default_timer
 
+from timeit import default_timer
 
 from forcedimension.dhd.bindings.adaptors import CartesianTuple, DeviceTuple
 import forcedimension.dhd.bindings as libdhd
@@ -331,7 +331,11 @@ class HapticDevice:
                 )
 
         if err and err != libdhd.TIMEGUARD:
-            raise errno_to_exception(libdhd.errorGetLast())
+            raise errno_to_exception(
+                ErrorNum(libdhd.errorGetLast()))(
+                    ID=cast(int, self.ID),
+                    feature=libdhd.expert.getDeltaEncoders
+                )
 
     def update_position(self) -> None:
         """
@@ -345,7 +349,11 @@ class HapticDevice:
         _, err = libdhd.getPosition(ID=cast(int, self._id), out=self._pos)
 
         if err and err != libdhd.TIMEGUARD:
-            raise errno_to_exception(libdhd.errorGetLast())
+            raise errno_to_exception(
+                ErrorNum(libdhd.errorGetLast()))(
+                    ID=cast(int, self.ID),
+                    feature=libdhd.getPosition
+                )
 
     def update_velocity(self) -> None:
         """
@@ -360,7 +368,8 @@ class HapticDevice:
         if err and err != libdhd.TIMEGUARD:
             if libdhd.errorGetLast() != ErrorNum.TIMEOUT:
                 raise errno_to_exception(ErrorNum(libdhd.errorGetLast()))(
-                    ID=cast(int, self._id)
+                    ID=cast(int, self._id),
+                    feature=libdhd.getLinearVelocity
                 )
             else:
                 self._v = [float('nan'), float('nan'), float('nan')]
@@ -399,10 +408,12 @@ class HapticDevice:
         _, err = libdhd.getForce(ID=cast(int, self._id), out=self._f)
 
         if err and err != libdhd.TIMEGUARD:
-            raise errno_to_exception(libdhd.errorGetLast())(
+            raise errno_to_exception(ErrorNum(
+                libdhd.errorGetLast())(
                     ID=cast(int, self._id),
                     feature=libdhd.getForce
                 )
+            )
 
     def update_force_and_torque(self):
         """
@@ -464,7 +475,8 @@ class HapticDevice:
                 pass
             else:
                 raise errno_to_exception(ErrorNum(libdhd.errorGetLast()))(
-                        ID=cast(int, self._id)
+                        ID=cast(int, self._id),
+                        feature=libdhd.setForceAndTorqueAndGripperForce
                     )
 
     def req(self, f: CartesianTuple,
@@ -940,13 +952,12 @@ class Poller(Thread):
         self._paused = False
         try:
             if self._min_period is not None:
-
                 while not self._paused:
                     t = default_timer()
 
                     self._f()
 
-                    while default_timer() - t < self._min_period:
+                    while (default_timer() - t) < self._min_period:
                         pass
             else:
                 while not self._paused:
@@ -1099,9 +1110,10 @@ class HapticDaemon(Thread):
                 for poller in self._pollers:
                     if poller.ex is not None:
                         raise poller.ex
+
         except DHDIOError as ex:
             self._paused = True
 
             for poller in self._pollers:
                 poller.stop()
-            self._dev.thread_exception = ex
+            self._dev._thread_exception = ex

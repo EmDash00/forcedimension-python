@@ -216,7 +216,7 @@ class DHDErrorCom(DHDIOError):
         **kwargs
     ):
         return super().__init__(
-            err="a communication error between the host and the HapticDevice",
+            err="A communication error between the host and the HapticDevice",
             ID=ID
         )
 
@@ -232,7 +232,7 @@ class DHDErrorDHCBusy(DHDIOError):
 class DHDErrorNoDeviceFound(DHDIOError):
     def __init__(self, **kwargs):
         return super().__init__(
-            err="No compatible ForceDimension devices found."
+            err="No compatible ForceDimension devices found"
         )
 
 
