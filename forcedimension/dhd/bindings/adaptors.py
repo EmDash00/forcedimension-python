@@ -99,7 +99,9 @@ class DHDFeatureError(DHDError):
         feature: Optional[Callable[[Any], Any]]
     ):
         err_msg = "{} is not available {} because {}."
-        feature_seg = "A particular feature" if feature is None else feature
+        feature_seg = (
+            "A particular feature" if feature is None else str(feature)
+        )
         id_seg = "" if ID is None else "on device {}".format(ID)
 
         return super().__init__(err_msg.format(feature_seg, id_seg, reason))
