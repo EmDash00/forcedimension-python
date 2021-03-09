@@ -97,30 +97,42 @@ class HapticDevice:
             raise ValueError("vecgen did not create a container with at least "
                              "length 3.")
 
+        self._open = True
+
+        self._enc = [0, 0, 0]
+        self._joint_angles = [0, 0, 0]
+
+        self._pos: MutFSeq = vecgen()
+        self._w: MutFSeq = vecgen()
+        self._v: MutFSeq = vecgen()
+        self._f: MutFSeq = vecgen()
+        self._t: MutFSeq = vecgen()
+        self._J: MutFSeqSeq = cast(MutFSeqSeq, JacobianMatrix())
+
         self._req = False
-        self._enc: Optional[MutISeq] = None
-        self._joint_angles: Optional[MutFSeq] = None
-        self._pos: Optional[MutFSeq] = None
-        self._w: Optional[MutFSeq] = None
-        self._v: Optional[MutFSeq] = None
-        self._f: Optional[MutFSeq] = None
-        self._t: Optional[MutFSeq] = None
-        self._J: Optional[MutFSeqSeq] = None
-
-        self._pos_view: Optional[ImmutableWrapper[MutFSeq]] = None
-        self._w_view: Optional[ImmutableWrapper[MutFSeq]] = None
-        self._v_view: Optional[ImmutableWrapper[MutFSeq]] = None
-        self._f_view: Optional[ImmutableWrapper[MutFSeq]] = None
-        self._t_view: Optional[ImmutableWrapper[MutFSeq]] = None
-        self._J_view: Optional[ImmutableWrapper[MutFSeqSeq]] = None
-
-        self._vibration_req: List[float] = [0, 0]
-
-        self._left_handed = None
-
-        self._f_req = [float('nan')] * 3
-        self._t_req = [float('nan')] * 3
+        self._f_req = [0.0] * 3
+        self._t_req = [0.0] * 3
+        self._vibration_req: List[float] = [0] * 2
         self._buttons = 0
+
+        self._pos_view: ImmutableWrapper[MutFSeq] = (
+            ImmutableWrapper(data=self._pos)
+        )
+        self._w_view: ImmutableWrapper[MutFSeq] = (
+            ImmutableWrapper(data=self._w)
+        )
+        self._v_view: ImmutableWrapper[MutFSeq] = (
+            ImmutableWrapper(data=self._v)
+        )
+        self._f_view: ImmutableWrapper[MutFSeq] = (
+            ImmutableWrapper(data=self._f)
+        )
+        self._t_view: ImmutableWrapper[MutFSeq] = (
+            ImmutableWrapper(data=self._t)
+        )
+        self._J_view: ImmutableWrapper[MutFSeqSeq] = (
+            ImmutableWrapper(data=self._J)
+        )
 
         self._mass = None
 
@@ -130,9 +142,57 @@ class HapticDevice:
 
         self._thread_exception = None
 
-        self._open = False
-
         self._haptic_deamon: Optional[HapticDaemon] = None
+
+        if (libdhd.getDeviceCount() > 0):
+            if cast(int, self._id) is None:
+                if (self._devtype is None):
+                    self._id = libdhd.open()
+                    self._devtype = libdhd.getSystemType()
+                else:
+                    self._id = libdhd.openType(self._devtype)
+
+                if (self._devtype == -1):
+                    raise errno_to_exception(libdhd.errorGetLast())(
+                        ID=cast(int, self._id),
+                        op=libdhd.getSystemType
+                    )
+            else:
+                libdhd.openID(cast(int, self._id))
+                if (cast(int, self._id) == -1):
+                    raise errno_to_exception(libdhd.errorGetLast())
+
+                devtype = libdhd.getSystemType()
+
+                if (devtype == -1):
+                    raise errno_to_exception(libdhd.errorGetLast())(
+                        ID=cast(int, self._id),
+                        op=libdhd.getSystemType
+                    )
+
+                if (self.devtype != devtype):
+                    raise Exception(
+                        "Device is not of type {}".format(self.devtype))
+
+            self._left_handed = libdhd.isLeftHanded(cast(int, self._id))
+
+            if (libdhd.hasGripper(cast(int, self._id))):
+                self.gripper = Gripper(
+                    self,
+                    cast(int, self._id),
+                    vecgen
+                )
+
+            self.update_enc_and_calculate()
+            self.update_velocity()
+            # self.update_angular_velocity()
+
+            if self.gripper is not None:
+                self.update_force_and_torque_and_gripper_force()
+            else:
+                self.update_force_and_torque()
+        else:
+            raise DHDErrorNoDeviceFound()
 
     def check_threadex(self):
         if self._thread_exception is not None:
@@ -278,7 +338,7 @@ class HapticDevice:
         libdhd.expert.deltaEncodersToJointAngles(
             ID=cast(int, self._id),
             enc=cast(DeviceTuple, self._enc),
-            out=self._joint_angles
+            out=cast(MutableSequence[float], self._joint_angles)
         )
 
     def calculate_jacobian(self) -> None:
@@ -709,83 +769,6 @@ class HapticDevice:
         return bool(self._buttons & cast(int, 1 << button_id))
 
     def __enter__(self):
-        self._open = True
-
-        VecGen = self._vecgen
-
-        self._enc = [0, 0, 0]
-        self._joint_angles = [0, 0, 0]
-        self._pos = VecGen()
-        self._w = VecGen()
-        self._v = VecGen()
-        self._f = VecGen()
-        self._t = VecGen()
-
-        self._pos_view = ImmutableWrapper(data=self._pos)
-        self._w_view = ImmutableWrapper(data=self._w)
-        self._v_view = ImmutableWrapper(data=self._v)
-        self._f_view = ImmutableWrapper(data=self._f)
-        self._t_view = ImmutableWrapper(data=self._t)
-        self._J_view = ImmutableWrapper(data=self._J)
-
-        if (len(self._pos) < 3):
-            raise ValueError("vecgen did not create a container with at least "
-                             "length 3.")
-
-        self._f_req[0:3] = [0.0, 0.0, 0.0]
-        self._t_req[0:3] = [0.0, 0.0, 0.0]
-
-        if (libdhd.getDeviceCount() > 0):
-            if cast(int, self._id) is None:
-                if (self._devtype is None):
-                    self._id = libdhd.open()
-                    self._devtype = libdhd.getSystemType()
-                else:
-                    self._id = libdhd.openType(self._devtype)
-
-                if (self._devtype == -1):
-                    raise errno_to_exception(libdhd.errorGetLast())(
-                        ID=cast(int, self._id),
-                        op=libdhd.getSystemType
-                    )
-            else:
-                libdhd.openID(cast(int, self._id))
-                if (cast(int, self._id) == -1):
-                    raise errno_to_exception(libdhd.errorGetLast())
-
-                devtype = libdhd.getSystemType()
-
-                if (devtype == -1):
-                    raise errno_to_exception(libdhd.errorGetLast())(
-                        ID=cast(int, self._id),
-                        op=libdhd.getSystemType
-                    )
-
-                if (self.devtype != devtype):
-                    raise Exception(
-                        "Device is not of type {}".format(self.devtype))
-
-            self._left_handed = libdhd.isLeftHanded(cast(int, self._id))
-
-            if (libdhd.hasGripper(cast(int, self._id))):
-                self.gripper = Gripper(
-                    self._f_req,
-                    self._t_req,
-                    cast(int, self._id),
-                    self._vecgen
-                )
-
-            self.update_enc_and_calculate()
-            self.update_velocity()
-            # self.update_angular_velocity()
-
-            if self.gripper is not None:
-                self.update_force_and_torque_and_gripper_force()
-            else:
-                self.update_force_and_torque()
-        else:
-            raise DHDErrorNoDeviceFound()
-
         return self
 
     def __exit__(self, t, value, traceback):
@@ -1075,7 +1058,7 @@ class HapticDaemon(Thread):
         self._set_pollers(update_list)
 
         if (self._dev.gripper is not None):
-            self._req_func: Callable[[], None] = self._dev.gripper.submit_ft
+            self._req_func: Callable[[], None] = self._dev.gripper.submit
         else:
             self._req_func = self._dev.submit
 
