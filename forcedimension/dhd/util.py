@@ -318,24 +318,18 @@ class ImmutableWrapper(Generic[T]):
 
 
 class GripperUpdateOpts(NamedTuple):
-    enc: bool = True
-    thumb_pos: bool = True
-    finger_pos: bool = True
-    v: bool = True
-    w: bool = True
-
-
-class EncUpdateOpts(NamedTuple):
-    pos: bool = True
-    J: bool = True
-    joint_angles: bool = False
+    enc: float = 1000
+    thumb_pos: float = 1000
+    finger_pos: float = 1000
+    v: float = 4000
+    w: float = 4000
 
 
 class UpdateOpts(NamedTuple):
-    enc: Optional[EncUpdateOpts] = EncUpdateOpts()
-    v: bool = True
-    w: bool = False
-    f: bool = True
-    t: bool = False
-    buttons: bool = True
+    enc: Optional[float] = 1000
+    v: Optional[float] = 4000
+    w: Optional[float] = None
+    buttons: Optional[float] = 100
+    ft: Optional[float] = 4000
+    req: Optional[float] = 4000
     gripper: Optional[GripperUpdateOpts] = None

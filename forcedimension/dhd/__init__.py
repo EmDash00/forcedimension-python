@@ -11,6 +11,7 @@ __all__ = ['bindings']
 from threading import Thread
 from typing import MutableSequence, Optional, Callable, List
 from typing import cast
+from math import nan
 
 from time import sleep, monotonic
 
@@ -460,9 +461,25 @@ class HapticDevice:
             self.gripper._fg = fg
 
     def update_buttons(self):
+        """
+        Performs a blocking read and gets the state of all buttons on the
+        device into a int bit vector buffer.
+
+        See Also
+        --------
+        :func:`HapticDevice.get_button`
+        """
         self._buttons = libdhd.getButtonMask(ID=self._id)
 
     def submit(self):
+        """
+        Push the requested forces and torques to the device in a blocking send.
+
+        See Also
+        --------
+        :func:HapticDevice.req
+
+        """
         self._req = False
         err = libdhd.setForceAndTorque(
                 self._f_req,
@@ -479,21 +496,63 @@ class HapticDevice:
                         feature=libdhd.setForceAndTorqueAndGripperForce
                     )
 
-    def req(self, f: CartesianTuple,
-            t: CartesianTuple = CartesianTuple(0, 0, 0)):
+    def req(
+        self,
+        f: CartesianTuple,
+        t: CartesianTuple = CartesianTuple(0, 0, 0)
+    ) -> None:
+        """
+        Load the request force and request torque buffer for this device.
+        This won't send the request to the device. This is used by the
+        HapticDaemon.
+
+        :param CartesianTuple f:
+            The force in [N] to apply to the end effector about
+            the x, y, and z axes.
+
+        :param CartesianTuple t:
+            The torque in [Nm] to apply to the end effector about the
+            x, y,and z axes.
+
+        See Also
+        --------
+        :func:`HapticDevice.submit`
+        """
         self._req = True
         self._f_req[0:3] = f
         self._t_req[0:3] = t
 
     def req_vibration(self, f: float, A: float):
+        """
+        Load the requested vibration into the vibration buffer. This won't
+        send the request to the device. This is used by the HapticDaemon. This
+        vibration will be added on top of the force requested to the device.
+
+        :param float f: frequency of the vibration in [Hz]
+        :param float A: amplitude of the vibration
+
+        See Also
+        --------
+        :func:`HapticDevice.submit_vibration`
+        """
+
         self._vibration_req[0:2] = [f, A]
 
     def neutral(self):
-        self._req = True
-        self._f_req[0:3] = [0.0, 0.0, 0.0]
-        self._t_req[0:3] = [0.0, 0.0, 0.0]
+        """
+        Disable forces and put the device in IDLE mode. Brakes will be turned
+        off and gravity compensation disabled. No forces will be allowed to be
+        put on the device.
+        """
+        self.enable_force(enabled=False)
+        self.enable_brakes(enabled=False)
+        self.enable_gravity_compensation(enabled=False)
 
-    def brake(self):
+    def stop(self):
+        """
+        Disable force and put the device in BRAKE mode. You may feel a viscous
+        force that keeps that device from moving too quickly in this mode.
+        """
         libdhd.stop(cast(int, self._id))
 
     def submit_vibration(self):
@@ -532,6 +591,20 @@ class HapticDevice:
         :param bool enabled: [default=True] true to enable, false to disable
         """
         libdhd.enableForce(enabled, ID=cast(int, self._id))
+
+    def enable_brakes(self, enabled: bool = True):
+        """
+        Enable electromagnetic braking on the device.
+
+        :param enabled bool:
+            True to enable electromagnetic braking, False to disable.
+        """
+        err = libdhd.setBrakes(enabled)
+        if err:
+            raise errno_to_exception(ErrorNum(libdhd.errorGetLast()))(
+                    ID=cast(int, self._id),
+                    feature=libdhd.setVibration
+                )
 
     def get_max_force(self) -> Optional[float]:
         """
@@ -605,7 +678,13 @@ class HapticDevice:
         if err:
             raise errno_to_exception(ErrorNum(libdhd.errorGetLast()))
 
-    def enable_gravity_compensation(self, enabled: bool = False):
+    def enable_gravity_compensation(self, enabled: bool = True):
+        """
+        Enable built-in gravity compensation for the end-effector that will be
+        added on top of the force request.
+
+        :param bool enabled: True to enable, False to disable
+        """
         libdhd.setGravityCompensation(enabled, ID=cast(int, self._id))
 
         self._req = True
@@ -615,6 +694,18 @@ class HapticDevice:
         libdhd.stop(cast(int, self._id))
 
     def get_button(self, button_id: int = 0) -> bool:
+        """
+        See if the button on the device is being pressed.
+
+        :param int button_id: The button to check
+
+        :rtype: bool
+        :returns: True if the button is being pressed, False otherwise.
+
+        See Also
+        --------
+        :class:forcedimension.dhd.bindings.constants.NovintButtonID
+        """
         return bool(self._buttons & cast(int, 1 << button_id))
 
     def __enter__(self):
@@ -730,11 +821,11 @@ class Gripper:
         VecType = vecgen
 
         self._enc: int = 0
-        self._angle: float = float('nan')
-        self._gap: float = float('nan')
-        self._v: float = float('nan')
-        self._w: float = float('nan')
-        self._fg: float = float('nan')
+        self._angle: float = nan
+        self._gap: float = nan
+        self._v: float = nan
+        self._w: float = nan
+        self._fg: float = nan
 
         self._thumb_pos: MutFSeq = VecType()
         self._finger_pos: MutFSeq = VecType()
@@ -751,10 +842,10 @@ class Gripper:
 
         self._fg_req: float = 0.0
 
-    def request_ft(self, fg: float):
+    def request(self, fg: float):
         self._fg_req = fg
 
-    def submit_ft(self):
+    def submit(self):
         self._req = False
         libdhd.setForceAndTorqueAndGripperForce(
             f=self._parent._f_req,
@@ -968,8 +1059,7 @@ class HapticDaemon(Thread):
     def __init__(
                 self,
                 dev: HapticDevice,
-                update_list: UpdateOpts = UpdateOpts(),
-                max_freq: float = 4000
+                update_list: UpdateOpts = UpdateOpts()
             ):
 
         super().__init__()
@@ -982,16 +1072,14 @@ class HapticDaemon(Thread):
         self._dev._haptic_deamon = self
         self.daemon = True
 
-        min_period = 1 / max_freq
-
-        self._set_pollers(update_list, min_period)
+        self._set_pollers(update_list)
 
         if (self._dev.gripper is not None):
             self._req_func: Callable[[], None] = self._dev.gripper.submit_ft
         else:
             self._req_func = self._dev.submit
 
-    def _set_pollers(self, update_list, min_period):
+    def _set_pollers(self, update_list):
         pollers = []
 
         if update_list is not None:
@@ -1002,94 +1090,61 @@ class HapticDaemon(Thread):
                 funcs.append(self._dev.update_enc_and_calculate)
             """
 
-            if update_list.enc is not None:
-                f = []
-                if update_list.enc.pos:
-                    f.append(self._dev.calculate_pos)
+            funcs = (
+                self._dev.update_enc_and_calculate,
+                self._dev.update_velocity,
+                self._dev.update_angular_velocity,
+                self._dev.update_buttons
+            )
 
-                if update_list.enc.J:
-                    f.append(self._dev.calculate_jacobian)
+            pollers.extend(
+                Poller(update, 1/freq)
+                for freq, update in zip(update_list[:-2], funcs)
+                if freq is not None
+            )
 
-                if update_list.enc.joint_angles:
-                    f.append(self._dev.calculate_joint_angles)
-
-                def update_enc_and_calculate():
-                    self._dev.update_enc()
-
-                    for calc in f:
-                        calc()
-
-                pollers.append(Poller(update_enc_and_calculate, min_period))
-
-            if update_list.v:
-                pollers.append(Poller(self._dev.update_velocity, min_period))
-
-            if update_list.w:
-                pollers.append(
-                    Poller(self._dev.update_angular_velocity, min_period)
-                )
-
-            if update_list.f and update_list.t:
-                if self.gripper_update_list:
+            if update_list.ft is not None:
+                if (
+                    update_list.gripper is not None and
+                    self.gripper is not None
+                ):
                     pollers.append(
-                        Poller(self._dev.update_force_and_torque, min_period))
+                        Poller(
+                            self._dev.update_force_and_torque,
+                            1/update_list.ft
+                        )
+                    )
                 else:
                     f = self._dev.update_force_and_torque_and_gripper_force
                     pollers.append(
-
-                        Poller(f, min_period)
+                        Poller(f, 1/update_list.ft)
                     )
-            elif update_list.f and not update_list.t:
-                pollers.append(Poller(self._dev.update_force, min_period))
-            elif not update_list.f and update_list.t:
-                pollers.append(Poller(self._dev.update_torque, min_period))
-
-            if update_list.buttons:
-                pollers.append(Poller(self._dev.update_buttons, min_period))
-
         if update_list.gripper is not None:
-            if update_list.gripper.v:
-                pollers.append(
-                    Poller(
-                        self._dev.gripper.update_linear_velocity,
-                        min_period
-                    )
-                )
+            funcs = (
+                self._dev.gripper.update_enc_and_calculate,
+                self._dev.gripper.update_finger_pos,
+                self._dev.gripper.update_thumb_pos,
+                self._dev.gripper.update_linear_velocity,
+                self._dev.gripper.update_angular_velocity
+            )
 
-            if update_list.gripper.w:
-                pollers.append(
-                    Poller(
-                        self._dev.gripper.update_angular_velocity,
-                        min_period
-                    )
-                )
+            pollers.extend(
+                Poller(update, 1/freq)
+                for freq, update in zip(update_list.gripper, funcs)
+                if freq is not None
+            )
 
-            if update_list.gripper.gap:
-                pollers.append(
-                    Poller(self._dev.gripper.update_gap, min_period)
-                )
-
-            if update_list.gripper.finger_pos:
-                pollers.append(
-                    Poller(self._dev.gripper.update_finger_pos, min_period)
-                )
-
-            if update_list.gripper.thumb_pos:
-                pollers.append(
-                    Poller(self._dev.gripper.update_thumb_pos, min_period)
-                )
-
-            pollers.append(Poller(self._dev.gripper.submit, min_period))
+            pollers.append(Poller(self._dev.gripper.submit, 1/update_list.req))
         else:
-            pollers.append(Poller(self._dev.submit, min_period))
+            pollers.append(Poller(self._dev.submit, 1/update_list.req))
 
         self._pollers = pollers
 
     def stop(self):
         self._paused = True
-
-        for poller in self._pollers:
-            poller.stop()
+        if self._pollers is not None:
+            for poller in self._pollers:
+                poller.stop()
 
         self.join()
 
