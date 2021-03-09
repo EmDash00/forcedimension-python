@@ -71,19 +71,23 @@ class HapticDevice:
         Create a handle to a ForceDimension haptic device.
 
         :param Optional[int] ID: optional ID to open. If no ID is provided, the
-        first device available is opened.
+        first available device available is opened.
 
         :param Optional[DeviceType]: optional requirement for the type of
         device opened. If specified with ID, a RuntimeError will happen if the
         device at the given ID is not the required type.
 
         :param vecgen: A method to generate vectors for use in the haptic
-        device. For maximum portability, the default is just a EuclideanVector.
-
-        If your system supports numpy, you can provide it with the NumpyVector
-        function.
+        device. For maximum portability, the default is just a
+        :class:`forcedimension.dhd.EuclidianVector`.
+        If your system supports numpy, the default is
+        :class:`forcedimension.dhd.EuclidianVector`.
 
         You can also provide it with any class so long as len(vecgen()) >= 3
+
+        While you can construct a HapticDevice object this way, it is usually
+        recommended to use the object with a "with" statement so that the
+        device is always properly closed.
         """
 
         if ID is not None:
