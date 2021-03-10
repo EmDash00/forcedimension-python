@@ -772,14 +772,17 @@ class HapticDevice:
         """
         return bool(self._buttons & cast(int, 1 << button_id))
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, t, value, traceback):
+    def close(self):
         self.open = False
         if self._haptic_deamon is not None:
             self._haptic_deamon.stop()
         libdhd.close(cast(int, self._id))
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, t, value, traceback):
+        self.close()
 
 
 class Gripper:
