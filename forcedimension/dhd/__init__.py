@@ -149,7 +149,7 @@ class HapticDevice:
         self._haptic_deamon: Optional[HapticDaemon] = None
 
         if (libdhd.getDeviceCount() > 0):
-            if cast(int, self._id) is None:
+            if self._id is None:
                 if (self._devtype is None):
                     self._id = libdhd.open()
                     self._devtype = libdhd.getSystemType()
@@ -174,9 +174,10 @@ class HapticDevice:
                         op=libdhd.getSystemType
                     )
 
-                if (self.devtype != devtype):
-                    raise Exception(
-                        "Device is not of type {}".format(self.devtype))
+                if self.devtype is not None:
+                    if (self.devtype != devtype):
+                        raise Exception(
+                            "Device is not of type {}".format(self.devtype))
 
             self._left_handed = libdhd.isLeftHanded(cast(int, self._id))
 
