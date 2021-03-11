@@ -13,9 +13,9 @@ from ctypes import c_int, c_uint, c_byte, c_ubyte, c_ushort, c_double
 
 from ctypes import byref, POINTER
 
-from forcedimension.dhd.libdhd import _libdhd
-from forcedimension.dhd.libdhd.constants import ComMode, MAX_DOF
-from forcedimension.dhd.libdhd.adaptors import (
+from forcedimension.dhd import _libdhd
+from forcedimension.dhd.constants import ComMode, MAX_DOF
+from forcedimension.dhd.adaptors import (
     DeviceTuple, DOFTuple, CartesianTuple
 )
 
