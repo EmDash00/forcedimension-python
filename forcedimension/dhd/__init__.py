@@ -1039,7 +1039,6 @@ class Poller(Thread):
         super().start(*args, **kwargs)
 
     def run(self):
-        self._paused = False
         try:
             while not self._stopped:
                 while not self._paused and not self._stopped:
