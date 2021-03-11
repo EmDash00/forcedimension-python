@@ -1020,27 +1020,40 @@ class Poller(Thread):
         self._min_period = min_period
         self.ex = None
 
+        self._stopped = False
         self._paused = False
         self._f = f
 
         super().__init__()
 
     def stop(self):
-        if not self._paused:
-            self._paused = True
+        if not self._stopped:
+            self._stopped = True
             self.join()
+
+    def pause(self, paused=True):
+        self._paused = paused
+
+    def start(self, paused=False, *args, **kwargs):
+        self._paused = paused
+        super().start(*args, **kwargs)
 
     def run(self):
         self._paused = False
         try:
-            while not self._paused:
-                t = monotonic()
+            while not self._stopped:
+                while not self._paused and not self._stopped:
+                    t = monotonic()
 
-                self._f()
+                    self._f()
 
-                sleep(self._min_period * 0.9)
-                while (monotonic() - t) < self._min_period:
-                    pass
+                    sleep(self._min_period * 0.9)
+                    while (monotonic() - t) < self._min_period:
+                        pass
+
+                while self._paused and not self._stopped:
+                    sleep(self._min_period)
+
         except DHDIOError as ex:
             self.ex = ex
             self._paused = True
@@ -1125,9 +1138,13 @@ class HapticDaemon(Thread):
                 if freq is not None
             )
 
-            pollers.append(Poller(self._dev.gripper.submit, 1/update_list.req))
+            self._force_poller = (
+                Poller(self._dev.gripper.submit, 1/update_list.req)
+            )
         else:
-            pollers.append(Poller(self._dev.submit, 1/update_list.req))
+            self._force_poller = (
+                Poller(self._dev.submit, 1/update_list.req)
+            )
 
         self._pollers = pollers
 
@@ -1137,18 +1154,29 @@ class HapticDaemon(Thread):
             for poller in self._pollers:
                 poller.stop()
 
+        self._force_poller.stop()
+
         self.join()
 
-    def run(self):
+    def forcepoll(self, poll=True):
+        if poll:
+            self._force_poller.pause(not poll)
+
+    def run(self, forceon=True):
         self._paused = False
         try:
             for poller in self._pollers:
                 poller.start()
 
+            self._force_poller.start(not forceon)
+
             while not self._paused:
                 for poller in self._pollers:
                     if poller.ex is not None:
                         raise poller.ex
+
+                if self._force_poller.ex is not None:
+                    raise self._force_poller.ex
 
                 sleep(0.01)
 
