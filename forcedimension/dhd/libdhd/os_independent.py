@@ -1,12 +1,12 @@
 """
 .. module::expert
    :platform: Windows, Unix
-   :synopsis: libdhd "OS Independent SDK" Python bindings
+   :synopsis: libdhd "OS Independent SDK" Python libdhd
 
 .. moduleauthor:: Drason Chow <drasonchow@gmail.com>
 """
 
-from forcedimension.dhd.bindings import _libdhd
+from forcedimension.dhd.libdhd import _libdhd
 from ctypes import c_bool, c_byte, c_double
 
 _libdhd.dhdKbHit.argtypes = []
