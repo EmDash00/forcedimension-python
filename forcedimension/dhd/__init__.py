@@ -1,12 +1,12 @@
 """
 .. module::dhd
    :platform: Windows, Unix
-   :synopsis: libdhd Python bindings
+   :synopsis: libdhd Python libdhd
 
 .. moduleauthor:: Drason Chow <drasonchow@gmail.com>
 """
 
-__all__ = ['bindings']
+__all__ = ['libdhd']
 
 from threading import Thread
 from typing import MutableSequence, Optional, Callable, List
@@ -15,9 +15,9 @@ from math import nan
 
 from time import sleep, monotonic
 
-from forcedimension.dhd.bindings.adaptors import CartesianTuple, DeviceTuple
-import forcedimension.dhd.bindings as libdhd
-import forcedimension.dhd.bindings.expert  # NOQA
+from forcedimension.dhd.libdhd.adaptors import CartesianTuple, DeviceTuple
+import forcedimension.dhd.libdhd as libdhd
+import forcedimension.dhd.libdhd.expert  # NOQA
 
 from forcedimension.dhd.util import ( # NOQA
     NamedSequence,
@@ -27,8 +27,8 @@ from forcedimension.dhd.util import ( # NOQA
     UpdateOpts,
 )
 
-from forcedimension.dhd.bindings import DeviceType
-from forcedimension.dhd.bindings.adaptors import (
+from forcedimension.dhd.libdhd import DeviceType
+from forcedimension.dhd.libdhd.adaptors import (
     StatusTuple,
     DHDIOError,
     DHDErrorNoDeviceFound,
@@ -56,7 +56,7 @@ class HapticDevice:
     """
     A HapticDevice is a high-level wrapper for any compatible ForceDimension
     device. It abstracts away low level implementation details bound in the
-    bindings and provides a peformant portable Pythonic interface for doing
+    libdhd and provides a peformant portable Pythonic interface for doing
     high-level control.
     """
     def __init__(
@@ -769,7 +769,7 @@ class HapticDevice:
 
         See Also
         --------
-        :class:forcedimension.dhd.bindings.constants.NovintButtonID
+        :class:forcedimension.dhd.libdhd.constants.NovintButtonID
         """
         return bool(self._buttons & cast(int, 1 << button_id))
 
