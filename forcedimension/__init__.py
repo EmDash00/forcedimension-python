@@ -7,9 +7,9 @@ from math import nan
 
 from time import sleep, monotonic
 
-from forcedimension.dhd.libdhd.adaptors import CartesianTuple, DeviceTuple
-import forcedimension.dhd.libdhd as libdhd
-import forcedimension.dhd.libdhd.expert  # NOQA
+from forcedimension.dhd.adaptors import CartesianTuple, DeviceTuple
+import forcedimension.dhd as libdhd
+import forcedimension.dhd.expert  # NOQA
 
 from forcedimension.util import ( # NOQA
     NamedSequence,
@@ -19,8 +19,8 @@ from forcedimension.util import ( # NOQA
     UpdateOpts,
 )
 
-from forcedimension.dhd.libdhd import DeviceType
-from forcedimension.dhd.libdhd.adaptors import (
+from forcedimension.dhd import DeviceType
+from forcedimension.dhd.adaptors import (
     StatusTuple,
     DHDIOError,
     DHDErrorNoDeviceFound,
