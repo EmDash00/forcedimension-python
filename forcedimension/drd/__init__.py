@@ -292,4 +292,4 @@ def hold(ID: int = -1) -> int:  # NOQA
     :returns: 0 on success, -1 otherwise
     """
 
-    return _libdrd.hold(ID)
+    return _libdrd.drdHold(ID)
