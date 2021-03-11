@@ -7,7 +7,7 @@
 """
 
 from typing import NamedTuple, Callable, Optional, Any
-from forcedimension.dhd.bindings.constants import ErrorNum
+from forcedimension.dhd.libdhd.constants import ErrorNum
 
 
 class VersionTuple(NamedTuple):

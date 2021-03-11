@@ -1,7 +1,7 @@
 """
-.. module::bindings
+.. module::libdhd
    :platform: Windows, Unix
-   :synopsis: libdhd Python bindings
+   :synopsis: libdhd Python libdhd
 
 .. moduleauthor:: Drason Chow <drasonchow@gmail.com>
 """
@@ -16,7 +16,7 @@ from typing import Tuple, MutableSequence, Union, Optional
 from ctypes import c_int, c_uint, c_bool, c_byte, c_ushort, c_char_p, c_double
 from ctypes import byref, POINTER
 
-from forcedimension.dhd.bindings.constants import ( # NOQA
+from forcedimension.dhd.libdhd.constants import ( # NOQA
     MAX_DOF, MAX_BUTTONS, TIMEGUARD,
     VELOCITY_WINDOWING, VELOCITY_WINDOW,
     MAX_STATUS,
@@ -27,7 +27,7 @@ from forcedimension.dhd.bindings.constants import ( # NOQA
     State, StatusIndex, ComMode, ThreadPriority
 )
 
-from forcedimension.dhd.bindings.adaptors import (
+from forcedimension.dhd.libdhd.adaptors import (
     StatusTuple, VersionTuple, CartesianTuple
 )
 
@@ -152,7 +152,7 @@ def open() -> int:  # NOQA
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
-    See also dhd.bindings.openID()
+    See also dhd.libdhd.openID()
 
     :rtype: int
     :returns: The device ID on success, -1 otherwise.
@@ -172,7 +172,7 @@ def openType(device_type: int) -> int:  # NOQA
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
-    See also dhd.bindings.openID()
+    See also dhd.libdhd.openID()
 
     :param int device_type: requested system Device Type type
 
@@ -194,7 +194,7 @@ def openSerial(serial: int) -> int:  # NOQA
     device. See the multiple device section for more information on using
     multiple devices on the same computer.
 
-    See also dhd.bindings.openID()
+    See also dhd.libdhd.openID()
 
     :param int serial: requested system serial number.
 
@@ -219,7 +219,7 @@ def openID(index: int) -> int:  # NOQA
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
-    See also dhd.bindings.open()
+    See also dhd.libdhd.open()
 
     :param in index: the device enumeration index, as assigned by the
     underlying operating system (must be between 0 and the number of devices
@@ -402,7 +402,7 @@ def getSDKVersion() -> VersionTuple:  # NOQA
     are reported as major.minor.release-revision by ForceDimension.
 
     See also:
-        dhd.bindings.VersionTuple
+        dhd.libdhd.VersionTuple
 
     :returns: A VersionTuple that represents the version.
     :rtype: VersionTuple
@@ -523,7 +523,7 @@ def getButton(index: int, ID: int = -1) -> Union[int, State]: # NOQA
     Return the status of the button located on the end-effector
 
     :param int index: button index, 0 for the gripper button up to
-    dhd.bindings.MAX_BUTTONS
+    dhd.libdhd.MAX_BUTTONS
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -592,12 +592,12 @@ def isLeftHanded(ID: int = -1) -> bool: # NOQA
     False otherwise.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -619,14 +619,14 @@ def hasBase(ID: int = -1) -> bool: # NOQA
     Returns True if the device has a base, False otherwise.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
-        dhd.bindings.DeviceType.DELTA3
-        dhd.bindings.DeviceType.FALCON
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.DELTA3
+        dhd.libdhd.DeviceType.FALCON
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -647,12 +647,12 @@ def hasWrist(ID: int = -1) -> bool: # NOQA
     Returns True if the device has a wrist, False otherwise.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -673,12 +673,12 @@ def hasActiveWrist(ID: int = -1) -> bool: # NOQA
     Returns True if the device has an active wrist, False otherwise.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -699,10 +699,10 @@ def hasGripper(ID: int = -1) -> bool: # NOQA
     Returns True if the device has a gripper, False otherwise.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -723,10 +723,10 @@ def hasActiveGripper(ID: int = -1) -> bool: # NOQA
     Returns True if the device has an active wrist, False otherwise.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -768,7 +768,7 @@ def waitForReset(timeout: Optional[int] = None, ID: int = -1) -> int: # NOQA
     even if calibration has not occured.
 
     If the timeout is reached, the call returns an error (-1) and dhdErrno is
-    set to dhd.bindings.Error.TIMEOUT
+    set to dhd.libdhd.Error.TIMEOUT
 
     :param Optional[int] timeout: Maximum time to wait for calibration in [ms]
 
@@ -866,7 +866,7 @@ def setDeviceAngleRad(angle: float, ID: int = -1) -> int: # NOQA
     with its base plate perpendicular to axis X. An angle value of pi/2
     corresponds to the device base plate resting horizontally.
 
-    See also dhd.bindings.setDeviceAngleDeg()
+    See also dhd.libdhd.setDeviceAngleDeg()
 
     :param float angle: device base plate angle [rad]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -892,7 +892,7 @@ def setDeviceAngleDeg(angle: float, ID: int = -1) -> int: # NOQA
     with its base plate perpendicular to axis X. An angle value of 90
     corresponds to the device base plate resting horizontally.
 
-    See also dhd.bindings.setDeviceAngleRad()
+    See also dhd.libdhd.setDeviceAngleRad()
 
     :param float angle: device base plate angle [deg]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -916,7 +916,7 @@ def setEffectorMass(mass: float, ID: int = -1) -> int: # NOQA
     accurate gravity compensation when custom-made or modified end-effectors
     are used.
 
-    See also dhd.bindings.getEffectorMass()
+    See also dhd.libdhd.getEffectorMass()
 
     :param float mass: the actual end-effector mass in [kg]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -963,7 +963,7 @@ def getPosition( # NOQA
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: A tuple in the form ([px, py, pz], err) where err is either 0
-    or dhd.bindings.TIMEGUARD on success, -1 otherwise and
+    or dhd.libdhd.TIMEGUARD on success, -1 otherwise and
     px, py, pz are the position of the end-effector about the X, Y, and Z axes,
     respectively in [m]
 
@@ -1081,8 +1081,8 @@ def getOrientationRad( # NOQA
     joint, starting with the one located nearest to the wrist base plate.
 
     Note:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
 
     have angles that are instead computed with respect to their internal
     reference frame, which is rotated pi/4 radians around the Y axis.
@@ -1090,12 +1090,12 @@ def getOrientationRad( # NOQA
     device coordinate system.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
 
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -1115,7 +1115,7 @@ def getOrientationRad( # NOQA
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of ([oa, ob, og], err) where err is 0 or
-    dhd.bindings.TIMEGUARD on
+    dhd.libdhd.TIMEGUARD on
     success, -1 otherwise. oa, ob, and og refer to the device orientation
     around the first, second, and third wrist joints, respectively, in [rad]
 
@@ -1156,8 +1156,8 @@ def getOrientationDeg( # NOQA
     joint, starting with the one located nearest to the wrist base plate.
 
     Note:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
 
     have angles that are instead computed with respect to their internal
     reference frame, which is rotated 45 degrees around the Y axis.
@@ -1165,12 +1165,12 @@ def getOrientationDeg( # NOQA
     device coordinate system.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1189,7 +1189,7 @@ def getOrientationDeg( # NOQA
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of ([oa, ob, og], err) where err is 0 or
-    dhd.bindings.TIMEGUARD on success, -1 otherwise. [oa, ob, og]
+    dhd.libdhd.TIMEGUARD on success, -1 otherwise. [oa, ob, og]
     refer to the device orientation around the first, second, and third wrist
     joints, respectively, in [deg]
 
@@ -1239,8 +1239,8 @@ def getPositionAndOrientationRad( # NOQA
     joint, starting with the one located nearest to the wrist base plate.
 
     Note:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
 
     have angles that are instead computed with respect to their internal
     reference frame, which is rotated pi/4 radians around the Y axis.
@@ -1248,12 +1248,12 @@ def getPositionAndOrientationRad( # NOQA
     device coordinate system.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1279,7 +1279,7 @@ def getPositionAndOrientationRad( # NOQA
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of ([px, py, pz], [oa, ob, og], err) where err is 0 or
-    dhd.bindings.TIMEGUARD on success, -1 otherwise, [oa, ob, og]
+    dhd.libdhd.TIMEGUARD on success, -1 otherwise, [oa, ob, og]
     refer to the device orientation around the first, second, and third wrist
     joints, respectively, in [rad], and [px, py, pz] is the position about the
     X, Y, and Z axes, respectively in [m].
@@ -1338,8 +1338,8 @@ def getPositionAndOrientationDeg( # NOQA
     joint, starting with the one located nearest to the wrist base plate.
 
     Note:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
 
     have angles that are instead computed with respect to their internal
     reference frame, which is rotated 45 degrees around the Y axis.
@@ -1347,12 +1347,12 @@ def getPositionAndOrientationDeg( # NOQA
     device coordinate system.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA33
-        dhd.bindings.DeviceType.OMEGA33_LEFT
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA33
+        dhd.libdhd.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1379,7 +1379,7 @@ def getPositionAndOrientationDeg( # NOQA
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of ([px, py, pz], [oa, ob, og], err) where err is 0 or
-    dhd.bindings.TIMEGUARD on success, -1 otherwise, [oa, ob, og]
+    dhd.libdhd.TIMEGUARD on success, -1 otherwise, [oa, ob, og]
     refer to the device orientation around the first, second, and third wrist
     joints, respectively, in [deg], and [px, py, pz] is the position about the
     X, Y, and Z axes, respectively in [m].
@@ -1458,7 +1458,7 @@ def getPositionAndOrientationFrame( # NOQA
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of ([px, py, pz], frame, err) where err is 0 or
-    dhd.bindings.TIMEGUARD on success, -1 otherwise.
+    dhd.libdhd.TIMEGUARD on success, -1 otherwise.
     [px, py, pz] is the position about the X, Y, and Z axes, respectively in
     [m] andmatrix is a 3x3 rotation matrix that describes the orientation
     of your device.
@@ -1636,7 +1636,7 @@ def getOrientationFrame( # NOQA
     :raises IndexError: if out any dimension of out is less than length 3.
 
     :returns: Tuple of (frame, err) where err is 0 or
-    dhd.bindings.TIMEGUARD on success, -1 otherwise. and frame is a
+    dhd.libdhd.TIMEGUARD on success, -1 otherwise. and frame is a
     3x3 rotation matrix that describes the device's orientation. If the device
     doesn't support orientations, the identity matrix is returned.
 
@@ -1664,12 +1664,12 @@ def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
     Get the gripper opening angle in degrees.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
-    See also dhd.bindings.getGripperAngleRad()
+    See also dhd.libdhd.getGripperAngleRad()
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1677,7 +1677,7 @@ def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of (angle, err) where err is 0 or
-    dhd.bindings.TIMEGUARD on success, -1 otherwise.
+    dhd.libdhd.TIMEGUARD on success, -1 otherwise.
     angle is in [deg]
 
     :rtype: Tuple[float, int]
@@ -1695,12 +1695,12 @@ def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]: # NOQA
     Get the gripper opening angle in degrees.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
-   See also dhd.bindings.getGripperAngleRad()
+   See also dhd.libdhd.getGripperAngleRad()
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1708,7 +1708,7 @@ def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]: # NOQA
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of (angle, err) where err is 0 or
-    dhd.bindings.TIMEGUARD on success, -1 otherwise.
+    dhd.libdhd.TIMEGUARD on success, -1 otherwise.
     angle is in [rad]
 
     :rtype: Tuple[float, int]
@@ -1725,10 +1725,10 @@ def getGripperGap(ID: int = -1) -> Tuple[float, int]: # NOQA
     Get the gripper opening distance in meters.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1736,7 +1736,7 @@ def getGripperGap(ID: int = -1) -> Tuple[float, int]: # NOQA
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of (gap, err) where err is 0 or
-    dhd.bindings.TIMEGUARD on success, -1 otherwise and gap is in [m]
+    dhd.libdhd.TIMEGUARD on success, -1 otherwise and gap is in [m]
 
     :rtype: Tuple[float, int]
     """
@@ -1759,10 +1759,10 @@ def getGripperThumbPos(ID: int = -1) -> Tuple[MutableSequence[float], int]: # NO
     force gripper structure if present.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1770,7 +1770,7 @@ def getGripperThumbPos(ID: int = -1) -> Tuple[MutableSequence[float], int]: # NO
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of ([px, py, pz], err) where err is 0 or
-    dhd.bindings.TIMEGUARD on success, -1 otherwise and [px, py, pz]
+    dhd.libdhd.TIMEGUARD on success, -1 otherwise and [px, py, pz]
     are the position about the X, Y, and Z axes, respectively in [m]
 
     :rtype: Tuple[float, int]
@@ -1800,10 +1800,10 @@ def getGripperFingerPos( # NOQA
     the force gripper structure if present.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -1822,7 +1822,7 @@ def getGripperFingerPos( # NOQA
     :raises ValueError: if ID is not implicitly convertible to a C char type
 
     :returns: Tuple of ([px, py, pz], err) where err is 0 or
-    dhd.bindings.TIMEGUARD on success, -1 otherwise and
+    dhd.libdhd.TIMEGUARD on success, -1 otherwise and
     [px, py, pz] are the position in the X, Y, and Z axes, respectively in [m]
 
     :rtype: Tuple[float, int]
@@ -1998,17 +1998,17 @@ def getLinearVelocity( # NOQA
     ) -> Tuple[MutableSequence[float], int]:
     """
     Retrieve the estimated instanteous linear velocity in [m/s]. Velocity
-    computation can be figured by calling dhd.bindings.configAngularVelocity().
-    By default dhd.bindings.VELOCITY_WINDOW and dhd.bindings.VELOCITY_WINDOWING
+    computation can be figured by calling dhd.libdhd.configAngularVelocity().
+    By default dhd.libdhd.VELOCITY_WINDOW and dhd.libdhd.VELOCITY_WINDOWING
     are used. See velocity estimator for details.
 
     Please note that the velocity estimator requires at least 2 position
     updates during the time interval defined in
-    dhd.bindings.configLinearVelocity() in order to be able to compute the
+    dhd.libdhd.configLinearVelocity() in order to be able to compute the
     estimate. Otherwise, e.g. if there are no calls to
-    dhd.bindings.getPosition(), dhd.bindings.getLinearVelocity(), or
-    dhd.bindings.getLinearVelocity() will set an error
-    (dhd.bindings.Error.TIMEOUT).
+    dhd.libdhd.getPosition(), dhd.libdhd.getLinearVelocity(), or
+    dhd.libdhd.getLinearVelocity() will set an error
+    (dhd.libdhd.Error.TIMEOUT).
 
 
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2069,10 +2069,10 @@ def configAngularVelocity(ms: int, mode: int, # NOQA
     Configure the internal velocity computation estimator. This only applies to
     the device wrist.
 
-    :param int ms: [default=dhd.bindings.VELOCITY_WINDOW] time interval used to
+    :param int ms: [default=dhd.libdhd.VELOCITY_WINDOW] time interval used to
     compute velocity in [ms]
 
-    :param int mode: [default=dhd.bindings.VELOCITY_WINDOWING] velocity
+    :param int mode: [default=dhd.libdhd.VELOCITY_WINDOWING] velocity
     estimator mode (see velocity estimator modes section for details)
 
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2104,26 +2104,26 @@ def getAngularVelocityRad( # NOQA
     """
     Retrieve the estimated instanteous angular velocity in [rad/s]. Velocity
     computation can be figured by calling:
-        dhd.bindings.configAngularVelocity()
+        dhd.libdhd.configAngularVelocity()
 
     By default:
-        dhd.bindings.VELOCITY_WINDOW
-        dhd.bindings.VELOCITY_WINDOWING
+        dhd.libdhd.VELOCITY_WINDOW
+        dhd.libdhd.VELOCITY_WINDOWING
     are used. See velocity estimator for details.
 
     Please note that the velocity estimator requires at least 2 position
     updates during the time interval defined in:
-        dhd.bindings.configAngularVelocity()
+        dhd.libdhd.configAngularVelocity()
 
     in order to be able to compute the estimate. Otherwise, e.g. if there are
     no calls to:
-        dhd.bindings.getPosition()
-        dhd.bindings.getAngularVelocityRad()
-        dhd.bindings.getAngularVelocityDeg()
+        dhd.libdhd.getPosition()
+        dhd.libdhd.getAngularVelocityRad()
+        dhd.libdhd.getAngularVelocityDeg()
     within the time interval window, this function will set an error with:
-        dhd.bindings.Error.TIMEOUT
+        dhd.libdhd.Error.TIMEOUT
 
-    See also dhd.bindings.getAngularVelocityDeg().
+    See also dhd.libdhd.getAngularVelocityDeg().
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -2189,26 +2189,26 @@ def getAngularVelocityDeg( # NOQA
     """
     Retrieve the estimated instanteous angular velocity in [deg/s]. Velocity
     computation can be figured by calling:
-        dhd.bindings.configAngularVelocity()
+        dhd.libdhd.configAngularVelocity()
 
     By default:
-        dhd.bindings.VELOCITY_WINDOW
-        dhd.bindings.VELOCITY_WINDOWING
+        dhd.libdhd.VELOCITY_WINDOW
+        dhd.libdhd.VELOCITY_WINDOWING
     are used. See velocity estimator for details.
 
     Please note that the velocity estimator requires at least 2 position
     updates during the time interval defined in:
-        dhd.bindings.configAngularVelocity()
+        dhd.libdhd.configAngularVelocity()
 
     in order to be able to compute the estimate. Otherwise, e.g. if there are
     no calls to:
-        dhd.bindings.getPosition()
-        dhd.bindings.getAngularVelocityRad()
-        dhd.bindings.getAngularVelocityDeg()
+        dhd.libdhd.getPosition()
+        dhd.libdhd.getAngularVelocityRad()
+        dhd.libdhd.getAngularVelocityDeg()
     within the time interval window, this function will set an error with:
-        dhd.bindings.Error.TIMEOUT
+        dhd.libdhd.Error.TIMEOUT
 
-    See also dhd.bindings.getAngularVelocityRad().
+    See also dhd.libdhd.getAngularVelocityRad().
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -2269,14 +2269,14 @@ def configGripperVelocity(ms: int, mode: int, # NOQA
     the device gripper. See velocity estimator for details.
 
     See also:
-        dhd.bindings.getGripperLinearVelocity()
-        dhd.bindings.getGripperAngularVelocityRad()
-        dhd.bindings.getGripperAngularVelocityDeg()
+        dhd.libdhd.getGripperLinearVelocity()
+        dhd.libdhd.getGripperAngularVelocityRad()
+        dhd.libdhd.getGripperAngularVelocityDeg()
 
-    :param int ms: [default=dhd.bindings.VELOCITY_WINDOW] time interval used to
+    :param int ms: [default=dhd.libdhd.VELOCITY_WINDOW] time interval used to
     compute velocity in [ms]
 
-    :param int mode: [default=dhd.bindings.VELOCITY_WINDOWING] velocity
+    :param int mode: [default=dhd.libdhd.VELOCITY_WINDOWING] velocity
     estimator mode (see velocity estimator modes section for details)
 
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2300,32 +2300,32 @@ def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
     Retrieve the estimated linear velocity of the gripper in in [m/s].
     Velocity computation can be figured by calling:
-        dhd.bindings.configGripperVelocity()
+        dhd.libdhd.configGripperVelocity()
 
     By default:
-        dhd.bindings.VELOCITY_WINDOW
-        dhd.bindings.VELOCITY_WINDOWING
+        dhd.libdhd.VELOCITY_WINDOW
+        dhd.libdhd.VELOCITY_WINDOWING
     are used. See velocity estimator for details.
 
     Please note that the velocity estimator requires at least 2 position
     updates during the time interval defined in:
-        dhd.bindings.configGripperVelocity()
+        dhd.libdhd.configGripperVelocity()
     in order to be able to compute the estimate. Otherwise, e.g. if there are
     no calls to:
-        dhd.bindings.getPosition()
-        dhd.bindings.getGripperLinearVelocity()
+        dhd.libdhd.getPosition()
+        dhd.libdhd.getGripperLinearVelocity()
     within the time interval window, this function will set an error with:
-        dhd.bindings.Error.TIMEOUT
+        dhd.libdhd.Error.TIMEOUT
 
     See also:
-        dhd.bindings.configGripperVelocity()
-        dhd.bindings.getGripperAngularVelocityRad()
-        dhd.bindings.getGripperAngularVelocityDeg()
+        dhd.libdhd.configGripperVelocity()
+        dhd.libdhd.getGripperAngularVelocityRad()
+        dhd.libdhd.getGripperAngularVelocityDeg()
 
-    :param int ms: [default=dhd.bindings.VELOCITY_WINDOW] time interval used to
+    :param int ms: [default=dhd.libdhd.VELOCITY_WINDOW] time interval used to
     compute velocity in [ms]
 
-    :param int mode: [default=dhd.bindings.VELOCITY_WINDOWING] velocity
+    :param int mode: [default=dhd.libdhd.VELOCITY_WINDOWING] velocity
     estimator mode (see velocity estimator modes section for details)
 
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2350,32 +2350,32 @@ def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
     Retrieve the estimated angular velocity of the gripper in in [rad/s].
     Velocity computation can be figured by calling:
-        dhd.bindings.configGripperVelocity()
+        dhd.libdhd.configGripperVelocity()
 
     By default:
-        dhd.bindings.VELOCITY_WINDOW
-        dhd.bindings.VELOCITY_WINDOWING
+        dhd.libdhd.VELOCITY_WINDOW
+        dhd.libdhd.VELOCITY_WINDOWING
     are used. See velocity estimator for details.
 
     Please note that the velocity estimator requires at least 2 position
     updates during the time interval defined in:
-        dhd.bindings.configGripperVelocity
+        dhd.libdhd.configGripperVelocity
     in order to be able to compute the estimate. Otherwise, e.g. if there are
     no calls to:
-        dhd.bindings.getPosition()
-        dhd.bindings.getGripperLinearVelocity()
+        dhd.libdhd.getPosition()
+        dhd.libdhd.getGripperLinearVelocity()
     within the time interval window, this function will set an error with:
-        dhd.bindings.Error.TIMEOUT
+        dhd.libdhd.Error.TIMEOUT
 
     See also:
-        dhd.bindings.configGripperVelocity()
-        dhd.bindings.getGripperLinearVelocity()
-        dhd.bindings.getGripperAngularVelocityDeg()
+        dhd.libdhd.configGripperVelocity()
+        dhd.libdhd.getGripperLinearVelocity()
+        dhd.libdhd.getGripperAngularVelocityDeg()
 
-    :param int ms: [default=dhd.bindings.VELOCITY_WINDOW] time interval used to
+    :param int ms: [default=dhd.libdhd.VELOCITY_WINDOW] time interval used to
     compute velocity in [ms]
 
-    :param int mode: [default=dhd.bindings.VELOCITY_WINDOWING] velocity
+    :param int mode: [default=dhd.libdhd.VELOCITY_WINDOWING] velocity
     estimator mode (see velocity estimator modes section for details)
 
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2400,32 +2400,32 @@ def getGripperAngularVelocityDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
     """
     Retrieve the estimated angular velocity of the gripper in in [rad/s].
     Velocity computation can be figured by calling:
-        dhd.bindings.configGripperVelocity()
+        dhd.libdhd.configGripperVelocity()
 
     By default:
-        dhd.bindings.VELOCITY_WINDOW
-        dhd.bindings.VELOCITY_WINDOWING
+        dhd.libdhd.VELOCITY_WINDOW
+        dhd.libdhd.VELOCITY_WINDOWING
     are used. See velocity estimator for details.
 
     Please note that the velocity estimator requires at least 2 position
     updates during the time interval defined in:
-        dhd.bindings.configGripperVelocity
+        dhd.libdhd.configGripperVelocity
     in order to be able to compute the estimate. Otherwise, e.g. if there are
     no calls to:
-        dhd.bindings.getPosition()
-        dhd.bindings.getGripperLinearVelocity()
+        dhd.libdhd.getPosition()
+        dhd.libdhd.getGripperLinearVelocity()
     within the time interval window, this function will set an error with:
-        dhd.bindings.Error.TIMEOUT
+        dhd.libdhd.Error.TIMEOUT
 
     See also:
-        dhd.bindings.configGripperVelocity()
-        dhd.bindings.getGripperLinearVelocity()
-        dhd.bindings.getGripperAngularVelocityRad()
+        dhd.libdhd.configGripperVelocity()
+        dhd.libdhd.getGripperLinearVelocity()
+        dhd.libdhd.getGripperAngularVelocityRad()
 
-    :param int ms: [default=dhd.bindings.VELOCITY_WINDOW] time interval used to
+    :param int ms: [default=dhd.libdhd.VELOCITY_WINDOW] time interval used to
     compute velocity in [ms]
 
-    :param int mode: [default=dhd.bindings.VELOCITY_WINDOWING] velocity
+    :param int mode: [default=dhd.libdhd.VELOCITY_WINDOWING] velocity
     estimator mode (see velocity estimator modes section for details)
 
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2451,10 +2451,10 @@ def emulateButton(enable: bool, ID: int = -1) -> int: # NOQA
     Enable the button behavior emulation in devices that feature a gripper.
 
     This feature only applies to the following devices:
-        dhd.bindings.DeviceType.OMEGA331
-        dhd.bindings.DeviceType.OMEGA331_LEFT
-        dhd.bindings.DeviceType.SIGMA331
-        dhd.bindings.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.DeviceType.OMEGA331
+        dhd.libdhd.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.DeviceType.SIGMA331
+        dhd.libdhd.DeviceType.SIGMA331_LEFT
 
     For omega.7 devices with firmware versions 2.x, forces need to be enabled
     for the button emulation to report the emulated button status.
@@ -2479,7 +2479,7 @@ def getBaseAngleXRad(ID: int = -1) -> Tuple[float, int]: # NOQA
     Get the device base plate angle around the X axis.
 
     See also:
-        dhd.bindings.getBaseAngleXDeg()
+        dhd.libdhd.getBaseAngleXDeg()
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -2503,7 +2503,7 @@ def getBaseAngleXDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
     Get the device base plate angle around the X axis.
 
     See also:
-        dhd.bindings.getBaseAngleXRad()
+        dhd.libdhd.getBaseAngleXRad()
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -2527,7 +2527,7 @@ def setBaseAngleXRad(angle: float, ID: int = -1) -> int: # NOQA
     device user manual for more information on your device coordinate system.
 
     See also:
-        dhd.bindings.setBaseAngleXDeg()
+        dhd.libdhd.setBaseAngleXDeg()
 
     :param float angle: device base plate angle around the X axis in [rad]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2550,7 +2550,7 @@ def setBaseAngleXDeg(angle: float, ID: int = -1) -> int: # NOQA
     device user manual for more information on your device coordinate system.
 
     See also:
-        dhd.bindings.setBaseAngleXRad()
+        dhd.libdhd.setBaseAngleXRad()
 
     :param float angle: device base plate angle around the X axis in [deg]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2572,7 +2572,7 @@ def getBaseAngleZRad(ID: int = -1) -> Tuple[float, int]: # NOQA
     Get the device base plate angle around the Z axis.
 
     See also:
-        dhd.bindings.getBaseAngleZDeg()
+        dhd.libdhd.getBaseAngleZDeg()
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -2596,7 +2596,7 @@ def getBaseAngleZDeg(ID: int = -1) -> Tuple[float, int]: # NOQA
     Get the device base plate angle around the Z axis.
 
     See also:
-        dhd.bindings.getBaseAngleZRad()
+        dhd.libdhd.getBaseAngleZRad()
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -2621,7 +2621,7 @@ def setBaseAngleZRad(angle: float, ID: int = -1) -> int: # NOQA
     device user manual for more information on your device coordinate system.
 
     See also:
-        dhd.bindings.setBaseAngleZDeg()
+        dhd.libdhd.setBaseAngleZDeg()
 
     :param float angle: device base plate angle around the Z axis in [rad]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2644,7 +2644,7 @@ def setBaseAngleZDeg(angle: float, ID: int = -1) -> int: # NOQA
     device user manual for more information on your device coordinate system.
 
     See also:
-        dhd.bindings.setBaseAngleZRad()
+        dhd.libdhd.setBaseAngleZRad()
 
     :param float angle: device base plate angle around the Z axis in [deg]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2667,7 +2667,7 @@ def setVibration(f: float, A: float, # NOQA
                  device_type: DeviceType, ID: int = -1) -> int:
     """
     Apply a vibration to the end-effector. The vibration is added to the force
-    requested by dhd.bindings.setForce()
+    requested by dhd.libdhd.setForce()
 
     :param float f: vibration frequency in [Hz]
     :param float A: vibration amplitude in [m]
@@ -2693,21 +2693,21 @@ _libdhd.dhdSetMaxForce.restype = c_int
 def setMaxForce(limit: float, ID: int = -1) -> int: # NOQA
     """
     Define a limit (in N) to the magnitude of the force that can be applied to
-    the haptic device. The limit applies to all dhd.bindings.setForce() and
+    the haptic device. The limit applies to all dhd.libdhd.setForce() and
     related calls, and ensures the force applied to the device end-effector
     remains below the requested value. If a negative limit is set, there is no
     max force and the full range of force can be applied.
 
     Note that the force limit enforced only applies to forces set
-    programatically by dhd.bindings.setForce(). Setting DAC values directly
+    programatically by dhd.libdhd.setForce(). Setting DAC values directly
     will bypass this limit.
 
     See also:
-        dhd.bindings.getMaxForce()
-        dhd.bindings.setMaxTorque()
-        dhd.bindings.setMaxGripperForce()
-        dhd.bindings.expert.setMaxPower()
-        dhd.bindings.expert.setMaxUsablePower()
+        dhd.libdhd.getMaxForce()
+        dhd.libdhd.setMaxTorque()
+        dhd.libdhd.setMaxGripperForce()
+        dhd.libdhd.expert.setMaxPower()
+        dhd.libdhd.expert.setMaxUsablePower()
 
     :param float limit: max magnitude of force that can be applied in [N]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2729,21 +2729,21 @@ _libdhd.dhdSetMaxTorque.restype = c_int
 def setMaxTorque(limit: float, ID: int = -1) -> int: # NOQA
     """
     Define a limit (in Nm) to the magnitude of the torque that can be applied
-    to the haptic device. The limit applies to all dhd.bindings.setForce() and
+    to the haptic device. The limit applies to all dhd.libdhd.setForce() and
     related calls, and ensures the force applied to the device end-effector
     remains below the requested value. If a negative limit is set, there is no
     max force and the full range of force can be applied.
 
     Note that the force limit enforced only applies to torques set
-    programatically by dhd.bindings.setTorque(). Setting DAC values directly
+    programatically by dhd.libdhd.setTorque(). Setting DAC values directly
     will bypass this limit.
 
     See also:
-        dhd.bindings.getMaxTorque()
-        dhd.bindings.setMaxForce()
-        dhd.bindings.setMaxGripperForce()
-        dhd.bindings.expert.setMaxPower()
-        dhd.bindings.expert.setMaxUsablePower()
+        dhd.libdhd.getMaxTorque()
+        dhd.libdhd.setMaxForce()
+        dhd.libdhd.setMaxGripperForce()
+        dhd.libdhd.expert.setMaxPower()
+        dhd.libdhd.expert.setMaxUsablePower()
 
     :param float limit: max magnitude of torque that can be applied in [Nm]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2766,21 +2766,21 @@ def setMaxGripperForce(limit: float, ID: int = -1) -> int: # NOQA
     """
     Define a limit (in N) to the magnitude of the force that can be applied to
     the haptic device gripper. The limit applies to all
-    dhd.bindings.setForceAndTorqueAndGripperForce() and related calls, and
+    dhd.libdhd.setForceAndTorqueAndGripperForce() and related calls, and
     ensures the force applied to the device gripper remains below the
     requested value. If a negative limit is set, there is no max force and the
     full range of force can be applied.
 
     Note that the force limit enforced only applies to forces set
-    programatically by dhd.bindings.setForceAndTorqueAndGripperForce. Setting
+    programatically by dhd.libdhd.setForceAndTorqueAndGripperForce. Setting
     DAC values directly will bypass this limit.
 
     See also:
-        dhd.bindings.getMaxGripperForce()
-        dhd.bindings.getMaxForce()
-        dhd.bindings.setMaxTorque()
-        dhd.bindings.expert.setMaxPower()
-        dhd.bindings.expert.setMaxUsablePower()
+        dhd.libdhd.getMaxGripperForce()
+        dhd.libdhd.getMaxForce()
+        dhd.libdhd.setMaxTorque()
+        dhd.libdhd.expert.setMaxPower()
+        dhd.libdhd.expert.setMaxUsablePower()
 
     :param float limit: max magnitude of force that can be applied in [N]
     :param int ID: [default=-1] device ID (see multiple devices section for
@@ -2806,11 +2806,11 @@ def getMaxForce(ID: int = -1) -> float: # NOQA
     disabled and the full range of force available can be applied.
 
     See also:
-        dhd.bindings.setMaxForce()
-        dhd.bindings.getMaxTorque()
-        dhd.bindings.getMaxGripperForce()
-        dhd.bindings.expert.getMaxPower()
-        dhd.bindings.expert.getMaxUsablePower()
+        dhd.libdhd.setMaxForce()
+        dhd.libdhd.getMaxTorque()
+        dhd.libdhd.getMaxGripperForce()
+        dhd.libdhd.expert.getMaxPower()
+        dhd.libdhd.expert.getMaxUsablePower()
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -2834,11 +2834,11 @@ def getMaxTorque(ID: int = -1) -> float: # NOQA
     disabled and the full range of force available can be applied.
 
     See also:
-        dhd.bindings.setMaxTorque()
-        dhd.bindings.getMaxForce()
-        dhd.bindings.getMaxGripperForce()
-        dhd.bindings.expert.getMaxPower()
-        dhd.bindings.expert.getMaxUsablePower()
+        dhd.libdhd.setMaxTorque()
+        dhd.libdhd.getMaxForce()
+        dhd.libdhd.getMaxGripperForce()
+        dhd.libdhd.expert.getMaxPower()
+        dhd.libdhd.expert.getMaxUsablePower()
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
@@ -2862,11 +2862,11 @@ def getMaxGripperForce(ID: int = -1) -> float: # NOQA
     limit is disabled and the full range of force available can be applied.
 
     See also:
-        dhd.bindings.setMaxGripperForce()
-        dhd.bindings.getMaxForce()
-        dhd.bindings.getMaxTorque()
-        dhd.bindings.expert.getMaxPower()
-        dhd.bindings.expert.getMaxUsablePower()
+        dhd.libdhd.setMaxGripperForce()
+        dhd.libdhd.getMaxForce()
+        dhd.libdhd.getMaxTorque()
+        dhd.libdhd.expert.getMaxPower()
+        dhd.libdhd.expert.getMaxUsablePower()
 
     :param int ID: [default=-1] device ID (see multiple devices section for
     details)
