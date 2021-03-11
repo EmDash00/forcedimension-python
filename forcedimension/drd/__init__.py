@@ -1,5 +1,5 @@
 import forcedimension.runtime as runtime  # type: ignore
-from forcedimension.dhd.libdhd.adaptors import CartesianTuple  # type: ignore
+from forcedimension.dhd.adaptors import CartesianTuple  # type: ignore
 
 from ctypes import c_int, c_bool, c_byte, c_double
 
