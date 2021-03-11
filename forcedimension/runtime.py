@@ -1,6 +1,7 @@
 import ctypes
-import os, sys, platform
-import re, glob
+import os
+import sys
+import re
 
 VERSION_TARGET_FULL = "3.9.1-3454"
 VERSION_TARGET = VERSION_TARGET_FULL.partition("-")[0]
@@ -22,9 +23,6 @@ def load(lib_name, search_dirs=(), silent=False):
     if (sys.platform == "win32"):
         lib_ext = ".dll"
         lib_dir = "bin"
-
-        if platform.architecture()[0] == "64bit":
-            lib_name = lib_name[3:] + "64"
     else:
         lib_ext = ".so"
         lib_dir = "lib"
@@ -32,25 +30,11 @@ def load(lib_name, search_dirs=(), silent=False):
     search_dirs = list(search_dirs)
 
     if sys.platform == "win32":
-        search_dirs.append(
-            glob.glob(
-                "{}\\sdk-*".format(
-                    os.path.join(
-                        "c:",
-                        os.sep,
-                        "Program Files",
-                        "Force Dimension"
-                    )
-                )
-            )[0]
-        )
-
-        print(os.path.join(
-                        "c:",
-                        os.sep,
-                        "Program Files",
-                        "Force Dimension"
-                    ))
+        search_dirs.append(os.path.join(
+            "c:",
+            "Program Files",
+            "ForceDimension",
+            "sdk-{}".format(VERSION_TARGET)))
     elif sys.platform.startswith("linux"):
         search_dirs.extend([
             "/usr/local",
@@ -74,6 +58,7 @@ def load(lib_name, search_dirs=(), silent=False):
 
         return None
 
+    search_path = os.environ.get('PATH', '')
     for directory in search_dirs:
 
         if directory is None:
@@ -87,10 +72,7 @@ def load(lib_name, search_dirs=(), silent=False):
 
         if (os.path.isfile(lib_path)):
             if sys.platform == "win32":
-
-                path = os.getenv("PATH")
-                if (path is not None and directory not in path):
-                    os.environ["PATH"] = "{};{}".format(path, directory)
+                os.environ["PATH"] = search_path + ";" + directory
 
             try:
                 lib = ctypes.CDLL(lib_path)
@@ -103,10 +85,10 @@ def load(lib_name, search_dirs=(), silent=False):
                                        "Ensure you have libusb-1.")
 
             if (lib_name == "libdhd"):
-                major = ctypes.c_int()
-                minor = ctypes.c_int()
-                release = ctypes.c_int()
-                revision = ctypes.c_int()
+                major = ctypes.c_int32()
+                minor = ctypes.c_int32()
+                release = ctypes.c_int32()
+                revision = ctypes.c_int32()
 
                 lib.dhdGetSDKVersion(ctypes.byref(major),
                                      ctypes.byref(minor),
@@ -134,5 +116,5 @@ def load(lib_name, search_dirs=(), silent=False):
 
             return lib
     if (not silent):
-        sys.stderr.write("Could not find {}. Is it installed?\n".format(lib_name))
+        sys.stderr.write("Could not find {}.\n".format(lib_name))
     return None
