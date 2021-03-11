@@ -1,7 +1,7 @@
 """
 .. module::expert
    :platform: Windows, Unix
-   :synopsis: libdhd "Expert SDK" Python bindings
+   :synopsis: libdhd "Expert SDK" Python libdhd
 
 .. moduleauthor:: Drason Chow <drasonchow@gmail.com>
 """
@@ -13,9 +13,9 @@ from ctypes import c_int, c_uint, c_byte, c_ubyte, c_ushort, c_double
 
 from ctypes import byref, POINTER
 
-from forcedimension.dhd.bindings import _libdhd
-from forcedimension.dhd.bindings.constants import ComMode, MAX_DOF
-from forcedimension.dhd.bindings.adaptors import (
+from forcedimension.dhd.libdhd import _libdhd
+from forcedimension.dhd.libdhd.constants import ComMode, MAX_DOF
+from forcedimension.dhd.libdhd.adaptors import (
     DeviceTuple, DOFTuple, CartesianTuple
 )
 
@@ -196,7 +196,7 @@ def getDeltaEncoders( # NOQA
     :rtype: Tuple[MutableSequence[int], int]
 
     :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and
+    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and
     enc0, enc1, and enc2 are the axis 0, axis 1, and axis 2 encoder readings,
     respectively.
     """
@@ -237,12 +237,12 @@ def getWristEncoders( # NOQA
     Read all encoders values of the wrist structure.
 
     This feature only applies to the following devices:
-        dhd.bindings.constants.DeviceType.OMEGA33
-        dhd.bindings.constants.DeviceType.OMEGA33_LEFT
-        dhd.bindings.constants.DeviceType.OMEGA331
-        dhd.bindings.constants.DeviceType.OMEGA331_LEFT
-        dhd.bindings.constants.DeviceType.SIGMA331
-        dhd.bindings.constants.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA33
+        dhd.libdhd.constants.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA331
+        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.constants.DeviceType.SIGMA331
+        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
@@ -263,7 +263,7 @@ def getWristEncoders( # NOQA
 
     :rtype: Tuple[MutableSequence[int], int]
     :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and
+    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and
     [enc0, enc1, enc2] are the axes 0, 1, and 2 encoder readings, respectively
     """
 
@@ -295,10 +295,10 @@ def getGripperEncoder(ID: int = -1) -> Tuple[int, int]: # NOQA
     Read the encoder value of the force gripper.
 
     This feature only applies to the following devices:
-        dhd.bindings.constants.DeviceType.OMEGA331
-        dhd.bindings.constants.DeviceType.OMEGA331_LEFT
-        dhd.bindings.constants.DeviceType.SIGMA331
-        dhd.bindings.constants.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA331
+        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.constants.DeviceType.SIGMA331
+        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
@@ -307,7 +307,7 @@ def getGripperEncoder(ID: int = -1) -> Tuple[int, int]: # NOQA
 
     :rtype: Tuple[int, int]
     :returns: tuple of (enc, err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and enc is the
+    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and enc is the
     gripper encoder reading.
     """
 
@@ -323,7 +323,7 @@ def getEncoder(index: int, ID: int = -1) -> int: # NOQA
     Read a single encoder value from the haptic device
 
     :param int index: the motor index number as defined by
-    dhd.bindings.constants.MAX_DOF
+    dhd.libdhd.constants.MAX_DOF
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
 
@@ -344,7 +344,7 @@ def setMotor(index: int, output: int, ID: int = -1) -> int: # NOQA
     Program a command to a single motor channel.
 
     :param int index: the motor index number as defined by
-    dhd.bindings.constants.MAX_DOF
+    dhd.libdhd.constants.MAX_DOF
 
     :param int output: the motor DAC value
 
@@ -723,7 +723,7 @@ def deltaForceToMotor( # NOQA
 
     :rtype: Tuple[MutableSequence[int], int]
     :returns: tuple of ([output0, output1, output2], err) where err is 0 or
-    dhd.bindings.constants.MOTOR_SATURATED on success, -1 otherwise and
+    dhd.libdhd.constants.MOTOR_SATURATED on success, -1 otherwise and
     [output0, output1, output2] correspond to the DELTA end-effector motor
     commands on axes 0, 1, and 2, respectively.
     """
@@ -772,19 +772,19 @@ def wristEncoderToOrientation( # NOQA
     """
     For devices with a wrist structure, compute the individual angle of each
     joint, starting with the one located nearest to the wrist base plate. For
-    the dhd.bindings.constants.DeviceType.OMEGA33 and the
-    dhd.bindings.constants.DeviceType.OMEGA33_LEFT devices, angles are computed
+    the dhd.libdhd.constants.DeviceType.OMEGA33 and the
+    dhd.libdhd.constants.DeviceType.OMEGA33_LEFT devices, angles are computed
     with respect to their internal reference frame, which is rotated 45 degrees
     or pi/4 radians about the Y axis. Please refer to your device user manual
     for more information on your device coordinate system.
 
     This feature only applies to the following devices:
-        dhd.bindings.constants.DeviceType.OMEGA33
-        dhd.bindings.constants.DeviceType.OMEGA33_LEFT
-        dhd.bindings.constants.DeviceType.OMEGA331
-        dhd.bindings.constants.DeviceType.OMEGA331_LEFT
-        dhd.bindings.constants.DeviceType.SIGMA331
-        dhd.bindings.constants.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA33
+        dhd.libdhd.constants.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA331
+        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.constants.DeviceType.SIGMA331
+        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
     :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
     enc1, and enc2 coresspond to wrist encoder readings on the first, second,
@@ -858,19 +858,19 @@ def wristOrientationToEncoder( # NOQA
     """
     For devices with a wrist structure, compute the encoder values from the
     individual angle of each joint, starting witht he one located nearest to
-    the wrist plate base. For the dhd.bindings.DeviceType.OMEGA33 and
-    dhd.bindings.DeviceType.OMEGA33_LEFT devices, angles must be expressed
+    the wrist plate base. For the dhd.libdhd.DeviceType.OMEGA33 and
+    dhd.libdhd.DeviceType.OMEGA33_LEFT devices, angles must be expressed
     withrespect to their internal reference frame, which is rotated 45 degrees
     or pi/4 radians about the Y axis. Please refer to your device user manual
     for more information on your device coordinate system.
 
     This feature only applies to the following devices:
-        dhd.bindings.constants.DeviceType.OMEGA33
-        dhd.bindings.constants.DeviceType.OMEGA33_LEFT
-        dhd.bindings.constants.DeviceType.OMEGA331
-        dhd.bindings.constants.DeviceType.OMEGA331_LEFT
-        dhd.bindings.constants.DeviceType.SIGMA331
-        dhd.bindings.constants.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA33
+        dhd.libdhd.constants.DeviceType.OMEGA33_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA331
+        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.constants.DeviceType.SIGMA331
+        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
     :param CartesianTuple orientation: tuple of (oa, ob, og) where
     (oa, ob, og) coresspond to wrist end effector orientation around the X, Y,
@@ -1110,10 +1110,10 @@ def gripperEncoderToAngleRad(enc: int, # NOQA
     [rad] for a given encoder reading.
 
     This feature only applies to the following devices:
-        dhd.bindings.constants.DeviceType.OMEGA331
-        dhd.bindings.constants.DeviceType.OMEGA331_LEFT
-        dhd.bindings.constants.DeviceType.SIGMA331
-        dhd.bindings.constants.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA331
+        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.constants.DeviceType.SIGMA331
+        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
     :param int enc: gripper encoder reading
 
@@ -1125,7 +1125,7 @@ def gripperEncoderToAngleRad(enc: int, # NOQA
 
     :rtype: Tuple[float, int]
     :returns: tuple of (angle, err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 on otherwise and angle is
+    dhd.libdhd.constants.TIMEGUARD on success, -1 on otherwise and angle is
     the gripper opening in [rad]
     """
 
@@ -1151,10 +1151,10 @@ def gripperEncoderToGap(enc: int, ID: int = -1) -> Tuple[float, int]: # NOQA
     in [m] for a given encoder reading.
 
     This feature only applies to the following devices:
-        dhd.bindings.constants.DeviceType.OMEGA331
-        dhd.bindings.constants.DeviceType.OMEGA331_LEFT
-        dhd.bindings.constants.DeviceType.SIGMA331
-        dhd.bindings.constants.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA331
+        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.constants.DeviceType.SIGMA331
+        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
 
     :param int enc: gripper encoder reading
@@ -1193,10 +1193,10 @@ def gripperAngleRadToEncoder(angle: float, # NOQA
     gripper opening distance in [rad].
 
     This feature only applies to the following devices:
-        dhd.bindings.constants.DeviceType.OMEGA331
-        dhd.bindings.constants.DeviceType.OMEGA331_LEFT
-        dhd.bindings.constants.DeviceType.SIGMA331
-        dhd.bindings.constants.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA331
+        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.constants.DeviceType.SIGMA331
+        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
     :param float angle: gripper opening as an angle in [rad]
 
@@ -1233,10 +1233,10 @@ def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]: # NOQA
     gripper opening distance in [m].
 
     This feature only applies to the following devices:
-        dhd.bindings.constants.DeviceType.OMEGA331
-        dhd.bindings.constants.DeviceType.OMEGA331_LEFT
-        dhd.bindings.constants.DeviceType.SIGMA331
-        dhd.bindings.constants.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA331
+        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.constants.DeviceType.SIGMA331
+        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
 
     :param float gap: gripper opening distance in [m]
@@ -1278,10 +1278,10 @@ def gripperMotorToForce(output: int,  # NOQA
     motor command.
 
     This feature only applies to the following devices:
-        dhd.bindings.constants.DeviceType.OMEGA331
-        dhd.bindings.constants.DeviceType.OMEGA331_LEFT
-        dhd.bindings.constants.DeviceType.SIGMA331
-        dhd.bindings.constants.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA331
+        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.constants.DeviceType.SIGMA331
+        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
 
     :param int output: motor command on gripper axis
@@ -1338,10 +1338,10 @@ def gripperForceToMotor(force: float,  # NOQA
     computes and returns the corresponding motor command.
 
     This feature only applies to the following devices:
-        dhd.bindings.constants.DeviceType.OMEGA331
-        dhd.bindings.constants.DeviceType.OMEGA331_LEFT
-        dhd.bindings.constants.DeviceType.SIGMA331
-        dhd.bindings.constants.DeviceType.SIGMA331_LEFT
+        dhd.libdhd.constants.DeviceType.OMEGA331
+        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
+        dhd.libdhd.constants.DeviceType.SIGMA331
+        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
 
     :param int force: force on the gripper end-effector in [N]
@@ -1366,7 +1366,7 @@ def gripperForceToMotor(force: float,  # NOQA
 
     :rtype: Tuple[int, int]
     :returns: tuple of (output, err) where err is 0 or
-    dhd.bindings.constants.MOTOR_SATURATED on success, -1 otherwise and output
+    dhd.libdhd.constants.MOTOR_SATURATED on success, -1 otherwise and output
     is the motor command on the gripper axis.
     """
 
@@ -1416,8 +1416,8 @@ _libdhd.dhdPreloadMot.restype = c_int
 def preloadMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int: # NOQA
     """
     Program motor commands to a selection of motor channels. Unlike
-    dhd.bindings.expert.setMot, this function saves the requested commands
-    internally for later application by calling dhd.bindings.standard.setForce
+    dhd.libdhd.expert.setMot, this function saves the requested commands
+    internally for later application by calling dhd.libdhd.standard.setForce
     and the likes.
 
     :param DOFTuple outputs: list of motor command values
@@ -1464,7 +1464,7 @@ def getEnc( # NOQA
     assignment either because its immutable or not subscriptable.
 
     :raises IndexError: if out is specified and
-    len(out) < dhd.bindings.MAX_DOF
+    len(out) < dhd.libdhd.MAX_DOF
 
 
     :raises ValueError: if mask is not implicitly convertible to C uchar
@@ -1472,7 +1472,7 @@ def getEnc( # NOQA
 
     :rtype: Tuple[MutableSequence[int], int]
     :returns: tuple of (enc, err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and enc is a list
+    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and enc is a list
     of encoder values.
     """
     enc = (c_int * MAX_DOF)()
@@ -1520,10 +1520,10 @@ def getEncRange( # NOQA
     assignment either because its immutable or not subscriptable.
 
     :raises IndexError: if encMin_out is specified and
-    len(out) < dhd.bindings.MAX_DOF
+    len(out) < dhd.libdhd.MAX_DOF
 
     :raises IndexError: if encMin_out is specified and
-    len(encMin_out) < dhd.bindings.MAX_DOF
+    len(encMin_out) < dhd.libdhd.MAX_DOF
 
 
     :raises ValueError: if ID is not implicitly convertible to a C char type
@@ -1621,7 +1621,7 @@ def getDeltaJointAngles( # NOQA
 
     :rtype: Tuple[MutableSequence[float], int]
     :returns: tuple of ([j0, j1, j2], err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and
+    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and
     [j0, j1, j2] are the joint angles for axes 0, 1, and 2, respectively
     """
 
@@ -1676,7 +1676,7 @@ def getDeltaJacobian( # NOQA
 
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
     :returns: tuple of (J, err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and J is the 3x3
+    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and J is the 3x3
     jacobian matrix.
 
     """
@@ -1799,13 +1799,13 @@ def deltaJointTorquesExtrema( # NOQA
     assignment either because its immutable or not subscriptable.
 
     :raises IndexError: if minq_out is specified and
-    len(encMin_out) < dhd.bindings.MAX_DOF
+    len(encMin_out) < dhd.libdhd.MAX_DOF
 
     :raises TypeError: if maxq_out is specified and does not support item
     assignment either because its immutable or not subscriptable.
 
     :raises IndexError: if maxq_out is specified and
-    len(out) < dhd.bindings.MAX_DOF
+    len(out) < dhd.libdhd.MAX_DOF
 
     :raises ValueError: if any member of joint_angles is not implicitly
     convertible to C double.
@@ -2123,7 +2123,7 @@ def getWristJointAngles( # NOQA
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns: tuple of ([j0, j1, j2], err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and [j0, j1, j2]
+    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and [j0, j1, j2]
     correspond to the joint angle for joint angles for joint 0, 1, and 2,
     respectively.
     """
@@ -2177,7 +2177,7 @@ def getWristJacobian( # NOQA
 
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
     :returns: tuple of (J, err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and J is the 3x3
+    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and J is the 3x3
     jacobian matrix.
 
     """
@@ -2303,13 +2303,13 @@ def wristJointTorquesExtrema( # NOQA
     assignment either because its immutable or not subscriptable.
 
     :raises IndexError: if minq_out is specified and
-    len(encMin_out) < dhd.bindings.MAX_DOF
+    len(encMin_out) < dhd.libdhd.MAX_DOF
 
     :raises TypeError: if maxq_out is specified and does not support item
     assignment either because its immutable or not subscriptable.
 
     :raises IndexError: if maxq_out is specified and
-    len(out) < dhd.bindings.MAX_DOF
+    len(out) < dhd.libdhd.MAX_DOF
 
     :raises ValueError: if any member of joint_angles is not implicitly
     convertible to C double.
@@ -2724,13 +2724,13 @@ def getJointAngles( # NOQA
     assignment either because its immutable or not subscriptable.
 
     :raises IndexError: if out is specified and
-    len(out) < dhd.bindings.MAX_DOF
+    len(out) < dhd.libdhd.MAX_DOF
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
     :rtype: Tuple[MutableSequence[float], int]
     :returns: tuple of (joint_angles, err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and joint_angles
+    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and joint_angles
     is a list of joint angles in [rad].
     """
 
@@ -2769,13 +2769,13 @@ def getJointVelocities( # NOQA
     assignment either because its immutable or not subscriptable.
 
     :raises IndexError: if out is specified and
-    len(out) < dhd.bindings.MAX_DOF
+    len(out) < dhd.libdhd.MAX_DOF
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
     :rtype: Tuple[MutableSequence[float], int]
     :returns: tuple of (w, err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and v is a list
+    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and v is a list
     of joint angle velocities in [rad/s].
     """
 
@@ -2813,14 +2813,14 @@ def getEncVelocities( # NOQA
     assignment either because its immutable or not subscriptable.
 
     :raises IndexError: if out is specified and
-    len(out) < dhd.bindings.MAX_DOF
+    len(out) < dhd.libdhd.MAX_DOF
 
     :raises ValueError: if ID is not implicitly convertible to C char
 
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns: tuple of (v, err) where err is 0 or
-    dhd.bindings.constants.TIMEGUARD on success, -1 otherwise and v is a list
+    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and v is a list
     of joint angle velocities in [increments/s].
     """
 
@@ -2928,7 +2928,7 @@ def setWatchdog(duration: int, ID: int = -1) -> int: # NOQA
 
     A value of 0 disables the watchdog feature.
 
-    See also dhd.bindings.expert.getWatchdog()
+    See also dhd.libdhd.expert.getWatchdog()
 
     :param int duration: watchdog duration in multiples of 125 [us]
 
@@ -2953,7 +2953,7 @@ def getWatchdog(ID: int = -1) -> Tuple[int, int]: # NOQA
     Get the watchdog duration in multiples of 125 microseconds on compatible
     devices.
 
-    See also dhd.bindings.expert.setWatchdog()
+    See also dhd.libdhd.expert.setWatchdog()
 
     :param int ID: [default=-1] device ID (see multiple devices section
     for details)
