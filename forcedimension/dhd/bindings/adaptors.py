@@ -99,7 +99,9 @@ class DHDFeatureError(DHDError):
         feature: Optional[Callable[[Any], Any]]
     ):
         err_msg = "{} is not available {} because {}."
-        feature_seg = "A particular feature" if feature is None else feature
+        feature_seg = (
+            "A particular feature" if feature is None else str(feature)
+        )
         id_seg = "" if ID is None else "on device {}".format(ID)
 
         return super().__init__(err_msg.format(feature_seg, id_seg, reason))
@@ -212,12 +214,11 @@ class DHDErrorCom(DHDIOError):
     def __init__(
         self,
         *,
-        err: str,
         ID: Optional[int] = None,
         **kwargs
     ):
         return super().__init__(
-            err="a communication error between the host and the HapticDevice",
+            err="A communication error between the host and the HapticDevice",
             ID=ID
         )
 
@@ -233,7 +234,7 @@ class DHDErrorDHCBusy(DHDIOError):
 class DHDErrorNoDeviceFound(DHDIOError):
     def __init__(self, **kwargs):
         return super().__init__(
-            err="No compatible ForceDimension devices found."
+            err="No compatible ForceDimension devices found"
         )
 
 
