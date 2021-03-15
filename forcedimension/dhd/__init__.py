@@ -24,7 +24,7 @@ from forcedimension.dhd.adaptors import (
 )
 
 # Load the runtime from the backend
-_libdhd = runtime.load("libdhd")
+_libdhd = runtime.load("libdrd")
 
 if _libdhd is None:
     raise ImportError("There were problems loading libdhd.")
