@@ -1,6 +1,6 @@
 __all__ = ['libdhd', 'libdrd', 'runtime']
 
-from threading import Thread
+from threading import Thread, Lock, Condition
 from typing import MutableSequence, Optional, Callable, List
 from typing import cast
 from math import nan
@@ -9,6 +9,8 @@ from time import sleep, monotonic
 
 from forcedimension.dhd.adaptors import CartesianTuple, DeviceTuple
 import forcedimension.dhd as libdhd
+import forcedimension.drd as libdrd
+
 import forcedimension.dhd.expert  # NOQA
 
 from forcedimension.util import ( # NOQA
@@ -143,20 +145,38 @@ class HapticDevice:
         if (libdhd.getDeviceCount() > 0):
             if self._id is None:
                 if (self._devtype is None):
-                    self._id = libdhd.open()
+                    self._id = libdrd.open()
+
+                    if self._id == -1:
+                        raise errno_to_exception(libdhd.errorGetLast())
+
                     self._devtype = libdhd.getSystemType()
+
+                    if (self._devtype == -1):
+                        raise errno_to_exception(libdhd.errorGetLast())(
+                            ID=cast(int, self._id),
+                            op=libdhd.getSystemType
+                        )
+
                 else:
                     self._id = libdhd.openType(self._devtype)
 
-                if (self._devtype == -1):
-                    raise errno_to_exception(libdhd.errorGetLast())(
-                        ID=cast(int, self._id),
-                        op=libdhd.getSystemType
-                    )
+                    if (self._id == -1):
+                        raise errno_to_exception(libdhd.errorGetLast())()
+
+                    if libdhd.close(self._id) == -1:
+                        raise errno_to_exception(libdhd.errorGetLast())(
+                            ID=cast(int, self._id),
+                            op=libdhd.close
+                        )
+
+                    if libdrd.openID(self._id) == -1:
+                        raise errno_to_exception(libdhd.errorGetLast())()
+
             else:
-                libdhd.openID(cast(int, self._id))
+                libdrd.openID(cast(int, self._id))
                 if (cast(int, self._id) == -1):
-                    raise errno_to_exception(libdhd.errorGetLast())
+                    raise errno_to_exception(libdhd.errorGetLast())()
 
                 devtype = libdhd.getSystemType()
 
@@ -769,7 +789,7 @@ class HapticDevice:
         self.open = False
         if self._haptic_deamon is not None:
             self._haptic_deamon.stop()
-        libdhd.close(cast(int, self._id))
+        libdrd.close(cast(int, self._id))
 
     def __enter__(self):
         return self
@@ -1008,31 +1028,49 @@ class Poller(Thread):
         self,
         f: Callable[[], None],
         min_period: Optional[float] = None,
+        paused=False
     ):
         self._min_period = min_period
         self.ex = None
 
         self._stopped = False
+
         self._paused = False
+
+        self._pause_cond = Condition(Lock())
         self._f = f
 
-        super().__init__()
+        super().__init__(daemon=True)
+
+        if paused:
+            self.pause()
 
     def stop(self):
         if not self._stopped:
             self._stopped = True
-            self.join()
+            self.resume()
 
-    def pause(self, paused=True):
-        self._paused = paused
+            if self.ident is not None:
+                self.join()
 
-    def start(self, paused=False, *args, **kwargs):
-        self._paused = paused
-        super().start(*args, **kwargs)
+    def pause(self):
+        if not self._paused:
+            self._paused = True
+            self._pause_cond.acquire()
+
+    def resume(self):
+        if self._paused:
+            self._paused = False
+            self._pause_cond.notify()
+            self._pause_cond.release()
 
     def run(self):
         try:
             while not self._stopped:
+                with self._pause_cond:
+                    if self._paused:
+                        self._pause_cond.wait()
+
                 while not self._paused and not self._stopped:
                     t = monotonic()
 
@@ -1054,7 +1092,8 @@ class HapticDaemon(Thread):
     def __init__(
                 self,
                 dev: HapticDevice,
-                update_list: UpdateOpts = UpdateOpts()
+                update_list: UpdateOpts = UpdateOpts(),
+                forceon=False
             ):
 
         super().__init__()
@@ -1065,7 +1104,9 @@ class HapticDaemon(Thread):
         self._paused = False
         self._dev = dev
         self._dev._haptic_deamon = self
-        self.daemon = True
+        self._forceon = forceon
+        self._force_poller = None
+        self._pollers = None
 
         self._set_pollers(update_list)
 
@@ -1073,6 +1114,8 @@ class HapticDaemon(Thread):
             self._req_func: Callable[[], None] = self._dev.gripper.submit
         else:
             self._req_func = self._dev.submit
+
+        super().__init__(daemon=True)
 
     def _set_pollers(self, update_list):
         pollers = []
@@ -1130,38 +1173,74 @@ class HapticDaemon(Thread):
             )
 
             self._force_poller = (
-                Poller(self._dev.gripper.submit, 1/update_list.req)
+                Poller(
+                    self._dev.gripper.submit,
+                    1/update_list.req,
+                    self._forceon
+                )
             )
         else:
             self._force_poller = (
-                Poller(self._dev.submit, 1/update_list.req)
+                Poller(self._dev.submit, 1/update_list.req, self._forceon)
             )
 
+        self._paused = False
+        self._stopped = False
+        self._pause_cond = Condition(Lock())
         self._pollers = pollers
 
     def stop(self):
-        self._paused = True
+        self._stopped = True
+
+        self.resume()
+
         if self._pollers is not None:
             for poller in self._pollers:
                 poller.stop()
 
-        self._force_poller.stop()
+        if self._force_poller is not None:
+            self._force_poller.stop()
 
-        self.join()
+        if self.ident is not None:
+            self.join()
+
+    def pause(self):
+        if not self._paused:
+            self._paused = True
+
+            for poller in self._pollers:
+                poller.pause()
+
+            self._pause_cond.acquire()
+
+    def resume(self):
+        if self._paused:
+            self._paused = False
+
+            self._pause_cond.notify()
+            self._pause_cond.release()
+
+            for poller in self._pollers:
+                poller.resume()
 
     def forcepoll(self, poll=True):
         if poll:
-            self._force_poller.pause(not poll)
+            self._force_poller.resume()
+        else:
+            self._force_poller.pause()
 
-    def run(self, forceon=True):
-        self._paused = False
+    def run(self):
         try:
             for poller in self._pollers:
                 poller.start()
 
-            self._force_poller.start(not forceon)
+            self._force_poller.start()
 
-            while not self._paused:
+            while not self._stopped:
+                with self._pause_cond:
+                    if self._paused:
+                        self._pause_cond.wait()
+
                 for poller in self._pollers:
                     if poller.ex is not None:
                         raise poller.ex
