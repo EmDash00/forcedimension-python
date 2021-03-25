@@ -140,7 +140,7 @@ class HapticDevice:
 
         self._thread_exception = None
 
-        self._haptic_deamon: Optional[HapticDaemon] = None
+        self._haptic_daemon: Optional[HapticDaemon] = None
 
         if (libdhd.getDeviceCount() > 0):
             if self._id is None:
@@ -1103,7 +1103,7 @@ class HapticDaemon(Thread):
 
         self._paused = False
         self._dev = dev
-        self._dev._haptic_deamon = self
+        self._dev._haptic_daemon = self
         self._forceon = forceon
         self._force_poller = None
         self._pollers = None
