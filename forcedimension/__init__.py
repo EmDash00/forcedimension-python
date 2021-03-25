@@ -787,8 +787,8 @@ class HapticDevice:
 
     def close(self):
         self.open = False
-        if self._haptic_deamon is not None:
-            self._haptic_deamon.stop()
+        if self._haptic_daemon is not None:
+            self._haptic_daemon.stop()
         libdrd.close(cast(int, self._id))
 
     def __enter__(self):
