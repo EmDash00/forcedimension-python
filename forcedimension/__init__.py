@@ -174,7 +174,7 @@ class HapticDevice:
                         raise errno_to_exception(libdhd.errorGetLast())()
 
             else:
-                libdrd.openID(cast(int, self._id))
+                self._id = libdrd.openID(cast(int, self._id))
                 if (cast(int, self._id) == -1):
                     raise errno_to_exception(libdhd.errorGetLast())()
 
@@ -190,6 +190,8 @@ class HapticDevice:
                     if (self.devtype != devtype):
                         raise Exception(
                             "Device is not of type {}".format(self.devtype))
+                else:
+                    self._devtype = devtype
 
             self._left_handed = libdhd.isLeftHanded(cast(int, self._id))
 
@@ -201,7 +203,7 @@ class HapticDevice:
                 )
 
             self.update_enc_and_calculate()
-            self.update_velocity()
+            # self.update_velocity()
             # self.update_angular_velocity()
 
             if self.gripper is not None:
