@@ -138,7 +138,7 @@ class HapticDevice:
 
         self._devtype = devtype
 
-        self._thread_exception = None
+        self._thread_exception: Optional[DHDIOError] = None
 
         self._haptic_daemon: Optional[HapticDaemon] = None
 
@@ -1107,8 +1107,7 @@ class HapticDaemon(Thread):
         self._dev = dev
         self._dev._haptic_daemon = self
         self._forceon = forceon
-        self._force_poller = None
-        self._pollers = None
+        self._pollers = []
 
         self._set_pollers(update_list)
 
@@ -1120,8 +1119,6 @@ class HapticDaemon(Thread):
         super().__init__(daemon=True)
 
     def _set_pollers(self, update_list):
-        pollers = []
-
         if update_list is not None:
             """
             not implemented yet.
@@ -1137,7 +1134,7 @@ class HapticDaemon(Thread):
                 self._dev.update_buttons
             )
 
-            pollers.extend(
+            self._pollers.extend(
                 Poller(update, 1/freq)
                 for freq, update in zip(update_list[:-2], funcs)
                 if freq is not None
@@ -1146,9 +1143,9 @@ class HapticDaemon(Thread):
             if update_list.ft is not None:
                 if (
                     update_list.gripper is not None and
-                    self.gripper is not None
+                    self._dev.gripper is not None
                 ):
-                    pollers.append(
+                    self._pollers.append(
                         Poller(
                             self._dev.update_force_and_torque,
                             1/update_list.ft
@@ -1156,10 +1153,10 @@ class HapticDaemon(Thread):
                     )
                 else:
                     f = self._dev.update_force_and_torque_and_gripper_force
-                    pollers.append(
+                    self._pollers.append(
                         Poller(f, 1/update_list.ft)
                     )
-        if update_list.gripper is not None:
+        if update_list.gripper is not None and self._dev.gripper is not None:
             funcs = (
                 self._dev.gripper.update_enc_and_calculate,
                 self._dev.gripper.update_finger_pos,
@@ -1168,7 +1165,7 @@ class HapticDaemon(Thread):
                 self._dev.gripper.update_angular_velocity
             )
 
-            pollers.extend(
+            self._pollers.extend(
                 Poller(update, 1/freq)
                 for freq, update in zip(update_list.gripper, funcs)
                 if freq is not None
@@ -1189,7 +1186,6 @@ class HapticDaemon(Thread):
         self._paused = False
         self._stopped = False
         self._pause_cond = Condition(Lock())
-        self._pollers = pollers
 
     def stop(self):
         self._stopped = True
