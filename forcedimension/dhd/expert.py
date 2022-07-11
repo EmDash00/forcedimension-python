@@ -504,9 +504,9 @@ def deltaEncoderToPosition(
     This routine computes and returns the position of the end-effector for a
     given set of encoder readings.
 
-    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,.
-    enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
-    respectively.
+    :param DeviceTuple enc:
+        Sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, and `enc2`
+        coresspond to raw encoder readings on axis 0, 1, and 2, respectively.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to `-1`.
@@ -658,7 +658,6 @@ _libdhd.dhdDeltaMotorToForce.restype = c_int
 def deltaMotorToForce(
     output: DeviceTuple,
     enc: DeviceTuple,
-    ID: int = -1,
     out: Optional[MutableSequence[float]] = None
 ) -> Tuple[MutableSequence[float], int]:
     """
@@ -666,9 +665,10 @@ def deltaMotorToForce(
     a given set of motor commands at a given position (defined by encoder
     readings)
 
-    :param DeviceTuple output: Tuple of (motor0, motor1, motor2) where.
-    motor0, motor1, and motor2 are the axis 0, 1, and 2 DELTA motor commands,
-    respectively.
+    :param DeviceTuple output:
+        Tuple of `(motor0, motor1, motor2)` where
+        `motor0`, `motor1`, and `motor2` are the axis 0, 1, and 2 DELTA motor
+        commands, respectively.
 
     :param DeviceTuple enc:
         Sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, and `enc2`
@@ -748,7 +748,6 @@ _libdhd.dhdDeltaForceToMotor.restype = c_int
 def deltaForceToMotor(
     f: CartesianTuple,
     enc: DeviceTuple,
-    ID: int = -1,
     out: Optional[MutableSequence[int]] = None
 ) -> Tuple[MutableSequence[int], int]:
     """
@@ -1020,7 +1019,6 @@ _libdhd.dhdWristMotorToTorque.restype = c_int
 def wristMotorToTorque(
     cmd: DeviceTuple,
     enc: DeviceTuple,
-    ID: int = -1,
     out: Optional[MutableSequence[float]] = None,
 ) -> Tuple[MutableSequence[float], int]:
     """
@@ -1110,7 +1108,6 @@ _libdhd.dhdWristTorqueToMotor.restype = c_int
 def wristTorqueToMotor(
     t: CartesianTuple,
     enc: DeviceTuple,
-    ID: int = -1,
     out: Optional[MutableSequence[int]] = None,
 ) -> Tuple[MutableSequence[int], int]:
     """
@@ -1685,7 +1682,8 @@ def getEncRange(
     if encMax_out is None:
         encMax_out = [val for val in encMax]
     else:
-        encMax_out[i] = encMax[i]
+        for i in range(MAX_DOF):
+            encMax_out[i] = encMax[i]
 
     return (encMin_out, encMax_out, err)
 
