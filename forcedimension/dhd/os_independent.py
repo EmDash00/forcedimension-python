@@ -3,39 +3,50 @@
    :platform: Windows, Unix
    :synopsis: libdhd "OS Independent SDK" Python libdhd
 
-.. moduleauthor:: Drason Chow <drasonchow@gmail.com>
+.. moduleauthor:: Ember "Emmy" Chow <emberchow.business@gmail.com>
 """
 
-from forcedimension.dhd.libdhd import _libdhd
 from ctypes import c_bool, c_byte, c_double
+
+from forcedimension.dhd import _libdhd
 
 _libdhd.dhdKbHit.argtypes = []
 _libdhd.dhdKbHit.restype = c_bool
-def kbHit() -> bool: # NOQA
+
+
+def kbHit() -> bool:
     """
     Check keyboard for a key hit. This function is OS independent.
 
     :rtype: bool
-    :returns: if a key on the keyboard was hit.
+
+    :returns:
+        `True` if a key on the keyboard was hit, and `False` otherwise.
     """
     return _libdhd.dhdKbHit()
 
 
 _libdhd.dhdKbGet.argtypes = []
 _libdhd.dhdKbGet.restype = c_byte
-def kbGet() -> str: # NOQA
+
+
+def kbGet() -> str:
     """
     Retrieve a character from the keyboard. This function is OS independent.
 
     :rtype: str
-    :returns: the character hit on the keyboard.
+
+    :returns:
+        The character hit on the keyboard.
     """
     return _libdhd.dhdKbGet().decode('utf-8')
 
 
 _libdhd.dhdGetTime.argtypes = []
 _libdhd.dhdGetTime.restype = c_double
-def getTime() -> float: # NOQA
+
+
+def getTime() -> float:
     """
     Returns the current value from the high-resolution system counter in [s].
     The resolution of the system counter may be machine-dependent, as it is
@@ -43,15 +54,19 @@ def getTime() -> float: # NOQA
     however, is guarunteed to be monotonic.
 
     :rtype: float
-    :returns: the current monotonic time in [s] from the high-resolution system
-    counter
+
+    :returns:
+        The current monotonic time in [s] from the high-resolution system
+        counter.
     """
     return _libdhd.dhdGetTime()
 
 
 _libdhd.dhdSleep.argtypes = [c_double]
 _libdhd.dhd.restype = None
-def sleep(sec: float) -> None: # NOQA
+
+
+def sleep(sec: float) -> None:
     """
     Sleep for a given period of time in [s]. This function is OS independent.
 
