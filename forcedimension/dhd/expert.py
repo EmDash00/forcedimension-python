@@ -1,13 +1,13 @@
 """
-.. module::expert
+. module::expert
    :platform: Windows, Unix
    :synopsis: libdhd "Expert SDK" Python libdhd
 
-.. moduleauthor:: Drason Chow <drasonchow@gmail.com>
+. moduleauthor:: Ember "Emmy" Chow <emberchow.business@gmail.com>
 """
 
 
-from typing import Tuple, MutableSequence, Optional
+from typing import Tuple, MutableSequence, Optional, cast
 
 from ctypes import c_int, c_uint, c_byte, c_ubyte, c_ushort, c_double
 
@@ -22,48 +22,65 @@ from forcedimension.dhd.adaptors import (
 
 _libdhd.dhdEnableExpertMode.argtypes = []
 _libdhd.dhdEnableExpertMode.restype = c_int
-def enableExpertMode() -> int: # NOQA
+
+
+def enableExpertMode() -> int:
     """
     Enable expert mode.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise.
+
+    :returns: `0` on success `-1` otherwise.
     """
     return _libdhd.dhdEnableExpertMode()
 
 
 _libdhd.dhdDisableExpertMode.argtypes = []
 _libdhd.dhdDisableExpertMode.restype = c_int
-def disableExpertMode() -> int: # NOQA
+
+
+def disableExpertMode() -> int:
     """
     Enable expert mode.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise.
+
+    :returns: `0` on success `-1` otherwise.
     """
     return _libdhd.dhdDisableExpertMode()
 
 
-# TODO add page for generic controller
-# TODO add a page for multiple devices
 _libdhd.dhdPreset.argtypes = [c_int * MAX_DOF, c_ubyte, c_byte]
 _libdhd.dhdPreset.restype = c_int
-def preset(val: DOFTuple, mask: int=0xff, ID: int = -1) -> int: # NOQA
+
+
+def preset(val: DOFTuple, mask: int = 0xff, ID: int = -1) -> int:
     """
     Set selected encoder offsets to a given value. Intended for use with the
     generic controller when no RESET button is available.
 
-    :param DOFTuple val: motor values array
-    :param int mask: [default=0xff] bitwise mask of which encoder should be set
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param DOFTuple val:
+        Sequence of encoder offsets corresponding to each DOF with length
+        :data:`forcedimension.dhd.constants.MAX_DOF`.
 
-    :raises ValueError: if val is not implicitly convertible to C int[9]
-    :raises ValueError: if mask is not implicitly convertible to C uchar
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :param int mask:
+        Bitwise mask of which encoder should be set, defaults to `0xff`.
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ValueError:
+        If `val` is not implicitly convertible to C `int[9]`.
+
+    :raises ValueError:
+        If `mask` is not implicitly convertible to C `uchar`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise
+
+    :returns: `0` on success, `-1` otherwise
     """
     return _libdhd.dhdPreset(val, mask, ID)
 
@@ -71,22 +88,29 @@ def preset(val: DOFTuple, mask: int=0xff, ID: int = -1) -> int: # NOQA
 # TODO add a page about TimeGuard
 _libdhd.dhdSetTimeGuard.argtypes = [c_int, c_byte]
 _libdhd.dhdSetTimeGuard.restype = c_int
-def setTimeGuard(min_period: int, ID: int = -1) -> int: # NOQA
+
+
+def setTimeGuard(min_period: int, ID: int = -1) -> int:
     """
-    Enable/disable the TimeGuard feature with an arbitrary minimum period.
+    Enable/disable the [TimeGuard] feature with an arbitrary minimum period.
 
-    :param int min_period: minimum refresh period in [us]. A value of 0
-    disables the TimeGuard feature, while a value of -1 resets the default
-    recommended value.
+    :param int min_period:
+        Minimum refresh period in [us]. A value of `0`.
+        disables the TimeGuard feature, while a value of -1 resets the default
+        recommended value.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if min_period is not implicitly convertible to C int.
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `min_period` is not implicitly convertible to C `int`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise.
+
+    :returns: `0` on success `-1` otherwise.
     """
 
     return _libdhd.dhdSetTimeGuard(min_period, ID)
@@ -95,25 +119,35 @@ def setTimeGuard(min_period: int, ID: int = -1) -> int: # NOQA
 # TODO Make a page for velocity threshold
 _libdhd.dhdSetVelocityThreshold.argtypes = [c_uint, c_byte]
 _libdhd.dhdSetVelocityThreshold.restype = c_int
-def setVelocityThreshold(thresh: int, ID: int = -1) -> int: # NOQA
+
+
+def setVelocityThreshold(thresh: int, ID: int = -1) -> int:
     """
     Adjust the velocity threshold of the device. Velocity threshold is a safety
     feature that prevents the device from accelerating to high velocities
     without control. If the velocity of one of the device axis passes the
     threshold, the device enters BRAKE mode.
 
-    Warning: since the range of threshold values is device dependent, it is
+    Warning
+    -------
+    Since the range of threshold values is device dependent, it is
     recommended NOT to modify factory settings.
 
-    :param int thresh: an arbitrary value of velocity threshold
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int thresh:
+        An arbitrary value of velocity threshold (in [m/s]).
 
-    :raises ValueError: if thresh is not implicitly convertible to C uint.
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ValueError:
+        If `thresh` is not implicitly convertible to C `uint`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise.
+
+    :returns: `0` on success `-1` otherwise.
     """
 
     return _libdhd.dhdSetVelocityThreshold(thresh, ID)
@@ -121,23 +155,30 @@ def setVelocityThreshold(thresh: int, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdGetVelocityThreshold.argtypes = [POINTER(c_uint), c_byte]
 _libdhd.dhdGetVelocityThreshold.restype = c_int
-def getVelocityThreshold(ID: int = -1) -> Tuple[int, int]: # NOQA
+
+
+def getVelocityThreshold(ID: int = -1) -> Tuple[int, int]:
     """
     Get the velocity threshold of the device. Velocity threshold is a safety
     feature that prevents the device from accelerating to high velocities
     without control. If the velocity of one of the device axis passes the
     threshold, the device enters BRAKE mode.
 
-    Warning: Velocity thresholds are device dependent.
+    Warning
+    -------
+    Velocity thresholds are device dependent.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[int, int]
-    :returns: Tuple of (thresh, err) where err 0 on success, -1 otherwise and
-    thresh is value of the velocity threshold.
+
+    :returns:
+        Tuple of `(thresh, err)`. `err` is `0` on success, `-1` otherwise.
+        `thresh` is the value of the velocity threshold (in [m/s]).
     """
 
     thresh = c_uint()
@@ -146,19 +187,23 @@ def getVelocityThreshold(ID: int = -1) -> Tuple[int, int]: # NOQA
 
 _libdhd.dhdUpdateEncoders.argtypes = [c_byte]
 _libdhd.dhdUpdateEncoders.restype = c_int
-def updateEncoders(ID: int = -1) -> int: # NOQA
+
+
+def updateEncoders(ID: int = -1) -> int:
     """
     Force an update of the internal encoder values in the state vector. This
     call retrieves the encoder readings from the device and places them into
     the state vector. No kinematic model is called.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[int, int]
-    :returns: 0 on success, -1 otherwise.
+
+    :returns: `0` on success `-1` otherwise.
     """
     return _libdhd.dhdUpdateEncoders(ID)
 
@@ -170,35 +215,44 @@ _libdhd.dhdGetDeltaEncoders.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetDeltaEncoders.restypes = c_int
-def getDeltaEncoders( # NOQA
-        ID: int = -1,
-        out: Optional[MutableSequence[int]] = None
-    ) -> Tuple[MutableSequence[int], int]:
+
+
+def getDeltaEncoders(
+    ID: int = -1,
+    out: Optional[MutableSequence[int]] = None
+) -> Tuple[MutableSequence[int], int]:
     """
     Read all encoders values of the DELTA structure
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out: OPTIONAL mutable sequence to use
-    instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[int]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[int], int]
 
-    :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and
-    enc0, enc1, and enc2 are the axis 0, axis 1, and axis 2 encoder readings,
-    respectively.
+    :returns:
+        Tuple of `([enc0, enc1, enc2], err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
+        otherwise and `enc0`, `enc1`, and `enc2` are the axis 0, axis 1, and
+        axis 2 encoder readings, respectively.
     """
 
     enc0 = c_int()
@@ -206,11 +260,11 @@ def getDeltaEncoders( # NOQA
     enc2 = c_int()
 
     err = _libdhd.dhdGetDeltaEncoders(
-                byref(enc0),
-                byref(enc1),
-                byref(enc2),
-                ID
-           )
+        byref(enc0),
+        byref(enc1),
+        byref(enc2),
+        ID
+    )
 
     if out is None:
         out = [enc0.value, enc1.value, enc2.value]
@@ -229,42 +283,53 @@ _libdhd.dhdGetWristEncoders.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetWristEncoders.restypes = c_int
-def getWristEncoders( # NOQA
-        ID: int = -1,
-        out: Optional[MutableSequence[int]] = None
-    ) -> Tuple[MutableSequence[int], int]:
+
+
+def getWristEncoders(
+    ID: int = -1,
+    out: Optional[MutableSequence[int]] = None
+) -> Tuple[MutableSequence[int], int]:
     """
     Read all encoders values of the wrist structure.
 
     This feature only applies to the following devices:
-        dhd.libdhd.constants.DeviceType.OMEGA33
-        dhd.libdhd.constants.DeviceType.OMEGA33_LEFT
-        dhd.libdhd.constants.DeviceType.OMEGA331
-        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
-        dhd.libdhd.constants.DeviceType.SIGMA331
-        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out: OPTIONAL mutable sequence to use
-    instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
+    :param Optional[MutableSequence[int]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
 
     :rtype: Tuple[MutableSequence[int], int]
-    :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and
-    [enc0, enc1, enc2] are the axes 0, 1, and 2 encoder readings, respectively
+
+    :returns:
+        Tuple of `([enc0, enc1, enc2], err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        `-1` otherwise. `[enc0, enc1, enc2]` are the axis 0, 1, and 2 raw
+        encoder readings, respectively.
     """
 
     enc0 = c_int()
@@ -272,11 +337,11 @@ def getWristEncoders( # NOQA
     enc2 = c_int()
 
     err = _libdhd.dhdGetWristEncoders(
-                byref(enc0),
-                byref(enc1),
-                byref(enc2),
-                ID
-           )
+        byref(enc0),
+        byref(enc1),
+        byref(enc2),
+        ID
+    )
 
     if out is None:
         out = [enc0.value, enc1.value, enc2.value]
@@ -290,25 +355,30 @@ def getWristEncoders( # NOQA
 
 _libdhd.dhdGetGripperEncoder.argtypes = [POINTER(c_int), c_byte]
 _libdhd.dhdGetGripperEncoder.argtypes = [c_int]
-def getGripperEncoder(ID: int = -1) -> Tuple[int, int]: # NOQA
+
+
+def getGripperEncoder(ID: int = -1) -> Tuple[int, int]:
     """
     Read the encoder value of the force gripper.
 
     This feature only applies to the following devices:
-        dhd.libdhd.constants.DeviceType.OMEGA331
-        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
-        dhd.libdhd.constants.DeviceType.SIGMA331
-        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[int, int]
-    :returns: tuple of (enc, err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and enc is the
-    gripper encoder reading.
+
+    :returns:
+        Tuple of `(enc, err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
+        otherwise. `enc` is the gripper raw encoder reading.
     """
 
     enc = c_int()
@@ -318,20 +388,28 @@ def getGripperEncoder(ID: int = -1) -> Tuple[int, int]: # NOQA
 
 _libdhd.dhdGetEncoder.argtypes = [c_int, c_byte]
 _libdhd.dhdGetEncoder.restype = c_int
-def getEncoder(index: int, ID: int = -1) -> int: # NOQA
+
+
+def getEncoder(index: int, ID: int = -1) -> int:
     """
     Read a single encoder value from the haptic device
 
-    :param int index: the motor index number as defined by
-    dhd.libdhd.constants.MAX_DOF
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int index:
+        The motor index number as defined by
+        :data:`forcedimension.dhd.constants.MAX_DOF`
 
-    :raises ValueError: if index is not implicitly convertible to C int
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ValueError:
+        If `index` is not implicitly convertible to C `int`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: the (positive) encoder reading on success, -1 otherwise
+
+    :returns: The (positive) encoder reading on success, `-1` otherwise.
     """
 
     return _libdhd.dhdGetEncoder(index, ID)
@@ -339,24 +417,34 @@ def getEncoder(index: int, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdSetMotor.argtypes = [c_int, c_ushort, c_byte]
 _libdhd.dhdSetMotor.restype = c_int
-def setMotor(index: int, output: int, ID: int = -1) -> int: # NOQA
+
+
+def setMotor(index: int, output: int, ID: int = -1) -> int:
     """
     Program a command to a single motor channel.
 
-    :param int index: the motor index number as defined by
-    dhd.libdhd.constants.MAX_DOF
+    :param int index:
+        The motor index number as defined by
+        :data:`forcedimension.dhd.constants.MAX_DOF`
 
-    :param int output: the motor DAC value
+    :param int output:
+        The motor DAC value.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if index is not implicitly convertible to C int
-    :raises ValueError: if output is not implicitly convertible to C ushort
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `index` is not implicitly convertible to C `int`.
+
+    :raises ValueError:
+        If `output` is not implicitly convertible to C `ushort`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise.
+
+    :returns: `0` on success `-1` otherwise.
     """
 
     return _libdhd.dhdSetMotor(index, output, ID)
@@ -364,25 +452,29 @@ def setMotor(index: int, output: int, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdSetDeltaMotor.argtypes = [c_ushort, c_ushort, c_ushort, c_byte]
 _libdhd.dhdSetDeltaMotor.restype = c_int
-def setDeltaMotor(output: DeviceTuple, ID: int = -1) -> int: # NOQA
+
+
+def setDeltaMotor(output: DeviceTuple, ID: int = -1) -> int:
     """
     Set desired motor commands to the amplifier channels commanding the DELTA
     motors.
 
-    :param DeviceTuple output: Tuple of (motor0, motor1, motor2) where
-    motor0, motor1, and motor2 are the axis 0, 1, and 2 DELTA motor commands,
-    respectively.
+    :param DeviceTuple output:
+        Sequence of `(motor0, motor1, motor2)` where `motor0`, `motor1`, and
+        `motor2` are the axis 0, 1, and 2 DELTA motor commands, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if any member of output is not implicitly convertible
-    to C ushort.
+    :raises ValueError:
+        If any element of `output` is not implicitly convertible to C `ushort`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise.
+
+    :returns: `0` on success `-1` otherwise.
 
     """
     return _libdhd.dhdSetDeltaMotor(output[0], output[1], output[2], ID)
@@ -390,25 +482,29 @@ def setDeltaMotor(output: DeviceTuple, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdSetWristMotor.argtypes = [c_ushort, c_ushort, c_ushort, c_byte]
 _libdhd.dhdSetWristMotor.restype = c_int
-def setWristMotor(output: DeviceTuple, ID: int = -1) -> int: # NOQA
+
+
+def setWristMotor(output: DeviceTuple, ID: int = -1) -> int:
     """
     Set desired motor commands to the amplifier channels commanding the wrist
     motors.
 
-    :param DeviceTuple output: Tuple of (motor0, motor1, motor2) where
-    motor0, motor1, and motor2 are the axis 0, 1, and 2 wrist motor commands,
-    respectively.
+    :param DeviceTuple output:
+        Sequence of (motor0, motor1, motor2) where `motor0`, `motor1`, and
+        `motor2` are the axis 0, 1, and 2 wrist motor commands, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if any member of output is not implicitly convertible
-    to C ushort.
+    :raises ValueError:
+        If any element of `output` is not implicitly convertible to C `ushort`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise.
+
+    :returns: `0` on success `-1` otherwise.
 
     """
     return _libdhd.dhdSetWristMotor(output[0], output[1], output[2], ID)
@@ -416,22 +512,28 @@ def setWristMotor(output: DeviceTuple, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdSetWristMotor.argtypes = [c_ushort, c_byte]
 _libdhd.dhdSetWristMotor.restype = c_int
-def setGripperMotor(output: int, ID: int = -1) -> int: # NOQA
+
+
+def setGripperMotor(output: int, ID: int = -1) -> int:
     """
     Set desired motor commands to the amplifier channels commanding the force
     gripper.
 
-    :param int output: gripper motor command
+    :param int output:
+        Gripper motor command.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if output is not implicitly convertible to C ushort.
+    :raises ValueError:
+        If `output` is not implicitly convertible to C `ushort`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise.
+
+    :returns: `0` on success `-1` otherwise.
     """
     return _libdhd.dhdSetWristMotor(output, ID)
 
@@ -446,42 +548,53 @@ _libdhd.dhdDeltaEncoderToPosition.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaEncoderToPosition.restype = c_int
-def deltaEncoderToPosition( # NOQA
-        enc: DeviceTuple,
-        ID: int = -1,
-        out: Optional[MutableSequence[float]] = None
-    ) -> Tuple[MutableSequence[float], int]:
+
+
+def deltaEncoderToPosition(
+    enc: DeviceTuple,
+    ID: int = -1,
+    out: Optional[MutableSequence[float]] = None
+) -> Tuple[MutableSequence[float], int]:
     """
     This routine computes and returns the position of the end-effector for a
     given set of encoder readings.
 
-    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
-    enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
-    respectively.
+    :param DeviceTuple enc:
+        Sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, and `enc2`
+        coresspond to raw encoder readings on axis 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if any member of enc is not implicitly convertible
-    to C int.
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If any element of `enc` is not implicitly convertible to C `int`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: tuple of ([px, py, pz], err) where err is 0 on success,
-    -1 otherwise and [px, py, pz] is a list of floats corresponding to the
-    DELTA end-effector position on the X, Y, and Z axes, respectively in [m].
+
+    :returns:
+        Tuple of `([px, py, pz], err)`. `err` is `0` on success,
+        `-1` otherwise. `[px, py, pz]` is a mutable sequence of floats
+        corresponding to the DELTA end-effector position on the X, Y, and Z
+        axes, respectively in [m].
     """
 
     px = c_double()
@@ -489,14 +602,14 @@ def deltaEncoderToPosition( # NOQA
     pz = c_double()
 
     err = _libdhd.dhdDeltaEncoderToPosition(
-              enc[0],
-              enc[1],
-              enc[2],
-              byref(px),
-              byref(py),
-              byref(pz),
-              ID
-          )
+        enc[0],
+        enc[1],
+        enc[2],
+        byref(px),
+        byref(py),
+        byref(pz),
+        ID
+    )
 
     if out is None:
         out = [px.value, py.value, pz.value]
@@ -518,42 +631,53 @@ _libdhd.dhdDeltaPositionToEncoder.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaPositionToEncoder.restype = c_int
-def deltaPositionToEncoder( # NOQA
-        pos: CartesianTuple,
-        ID: int = -1,
-        out: Optional[MutableSequence[int]] = None
-    ) -> Tuple[MutableSequence[int], int]:
+
+
+def deltaPositionToEncoder(
+    pos: CartesianTuple,
+    ID: int = -1,
+    out: Optional[MutableSequence[int]] = None
+) -> Tuple[MutableSequence[int], int]:
     """
     This routine computes and returns the encoder values of the end-effector
     for a given Cartesian end-effector position.
 
-    :param CartesianTuple pos: tuple of (px, py, pz) where px, py,
-    and pz correspond to the end-effector position on the X, Y, and Z axes,
-    respectively in [m].
+    :param CartesianTuple pos:
+        Sequence of `(px, py, pz)` where `px`, `py`, and `pz` correspond to the
+        end-effector position on the X, Y, and Z axes, respectively in [m].
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out: OPTIONAL mutable sequence to use
-    instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[int]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item
+        assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if any member of pos is not implicitly convertible
-    to C double
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If any element of `pos` is not implicitly convertible to C `double`
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[int], int]
-    :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 on success,
-    -1 otherwise and [enc0, enc1, enc2] is a list of floats corresponding to
-    the DELTA end-effector encoder readings on axis 0, 1, and 2, respectively.
+
+    :returns:
+        Tuple of `([enc0, enc1, enc2], err). `err` is `0` on success, -1
+        otherwise. `[enc0, enc1, enc2]` is a mutable sequence of floats
+        corresponding to the DELTA end-effector encoder readings on axis 0, 1,
+        and 2, respectively.
     """
 
     enc0 = c_int()
@@ -561,14 +685,14 @@ def deltaPositionToEncoder( # NOQA
     enc2 = c_int()
 
     err = _libdhd.dhdDeltaEncoderToPosition(
-               pos[0],
-               pos[1],
-               pos[2],
-               byref(enc0),
-               byref(enc1),
-               byref(enc2),
-               ID
-           )
+        pos[0],
+        pos[1],
+        pos[2],
+        byref(enc0),
+        byref(enc1),
+        byref(enc2),
+        ID
+    )
 
     if out is None:
         out = [enc0.value, enc1.value, enc2.value]
@@ -593,51 +717,60 @@ _libdhd.dhdDeltaMotorToForce.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaMotorToForce.restype = c_int
-def deltaMotorToForce( # NOQA
-        output: DeviceTuple,
-        enc: DeviceTuple,
-        ID: int = -1,
-        out: Optional[MutableSequence[float]] = None
-    ) -> Tuple[MutableSequence[float], int]:
+
+
+def deltaMotorToForce(
+    output: DeviceTuple,
+    enc: DeviceTuple,
+    out: Optional[MutableSequence[float]] = None
+) -> Tuple[MutableSequence[float], int]:
     """
     This routine computes and returns the force applied to the end-effector for
     a given set of motor commands at a given position (defined by encoder
     readings)
 
-    :param DeviceTuple output: Tuple of (motor0, motor1, motor2) where
-    motor0, motor1, and motor2 are the axis 0, 1, and 2 DELTA motor commands,
-    respectively.
+    :param DeviceTuple output:
+        Sequence of `(motor0, motor1, motor2)` where `motor0`, `motor1`, and
+        `motor2` are the axis 0, 1, and 2 DELTA motor commands, respectively.
 
-    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
-    enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
-    respectively.
+    :param DeviceTuple enc:
+        Sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, and `enc2`
+        coresspond to encoder readings on axis 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if any member of output is not implicitly convertible
-    to C ushort.
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
 
-    :raises ValueError: if any member of enc is not implicitly convertible to
-    C int.
+    :raises ValueError:
+        If any element of `output` is not implicitly convertible to C `ushort`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If any element of `enc` is not implicitly convertible to C `int`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
-    :returns: tuple of ([fx, fy, fz], err) where err is 0 on success, -1
-    otherwise and [fx, fy, fz] correspond to the translational force on the
-    DELTA end-effector on the X, Y and Z axes, respectively in [N].
+
+    :returns:
+        Tuple of `([fx, fy, fz], err)`. `err` is `0` on success, `-1`
+        otherwise and `[fx, fy, fz]` correspond to the translational force on
+        the DELTA end-effector on the X, Y and Z axes, respectively in [N].
     """
 
     fx = c_double()
@@ -645,16 +778,16 @@ def deltaMotorToForce( # NOQA
     fz = c_double()
 
     err = _libdhd.dhdDeltaMotorToForce(
-             output[0],
-             output[1],
-             output[2],
-             enc[0],
-             enc[1],
-             enc[2],
-             byref(fx),
-             byref(fy),
-             byref(fz)
-         )
+        output[0],
+        output[1],
+        output[2],
+        enc[0],
+        enc[1],
+        enc[2],
+        byref(fx),
+        byref(fy),
+        byref(fz)
+    )
 
     if out is None:
         out = [fx.value, fy.value, fz.value]
@@ -679,10 +812,11 @@ _libdhd.dhdDeltaForceToMotor.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaForceToMotor.restype = c_int
-def deltaForceToMotor( # NOQA
+
+
+def deltaForceToMotor(
     f: CartesianTuple,
     enc: DeviceTuple,
-    ID: int = -1,
     out: Optional[MutableSequence[int]] = None
 ) -> Tuple[MutableSequence[int], int]:
     """
@@ -690,42 +824,49 @@ def deltaForceToMotor( # NOQA
     given force on the end-effector at a given position (defined by encoder
     readings).
 
-    :param CartesianTuple f: Tuple of (fx, fy, fz) where fx, fy,
-    and fz are the force on the DELTA end-effector on the X, Y, and Z axes,
-    respectively in [N]
+    :param CartesianTuple f:
+        Sequence of `(fx, fy, fz)` where `fx`, `fy`, and `fz` are the force on
+        the DELTA end-effector on the X, Y, and Z axes, respectively in [N]
 
-    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
-    enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
-    respectively.
+    :param DeviceTuple enc:
+        Sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, and `enc2`
+        coresspond to encoder readings on axis 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out: OPTIONAL mutable sequence to use
-    instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[int]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
 
-    :raises ValueError: if any member of f is not implicitly convertible to C
-    double
+    :raises ValueError:
+        If any element of `f` is not implicitly convertible to C `double`.
 
-    :raises ValueError: if any member of output is not implicitly convertible
-    to C ushort.
+    :raises ValueError:
+        If any element of `output` is not implicitly convertible to C `ushort`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[int], int]
-    :returns: tuple of ([output0, output1, output2], err) where err is 0 or
-    dhd.libdhd.constants.MOTOR_SATURATED on success, -1 otherwise and
-    [output0, output1, output2] correspond to the DELTA end-effector motor
-    commands on axes 0, 1, and 2, respectively.
+
+    :returns:
+        Tuple of `([output0, output1, output2], err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success, `-1`
+        otherwise. `[output0, output1, output2]` correspond to the DELTA
+        end-effector motor commands on axes 0, 1, and 2, respectively.
     """
 
     output0 = c_ushort()
@@ -733,16 +874,16 @@ def deltaForceToMotor( # NOQA
     output2 = c_ushort()
 
     err = _libdhd.dhdDeltaMotorToForce(
-              f[0],
-              f[1],
-              f[2],
-              enc[0],
-              enc[1],
-              enc[2],
-              byref(output0),
-              byref(output1),
-              byref(output2)
-          )
+        f[0],
+        f[1],
+        f[2],
+        enc[0],
+        enc[1],
+        enc[2],
+        byref(output0),
+        byref(output1),
+        byref(output2)
+    )
 
     if out is None:
         out = [output0.value, output1.value, output2.value]
@@ -764,7 +905,9 @@ _libdhd.dhdWristEncoderToOrientation.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristEncoderToOrientation.restype = c_int
-def wristEncoderToOrientation( # NOQA
+
+
+def wristEncoderToOrientation(
     enc: DeviceTuple,
     ID: int = -1,
     out: Optional[MutableSequence[float]] = None,
@@ -772,63 +915,70 @@ def wristEncoderToOrientation( # NOQA
     """
     For devices with a wrist structure, compute the individual angle of each
     joint, starting with the one located nearest to the wrist base plate. For
-    the dhd.libdhd.constants.DeviceType.OMEGA33 and the
-    dhd.libdhd.constants.DeviceType.OMEGA33_LEFT devices, angles are computed
-    with respect to their internal reference frame, which is rotated 45 degrees
-    or pi/4 radians about the Y axis. Please refer to your device user manual
-    for more information on your device coordinate system.
+    the :data:`forcedimension.dhd.constants.DeviceType.OMEGA33` and the
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT` devices,
+    angles are computed with respect to their internal reference frame, which
+    is rotated 45 degrees or π/4 radians about the Y axis. Please refer to your
+    device user manual for more information on your device coordinate system.
 
     This feature only applies to the following devices:
-        dhd.libdhd.constants.DeviceType.OMEGA33
-        dhd.libdhd.constants.DeviceType.OMEGA33_LEFT
-        dhd.libdhd.constants.DeviceType.OMEGA331
-        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
-        dhd.libdhd.constants.DeviceType.SIGMA331
-        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
-    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
-    enc1, and enc2 coresspond to wrist encoder readings on the first, second,
-    and third joint, respectively
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
+    :param DeviceTuple enc:
+        Sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, and `enc2`
+        correspond to wrist encoder readings on the first, second, and third
+        joint, respectively
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
+    :raises ValueError:
+        If any element of `enc` is not implicitly convertible
+        to C `int`.
 
-    :raises ValueError: if any member of enc is not implicitly convertible
-    to C int.
-
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
-    :returns: tuple of ([oa, ob, og], err) where err is 0 on success,
-    -1 otherwise and [oa, ob, og] is a list of floats corresponding to the
-    wrist end-effector's orientation about the first, second, and third wrist
-    joint, respectively in [rad].
+
+    :returns:
+        Tuple of `([oa, ob, og], err)`. `err` is `0` on success,
+        `-1` otherwise. `[oa, ob, og]` is a mutable sequence of floats
+        corresponding to the wrist end-effector's orientation about the first,
+        second, and third wrist joint, respectively in [rad].
     """
     px = c_double()
     py = c_double()
     pz = c_double()
 
     err = _libdhd.dhdDeltaEncoderToPosition(
-          enc[0],
-          enc[1],
-          enc[2],
-          byref(px),
-          byref(py),
-          byref(pz),
-          ID
-      )
+        enc[0],
+        enc[1],
+        enc[2],
+        byref(px),
+        byref(py),
+        byref(pz),
+        ID
+    )
 
     if out is None:
         out = [px.value, py.value, pz.value]
@@ -850,7 +1000,9 @@ _libdhd.dhdWristOrientationToEncoder.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristOrientationToEncoder.restype = c_int
-def wristOrientationToEncoder( # NOQA
+
+
+def wristOrientationToEncoder(
     orientation: CartesianTuple,
     ID: int = -1,
     out: Optional[MutableSequence[int]] = None,
@@ -861,44 +1013,51 @@ def wristOrientationToEncoder( # NOQA
     the wrist plate base. For the dhd.libdhd.DeviceType.OMEGA33 and
     dhd.libdhd.DeviceType.OMEGA33_LEFT devices, angles must be expressed
     withrespect to their internal reference frame, which is rotated 45 degrees
-    or pi/4 radians about the Y axis. Please refer to your device user manual
+    or π/4 radians about the Y axis. Please refer to your device user manual
     for more information on your device coordinate system.
 
     This feature only applies to the following devices:
-        dhd.libdhd.constants.DeviceType.OMEGA33
-        dhd.libdhd.constants.DeviceType.OMEGA33_LEFT
-        dhd.libdhd.constants.DeviceType.OMEGA331
-        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
-        dhd.libdhd.constants.DeviceType.SIGMA331
-        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    :param CartesianTuple orientation: tuple of (oa, ob, og) where
-    (oa, ob, og) coresspond to wrist end effector orientation around the X, Y,
-    and Z axes, respectively in [rad].
+    :param CartesianTuple orientation:
+        Sequence of `(oa, ob, og)` where `oa`, `ob`, and `og` correspond to
+        wrist end effector orientation around the X, Y, and Z axes,
+        respectively in [rad].
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out: OPTIONAL mutable sequence to use
-    instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[int]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if any member of enc is not implicitly convertible
-    to C int.
+    :raises ValueError:
+        If any element of `enc` is not implicitly convertible to C `int`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[int], int]
-    :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 on success,
-    -1 otherwise and [enc0, enc1, enc2] is a list of ints corresponding to
-    the wrist end-effector orientation around the X, Y, and Z axes,
-    respectively.
+
+    :returns:
+        Tuple of `([enc0, enc1, enc2], err)`. `err` is `0` on success,
+        `-1` otherwise and `[enc0, enc1, enc2]` is a mutable sequence of ints
+        corresponding to the wrist end-effector orientation around the X, Y,
+        and Z axes, respectively.
     """
 
     enc0 = c_int()
@@ -906,14 +1065,14 @@ def wristOrientationToEncoder( # NOQA
     enc2 = c_int()
 
     err = _libdhd.dhdDeltaEncoderToPosition(
-              orientation[0],
-              orientation[1],
-              orientation[2],
-              byref(enc0),
-              byref(enc1),
-              byref(enc2),
-              ID
-          )
+        orientation[0],
+        orientation[1],
+        orientation[2],
+        byref(enc0),
+        byref(enc1),
+        byref(enc2),
+        ID
+    )
 
     if out is None:
         out = [enc0.value, enc1.value, enc2.value]
@@ -938,10 +1097,11 @@ _libdhd.dhdWristMotorToTorque.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristMotorToTorque.restype = c_int
-def wristMotorToTorque( # NOQA
+
+
+def wristMotorToTorque(
     cmd: DeviceTuple,
     enc: DeviceTuple,
-    ID: int = -1,
     out: Optional[MutableSequence[float]] = None,
 ) -> Tuple[MutableSequence[float], int]:
     """
@@ -949,40 +1109,46 @@ def wristMotorToTorque( # NOQA
     end-effector for a given set of motor commands at a given orientation
     (defined by encoder readings)
 
-    :param DeviceTuple cmd: Tuple of (motor0, motor1, motor2) where
-    motor0, motor1, and motor2 are the axis 0, 1, and 2 DELTA motor commands,
-    respectively.
+    :param DeviceTuple cmd:
+        Sequence of `(motor0, motor1, motor2)` where `motor0`, `motor1`, and
+        `motor2` are the axis 0, 1, and 2 DELTA motor commands, respectively.
 
-    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
-    enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
-    respectively.
+    :param DeviceTuple enc:
+        Sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, and `enc2`
+        correspond to encoder readings on axis 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
+    :raises ValueError:
+        If any element of `output` is not implicitly convertible to C `ushort`.
 
-    :raises ValueError: if any member of output is not implicitly convertible
-    to C ushort.
+    :raises ValueError:
+        If any element of `enc` is not implicitly convertible to C `int`.
 
-    :raises ValueError: if any member of enc is not implicitly convertible to
-    C int.
-
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
-    :returns: tuple of ([tx, ty, tz], err) where err is 0 on success, -1
-    otherwise and [tx, ty, tz] correspond to the torque on the wrist
-    end-effector around the X, Y and Z axes, respectively in [Nm].
+
+    :returns:
+        Tuple of `([tx, ty, tz], err)`. `err` is `0` on success, `-1`,
+        otherwise. `[tx, ty, tz]` is a mutable sequence of floats which
+        correspond to the torque on the wrist end-effector around the X, Y, and
+        Z axes respectively in [Nm].
     """
 
     tx = c_double()
@@ -990,16 +1156,16 @@ def wristMotorToTorque( # NOQA
     tz = c_double()
 
     err = _libdhd.dhdDeltaMotorToForce(
-               cmd[0],
-               cmd[1],
-               cmd[2],
-               enc[0],
-               enc[1],
-               enc[2],
-               byref(tx),
-               byref(ty),
-               byref(tz)
-          )
+        cmd[0],
+        cmd[1],
+        cmd[2],
+        enc[0],
+        enc[1],
+        enc[2],
+        byref(tx),
+        byref(ty),
+        byref(tz)
+    )
 
     if out is None:
         out = [tx.value, ty.value, tz.value]
@@ -1024,10 +1190,11 @@ _libdhd.dhdWristTorqueToMotor.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristTorqueToMotor.restype = c_int
-def wristTorqueToMotor(  # NOQA
+
+
+def wristTorqueToMotor(
     t: CartesianTuple,
     enc: DeviceTuple,
-    ID: int = -1,
     out: Optional[MutableSequence[int]] = None,
 ) -> Tuple[MutableSequence[int], int]:
     """
@@ -1035,40 +1202,46 @@ def wristTorqueToMotor(  # NOQA
     obtain a given torque on the wrist end-effector at a given orientation
     (defined by encoder readings)
 
-    :param DeviceTuple output: Tuple of (motor0, motor1, motor2) where
-    motor0, motor1, and motor2 are the axis 0, 1, and 2 DELTA motor commands,
-    respectively.
+    :param DeviceTuple output:
+        Sequence of `(motor0, motor1, motor2)` where `motor0`, `motor1`, and
+        `motor2` are the axis 0, 1, and 2 DELTA motor commands, respectively.
 
-    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
-    enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
-    respectively.
+    :param DeviceTuple enc:
+        Sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, and `enc2`
+        correspond to encoder readings on axis 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out: OPTIONAL mutable sequence to use
-    instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[int]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if any member of t is not implicitly convertible
-    to C double.
+    :raises ValueError:
+        If any element of `t` is not implicitly convertible to C `double`.
 
-    :raises ValueError: if any member of enc is not implicitly convertible to
-    C int.
+    :raises ValueError:
+        If any element of `enc` is not implicitly convertible to C `int`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[int], int]
-    :returns: tuple of ([output0, output1, output2], err) where err is 0 on
-    success, -1 otherwise and [output0, output1, output2] correspond to the
-    motor commands on the wrist end-effector around wrist joint 0, 1, and 2,
-    respectively.
+
+    :returns:
+        Tuple of `([output0, output1, output2], err)`. `err` is `0` on
+        success, `-1` otherwise and `[output0, output1, output2]` correspond to
+        the motor commands on the wrist end-effector around wrist joint 0, 1,
+        and 2, respectively.
     """
 
     output0 = c_ushort()
@@ -1076,16 +1249,16 @@ def wristTorqueToMotor(  # NOQA
     output2 = c_ushort()
 
     err = _libdhd.dhdDeltaMotorToForce(
-                t[0],
-                t[1],
-                t[2],
-                enc[0],
-                enc[1],
-                enc[2],
-                byref(output0),
-                byref(output1),
-                byref(output2)
-         )
+        t[0],
+        t[1],
+        t[2],
+        enc[0],
+        enc[1],
+        enc[2],
+        byref(output0),
+        byref(output1),
+        byref(output2)
+    )
 
     if out is None:
         out = [output0.value, output1.value, output2.value]
@@ -1103,30 +1276,39 @@ _libdhd.dhdGripperEncoderToAngleRad.argtypes = [
     c_byte
 ]
 _libdhd.dhdGripperEncoderToAngleRad.restype = c_int
-def gripperEncoderToAngleRad(enc: int, # NOQA
+
+
+def gripperEncoderToAngleRad(enc: int,
                              ID: int = -1) -> Tuple[float, int]:
     """
     This routine computes and returns the opening of the gripper as an angle in
     [rad] for a given encoder reading.
 
     This feature only applies to the following devices:
-        dhd.libdhd.constants.DeviceType.OMEGA331
-        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
-        dhd.libdhd.constants.DeviceType.SIGMA331
-        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
-    :param int enc: gripper encoder reading
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int enc:
+        Gripper encoder reading.
 
-    :raises ValueError: if enc is not implicitly convertible to C int.
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ValueError:
+        If `enc` is not implicitly convertible to C `int`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[float, int]
-    :returns: tuple of (angle, err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 on otherwise and angle is
-    the gripper opening in [rad]
+
+    :returns:
+        Tuple of `(angle, err)`. err is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1` on
+        otherwise. `angle` is the gripper opening in [rad]
     """
 
     angle = c_double()
@@ -1145,37 +1327,45 @@ _libdhd.dhdGripperEncoderToGap.argtypes = [
     c_byte
 ]
 _libdhd.dhdGripperEncoderToGap.restype = c_int
-def gripperEncoderToGap(enc: int, ID: int = -1) -> Tuple[float, int]: # NOQA
+
+
+def gripperEncoderToGap(enc: int, ID: int = -1) -> Tuple[float, int]:
     """
     This routine computes and returns the opening of the gripper as a distance
     in [m] for a given encoder reading.
 
     This feature only applies to the following devices:
-        dhd.libdhd.constants.DeviceType.OMEGA331
-        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
-        dhd.libdhd.constants.DeviceType.SIGMA331
-        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
 
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    :param int enc: gripper encoder reading
+    :param int enc:
+        Gripper encoder reading.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if enc is not implicitly convertible to C int.
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `enc` is not implicitly convertible to C `int`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[float, int]
-    :returns: tuple of (gap, err) where err is 0 on success, -1 otherwise and
-    gap is the gripper opening in [m]
+
+    :returns:
+        Tuple of `(gap, err)`. `err` is `0` on success, `-1` otherwise.
+        gap is the gripper opening in [m]
     """
 
     gap = c_double()
     err = _libdhd.dhdGripperEncoderToGap(
-                            enc,
-                            byref(gap),
-                            ID
-                        )
+        enc,
+        byref(gap),
+        ID
+    )
 
     return (gap.value, err)
 
@@ -1186,38 +1376,45 @@ _libdhd.dhdGripperAngleRadToEncoder.argtypes = [
     c_byte
 ]
 _libdhd.dhdGripperAngleRadToEncoder.restype = c_int
-def gripperAngleRadToEncoder(angle: float, # NOQA
-                             ID: int = -1) -> Tuple[int, int]:
+
+
+def gripperAngleRadToEncoder(angle: float, ID: int = -1) -> Tuple[int, int]:
     """
     This routine computes and returns the gripper encoder value for a given
     gripper opening distance in [rad].
 
     This feature only applies to the following devices:
-        dhd.libdhd.constants.DeviceType.OMEGA331
-        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
-        dhd.libdhd.constants.DeviceType.SIGMA331
-        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    :param float angle: gripper opening as an angle in [rad]
+    :param float angle:
+        Gripper opening as an angle in [rad].
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if angle is not implicitly convertible to C float
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `angle` is not implicitly convertible to C `float`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[int, int]
-    :returns: tuple of (enc, err) where err is 0 on success, -1 on otherwise
-    and enc is the gripper encoder reading
+
+    :returns:
+        Tuple of `(enc, err)`. `err` is `0` on success, `-1` otherwise.
+        `enc` is the gripper encoder reading
     """
 
     enc = c_int()
 
     err = _libdhd.dhdGripperEncoderToAngleRad(
-                                    angle,
-                                    byref(enc),
-                                    ID
-                                )
+        angle,
+        byref(enc),
+        ID
+    )
     return (enc.value, err)
 
 
@@ -1227,37 +1424,46 @@ _libdhd.dhdGripperGapToEncoder.argtypes = [
     c_byte
 ]
 _libdhd.dhdGripperEncoderToGap.restype = c_int
-def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]: # NOQA
+
+
+def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]:
     """
     This routine computes and returns the gripper encoder value for a given
     gripper opening distance in [m].
 
     This feature only applies to the following devices:
-        dhd.libdhd.constants.DeviceType.OMEGA331
-        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
-        dhd.libdhd.constants.DeviceType.SIGMA331
-        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
+
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
 
-    :param float gap: gripper opening distance in [m]
+    :param float gap:
+        Gripper opening distance in [m].
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if gap is not implicitly convertible to C double
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `gap` is not implicitly convertible to C `double`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[int, int]
-    :returns: tuple of (enc, err) where err is 0 on success, -1 otherwise and
-    enc is the gripper encoder reading
+
+    :returns:
+        Tuple of `(enc, err)`. `err` is `0` on success, `-1` otherwise.
+        `enc` is the gripper encoder reading.
     """
 
     enc = c_int()
     err = _libdhd.dhdGripperEncoderToGap(
-                                gap,
-                                byref(enc),
-                                ID
-                            )
+        gap,
+        byref(enc),
+        ID
+    )
 
     return (enc.value, err)
 
@@ -1269,7 +1475,9 @@ _libdhd.dhdGripperMotorToForce.argtypes = [
     c_byte
 ]
 _libdhd.dhdGripperMotorToForce.restype = c_int
-def gripperMotorToForce(output: int,  # NOQA
+
+
+def gripperMotorToForce(output: int,
                         enc_wrist: DeviceTuple,
                         enc_gripper: int,
                         ID: int = -1) -> Tuple[float, int]:
@@ -1278,46 +1486,54 @@ def gripperMotorToForce(output: int,  # NOQA
     motor command.
 
     This feature only applies to the following devices:
-        dhd.libdhd.constants.DeviceType.OMEGA331
-        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
-        dhd.libdhd.constants.DeviceType.SIGMA331
-        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
+
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
 
-    :param int output: motor command on gripper axis
+    :param int output:
+        Motor command on gripper axis.
 
-    :param DeviceTuple enc_wrist: tuple of (enc0, enc1, enc2) where
-    (enc0, enc1, enc2) are encoder readings about joint 0, 1, and 2,
-    respectively.
+    :param DeviceTuple enc_wrist:
+        Sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, `enc2` are
+        encoder readings about joint 0, 1, and 2, respectively.
 
-    :param int enc_gripper: encoder reading for the gripper.
+    :param int enc_gripper:
+        Encoder reading for the gripper.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if output is not implicitly convertible to C ushort.
+    :raises ValueError:
+        If `output` is not implicitly convertible to C `ushort`.
 
-    :raises ValueError: if a member of enc_wrist is not implicitly convertible
-    to C int
+    :raises ValueError:
+        If any element of `enc_wrist` is not implicitly convertible to C `int`.
 
-    :raises ValueError: if enc_gripper is not implicitly convertible to C int
+    :raises ValueError:
+        If `enc_gripper` is not implicitly convertible to C `int`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[float, int]
-    :returns: tuple of (force, err) where err is 0 on success, -1 otherwise and
-    force is the force on the gripper end-effector in [N]
+
+    :returns:
+        Tuple of `(force, err)`. `err` is `0` on success, `-1` otherwise.and
+        force is the force on the gripper end-effector in [N].
     """
 
     force = c_double()
 
     enc = [enc_wrist[0], enc_wrist[1], enc_wrist[2], enc_gripper]
     err = _libdhd.dhdGripperMotorToForce(
-                                output,
-                                byref(force),
-                                enc,
-                                ID
-                            )
+        output,
+        byref(force),
+        enc,
+        ID
+    )
 
     return (force.value, err)
 
@@ -1329,7 +1545,9 @@ _libdhd.dhdGripperForceToMotor.argtypes = [
     c_byte
 ]
 _libdhd.dhdGripperForceToMotor.restype = c_int
-def gripperForceToMotor(force: float,  # NOQA
+
+
+def gripperForceToMotor(force: float,
                         enc_wrist: DeviceTuple,
                         enc_gripper: int,
                         ID: int = -1) -> Tuple[int, int]:
@@ -1338,36 +1556,43 @@ def gripperForceToMotor(force: float,  # NOQA
     computes and returns the corresponding motor command.
 
     This feature only applies to the following devices:
-        dhd.libdhd.constants.DeviceType.OMEGA331
-        dhd.libdhd.constants.DeviceType.OMEGA331_LEFT
-        dhd.libdhd.constants.DeviceType.SIGMA331
-        dhd.libdhd.constants.DeviceType.SIGMA331_LEFT
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
 
-    :param int force: force on the gripper end-effector in [N]
+    :param int force:
+        Force on the gripper end-effector in [N].
 
-    :param DeviceTuple enc_wrist: tuple of (enc0, enc1, enc2) where
-    (enc0, enc1, enc2) are encoder readings about joint 0, 1, and 2,
-    respectively.
+    :param DeviceTuple enc_wrist:
+        Sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, and `enc2` are
+        the raw encoder readings about joint 0, 1, and 2, respectively.
 
-    :param int enc_gripper: encoder reading for the gripper.
+    :param int enc_gripper:
+        Encoder reading for the gripper.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if force is not implicitly convertible to C double
+    :raises ValueError:
+        If `force` is not implicitly convertible to C `double`.
 
-    :raises ValueError: if a member of enc_wrist is not implicitly convertible
-    to C int
+    :raises ValueError:
+        If `a` member of enc_wrist is not implicitly convertible to C `int`
 
-    :raises ValueError: if enc_gripper is not implicitly convertible to C int
+    :raises ValueError:
+        If `enc_gripper` is not implicitly convertible to C `int`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[int, int]
-    :returns: tuple of (output, err) where err is 0 or
-    dhd.libdhd.constants.MOTOR_SATURATED on success, -1 otherwise and output
-    is the motor command on the gripper axis.
+
+    :returns:
+        Tuple of `(output, err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success,
+        `-1` otherwise. `output` is the motor command on the gripper axis.
     """
 
     output = c_ushort()
@@ -1375,37 +1600,46 @@ def gripperForceToMotor(force: float,  # NOQA
     enc = [enc_wrist[0], enc_wrist[1], enc_wrist[2], enc_gripper]
 
     err = _libdhd.dhdGripperMotorToForce(
-                                force,
-                                byref(output),
-                                enc,
-                                ID
-                            )
+        force,
+        byref(output),
+        enc,
+        ID
+    )
 
     return (output.value, err)
 
 
 _libdhd.dhdSetMot.argtypes = [c_ushort * MAX_DOF, c_ubyte, c_byte]
 _libdhd.dhdSetMot.restype = c_int
-def setMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int: # NOQA
+
+
+def setMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int:
     """
     Program motor commands to a selection of motor channels. Particularly
     useful when using the generic controller directly, without a device model
     attached.
 
-    :param DOFTuple outputs: list of motor command values
-    :param int mask: [default=0xff] bitwise mask of which motor should be set
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param DOFTuple outputs:
+        List of motor command values.
 
-    :raises ValueError: if any member of outputs is not implicitly
-    convertible to C int
+    :param int mask:
+        Bitwise mask of which motor should be set, defaults to `0xff`
 
-    :raises ValueError: if mask is not implicitly convertible to C uchar
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If any element of `outputs` is not implicitly convertible to C `int`.
+
+    :raises ValueError:
+        If `mask` is not implicitly convertible to C `uchar`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise
+
+    :returns: `0` on success, `-1` otherwise
     """
 
     return _libdhd.dhdSetMot(outputs, mask, ID)
@@ -1413,27 +1647,37 @@ def setMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdPreloadMot.argtypes = [c_ushort * MAX_DOF, c_ubyte, c_byte]
 _libdhd.dhdPreloadMot.restype = c_int
-def preloadMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int: # NOQA
+
+
+def preloadMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int:
     """
     Program motor commands to a selection of motor channels. Unlike
     dhd.libdhd.expert.setMot, this function saves the requested commands
     internally for later application by calling dhd.libdhd.standard.setForce
     and the likes.
 
-    :param DOFTuple outputs: list of motor command values
-    :param int mask: [default=0xff] bitwise mask of which motor should be set
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param DOFTuple outputs:
+        List of motor command values.
 
-    :raises ValueError: if any member of outputs is not implicitly
-    convertible to C int
+    :param int mask:
+        Bitwise mask of which motor should be set, defaults to `0xff`
 
-    :raises ValueError: if mask is not implicitly convertible to C uchar
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If any element of `outputs` is not implicitly.
+    convertible to C `int`
+
+    :raises ValueError:
+        If `mask` is not implicitly convertible to C `uchar`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise
+
+    :returns: `0` on success, `-1` otherwise
     """
 
     return _libdhd.dhdPreloadMot(outputs, mask, ID)
@@ -1441,7 +1685,9 @@ def preloadMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdGetEnc.argtypes = [c_int * MAX_DOF, c_ubyte, c_byte]
 _libdhd.dhdGetEnc.restype = c_int
-def getEnc( # NOQA
+
+
+def getEnc(
     mask: int,
     ID: int = -1,
     out: Optional[MutableSequence[int]] = None,
@@ -1450,30 +1696,39 @@ def getEnc( # NOQA
     Get a selective list of encoder values. Particularly useful when using the
     generic controller directly, without a device model attached.
 
-    :param int mask: [default=0xff] bitwise mask of which motor should be set
+    :param int mask:
+        [default=0xff] bitwise mask of which motor should be set.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out: OPTIONAL mutable sequence to use
-    instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[int]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and
-    len(out) < dhd.libdhd.MAX_DOF
+    :raises IndexError:
+        If `out` is specified and.
+    len(out) < :data:forcedimension.dhd.constants.MAX_DOF`
 
 
-    :raises ValueError: if mask is not implicitly convertible to C uchar
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `mask` is not implicitly convertible to C `uchar`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[int], int]
-    :returns: tuple of (enc, err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and enc is a list
-    of encoder values.
+
+    :returns:
+        Tuple of `(enc, err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
+        otherwise. `enc` is a mutable sequence of encoder values.
     """
     enc = (c_int * MAX_DOF)()
 
@@ -1490,7 +1745,9 @@ def getEnc( # NOQA
 
 _libdhd.dhdGetEncRange.argtypes = [c_int * MAX_DOF, c_int * MAX_DOF, c_byte]
 _libdhd.dhdGetEncRange.restype = c_int
-def getEncRange( # NOQA
+
+
+def getEncRange(
     ID: int = -1,
     encMin_out: Optional[MutableSequence[int]] = None,
     encMax_out: Optional[MutableSequence[int]] = None,
@@ -1500,40 +1757,50 @@ def getEncRange( # NOQA
     current device. Axis indices that do not exist on the device will return
     a range of 0.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] encMin_out: OPTIONAL mutable sequence
-    to use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[int]] encMin_out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :param Optional[MutableSequence[int]] encMax_out: OPTIONAL mutable sequence
-    to use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[int]] encMax_out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if encMan_out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `encMax_out` is specified and does not support item assignment
+        either because it's immutable or not subscriptable.
 
-    :raises TypeError: if encMin_out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `encMin_out` is specified and does not support item assignment
+        either because it's immutable or not subscriptable.
 
-    :raises IndexError: if encMin_out is specified and
-    len(out) < dhd.libdhd.MAX_DOF
+    :raises IndexError:
+        If `encMin_out` is specified and
+        len(out) < :data:forcedimension.dhd.constants.MAX_DOF`
 
-    :raises IndexError: if encMin_out is specified and
-    len(encMin_out) < dhd.libdhd.MAX_DOF
+    :raises IndexError:
+        If `encMin_out` is specified and
+        `len(encMin_out) < :data:forcedimension.dhd.constants.MAX_DOF`
 
 
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[int], MutableSequence[int], int]
-    :returns: tuple of (encMin, encMax err) where err is 0 on success, -1
-    otherwise and encMin and encMax are a list of minimum and maximum encoder
-    values for each axis, respectively.
+
+    :returns:
+        Tuple of `(encMin, encMax err)`. `err` is `0` on success, `-1`
+        otherwise. `encMin` and `encMax` are a mutable sequence of minimum and
+        maximum encoder values for each axis, respectively.
     """
 
     encMin = (c_int * MAX_DOF)()
@@ -1550,14 +1817,17 @@ def getEncRange( # NOQA
     if encMax_out is None:
         encMax_out = [val for val in encMax]
     else:
-        encMax_out[i] = encMax[i]
+        for i in range(MAX_DOF):
+            encMax_out[i] = encMax[i]
 
     return (encMin_out, encMax_out, err)
 
 
 _libdhd.dhdSetBrk.argtypes = [c_ubyte, c_byte]
 _libdhd.dhdSetBrk.restype = c_int
-def setBrk(mask: int = 0xff, ID: int = -1) -> int: # NOQA
+
+
+def setBrk(mask: int = 0xff, ID: int = -1) -> int:
     """
     Set electromagnetic braking status on selective motor groups. Only applies
     when using the generic controller directly, without a device model
@@ -1570,20 +1840,25 @@ def setBrk(mask: int = 0xff, ID: int = -1) -> int: # NOQA
         group4 - [mot7]
 
     The mask parameter addresses all 8 motors bitwise. If a single bit within
-    the motor group is enabled, the entire motor group's electromagnetic
-    brakes will be activated.
+    a motor group's is enabled, all motors in that motor's group's
+    electromagnetic brakes will be activated.
 
-    :param mask: [default=0xff] bitwise mask of which motor groups should have
-    their electromagnetic brakes be set on.
+    :param mask:
+        Bitwise mask of which motor groups should have their electromagnetic
+        brakes be set on, defaults to `0xff`
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if mask is not implicitly convertible to C uchar
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `mask` is not implicitly convertible to C `uchar`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise
+
+    :returns: `0` on success, `-1` otherwise
     """
 
     return _libdhd.dhdSetBrk(mask, ID)
@@ -1596,33 +1871,44 @@ _libdhd.dhdGetDeltaJointAngles.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetDeltaJointAngles.restype = c_int
-def getDeltaJointAngles( # NOQA
+
+
+def getDeltaJointAngles(
     ID: int = -1,
     out: Optional[MutableSequence[float]] = None
 ) -> Tuple[MutableSequence[float], int]:
     """
     Retrieve the joint angles in [rad] for the DELTA structure.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
-    :returns: tuple of ([j0, j1, j2], err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and
-    [j0, j1, j2] are the joint angles for axes 0, 1, and 2, respectively
+
+    :returns:
+        Tuple of `([j0, j1, j2], err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
+        otherwise and `[j0, j1, j2]` are a mutable sequence of joint angles for
+        axes 0, 1, and 2, respectively.
     """
 
     j0 = c_double()
@@ -1630,11 +1916,11 @@ def getDeltaJointAngles( # NOQA
     j2 = c_double()
 
     err = _libdhd.dhdGetDeltaJointAngles(
-               byref(j0),
-               byref(j1),
-               byref(j2),
-               ID
-         )
+        byref(j0),
+        byref(j1),
+        byref(j2),
+        ID
+    )
 
     if out is None:
         out = [j0.value, j1.value, j2.value]
@@ -1648,7 +1934,9 @@ def getDeltaJointAngles( # NOQA
 
 _libdhd.dhdGetDeltaJacobian.argtypes = [(c_double * 3) * 3, c_byte]
 _libdhd.dhdGetDeltaJacobian.restype = c_int
-def getDeltaJacobian( # NOQA
+
+
+def getDeltaJacobian(
     ID: int = -1,
     out: Optional[MutableSequence[MutableSequence[float]]] = None
 ) -> Tuple[MutableSequence[MutableSequence[float]], int]:
@@ -1657,27 +1945,34 @@ def getDeltaJacobian( # NOQA
     current end-effector position. Please refer to your device user manual for
     more information on your device coordinate system.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[MutableSequence[float]]] out: OPTIONAL
-    mutable sequence to use instead of generating a new List of Lists. If this
-    is specified, the list provided will be updated with the new values and the
-    return will be a reference to the same list.
+    :param Optional[MutableSequence[MutableSequence[float]]] out:
+         Mutable sequence of mutable sequences to use intead of generating a
+         new list of lists. If this is speicfied, the list provided will be
+         updated with the new values and the return will be a reference to the
+         same mutable sequence.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if any dimension of out is less than 3
+    :raises IndexError:
+        If `any` dimension of out is less than 3.
 
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
-    :returns: tuple of (J, err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and J is the 3x3
-    jacobian matrix.
+
+    :returns:
+        Tuple of `(J, err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
+        otherwise. `J` is the 3x3 jacobian matrix.
 
     """
 
@@ -1685,7 +1980,10 @@ def getDeltaJacobian( # NOQA
     err = _libdhd.dhdGetDeltaJacobian(J, ID)
 
     if out is None:
-        out = [list(row) for row in J]
+        out = cast(
+            MutableSequence[MutableSequence[float]],
+            [list(row) for row in J]
+        )
     else:
         for i in range(3):
             for j in range(3):
@@ -1702,7 +2000,9 @@ _libdhd.dhdDeltaJointAnglesToJacobian.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaJointAnglesToJacobian.restype = c_int
-def deltaJointAnglesToJacobian( # NOQA
+
+
+def deltaJointAnglesToJacobian(
     joint_angles: CartesianTuple,
     ID: int = -1,
     out: Optional[MutableSequence[MutableSequence[float]]] = None
@@ -1712,45 +2012,58 @@ def deltaJointAnglesToJacobian( # NOQA
     based on a given joint configuration. Please refer to your device user
     manual for more information on your device coordinate system.
 
-    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
-    (j0, j1, j2) refer to the joint angles for axis 0, 1, and 2, respectively.
+    :param CartesianTuple joint_angles:
+        Sequence of (j0, j1, j2) where `j0`, `j1`, and `j2` refer to the joint
+        angles for axis 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[MutableSequence[float]]] out: OPTIONAL
-    mutable sequence to use instead of generating a new List of Lists. If this
-    is specified, the list provided will be updated with the new values and the
-    return will be a reference to the same list.
+    :param Optional[MutableSequence[MutableSequence[float]]] out:
+         Mutable sequence of mutable sequences to use intead of generating a
+         new list of lists. If this is speicfied, the list provided will be
+         updated with the new values and the return will be a reference to the
+         same mutable sequence.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if any member of joint_angles is not implicitly
-    convertible to C double.
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If any element of `joint_angles` is not implicitly convertible to C
+        double.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
-    :returns: tuple of (J, err) where err is 0 on success, -1 otherwise and
-    J is the 3x3 jacobian matrix.
+
+    :returns:
+        Tuple of (J, err). `err` is `0` on success, `-1` otherwise.
+        `J` is the 3x3 jacobian matrix.
     """
 
     J = ((c_double * 3) * 3)()
 
     err = _libdhd.dhdDeltaJointAnglesToJacobian(
-              joint_angles[0],
-              joint_angles[1],
-              joint_angles[2],
-              J,
-              ID
-          )
+        joint_angles[0],
+        joint_angles[1],
+        joint_angles[2],
+        J,
+        ID
+    )
 
     if out is None:
-        out = [list(row) for row in J]
+        out = cast(
+            MutableSequence[MutableSequence[float]],
+            [list(row) for row in J]
+        )
     else:
         for i in range(3):
             for j in range(3):
@@ -1768,7 +2081,9 @@ _libdhd.dhdDeltaJointTorquesExtrema.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaJointTorquesExtrema.restype = c_int
-def deltaJointTorquesExtrema( # NOQA
+
+
+def deltaJointTorquesExtrema(
     joint_angles: CartesianTuple,
     ID: int = -1,
     minq_out: Optional[MutableSequence[float]] = None,
@@ -1779,59 +2094,71 @@ def deltaJointTorquesExtrema( # NOQA
     angle configuration. Please refer to your device user manual for more
     information on your device coordinate system.
 
-    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
-    (j0, j1, j2) refer to the joint angles for axis 0, 1, and 2, respectively.
+    :param CartesianTuple joint_angles:
+        Sequence of `(j0, j1, j2)` where `j0`, `j1`, `j2` refer to the joint
+        angles for axis 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] minq_out: OPTIONAL mutable sequence
-    to use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] minq_out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :param Optional[MutableSequence[float]] maxq_out: OPTIONAL mutable sequence
-    to use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] maxq_out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if minq_out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `minq_out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if minq_out is specified and
-    len(encMin_out) < dhd.libdhd.MAX_DOF
+    :raises IndexError:
+        If `minq_out` is specified and
+        `len(encMin_out) < :data:forcedimension.dhd.constants.MAX_DOF`
 
-    :raises TypeError: if maxq_out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `maxq_out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if maxq_out is specified and
-    len(out) < dhd.libdhd.MAX_DOF
+    :raises IndexError:
+        If `maxq_out` is specified and
+        `len(out) < :data:forcedimension.dhd.constants.MAX_DOF`
 
-    :raises ValueError: if any member of joint_angles is not implicitly
-    convertible to C double.
+    :raises ValueError:
+        If any element of `joint_angles` is not implicitly convertible to
+        C `double`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
-    :returns: tuple of (minq, maxq, err) where err is 0 on success, -1
-    otherwise, minq is a list of floats [minq1, minq2, minq3] which correspond
-    to the minimum applicable joint torque to axes 0, 1, and 2, respectively in
-    [Nm], and maxq is a list of floats [maxq1, maxq2, maxq3] which correspond
-    to the maximium applicable joint torque to axes 0, 1, and 2, respectively
-    in [Nm]
+
+    :returns:
+        Tuple of `(minq, maxq, err)`. `err` is `0` on success, `-1`
+        otherwise, `minq` is a mutable sequence of floats.
+        `[minq1, minq2, minq3]`, corresponding to the minimum applicable
+        joint torque to axes 0, 1, and 2, respectively in [Nm], and `maxq` is
+        a mutable sequence of floats, `[maxq1, maxq2, maxq3]`, corresponding
+        to the maximium applicable joint torque to axes 0, 1, and 2,
+        respectively in [Nm]
     """
 
     minq = (c_double * 3)()
     maxq = (c_double * 3)()
 
     err = _libdhd.dhdDeltaJointTorquesExtrema(
-              joint_angles[0],
-              joint_angles[1],
-              joint_angles[2],
-              minq,
-              maxq,
-              ID
-          )
+        joint_angles[0],
+        joint_angles[1],
+        joint_angles[2],
+        minq,
+        maxq,
+        ID
+    )
 
     if minq_out is None:
         minq_out = [v for v in minq]
@@ -1860,7 +2187,9 @@ _libdhd.dhdDeltaGravityJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaGravityJointTorques.retype = c_int
-def deltaGravityJointTorques( # NOQA
+
+
+def deltaGravityJointTorques(
     joint_angles: CartesianTuple,
     ID: int = -1,
     out: Optional[MutableSequence[float]] = None
@@ -1870,32 +2199,39 @@ def deltaGravityJointTorques( # NOQA
     given DELTA joint angle configuration. Please refer to your device user
     manual for more information on your device coordinate system.
 
-    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
-    (j0, j1, j2) refer to the joint angles for axis 0, 1, and 2, respectively.
+    :param CartesianTuple joint_angles:
+        Sequence of `(j0, j1, j2)` where `j0`, `j1`, `j2` refer to the joint
+        angles for axis 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
+    :raises ValueError:
+        If any element of `joint_angles` is not implicitly convertible to
+        C `double`.
 
-    :raises ValueError: if any member of joint_angles is not implicitly
-    convertible to C double.
-
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
-    :returns: tuple of ([q0, q1, q2], err) where err is 0 on success, -1
-    otherwise and [q0, q1, q2] are the gravity compensation joint torques for
-    axes 0, 1, and 2, respectively in [Nm]
+
+    :returns:
+        Tuple of `([q0, q1, q2], err)`. `err` is `0` on success, `-1`
+        otherwise and `[q0, q1, q2]` is a mutable sequence of the gravity
+        compensation joint torques for axes 0, 1, and 2, respectively in [Nm].
     """
 
     q0 = c_double()
@@ -1903,14 +2239,14 @@ def deltaGravityJointTorques( # NOQA
     q2 = c_double()
 
     err = _libdhd.dhdDeltaGravityJointTorques(
-              joint_angles[0],
-              joint_angles[1],
-              joint_angles[2],
-              byref(q0),
-              byref(q1),
-              byref(q2),
-              ID
-          )
+        joint_angles[0],
+        joint_angles[1],
+        joint_angles[2],
+        byref(q0),
+        byref(q1),
+        byref(q2),
+        ID
+    )
 
     if out is None:
         out = [q0.value, q1.value, q2.value]
@@ -1929,22 +2265,26 @@ _libdhd.dhdSetDeltaJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdSetDeltaJointTorques.restype = c_int
-def setDeltaJointTorques(t: CartesianTuple, # NOQA
+
+
+def setDeltaJointTorques(t: CartesianTuple,
                          ID: int = -1) -> int:
     """
     Set all joint torques of the DELTA structure.
 
-    :param CartesianTuple t: tuple of (t0, t1, t2) where
-    (t0, t1, t2) are the DELTA axis torque commands for axes 0, 1, and 2,
-    respectively in [Nm].
+    :param CartesianTuple t:
+        Sequence of `(t0, t1, t2)` where `t0`, `t1`, and `t2` are the DELTA
+        axis torque commands for axes 0, 1, and 2, respectively in [Nm].
 
-    :raises ValueError: if any member of t is not implicitly convertible to
-    c_double
+    :raises ValueError:
+        If any element of `t` is not implicitly convertible to C `double`
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise
+
+    :returns: `0` on success, `-1` otherwise
     """
     return _libdhd.dhdSetDeltaJointTorques(t[0], t[1], t[2], ID)
 
@@ -1959,7 +2299,9 @@ _libdhd.dhdDeltaEncodersToJointAngles.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaEncodersToJointAngles.restype = c_int
-def deltaEncodersToJointAngles( # NOQA
+
+
+def deltaEncodersToJointAngles(
     enc: DeviceTuple,
     ID: int = -1,
     out: Optional[MutableSequence[float]] = None
@@ -1968,32 +2310,39 @@ def deltaEncodersToJointAngles( # NOQA
     This routine computes and returns the DELTA joint angles for a given set of
     encoder readings.
 
-    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
-    enc1, and enc2 coresspond to encoder readings on axis 0, 1, and 2,
-    respectively.
+    :param DeviceTuple enc:
+        Sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, and `enc2`
+        coresspond to encoder readings on axis 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if any member of enc is not implicitly convertible
-    to C int.
+    :raises ValueError:
+        If any element of `enc` is not implicitly convertible to C `int`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
-    :returns: tuple of ([j0, j1, j2], err) where err is 0 on success,
-    -1 otherwise and [j0, j1, j1] is a list of floats corresponding to the
-    DELTA joint angles on axes 0, 1, and 2, respectively in [rad].
+
+    :returns:
+        Tuple of `([j0, j1, j2], err)`. `err` is `0` on success,
+        `-1` otherwise. `[j0, j1, j1]` is a mutable sequence of floats
+        corresponding to the DELTA joint angles on axes 0, 1, and 2,
+        respectively in [rad].
     """
 
     j0 = c_double()
@@ -2001,14 +2350,14 @@ def deltaEncodersToJointAngles( # NOQA
     j2 = c_double()
 
     err = _libdhd.dhdDeltaEncodersToJointAngles(
-            enc[0],
-            enc[1],
-            enc[2],
-            byref(j0),
-            byref(j1),
-            byref(j2),
-            ID
-        )
+        enc[0],
+        enc[1],
+        enc[2],
+        byref(j0),
+        byref(j1),
+        byref(j2),
+        ID
+    )
 
     if out is None:
         out = [j0.value, j1.value, j2.value]
@@ -2030,7 +2379,9 @@ _libdhd.dhdDeltaJointAnglesToEncoders.argtypes = [
     c_byte
 ]
 _libdhd.dhdDeltaJointAnglesToEncoders.restype = c_int
-def deltaJointAnglesToEncoders( # NOQA
+
+
+def deltaJointAnglesToEncoders(
     joint_angles: CartesianTuple,
     ID: int = -1,
     out: Optional[MutableSequence[int]] = None
@@ -2039,32 +2390,40 @@ def deltaJointAnglesToEncoders( # NOQA
     This routine computes and returns the DELTA encoder readings for a given
     set of joint angles.
 
-    :param CartesianTuple enc: tuple of (j0, j1, j1) where j0,
-    j1, and j2 coresspond to DELTA joint angles for axes 0, 1, and 2,
-    respectively, in [rad].
+    :param CartesianTuple enc:
+        Sequence of `(j0, j1, j1)` where `j0`, `j1`, and `j2` coresspond to
+        DELTA joint angles for axes 0, 1, and 2, respectively, in [rad].
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if any member of joint_angles is not implicitly
-    convertible to C double.
+    :raises ValueError:
+        If any element of `joint_angles` is not implicitly convertible to
+        C `double`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[int], int]
-    :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 on success,
-    -1 otherwise and [enc0, enc1, enc2] correspond to the DELTA joint angles
-    on axes 0, 1, and 2, respectively in [rad].
+
+    :returns:
+        Tuple of `([enc0, enc1, enc2], err)` where `err` is `0` on success,
+        `-1` otherwise. `[enc0, enc1, enc2]` is a mutable sequence of floats
+        corresponding to the DELTA joint angles (in [rad]) on axes 0, 1,
+        and 2, respectively.
     """
 
     enc0 = c_int()
@@ -2072,14 +2431,14 @@ def deltaJointAnglesToEncoders( # NOQA
     enc2 = c_int()
 
     err = _libdhd.dhdDeltaJointAnglesToEncoders(
-              joint_angles[0],
-              joint_angles[1],
-              joint_angles[2],
-              byref(enc0),
-              byref(enc1),
-              byref(enc2),
-              ID
-          )
+        joint_angles[0],
+        joint_angles[1],
+        joint_angles[2],
+        byref(enc0),
+        byref(enc1),
+        byref(enc2),
+        ID
+    )
 
     if out is None:
         out = [enc0.value, enc1.value, enc2.value]
@@ -2098,45 +2457,53 @@ _libdhd.dhdGetWristJointAngles.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetWristJointAngles.restype = c_int
-def getWristJointAngles( # NOQA
+
+
+def getWristJointAngles(
     ID: int = -1,
     out: Optional[MutableSequence[float]] = None
 ) -> Tuple[MutableSequence[float], int]:
     """
     Retrieve the joint angles in [rad] for the wrist structure.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
 
-    :returns: tuple of ([j0, j1, j2], err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and [j0, j1, j2]
-    correspond to the joint angle for joint angles for joint 0, 1, and 2,
-    respectively.
+    :returns:
+        Tuple of `([j0, j1, j2], err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
+        otherwise. `[j0, j1, j2]` is a mutable sequence of floats which
+        corresponds to the joint angle for joint angles for joint 0, 1, and 2,
+        respectively.
     """
 
     j0 = c_double()
     j1 = c_double()
     j2 = c_double()
     err = _libdhd.dhdGetWristJointAngles(
-              byref(j0),
-              byref(j1),
-              byref(j2),
-              ID
-          )
+        byref(j0),
+        byref(j1),
+        byref(j2),
+        ID
+    )
 
     if out is None:
         out = [j0.value, j1.value, j2.value]
@@ -2150,7 +2517,9 @@ def getWristJointAngles( # NOQA
 
 _libdhd.dhdGetWristJacobian.argtypes = [(c_double * 3) * 3, c_byte]
 _libdhd.dhdGetWristJacobian.restype = c_int
-def getWristJacobian( # NOQA
+
+
+def getWristJacobian(
     ID: int = -1,
     out: Optional[MutableSequence[MutableSequence[float]]] = None
 ) -> Tuple[MutableSequence[MutableSequence[float]], int]:
@@ -2159,26 +2528,34 @@ def getWristJacobian( # NOQA
     current end-effector position. Please refer to your device user manual for
     more information on your device coordinate system.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if any dimensinon of out is less than 3
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises IndexError:
+        If any dimension of out is less than 3.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
-    :returns: tuple of (J, err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and J is the 3x3
-    jacobian matrix.
+
+    :returns:
+        Tuple of `(J, err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
+        otherwise. `J` is the 3x3 jacobian matrix.
 
     """
 
@@ -2187,7 +2564,10 @@ def getWristJacobian( # NOQA
     err = _libdhd.dhdGetWristJacobian(J, ID)
 
     if out is None:
-        out = [list(row) for row in J]
+        out = cast(
+            MutableSequence[MutableSequence[float]],
+            [list(row) for row in J]
+        )
     else:
         for i in range(3):
             for j in range(3):
@@ -2204,7 +2584,9 @@ _libdhd.dhdWristJointAnglesToJacobian.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristJointAnglesToJacobian.restype = c_int
-def wristJointAnglesToJacobian( # NOQA
+
+
+def wristJointAnglesToJacobian(
     joint_angles: CartesianTuple,
     ID: int = -1,
     out: Optional[MutableSequence[MutableSequence[float]]] = None
@@ -2214,46 +2596,58 @@ def wristJointAnglesToJacobian( # NOQA
     based on a given joint configuration. Please refer to your device user
     manual for more information on your device coordinate system.
 
-    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
-    (j0, j1, j2) refer to the joint angles for wrist axis 0, 1, and 2,
-    respectively.
+    :param CartesianTuple joint_angles:
+        Sequence of `(j0, j1, j2)` where `j0`, `j1`, and `j2` refer to the
+        joint angles for wrist axis 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[MutableSequence[float]]] out: OPTIONAL
-    mutable sequence to use instead of generating a new List of Lists. If this
-    is specified, the list provided will be updated with the new values and the
-    return will be a reference to the same list.
+    :param Optional[MutableSequence[MutableSequence[float]]] out:
+         Mutable sequence of mutable sequences to use intead of generating a
+         new list of lists. If this is speicfied, the list provided will be
+         updated with the new values and the return will be a reference to the
+         same mutable sequence.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
-    :raises ValueError: if ID is not implicitly convertible to a C char type
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if any member of joint_angles is not implicitly
-    convertible to C double.
+    :raises ValueError:
+        If `ID` is not implicitly convertible to a C `char`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If any element of `joint_angles` is not implicitly convertible to
+        C `double`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
-    :returns: tuple of (J, err) where err is 0 on success, -1 otherwise and
-    J is the 3x3 jacobian matrix.
+
+    :returns:
+        Tuple of `(J, err)`. `err` is `0` on success, `-1` otherwise.
+        `J` is the 3x3 jacobian matrix.
     """
 
     J = ((c_double * 3) * 3)()
 
     err = _libdhd.dhdWristJointAnglesToJacobian(
-                  joint_angles[0],
-                  joint_angles[1],
-                  joint_angles[2],
-                  J,
-                  ID
-              )
+        joint_angles[0],
+        joint_angles[1],
+        joint_angles[2],
+        J,
+        ID
+    )
 
     if out is None:
-        out = [list(row) for row in J]
+        out = cast(
+            MutableSequence[MutableSequence[float]],
+            [list(row) for row in J]
+        )
     else:
         for i in range(3):
             for j in range(3):
@@ -2271,7 +2665,9 @@ _libdhd.dhdWristJointTorquesExtrema.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristJointTorquesExtrema.restype = c_int
-def wristJointTorquesExtrema( # NOQA
+
+
+def wristJointTorquesExtrema(
     joint_angles: CartesianTuple,
     ID: int = -1,
     minq_out: Optional[MutableSequence[float]] = None,
@@ -2282,48 +2678,58 @@ def wristJointTorquesExtrema( # NOQA
     angle configuration. Please refer to your device user manual for more
     information on your device coordinate system.
 
-    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
-    (j0, j1, j2) refer to the joint angles for wrist axes 0, 1, and 2,
-    respectively.
+    :param CartesianTuple joint_angles:
+        Sequence of `(j0, j1, j2)` where `j0`, `j1`, `j2` refer to the joint
+        angles for wrist axes 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] minq_out: OPTIONAL mutable sequence
-    to use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] minq_out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :param Optional[MutableSequence[float]] maxq_out: OPTIONAL mutable sequence
-    to use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] maxq_out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if minq_out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `minq_out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if minq_out is specified and
-    len(encMin_out) < dhd.libdhd.MAX_DOF
+    :raises IndexError:
+        If `minq_out` is specified and
+        `len(encMin_out) < :data:forcedimension.dhd.constants.MAX_DOF`
 
-    :raises TypeError: if maxq_out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `maxq_out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if maxq_out is specified and
-    len(out) < dhd.libdhd.MAX_DOF
+    :raises IndexError:
+        If `maxq_out` is specified and
+        `len(out) < :data:forcedimension.dhd.constants.MAX_DOF`
 
-    :raises ValueError: if any member of joint_angles is not implicitly
-    convertible to C double.
+    :raises ValueError:
+        If any element of `joint_angles` is not implicitly convertible to C
+        double.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
 
-    :returns: tuple of (minq, maxq, err) where err is 0 on success, -1
-    otherwise, minq is a list of floats [minq1, minq2, minq3] which correspond
-    to the minimum applicable joint torque to axes 0, 1, and 2, respectively in
-    [Nm], and maxq is a list of floats [maxq1, maxq2, maxq3] which correspond
-    to the maximium applicable joint torque to axes 0, 1, and 2, respectively
-    in [Nm]
+    :returns:
+        Tuple of `(minq, maxq, err)`. `err` is `0` on success, `-1`
+        otherwise, `minq` is a mutable sequence of floats,
+        `[minq1, minq2, minq3]`, corresponding to the minimum applicable
+        joint torques (in [Nm]) to axes 0, 1, and 2, respectively in.
+        `maxq` is a mutable sequence of floats `[maxq1, maxq2, maxq3]` which
+        correspond to the maximium applicable joint torques (in [Nm]) to axes
+        0, 1, and 2, respectively.
     """
 
     minq = (c_double * 3)()
@@ -2365,7 +2771,9 @@ _libdhd.dhdWristGravityJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristGravityJointTorques.retype = c_int
-def wristGravityJointTorques( # NOQA
+
+
+def wristGravityJointTorques(
     joint_angles: CartesianTuple,
     ID: int = -1,
     out: Optional[MutableSequence[float]] = None
@@ -2375,33 +2783,39 @@ def wristGravityJointTorques( # NOQA
     given wrist joint angle configuration. Please refer to your device user
     manual for more information on your device coordinate system.
 
-    :param CartesianTuple joint_angles: tuple of (j0, j1, j2) where
-    (j0, j1, j2) refer to the joint angles for wrist axes 0, 1, and 2,
-    respectively.
+    :param CartesianTuple joint_angles:
+        Sequence of `(j0, j1, j2)` where `j0`, `j1`, and `j2` refer to the
+        joint angles for wrist axes 0, 1, and 2, respectively.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
+    :raises ValueError:
+        If any element of `joint_angles` is not implicitly convertible to
+        C `double`.
 
-    :raises ValueError: if any member of joint_angles is not implicitly
-    convertible to C double.
-
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
-    :returns: tuple of ([q0, q1, q2], err) where err is 0 on success, -1
-    otherwise and [q0, q1, q2] are the gravity compensation joint torques for
-    axes 0, 1, and 2, respectively in [Nm]
+
+    :returns:
+        Tuple of `([q0, q1, q2], err)`. `err` is `0` on success, `-1`
+        otherwise and `[q0, q1, q2]` are the gravity compensation joint torques
+        (in [Nm]) for axes 0, 1, and 2, respectively.
     """
 
     q0 = c_double()
@@ -2409,14 +2823,14 @@ def wristGravityJointTorques( # NOQA
     q2 = c_double()
 
     err = _libdhd.dhdWristGravityJointTorques(
-              joint_angles[0],
-              joint_angles[1],
-              joint_angles[2],
-              byref(q0),
-              byref(q1),
-              byref(q2),
-              ID
-          )
+        joint_angles[0],
+        joint_angles[1],
+        joint_angles[2],
+        byref(q0),
+        byref(q1),
+        byref(q2),
+        ID
+    )
 
     if out is None:
         out = [q0.value, q1.value, q2.value]
@@ -2435,25 +2849,29 @@ _libdhd.dhdSetWristJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdSetWristJointTorques.restype = c_int
-def setWristJointTorques(t: CartesianTuple, # NOQA
+
+
+def setWristJointTorques(t: CartesianTuple,
                          ID: int = -1) -> int:
     """
     Set all joint torques of the wrist structure.
 
-    :param CartesianTuple t: tuple of (t0, t1, t2) where
-    (t0, t1, t2) are the wrist axis torque commands for axes 0, 1, and 2,
-    respectively in [Nm].
+    :param CartesianTuple t:
+        Sequence of (t0, t1, t2) where t0, t1, t2 are the wrist axis torque
+        commands for axes 0, 1, and 2, respectively in [Nm].
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if any member of t is not implicitly convertible to
-    c_double
+    :raises ValueError:
+        If any element of `t` is not implicitly convertible to C `double`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise
+
+    :returns: `0` on success, `-1` otherwise.
     """
     return _libdhd.dhdSetWristJointTorques(t[0], t[1], t[2], ID)
 
@@ -2468,33 +2886,37 @@ _libdhd.dhdSetForceAndWristJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdSetForceAndWristJointTorques.restype = c_int
-def setForceAndWristJointTorques(f: CartesianTuple, # NOQA
-                                 t: CartesianTuple,
-                                 ID: int = -1) -> int:
+
+
+def setForceAndWristJointTorques(
+    f: CartesianTuple, t: CartesianTuple, ID: int = -1
+) -> int:
     """
     Set Cartesian force and wrist joint torques
 
-    :param CartesianTuple f: Tuple of (fx, fy, fz) where fx, fy,
-    and fz are the force on the DELTA end-effector on the X, Y, and Z axes,
-    respectively in [N]
+    :param CartesianTuple f:
+        Sequence of `(fx, fy, fz)` where `fx`, `fy`, and `fz` are the force on
+        the  DELTA end-effector on the X, Y, and Z axes, respectively in [N].
 
-    :param CartesianTuple t: tuple of (t0, t1, t2) where
-    (t0, t1, t2) are the wrist axis torque commands for axes 0, 1, and 2,
-    respectively in [Nm].
+    :param CartesianTuple t:
+        Sequence of `(t0, t1, t2)` where `t0`, `t1`, and `t2` are the wrist
+        axis torque commands for axes 0, 1, and 2, respectively in [Nm].
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if any member of f is not implicitly convertible to
-    c_double
+    :raises ValueError:
+        If any element of `f` is not implicitly convertible to C `double`.
 
-    :raises ValueError: if any member of t is not implicitly convertible to
-    c_double
+    :raises ValueError:
+        If any element of `t` is not implicitly convertible to C `double`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise
+
+    :returns: `0` on success, `-1` otherwise
     """
     return _libdhd.dhdSetForceAndWristJointTorques(
         f[0],
@@ -2518,40 +2940,46 @@ _libdhd.dhdSetForceAndWristJointTorques.argtypes = [
     c_byte
 ]
 _libdhd.dhdSetForceAndWristJointTorquesAndGripperForce.restype = c_int
-def setForceAndWristJointTorquesAndGripperForce( # NOQA
-                                 f: CartesianTuple,
-                                 t: CartesianTuple,
-                                 fg: float,
-                                 ID: int = -1) -> int:
+
+
+def setForceAndWristJointTorquesAndGripperForce(
+        f: CartesianTuple,
+        t: CartesianTuple,
+        fg: float,
+        ID: int = -1) -> int:
     """
     Set Cartesian force, wrist joint torques, and gripper force
 
-    :param CartesianTuple f: Tuple of (fx, fy, fz) where fx, fy,
-    and fz are the force on the DELTA end-effector on the X, Y, and Z axes,
-    respectively in [N]
+    :param CartesianTuple f:
+        Sequence of `(fx, fy, fz)` where `fx`, `fy`, and `fz` are the forces
+        (in [N]) on the DELTA end-effector on the X, Y, and Z axes
+        respectively.
 
-    :param CartesianTuple t: tuple of (t0, t1, t2) where
-    (t0, t1, t2) are the wrist axis torque commands for axes 0, 1, and 2,
-    respectively in [Nm].
+    :param CartesianTuple t:
+        Sequence of (t0, t1, t2) where `t0`, `t1`, `t2` are the wrist axis
+        torque (in [Nm]) commands for axes 0, 1, and 2, respectively.
 
-    :param float fg: gripper force in [N]
+    :param float fg:
+        Gripper force in [N].
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if any member of f is not implicitly convertible to
-    c_double
+    :raises ValueError:
+        If any element of `f` is not implicitly convertible to C `double`.
 
-    :raises ValueError: if any member of t is not implicitly convertible to
-    c_double
+    :raises ValueError:
+        If any element of `t` is not implicitly convertible to C `double`.
 
-    :raises ValueError: if gripper_force is not implicitly convertible to C
-    double
+    :raises ValueError:
+        If `gripper_force` is not implicitly convertible to C `double`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
-    :returns: 0 on success, -1 otherwise
+
+    :returns: `0` on success, `-1` otherwise
     """
     return _libdhd.dhdSetForceAndWristJointTorquesAndGripperForce(
         f[0],
@@ -2575,7 +3003,9 @@ _libdhd.dhdWristEncodersToJointAngles.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristEncodersToJointAngles.restype = c_int
-def wristEncodersToJointAngles( # NOQA
+
+
+def wristEncodersToJointAngles(
     enc: DeviceTuple,
     ID: int = -1,
     out: Optional[MutableSequence[float]] = None
@@ -2584,27 +3014,32 @@ def wristEncodersToJointAngles( # NOQA
     This routine computes and returns the wrist joint angles for a given set of
     encoder readings.
 
-    :param DeviceTuple enc: tuple of (enc0, enc1, enc2) where enc0,
-    enc1, and enc2 coresspond to encoder readings on wrist axes 0, 1, and 2,
-    respectively.
+    :param DeviceTuple enc:
+        Sequence of (enc0, enc1, enc2) where `enc0`, `enc1`, and `enc2`
+        coresspond to encoder readings on wrist axes 0, 1, and 2, respectively.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if any member of enc is not implicitly convertible
-    to C int.
+    :raises ValueError:
+        If any element of `enc` is not implicitly convertible to C `int`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
-    :returns: tuple of ([j0, j1, j2], err) where err is 0 on success,
-    -1 otherwise and [j0, j1, j1] is a list of floats corresponding to the
-    wrist joint angles on axes 0, 1, and 2, respectively in [rad].
+
+    :returns:
+        Tuple of `([j0, j1, j2], err)`. `err` is `0` on success,
+        `-1` otherwise and `[j0, j1, j1]` is a mutable sequence of floats
+        corresponding to the wrist joint angles (in [rad]) on axes 0, 1, and 2,
+        respectively.
     """
 
     j0 = c_double()
@@ -2612,14 +3047,14 @@ def wristEncodersToJointAngles( # NOQA
     j2 = c_double()
 
     err = _libdhd.dhdWristEncodersToJointAngles(
-              enc[0],
-              enc[1],
-              enc[2],
-              byref(j0),
-              byref(j1),
-              byref(j2),
-              ID
-           )
+        enc[0],
+        enc[1],
+        enc[2],
+        byref(j0),
+        byref(j1),
+        byref(j2),
+        ID
+    )
 
     if out is None:
         out = [j0.value, j1.value, j2.value]
@@ -2641,7 +3076,9 @@ _libdhd.dhdWristJointAnglesToEncoders.argtypes = [
     c_byte
 ]
 _libdhd.dhdWristJointAnglesToEncoders.restype = c_int
-def wristJointAnglesToEncoders( # NOQA
+
+
+def wristJointAnglesToEncoders(
     joint_angles: CartesianTuple,
     ID: int = -1,
     out: Optional[MutableSequence[int]] = None
@@ -2650,32 +3087,39 @@ def wristJointAnglesToEncoders( # NOQA
     This routine computes and returns the wrist encoder readings for a given
     set of wrist joint angles.
 
-    :param CartesianTuple enc: tuple of (j0, j1, j1) where j0,
-    j1, and j2 coresspond to wrist joint angles for axes 0, 1, and 2,
-    respectively, in [rad].
+    :param CartesianTuple enc:
+        Sequence of `(j0, j1, j1)` where `j0`, `j1`, and `j2` coresspond to
+        wrist joint angles for axes 0, 1, and 2, respectively, in [rad].
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out: OPTIONAL mutable sequence to use
-    instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[int]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and len(out) < 3
+    :raises IndexError:
+        If `out` is specified and `len(out) < 3`.
 
-    :raises ValueError: if any member of joint_angles is not implicitly
-    convertible to C double.
+    :raises ValueError:
+        If any element of `joint_angles` is not implicitly convertible to
+        C `double`.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[int], int]
-    :returns: tuple of ([enc0, enc1, enc2], err) where err is 0 on success,
-    -1 otherwise and [enc0, enc1, enc2] correspond to the wrist joint angles
-    on axes 0, 1, and 2, respectively in [rad].
+
+    :returns:
+        Tuple of `([enc0, enc1, enc2], err)`. `err` is `0` on success,
+        `-1` otherwise and `[enc0, enc1, enc2]` correspond to the wrist joint
+        angles (in [rad]) on axes 0, 1, and 2, respectively.
     """
 
     enc0 = c_int()
@@ -2683,14 +3127,14 @@ def wristJointAnglesToEncoders( # NOQA
     enc2 = c_int()
 
     err = _libdhd.dhdWristJointAnglesToEncoders(
-              joint_angles[0],
-              joint_angles[1],
-              joint_angles[2],
-              byref(enc0),
-              byref(enc1),
-              byref(enc2),
-              ID
-          )
+        joint_angles[0],
+        joint_angles[1],
+        joint_angles[2],
+        byref(enc0),
+        byref(enc1),
+        byref(enc2),
+        ID
+    )
 
     if out is None:
         out = [enc0.value, enc1.value, enc2.value]
@@ -2704,7 +3148,9 @@ def wristJointAnglesToEncoders( # NOQA
 
 _libdhd.dhdGetJointAngles.argtypes = [c_double * MAX_DOF, c_byte]
 _libdhd.dhdGetJointAngles.restype = c_int
-def getJointAngles( # NOQA
+
+
+def getJointAngles(
     ID: int = -1,
     out: Optional[MutableSequence[float]] = None
 ) -> Tuple[MutableSequence[float], int]:
@@ -2712,26 +3158,34 @@ def getJointAngles( # NOQA
     Retrieve the joint angles in [rad] for all sensed degrees-of-freedom of the
     current device.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and
-    len(out) < dhd.libdhd.MAX_DOF
+    :raises IndexError:
+        If `out` is specified and.
+        `len(out) < :data:forcedimension.dhd.constants.MAX_DOF`
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
-    :returns: tuple of (joint_angles, err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and joint_angles
-    is a list of joint angles in [rad].
+
+    :returns:
+        Tuple of `(joint_angles, err)`. err is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
+        otherwise. `joint_angles` is a mutable sequence of joint angles
+        (in [rad]) with a length equal to
+        :data:`forcedimension.dhd.constants.MAX_DOF`.
     """
 
     joint_angles = (c_int * MAX_DOF)()
@@ -2749,34 +3203,43 @@ def getJointAngles( # NOQA
 
 _libdhd.dhdGetJointVelocities.argtypes = [c_double * MAX_DOF, c_byte]
 _libdhd.dhdGetJointVelocities.restype = c_int
-def getJointVelocities( # NOQA
+
+
+def getJointVelocities(
     ID: int = -1,
     out: Optional[MutableSequence[float]] = None
 ) -> Tuple[MutableSequence[float], int]:
     """
     Retrieve the joint angle velocities in [rad/s] for all sensed
-    degrees-of-freedom of the current device
+    degrees-of-freedom of the current device.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item.
+    assignment either because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and
-    len(out) < dhd.libdhd.MAX_DOF
+    :raises IndexError:
+        If `out` is specified and
+        `len(out) < :data:forcedimension.dhd.constants.MAX_DOF`
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
-    :returns: tuple of (w, err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and v is a list
-    of joint angle velocities in [rad/s].
+
+    :returns:
+        Tuple of `(v, err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        `-1` otherwise. `v` is a mutable sequence of joint angle velocities
+        (in [rad/s]) with length :data:`forcedimension.dhd.constants.MAX_DOF`.
     """
 
     w = (c_int * MAX_DOF)()
@@ -2793,35 +3256,43 @@ def getJointVelocities( # NOQA
 
 _libdhd.dhdGetEncVelocities.argtypes = [c_double * MAX_DOF, c_byte]
 _libdhd.dhdGetEncVelocities.restype = c_int
-def getEncVelocities( # NOQA
+
+
+def getEncVelocities(
     ID: int = -1,
     out: Optional[MutableSequence[float]] = None
 ) -> Tuple[MutableSequence[float], int]:
     """
-    Retrieve the joint angle velocities in [increments/s] for all sensed
+    Retrieve the encoder angle velocities in [increments/s] for all sensed
     degrees-of-freedom of the current device
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out: OPTIONAL mutable sequence to
-    use instead of generating a new List. If this is specified, the mutable
-    sequence provided will be updated with the new values and the return will
-    be a reference to the same mutable sequence passed in.
+    :param Optional[MutableSequence[float]] out:
+        Optional mutable sequence to use instead of generating a new list. If
+        this is specified, the mutable sequence provided will be updated with
+        the new values and the return will be a reference to the same mutable
+        sequence passed in.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and
-    len(out) < dhd.libdhd.MAX_DOF
+    :raises IndexError:
+        If `out` is specified and
+        `len(out) < :data:forcedimension.dhd.constants.MAX_DOF`
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[float], int]
 
-    :returns: tuple of (v, err) where err is 0 or
-    dhd.libdhd.constants.TIMEGUARD on success, -1 otherwise and v is a list
-    of joint angle velocities in [increments/s].
+    :returns:
+        Tuple of `(v, err)`. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
+        otherwise. `v` is a mutable sequence of encoder angle velocities (in
+        [increments/s]).
     """
 
     v = (c_int * MAX_DOF)()
@@ -2842,51 +3313,60 @@ _libdhd.dhdJointAnglesToInertiaMatrix.argtypes = [
     c_byte
 ]
 _libdhd.dhdJointAnglesToInertiaMatrix.restype = c_int
-def jointAnglesToIntertiaMatrix( # NOQA
+
+
+def jointAnglesToIntertiaMatrix(
     joint_angles: DOFTuple,
     ID: int = -1,
     out: Optional[MutableSequence[MutableSequence[float]]] = None
 ) -> Tuple[MutableSequence[MutableSequence[float]], int]:
-
     """
     Retrieve the (Cartesian) inertia matrix based on a given joint
     configuration. Please refer to your device user manual for more information
     on your device coordinate system.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if joint_angles is not implicitly convertible to C
-    double[MAX_DOF]
+    :raises ValueError:
+        If `joint_angles` is not implicitly convertible to C `double[MAX_DOF]`
 
-    :param Optional[MutableSequence[MutableSequence[float]]] out: OPTIONAL
-    mutable sequence to use instead of generating a new List of Lists. If this
-    is specified, the list provided will be updated with the new values and the
-    return will be a reference to the same list.
+    :param Optional[MutableSequence[MutableSequence[float]]] out:
+         Mutable sequence of mutable sequences to use intead of generating a
+         new list of lists. If this is speicfied, the list provided will be
+         updated with the new values and the return will be a reference to the
+         same mutable sequence.
 
-    :raises TypeError: if out is specified and does not support item
-    assignment either because its immutable or not subscriptable.
+    :raises TypeError:
+        If `out` is specified and does not support item assignment either
+        because it's immutable or not subscriptable.
 
-    :raises IndexError: if out is specified and the length of any dimension of
-    out is less than 6.
+    :raises IndexError:
+        if `out` is specified and the length of the any dimension of `out` is
+        less than 6.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
 
-    :returns: tuple of (inertia, err) where err is 0 on success, -1 otherwise
-    and inertia is the 6x6 Cartesian inertia matrix.
+    :returns:
+        Tuple of `(inertia, err)`. `err` is `0` on success, `-1` otherwise.
+        `inertia` is the 6x6 Cartesian inertia matrix.
     """
 
     inertia = ((c_double * 6) * 6)()
     err = _libdhd.dhdJointAnglesToInertiaMatrix(
-                joint_angles,
-                inertia,
-                ID
-            )
+        joint_angles,
+        inertia,
+        ID
+    )
 
     if out is None:
-        out = [list(row) for row in inertia]
+        out = cast(
+            MutableSequence[MutableSequence[float]],
+            [list(row) for row in inertia]
+        )
     else:
         for i in range(6):
             for j in range(6):
@@ -2895,24 +3375,29 @@ def jointAnglesToIntertiaMatrix( # NOQA
     return (out, err)
 
 
-# TODO add a page for COM operation mode.
 _libdhd.dhdSetComMode.argtypes = [c_int, c_byte]
 _libdhd.dhdSetComMode.restype = c_int
-def setComMode(mode: ComMode, ID: int = -1) -> int: # NOQA
+
+
+def setComMode(mode: ComMode, ID: int = -1) -> int:
     """
     Set the COM operation mode on compatible devices.
 
-    :param ComMode mode: desired COM operation mode
+    :param ComMode mode:
+        desired COM operation mode.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if mode is not implicitly convertible to C int
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `mode` is not implicitly convertible to C `int`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
 
-    :returns: 0 on success, -1 otherwise
+    :returns: `0` on success, `-1` otherwise.
     """
 
     return _libdhd.dhdSetComMode(mode, ID)
@@ -2920,7 +3405,9 @@ def setComMode(mode: ComMode, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdSetWatchdog.argtypes = [c_ubyte, c_byte]
 _libdhd.dhdSetWatchdog.restype = c_int
-def setWatchdog(duration: int, ID: int = -1) -> int: # NOQA
+
+
+def setWatchdog(duration: int, ID: int = -1) -> int:
     """
     Set the watchdog duration in multiples of 125 microseconds on compatible
     devices. If the watchdog duration is exceeded before the device recieves a
@@ -2928,19 +3415,25 @@ def setWatchdog(duration: int, ID: int = -1) -> int: # NOQA
 
     A value of 0 disables the watchdog feature.
 
-    See also dhd.libdhd.expert.getWatchdog()
+    See Also
+    --------
+    :func:`forcedimension.dhd.expert.getWatchdog()`
 
-    :param int duration: watchdog duration in multiples of 125 [us]
+    :param int duration:
+        watchdog duration in multiples of 125 us.
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if duration is not implicitly convertible to C uchar
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `duration` is not implicitly convertible to C `uchar`.
+
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: int
 
-    :returns: 0 on success, -1 otherwise
+    :returns: `0` on success, `-1` otherwise.
     """
 
     return _libdhd.dhdSetWatchdog(duration, ID)
@@ -2948,22 +3441,28 @@ def setWatchdog(duration: int, ID: int = -1) -> int: # NOQA
 
 _libdhd.dhdGetWatchdog.argtypes = [POINTER(c_ubyte), c_byte]
 _libdhd.dhdGetWatchdog.restype = c_int
-def getWatchdog(ID: int = -1) -> Tuple[int, int]: # NOQA
+
+
+def getWatchdog(ID: int = -1) -> Tuple[int, int]:
     """
-    Get the watchdog duration in multiples of 125 microseconds on compatible
+    Get the watchdog duration in multiples of 125 us on compatible
     devices.
 
-    See also dhd.libdhd.expert.setWatchdog()
+    See Also
+    --------
+    :func:`forcedimension.dhd.expert.setWatchdog()`
 
-    :param int ID: [default=-1] device ID (see multiple devices section
-    for details)
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises ValueError: if ID is not implicitly convertible to C char
+    :raises ValueError:
+        If `ID` is not implicitly convertible to C `char`.
 
     :rtype: Tuple[int, int]
 
-    :returns: tuple of (duration, err) where err is 0 on success, -1 otherwise
-    and duration is in multiples of 125 [us]
+    :returns:
+        Tuple of `(duration, err)`. `err` is `0` on success, `-1`
+        otherwise. `duration` is the watchdog duration in multiples of 125 us.
     """
 
     duration = c_int()
