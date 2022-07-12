@@ -30,7 +30,7 @@ def enableExpertMode() -> int:
 
     :rtype: int
 
-    :returns: `0` on success `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
     """
     return _libdhd.dhdEnableExpertMode()
 
@@ -45,7 +45,7 @@ def disableExpertMode() -> int:
 
     :rtype: int
 
-    :returns: `0` on success `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
     """
     return _libdhd.dhdDisableExpertMode()
 
@@ -80,7 +80,7 @@ def preset(val: DOFTuple, mask: int = 0xff, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success, `-1` otherwise
+    :returns: `0` on success, and `-1` otherwise
     """
     return _libdhd.dhdPreset(val, mask, ID)
 
@@ -110,7 +110,7 @@ def setTimeGuard(min_period: int, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
     """
 
     return _libdhd.dhdSetTimeGuard(min_period, ID)
@@ -147,7 +147,7 @@ def setVelocityThreshold(thresh: int, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
     """
 
     return _libdhd.dhdSetVelocityThreshold(thresh, ID)
@@ -177,8 +177,9 @@ def getVelocityThreshold(ID: int = -1) -> Tuple[int, int]:
     :rtype: Tuple[int, int]
 
     :returns:
-        Tuple of `(thresh, err)`. `err` is `0` on success, `-1` otherwise.
-        `thresh` is the value of the velocity threshold (in [m/s]).
+        A tuple in the form `(thresh, err)`. `thresh` is the value of the
+        velocity threshold (in [m/s]). `err` is `0` on success, and `-1`
+        otherwise.
     """
 
     thresh = c_uint()
@@ -203,7 +204,7 @@ def updateEncoders(ID: int = -1) -> int:
 
     :rtype: Tuple[int, int]
 
-    :returns: `0` on success `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
     """
     return _libdhd.dhdUpdateEncoders(ID)
 
@@ -249,10 +250,10 @@ def getDeltaEncoders(
     :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
-        Tuple of `([enc0, enc1, enc2], err)`. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
-        otherwise and `enc0`, `enc1`, and `enc2` are the axis 0, axis 1, and
-        axis 2 encoder readings, respectively.
+        A tuple in the form `([enc0, enc1, enc2], err)`. `[enc0, enc1, enc2]`
+        are the axis 0, 1, and 2 raw encoder readings, respectively. `err` is
+        `0` or :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and
+        `-1` otherwise.
     """
 
     enc0 = c_int()
@@ -326,10 +327,10 @@ def getWristEncoders(
     :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
-        Tuple of `([enc0, enc1, enc2], err)`. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
-        `-1` otherwise. `[enc0, enc1, enc2]` are the axis 0, 1, and 2 raw
-        encoder readings, respectively.
+        A tuple in the form `([enc0, enc1, enc2], err)`. `[enc0, enc1, enc2]`
+        are the axis 0, 1, and 2 raw encoder readings, respectively. `err` is
+        `0` or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        `-1` otherwise.
     """
 
     enc0 = c_int()
@@ -376,9 +377,9 @@ def getGripperEncoder(ID: int = -1) -> Tuple[int, int]:
     :rtype: Tuple[int, int]
 
     :returns:
-        Tuple of `(enc, err)`. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
-        otherwise. `enc` is the gripper raw encoder reading.
+        A tuple in the form `(enc, err)`. `enc` is the gripper raw encoder
+        reading. `err` is `0` or :data:`forcedimension.dhd.constants.TIMEGUARD`
+        on success, and `-1` otherwise.
     """
 
     enc = c_int()
@@ -392,7 +393,7 @@ _libdhd.dhdGetEncoder.restype = c_int
 
 def getEncoder(index: int, ID: int = -1) -> int:
     """
-    Read a single encoder value from the haptic device
+    Read a single encoder value from the haptic device.
 
     :param int index:
         The motor index number as defined by
@@ -409,7 +410,7 @@ def getEncoder(index: int, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: The (positive) encoder reading on success, `-1` otherwise.
+    :returns: The (positive) encoder reading on success, and `-1` otherwise.
     """
 
     return _libdhd.dhdGetEncoder(index, ID)
@@ -444,7 +445,7 @@ def setMotor(index: int, output: int, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
     """
 
     return _libdhd.dhdSetMotor(index, output, ID)
@@ -474,7 +475,7 @@ def setDeltaMotor(output: DeviceTuple, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
 
     """
     return _libdhd.dhdSetDeltaMotor(output[0], output[1], output[2], ID)
@@ -504,7 +505,7 @@ def setWristMotor(output: DeviceTuple, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
 
     """
     return _libdhd.dhdSetWristMotor(output[0], output[1], output[2], ID)
@@ -533,7 +534,7 @@ def setGripperMotor(output: int, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
     """
     return _libdhd.dhdSetWristMotor(output, ID)
 
@@ -591,7 +592,7 @@ def deltaEncoderToPosition(
     :rtype: int
 
     :returns:
-        Tuple of `([px, py, pz], err)`. `err` is `0` on success,
+        A tuple in the form `([px, py, pz], err)`. `err` is `0` on success,
         `-1` otherwise. `[px, py, pz]` is a mutable sequence of floats
         corresponding to the DELTA end-effector position on the X, Y, and Z
         axes, respectively in [m].
@@ -674,10 +675,10 @@ def deltaPositionToEncoder(
     :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
-        Tuple of `([enc0, enc1, enc2], err). `err` is `0` on success, -1
-        otherwise. `[enc0, enc1, enc2]` is a mutable sequence of floats
-        corresponding to the DELTA end-effector encoder readings on axis 0, 1,
-        and 2, respectively.
+        A tuple in the form `([enc0, enc1, enc2], err). `[enc0, enc1, enc2]` is
+        a mutable sequence of floats corresponding to the DELTA end-effector
+        encoder readings on axes 0, 1, and 2, respectively. `err` is `0` on
+        success, -1 otherwise.
     """
 
     enc0 = c_int()
@@ -768,9 +769,10 @@ def deltaMotorToForce(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `([fx, fy, fz], err)`. `err` is `0` on success, `-1`
-        otherwise and `[fx, fy, fz]` correspond to the translational force on
-        the DELTA end-effector on the X, Y and Z axes, respectively in [N].
+        A tuple in the form `([fx, fy, fz], err)`. `[fx, fy, fz]` correspond to
+        the translational force applied on the DELTA end-effector on the X, Y
+        and Z axes, respectively in [N]. `err` is `0` on success, and `-1`
+        otherwise.
     """
 
     fx = c_double()
@@ -863,10 +865,11 @@ def deltaForceToMotor(
     :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
-        Tuple of `([output0, output1, output2], err)`. `err` is `0` or
-        :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success, `-1`
-        otherwise. `[output0, output1, output2]` correspond to the DELTA
-        end-effector motor commands on axes 0, 1, and 2, respectively.
+        A tuple in the form `([output0, output1, output2], err)`.
+        `[output0, output1, output2]` correspond to the DELTA end-effector
+        motor commands on axes 0, 1, and 2, respectively. `err` is `0` or
+        :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success, and
+        `-1` otherwise.
     """
 
     output0 = c_ushort()
@@ -961,10 +964,10 @@ def wristEncoderToOrientation(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `([oa, ob, og], err)`. `err` is `0` on success,
-        `-1` otherwise. `[oa, ob, og]` is a mutable sequence of floats
-        corresponding to the wrist end-effector's orientation about the first,
-        second, and third wrist joint, respectively in [rad].
+        A tuple in the form `([oa, ob, og], err)`. `[oa, ob, og]` is a mutable
+        sequence of floats corresponding to the wrist end-effector's
+        orientation about the first, second, and third wrist joint,
+        respectively in [rad]. `err` is `0` on success, `-1` otherwise.
     """
     px = c_double()
     py = c_double()
@@ -1054,10 +1057,9 @@ def wristOrientationToEncoder(
     :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
-        Tuple of `([enc0, enc1, enc2], err)`. `err` is `0` on success,
-        `-1` otherwise and `[enc0, enc1, enc2]` is a mutable sequence of ints
-        corresponding to the wrist end-effector orientation around the X, Y,
-        and Z axes, respectively.
+        A tuple in the form `([enc0, enc1, enc2], err)`. `[enc0, enc1, enc2]`
+        is the wrist end-effector orientation around the X, Y, and Z axes,
+        respectively. `err` is `0` on success, `-1` otherwise
     """
 
     enc0 = c_int()
@@ -1145,10 +1147,9 @@ def wristMotorToTorque(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `([tx, ty, tz], err)`. `err` is `0` on success, `-1`,
-        otherwise. `[tx, ty, tz]` is a mutable sequence of floats which
-        correspond to the torque on the wrist end-effector around the X, Y, and
-        Z axes respectively in [Nm].
+        A tuple in the form `([tx, ty, tz], err)`.  `[tx, ty, tz]` is the
+        torque applied to the wrist end-effector around the X, Y, and Z axes
+        respectively in [Nm]. `err` is `0` on success, and `-1`, otherwise.
     """
 
     tx = c_double()
@@ -1238,10 +1239,10 @@ def wristTorqueToMotor(
     :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
-        Tuple of `([output0, output1, output2], err)`. `err` is `0` on
-        success, `-1` otherwise and `[output0, output1, output2]` correspond to
-        the motor commands on the wrist end-effector around wrist joint 0, 1,
-        and 2, respectively.
+        A tuple in the form `([output0, output1, output2], err)`.
+        `[output0, output1, output2]` correspond to the motor commands on the
+        wrist end-effector around wrist joint 0, 1, and 2, respectively. `err`
+        is `0` on success, `-1` otherwise
     """
 
     output0 = c_ushort()
@@ -1306,8 +1307,8 @@ def gripperEncoderToAngleRad(enc: int,
     :rtype: Tuple[float, int]
 
     :returns:
-        Tuple of `(angle, err)`. err is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1` on
+        A tuple in the form `(angle, err)`. err is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1` on
         otherwise. `angle` is the gripper opening in [rad]
     """
 
@@ -1356,8 +1357,8 @@ def gripperEncoderToGap(enc: int, ID: int = -1) -> Tuple[float, int]:
     :rtype: Tuple[float, int]
 
     :returns:
-        Tuple of `(gap, err)`. `err` is `0` on success, `-1` otherwise.
-        gap is the gripper opening in [m]
+        A tuple in the form `(gap, err)`. `gap` is the gripper opening in [m]
+        `err` is `0` on success, and `-1` otherwise.
     """
 
     gap = c_double()
@@ -1404,8 +1405,9 @@ def gripperAngleRadToEncoder(angle: float, ID: int = -1) -> Tuple[int, int]:
     :rtype: Tuple[int, int]
 
     :returns:
-        Tuple of `(enc, err)`. `err` is `0` on success, `-1` otherwise.
-        `enc` is the gripper encoder reading
+        A tuple in the form `(enc, err)`. `enc` is the gripper raw encoder
+        reading. `err` is `0` on success, and `-1` otherwise.
+
     """
 
     enc = c_int()
@@ -1454,8 +1456,8 @@ def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]:
     :rtype: Tuple[int, int]
 
     :returns:
-        Tuple of `(enc, err)`. `err` is `0` on success, `-1` otherwise.
-        `enc` is the gripper encoder reading.
+        A tuple in the form `(enc, err)`. `enc` is the gripper encoder reading.
+        `err` is `0` on success, and `-1` otherwise.
     """
 
     enc = c_int()
@@ -1521,8 +1523,8 @@ def gripperMotorToForce(output: int,
     :rtype: Tuple[float, int]
 
     :returns:
-        Tuple of `(force, err)`. `err` is `0` on success, `-1` otherwise.and
-        force is the force on the gripper end-effector in [N].
+        A tuple in the form `(force, err)`. `force` is the force on the gripper
+        end-effector in [N]. `err` is `0` on success, and `-1` otherwise.
     """
 
     force = c_double()
@@ -1590,9 +1592,10 @@ def gripperForceToMotor(force: float,
     :rtype: Tuple[int, int]
 
     :returns:
-        Tuple of `(output, err)`. `err` is `0` or
+        A tuple in the form `(output, err)`. `output` is the motor command on
+        the gripper axis. `err` is `0` or
         :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success,
-        `-1` otherwise. `output` is the motor command on the gripper axis.
+        `-1` otherwise.
     """
 
     output = c_ushort()
@@ -1639,7 +1642,7 @@ def setMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success, `-1` otherwise
+    :returns: `0` on success, and `-1` otherwise
     """
 
     return _libdhd.dhdSetMot(outputs, mask, ID)
@@ -1677,7 +1680,7 @@ def preloadMot(outputs: DOFTuple, mask: int = 0xff, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success, `-1` otherwise
+    :returns: `0` on success, and `-1` otherwise
     """
 
     return _libdhd.dhdPreloadMot(outputs, mask, ID)
@@ -1726,9 +1729,10 @@ def getEnc(
     :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
-        Tuple of `(enc, err)`. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
-        otherwise. `enc` is a mutable sequence of encoder values.
+        A tuple in the form `(enc, err)`. `enc` is a mutable sequence of
+        encoder values. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        otherwise.
     """
     enc = (c_int * MAX_DOF)()
 
@@ -1798,9 +1802,9 @@ def getEncRange(
     :rtype: Tuple[MutableSequence[int], MutableSequence[int], int]
 
     :returns:
-        Tuple of `(encMin, encMax err)`. `err` is `0` on success, `-1`
-        otherwise. `encMin` and `encMax` are a mutable sequence of minimum and
-        maximum encoder values for each axis, respectively.
+        A tuple in the form `(encMin, encMax err)`. `encMin` and `encMax` are a
+        mutable sequence of minimum and maximum encoder values for each axis,
+        respectively. `err` is `0` on success, and `-1` otherwise.
     """
 
     encMin = (c_int * MAX_DOF)()
@@ -1858,7 +1862,7 @@ def setBrk(mask: int = 0xff, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success, `-1` otherwise
+    :returns: `0` on success, and `-1` otherwise
     """
 
     return _libdhd.dhdSetBrk(mask, ID)
@@ -1905,10 +1909,10 @@ def getDeltaJointAngles(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `([j0, j1, j2], err)`. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
-        otherwise and `[j0, j1, j2]` are a mutable sequence of joint angles for
-        axes 0, 1, and 2, respectively.
+        A tuple in the form `([j0, j1, j2], err)`. `[j0, j1, j2]` are joint
+        angles for axes 0, 1, and 2, respectively. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        otherwise.
     """
 
     j0 = c_double()
@@ -1970,10 +1974,9 @@ def getDeltaJacobian(
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
 
     :returns:
-        Tuple of `(J, err)`. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
-        otherwise. `J` is the 3x3 jacobian matrix.
-
+        A tuple in the form `(J, err)`. `J` is the 3x3 jacobian matrix.
+        `err` is `0` or :data:`forcedimension.dhd.constants.TIMEGUARD` on
+        success, and `-1` otherwise.
     """
 
     J = ((c_double * 3) * 3)()
@@ -2045,8 +2048,8 @@ def deltaJointAnglesToJacobian(
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
 
     :returns:
-        Tuple of (J, err). `err` is `0` on success, `-1` otherwise.
-        `J` is the 3x3 jacobian matrix.
+        A tuple in the form `(J, err)`. `err` is `0` on success, and `-1`
+        otherwise. `J` is the 3x3 jacobian matrix.
     """
 
     J = ((c_double * 3) * 3)()
@@ -2139,13 +2142,12 @@ def deltaJointTorquesExtrema(
     :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
 
     :returns:
-        Tuple of `(minq, maxq, err)`. `err` is `0` on success, `-1`
-        otherwise, `minq` is a mutable sequence of floats.
-        `[minq1, minq2, minq3]`, corresponding to the minimum applicable
-        joint torque to axes 0, 1, and 2, respectively in [Nm], and `maxq` is
-        a mutable sequence of floats, `[maxq1, maxq2, maxq3]`, corresponding
-        to the maximium applicable joint torque to axes 0, 1, and 2,
-        respectively in [Nm]
+        A tuple in the form `(minq, maxq, err)`. `minq` is a mutable sequence
+        of floats, `[minq1, minq2, minq3]`, corresponding to the minimum
+        applicable joint torque to axes 0, 1, and 2, respectively in [Nm].
+        `maxq` is a mutable sequence of floats, `[maxq1, maxq2, maxq3]`,
+        corresponding to the maximium applicable joint torque to axes 0, 1, and
+        2, respectively in [Nm]. `err` is `0` on success, and `-1` otherwise.
     """
 
     minq = (c_double * 3)()
@@ -2229,9 +2231,9 @@ def deltaGravityJointTorques(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `([q0, q1, q2], err)`. `err` is `0` on success, `-1`
-        otherwise and `[q0, q1, q2]` is a mutable sequence of the gravity
-        compensation joint torques for axes 0, 1, and 2, respectively in [Nm].
+        A tuple in the form `([q0, q1, q2], err)`.`[q0, q1, q2]` is a mutable
+        sequence of the gravity compensation joint torques for axes 0, 1, and
+        2, respectively in [Nm]. `err` is `0` on success, and `-1` otherwise.
     """
 
     q0 = c_double()
@@ -2284,7 +2286,7 @@ def setDeltaJointTorques(t: CartesianTuple,
 
     :rtype: int
 
-    :returns: `0` on success, `-1` otherwise
+    :returns: `0` on success, and `-1` otherwise
     """
     return _libdhd.dhdSetDeltaJointTorques(t[0], t[1], t[2], ID)
 
@@ -2339,10 +2341,9 @@ def deltaEncodersToJointAngles(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `([j0, j1, j2], err)`. `err` is `0` on success,
-        `-1` otherwise. `[j0, j1, j1]` is a mutable sequence of floats
-        corresponding to the DELTA joint angles on axes 0, 1, and 2,
-        respectively in [rad].
+        A tuple in the form `([j0, j1, j2], err)`. `err` is `0` on success,
+        `-1` otherwise. `[j0, j1, j1]` are the DELTA joint angles on axes 0, 1,
+        and 2, respectively in [rad].
     """
 
     j0 = c_double()
@@ -2420,10 +2421,10 @@ def deltaJointAnglesToEncoders(
     :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
-        Tuple of `([enc0, enc1, enc2], err)` where `err` is `0` on success,
-        `-1` otherwise. `[enc0, enc1, enc2]` is a mutable sequence of floats
-        corresponding to the DELTA joint angles (in [rad]) on axes 0, 1,
-        and 2, respectively.
+        A tuple in the form `([enc0, enc1, enc2], err)`. `[enc0, enc1, enc2]`
+        is a mutable sequence of floats corresponding to the DELTA joint angles
+        (in [rad]) on axes 0, 1, and 2, respectively. `err` is `0` on success,
+        `-1` otherwise.
     """
 
     enc0 = c_int()
@@ -2488,11 +2489,11 @@ def getWristJointAngles(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `([j0, j1, j2], err)`. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
-        otherwise. `[j0, j1, j2]` is a mutable sequence of floats which
-        corresponds to the joint angle for joint angles for joint 0, 1, and 2,
-        respectively.
+        A tuple in the form `([j0, j1, j2], err)`. `[j0, j1, j2]` is a mutable
+        sequence of floats which corresponds to the joint angle for joint
+        angles for joint 0, 1, and 2, respectively. `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        otherwise.
     """
 
     j0 = c_double()
@@ -2553,9 +2554,9 @@ def getWristJacobian(
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
 
     :returns:
-        Tuple of `(J, err)`. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
-        otherwise. `J` is the 3x3 jacobian matrix.
+        A tuple in the form `(J, err)`. `J` is the 3x3 jacobian matrix. `err`
+        is `0` or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        and `-1` otherwise.
 
     """
 
@@ -2629,8 +2630,8 @@ def wristJointAnglesToJacobian(
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
 
     :returns:
-        Tuple of `(J, err)`. `err` is `0` on success, `-1` otherwise.
-        `J` is the 3x3 jacobian matrix.
+        A tuple in the form `(J, err)`. `J` is the 3x3 jacobian matrix.
+        `err` is `0` on success, and `-1` otherwise.
     """
 
     J = ((c_double * 3) * 3)()
@@ -2723,13 +2724,13 @@ def wristJointTorquesExtrema(
     :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
 
     :returns:
-        Tuple of `(minq, maxq, err)`. `err` is `0` on success, `-1`
-        otherwise, `minq` is a mutable sequence of floats,
-        `[minq1, minq2, minq3]`, corresponding to the minimum applicable
-        joint torques (in [Nm]) to axes 0, 1, and 2, respectively in.
+        A tuple in the form `(minq, maxq, err)`. `minq` is a mutable sequence
+        of floats, `[minq1, minq2, minq3]`, corresponding to the minimum
+        applicable joint torques (in [Nm]) to axes 0, 1, and 2, respectively.
         `maxq` is a mutable sequence of floats `[maxq1, maxq2, maxq3]` which
         correspond to the maximium applicable joint torques (in [Nm]) to axes
-        0, 1, and 2, respectively.
+        0, 1, and 2, respectively. `err` is `0` on success, and `-1`
+        otherwise.
     """
 
     minq = (c_double * 3)()
@@ -2813,9 +2814,9 @@ def wristGravityJointTorques(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `([q0, q1, q2], err)`. `err` is `0` on success, `-1`
-        otherwise and `[q0, q1, q2]` are the gravity compensation joint torques
-        (in [Nm]) for axes 0, 1, and 2, respectively.
+        A tuple in the form `([q0, q1, q2], err)`. `[q0, q1, q2]` are the
+        gravity compensation joint torques (in [Nm]) for axes 0, 1, and 2,
+        respectively. `err` is `0` on success, and `-1` otherwise
     """
 
     q0 = c_double()
@@ -2871,7 +2872,7 @@ def setWristJointTorques(t: CartesianTuple,
 
     :rtype: int
 
-    :returns: `0` on success, `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
     """
     return _libdhd.dhdSetWristJointTorques(t[0], t[1], t[2], ID)
 
@@ -2895,12 +2896,14 @@ def setForceAndWristJointTorques(
     Set Cartesian force and wrist joint torques
 
     :param CartesianTuple f:
-        Sequence of `(fx, fy, fz)` where `fx`, `fy`, and `fz` are the force on
-        the  DELTA end-effector on the X, Y, and Z axes, respectively in [N].
+        Sequence of `(fx, fy, fz)` where `fx`, `fy`, and `fz` are the
+        translation forces (in [N]) to be applied to the DELTA end-effector on
+        the X, Y, and Z axes respectively.
 
     :param CartesianTuple t:
-        Sequence of `(t0, t1, t2)` where `t0`, `t1`, and `t2` are the wrist
-        axis torque commands for axes 0, 1, and 2, respectively in [Nm].
+        Sequence of (t0, t1, t2) where `t0`, `t1`, `t2` are the wrist joint
+        torques (in [Nm]) to be applied to the wrist end-effector
+        for axes 0, 1, and 2, respectively.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -2916,7 +2919,7 @@ def setForceAndWristJointTorques(
 
     :rtype: int
 
-    :returns: `0` on success, `-1` otherwise
+    :returns: `0` on success, and `-1` otherwise
     """
     return _libdhd.dhdSetForceAndWristJointTorques(
         f[0],
@@ -2951,13 +2954,14 @@ def setForceAndWristJointTorquesAndGripperForce(
     Set Cartesian force, wrist joint torques, and gripper force
 
     :param CartesianTuple f:
-        Sequence of `(fx, fy, fz)` where `fx`, `fy`, and `fz` are the forces
-        (in [N]) on the DELTA end-effector on the X, Y, and Z axes
-        respectively.
+        Sequence of `(fx, fy, fz)` where `fx`, `fy`, and `fz` are the
+        translation forces (in [N]) to be applied to the DELTA end-effector on
+        the X, Y, and Z axes respectively.
 
     :param CartesianTuple t:
-        Sequence of (t0, t1, t2) where `t0`, `t1`, `t2` are the wrist axis
-        torque (in [Nm]) commands for axes 0, 1, and 2, respectively.
+        Sequence of (t0, t1, t2) where `t0`, `t1`, `t2` are the wrist joint
+        torques (in [Nm]) to be applied to the wrist end-effector
+        for axes 0, 1, and 2, respectively.
 
     :param float fg:
         Gripper force in [N].
@@ -2979,7 +2983,7 @@ def setForceAndWristJointTorquesAndGripperForce(
 
     :rtype: int
 
-    :returns: `0` on success, `-1` otherwise
+    :returns: `0` on success, and `-1` otherwise
     """
     return _libdhd.dhdSetForceAndWristJointTorquesAndGripperForce(
         f[0],
@@ -3036,10 +3040,9 @@ def wristEncodersToJointAngles(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `([j0, j1, j2], err)`. `err` is `0` on success,
-        `-1` otherwise and `[j0, j1, j1]` is a mutable sequence of floats
-        corresponding to the wrist joint angles (in [rad]) on axes 0, 1, and 2,
-        respectively.
+        A tuple in the form `([j0, j1, j2], err)`. `[j0, j1, j1]` are the wrist
+        joint angles (in [rad]) on axes 0, 1, and 2, respectively. `err` is
+        `0` on success, `-1` otherwise
     """
 
     j0 = c_double()
@@ -3117,9 +3120,9 @@ def wristJointAnglesToEncoders(
     :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
-        Tuple of `([enc0, enc1, enc2], err)`. `err` is `0` on success,
-        `-1` otherwise and `[enc0, enc1, enc2]` correspond to the wrist joint
-        angles (in [rad]) on axes 0, 1, and 2, respectively.
+        A tuple in the form `([enc0, enc1, enc2], err)`. `[enc0, enc1, enc2]`
+        correspond to the wrist joint angles (in [rad]) on axes 0, 1, and 2,
+        respectively. `err` is `0` on success, `-1` otherwise.
     """
 
     enc0 = c_int()
@@ -3181,8 +3184,8 @@ def getJointAngles(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `(joint_angles, err)`. err is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
+        A tuple in the form `(joint_angles, err)`. err is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
         otherwise. `joint_angles` is a mutable sequence of joint angles
         (in [rad]) with a length equal to
         :data:`forcedimension.dhd.constants.MAX_DOF`.
@@ -3236,10 +3239,11 @@ def getJointVelocities(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `(v, err)`. `err` is `0` or
+        A tuple in the form `(v, err)`. `v` is a mutable sequence of joint
+        angle velocities (in [rad/s]) with length
+        :data:`forcedimension.dhd.constants.MAX_DOF`. `err` is `0` or
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
-        `-1` otherwise. `v` is a mutable sequence of joint angle velocities
-        (in [rad/s]) with length :data:`forcedimension.dhd.constants.MAX_DOF`.
+        `-1` otherwise.
     """
 
     w = (c_int * MAX_DOF)()
@@ -3289,10 +3293,10 @@ def getEncVelocities(
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        Tuple of `(v, err)`. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, `-1`
-        otherwise. `v` is a mutable sequence of encoder angle velocities (in
-        [increments/s]).
+        A tuple in the form `(v, err)`. `v` is a mutable sequence of encoder
+        angle velocities (in [increments/s]). `err` is `0` or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        otherwise.
     """
 
     v = (c_int * MAX_DOF)()
@@ -3351,8 +3355,8 @@ def jointAnglesToIntertiaMatrix(
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
 
     :returns:
-        Tuple of `(inertia, err)`. `err` is `0` on success, `-1` otherwise.
-        `inertia` is the 6x6 Cartesian inertia matrix.
+        A tuple in the form `(inertia, err)`. `inertia` is the 6x6 Cartesian
+        inertia matrix. `err` is `0` on success, and `-1` otherwise.
     """
 
     inertia = ((c_double * 6) * 6)()
@@ -3397,7 +3401,7 @@ def setComMode(mode: ComMode, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success, `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
     """
 
     return _libdhd.dhdSetComMode(mode, ID)
@@ -3433,7 +3437,7 @@ def setWatchdog(duration: int, ID: int = -1) -> int:
 
     :rtype: int
 
-    :returns: `0` on success, `-1` otherwise.
+    :returns: `0` on success, and `-1` otherwise.
     """
 
     return _libdhd.dhdSetWatchdog(duration, ID)
@@ -3461,8 +3465,9 @@ def getWatchdog(ID: int = -1) -> Tuple[int, int]:
     :rtype: Tuple[int, int]
 
     :returns:
-        Tuple of `(duration, err)`. `err` is `0` on success, `-1`
-        otherwise. `duration` is the watchdog duration in multiples of 125 us.
+        A tuple in the form `(duration, err)`. `duration` is the watchdog
+        duration in multiples of 125 us. `err` is `0` on success, and `-1`
+        otherwise.
     """
 
     duration = c_int()
