@@ -2727,7 +2727,7 @@ def wristJointTorquesExtrema(
         otherwise, `minq` is a mutable sequence of floats,
         `[minq1, minq2, minq3]`, corresponding to the minimum applicable
         joint torques (in [Nm]) to axes 0, 1, and 2, respectively in.
-        `maxq` is a mutable sequence of floats [maxq1, maxq2, maxq3] which
+        `maxq` is a mutable sequence of floats `[maxq1, maxq2, maxq3]` which
         correspond to the maximium applicable joint torques (in [Nm]) to axes
         0, 1, and 2, respectively.
     """
@@ -2951,8 +2951,9 @@ def setForceAndWristJointTorquesAndGripperForce(
     Set Cartesian force, wrist joint torques, and gripper force
 
     :param CartesianTuple f:
-        Sequence of `(fx, fy, fz)` where `fx`, `fy`, and `fz` (in [N]) are the
-        forces on the DELTA end-effector on the X, Y, and Z axes respectively.
+        Sequence of `(fx, fy, fz)` where `fx`, `fy`, and `fz` are the forces
+        (in [N]) on the DELTA end-effector on the X, Y, and Z axes
+        respectively.
 
     :param CartesianTuple t:
         Sequence of (t0, t1, t2) where `t0`, `t1`, `t2` are the wrist axis
