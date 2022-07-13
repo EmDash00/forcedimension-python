@@ -63,7 +63,7 @@ def openID(ID: int) -> int:
 
 
     :raises ValueError:
-        index is not convertible to a C `int`.
+        index is not convertible to a C int.
 
     :rtype: int
 
@@ -89,12 +89,12 @@ def setDevice(ID: int) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `ID` is not implicitly convertible to C `int`.
+        ``ID`` is not implicitly convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
     return _libdrd.drdSetDevice(ID)
 
@@ -127,12 +127,12 @@ def close(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `ID` is not implicitly convertible to C `int`.
+        ``ID`` is not implicitly convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
     return _libdrd.drdClose(ID)
 
@@ -153,11 +153,11 @@ def isSupported(ID: int) -> bool:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `ID` is not implicitly convertible to C `int`.
+        ``ID`` is not implicitly convertible to a C int.
 
     :rtype: bool
 
-    :returns: `True` if the device is supported, `False` otherwise.
+    :returns: ``True`` if the device is supported, ``False`` otherwise.
 
     """
     return _libdrd.drdIsSupported(ID)
@@ -175,11 +175,11 @@ def isRunning(ID: int = -1) -> bool:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: bool
 
-    :returns: `True` if the control thread is running, `False` otherwise.
+    :returns: ``True`` if the control thread is running, ``False`` otherwise.
     """
 
     return _libdrd.drdIsRunning(ID)
@@ -200,11 +200,11 @@ def isFiltering(ID: int = -1) -> bool:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: bool
 
-    :returns: `True` if the motion filter is enabled, `False` otherwise.
+    :returns: ``True`` if the motion filter is enabled, ``False`` otherwise.
     """
 
     return _libdrd.drdIsMoving(ID)
@@ -225,11 +225,11 @@ def isInitialized(ID: int = -1) -> bool:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: bool
 
-    :returns: `True` if the robot is initialized, `False` otherwise
+    :returns: ``True`` if the robot is initialized, ``False`` otherwise
     """
 
     return _libdrd.drdIsInitialized(ID)
@@ -252,11 +252,11 @@ def isMoving(ID: int = -1) -> bool:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: bool
 
-    :returns: `True` if the robot is moving, `False` otherwise
+    :returns: ``True`` if the robot is moving, ``False`` otherwise
     """
 
     return _libdrd.drdIsMoving(ID)
@@ -280,12 +280,12 @@ def enableSimulator(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdEnableSimulator(ID)
@@ -305,12 +305,12 @@ def autoInit(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdAutoInit(ID)
@@ -333,12 +333,12 @@ def checkInit(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdCheckInit(ID)
@@ -395,36 +395,37 @@ def getPositionAndOrientationFrame(
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises TypeError:
-        If `p_out` is specified and does not support item assignment either
+        If ``p_out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `p_out` is specified and `len(p_out) < 3`.
+        If ``p_out`` is specified and ``len(p_out) < 3``.
 
     :raises TypeError:
-        If `o_out` is specified and does not support item assignment either
+        If ``o_out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `o_out` is specified and `len(o_out) < 3`.
+        If ``o_out`` is specified and ``len(o_out) < 3``.
 
     :raises ValueError:
-        `ID` is not implicitly convertible to C `int`.
+        ``ID`` is not implicitly convertible to a C int.
 
     :returns:
-        A tuple in the form `([px, py, pz], [oa, ob, og], pg, matrix, err)`.
-        `[px, py, pz]` is the position (in [m]) about the X, Y, and Z axes,
-        respectively. `matrix` is a 3x3 rotation matrix that describes
-        the orientation of your device. `err` is 0 or
+        A tuple in the form ``([px, py, pz], [oa, ob, og], pg, matrix, err)``.
+        ``[px, py, pz]`` is the position (in [m]) about the X, Y, and Z axes,
+        respectively. ``matrix`` is a 3x3 rotation matrix that describes
+        the orientation of your device. ``err`` is 0 or
         :data:`forcedimension.dhd.libdhd.TIMEGUARD` on success, -1 otherwise.
 
-    :rtype: Tuple[
-        MutableSequence[float],
-        MutableSequence[float],
-        float,
-        MutableSequence[MutableSequence[float]],
-        int
-    ]
+    :rtype:
+        Tuple[
+            MutableSequence[float],
+            MutableSequence[float],
+            float,
+            MutableSequence[MutableSequence[float]],
+            int
+        ]
     """
 
     px = c_double()
@@ -514,25 +515,25 @@ def getLinearVelocity(
         if v_out is specified and does not support item assignment either
         because its immutable or not support item assignment
 
-    :raises IndexError: If `v_out` is specified and `len(v_out) < 3`.
+    :raises IndexError: If ``v_out`` is specified and ``len(v_out) < 3``.
 
     :raises TypeError:
         If w_out is specified and does not support item assignment either
         because its immutable or does not support item assignment
 
-    :raises IndexError: If `w_out` is specified and `len(w_out) < 3`.
+    :raises IndexError: If ``w_out`` is specified and ``len(w_out) < 3``.
 
     :raises ValueError:
-        `ID` is not implicitly convertible to C `int`.
+        ``ID`` is not implicitly convertible to a C int.
 
     :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
 
     :returns:
-        A tuple in the form `([vx, vy, vz], [wx, wy, wz], err)`.
-        `[vx, vy, vz]` is the linear velocity (in [m/s]) about the X, Y, and Z
-        axes, respectively. `[wx, wy, wz]` is the angular velocity (in [rad/s])
-        about the X, Y, and Z axes, respectively. `err` is either `0` on
-        success and `-1` otherwise.
+        A tuple in the form ``([vx, vy, vz], [wx, wy, wz], err)``.
+        ``[vx, vy, vz]`` is the linear velocity (in [m/s]) about the X, Y, and
+        Z axes, respectively. ``[wx, wy, wz]`` is the angular velocity
+        (in [rad/s]) about the X, Y, and Z axes, respectively.
+        ``err`` is either 0 on success and -1 otherwise.
     """
 
     vx = c_double()
@@ -583,12 +584,12 @@ def getComFreq(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdGetCtrlFreq(ID)
@@ -609,12 +610,12 @@ def start(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdStart(ID)
@@ -635,21 +636,21 @@ def regulatePos(enable: bool, ID: int = -1) -> int:
     By default, delta base, regulation is enabled.
 
     :param bool enable:
-        `True` to enable base regulation, `False` to disable it.
+        ``True`` to enable base regulation, ``False`` to disable it.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `val` is not implicitly convertible to C `int`.
+        ``val`` is not implicitly convertible to a C int.
 
     :raises ValueError:
-        `ID` is not implicitly convertible to C `int`.
+        ``ID`` is not implicitly convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdRegulatePos(enable, ID)
@@ -669,21 +670,21 @@ def regulateRot(enable: bool, ID: int = -1) -> int:
     wrist regulation is enabled.
 
     :param bool enable:
-        `True` to enable wrist regulation, `False` to disable it.
+        ``True`` to enable wrist regulation, ``False`` to disable it.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `val` is not implicitly convertible to C `int`.
+        ``val`` is not implicitly convertible to a C int.
 
     :raises ValueError:
-        `ID` is not implicitly convertible to C `int`.
+        ``ID`` is not implicitly convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdRegulateRot(enable, ID)
@@ -703,21 +704,21 @@ def regulateGrip(enable: bool, ID: int = -1) -> int:
     gripper regulation is enabled.
 
     :param bool enable:
-        `True` to enable gripper regulation, `False` to disable it.
+        ``True`` to enable gripper regulation, ``False`` to disable it.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `val` is not implicitly convertible to C `int`.
+        ``val`` is not implicitly convertible to a C int.
 
     :raises ValueError:
-        `ID` is not implicitly convertible to C `int`.
+        ``ID`` is not implicitly convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdRegulateGrip(enable, ID)
@@ -734,19 +735,19 @@ def enableFilter(enabled: bool, ID: int = -1) -> int:
     :func:`forcedimension.drd.libdrd.trackEnc()`
 
     :param bool enabled:
-        `True` to enable motion filtering, `False` to disable it.
+        ``True`` to enable motion filtering, ``False`` to disable it.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `enabled` is not implicitly convertible to C `int`.
+        ``enabled`` is not implicitly convertible to a C int.
 
     :raises ValueError:
-        `ID` is not implicitly convertible to C `int`.
+        ``ID`` is not implicitly convertible to a C int.
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
     return _libdrd.drdEnableFilter(enabled, ID)
 
@@ -766,19 +767,19 @@ def moveToPos(pos: CartesianTuple, block: bool, ID: int = -1):
         Device ID (see multiple devices section for details), defaults to -1.
 
     :param bool block:
-        If `True`, the call blocks until the destination is reached. If
-        `False`, the call returns immediately.
+        If ``True``, the call blocks until the destination is reached. If
+        ``False``, the call returns immediately.
 
     :param CartesianTuple pos:
         A tuple of x, y, and z coordinates to move the end effector to.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
 
     """
     return _libdrd.drdMoveToPos(pos[0], pos[1], pos[2], block, ID)
@@ -799,19 +800,19 @@ def moveToRot(o: CartesianTuple, block: bool, ID: int = -1):
         Device ID (see multiple devices section for details), defaults to -1.
 
     :param bool block:
-        If `True`, the call blocks until the destination is reached. If
-        `False`, the call returns immediately.
+        If ``True``, the call blocks until the destination is reached. If
+        ``False``, the call returns immediately.
 
     :param CartesianTuple o:
         A tuple of angles about the first, second, and third joints in [rad].
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
 
     """
     return _libdrd.drdMoveToRot(o[0], o[1], o[2], block, ID)
@@ -832,19 +833,19 @@ def moveToGrip(pg: float, block: bool, ID: int = -1):
         Device ID (see multiple devices section for details), defaults to -1.
 
     :param bool block:
-        If `True`, the call blocks until the destination is reached. If
-        `False`, the call returns immediately.
+        If ``True``, the call blocks until the destination is reached. If
+        ``False``, the call returns immediately.
 
     :param float pg:
         Target gripper opening distance in [m].
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
 
     """
     return _libdrd.drdMoveToGrip(pg, block, ID)
@@ -867,12 +868,12 @@ def moveTo(p: Sequence[float], block: bool, ID: int = -1):
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdMoveTo((c_double * 7)(*p), block, ID)
@@ -890,26 +891,26 @@ def moveToEnc(enc: Sequence[int], block: bool, ID: int = -1) -> int:
     controlled by adjusting the trajectory generation parameters.
 
     :param int enc:
-        A sequence of `(enc0, enc1, enc2)` where `enc0`, `enc1`, and
-        `enc2` are the target encoder position on axis 0, 1, and 2.
+        A sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
+        ``enc2`` are the target encoder position on axis 0, 1, and 2.
 
     :param bool block:
-        If `True`, the call blocks until the destination is reached. If
-        `False`, the call returns immediately.
+        If ``True``, the call blocks until the destination is reached. If
+        ``False``, the call returns immediately.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If any of elements of enc are not implicitly convertible to C `int`.
+        If any of elements of enc are not implicitly convertible to a C int.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdMoveToEnc(enc[0], enc[1], enc[2], block, ID)
@@ -930,22 +931,22 @@ def moveToAllEnc(enc: Sequence[int], block: bool, ID: int = -1):
     :param int enc: Target encoder positions.
 
     :param bool block:
-        If `True`, the call blocks until the destination is reached.
-        If `False`, the call returns immediately.
+        If ``True``, the call blocks until the destination is reached.
+        If ``False``, the call returns immediately.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If any of elements of enc are not implicitly convertible to C `int`.
+        If any of elements of enc are not implicitly convertible to a C int.
 
     :raises ValueError:
-        If ID is not convertible to C `int`.
+        If ID is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
     return _libdrd.drdMoveToAllEnc((c_int * 7)(*enc), block, ID)
 
@@ -968,12 +969,12 @@ def hold(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdLock(ID)
@@ -991,12 +992,12 @@ def stop(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdStop(ID)
@@ -1016,15 +1017,15 @@ def getPriorities(ID: int = -1) -> Tuple[int, int, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: Tuple[int, int, int]
 
     :returns:
-        A tuple in the form `(prio, ctrlprio, err)`. `prio` is the calling
-        thread's priority level and `ctrlprio` is the control thread priority
-        level. These values are system independent. `err` is `0` on success,
-        and `-1` otherwise.
+        A tuple in the form ``(prio, ctrlprio, err)``. ``prio`` is the calling
+        thread's priority level and ``ctrlprio`` is the control thread priority
+        level. These values are system independent. ``err`` is 0 on success,
+        and -1 otherwise.
     """
     prio = c_int()
     ctrlprio = c_int()
@@ -1047,9 +1048,9 @@ def setPriorities(prio: int, ctrlprio: int, ID: int = -1) -> int:
     Note
     ----
     Please keep in mind that administrator/superuser access is required on many
-    platforms in order to increase thread priority. The first argument, `prio`
-    is always applied to the calling thread, even when the call returns an
-    error.
+    platforms in order to increase thread priority. The first argument,
+    ``prio`` is always applied to the calling thread, even when the call returns
+    an error.
 
     :param int prio:
         Calling thread priority level (value is system dependent)
@@ -1061,18 +1062,18 @@ def setPriorities(prio: int, ctrlprio: int, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `prio` is not convertible to C `int`.
+        ``prio`` is not convertible to a C int.
 
     :raises ValueError:
-        `ctrlprio` is not convertible to C `int`.
+        ``ctrlprio`` is not convertible to a C int.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdSetPriorities(prio, ctrlprio, ID)
@@ -1092,15 +1093,15 @@ def getEncPGain(gain: float, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `gain` is not convertible to C `int`.
+        ``gain`` is not convertible to a C int.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdSetEncPGain(gain, ID)
@@ -1119,7 +1120,7 @@ def setEncPGain(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
@@ -1147,15 +1148,15 @@ def setEncIGain(gain: float, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `gain` is not convertible to C `int`.
+        ``gain`` is not convertible to a C int.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdSetEncIGain(gain, ID)
@@ -1174,7 +1175,7 @@ def getEncIGain(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
@@ -1202,15 +1203,15 @@ def setEncDGain(gain: float, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `gain` is not convertible to C `int`.
+        ``gain`` is not convertible to a C int.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdSetEncDGain(gain, ID)
@@ -1229,7 +1230,7 @@ def getEncDGain(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
@@ -1255,21 +1256,21 @@ def setMotRatioMax(scale: float, ID: int = -1) -> int:
     delicate obstacles are present.
 
     :param float scale:
-        The joint torque scaling factor (must be between `0.0` and `1.0`).
+        The joint torque scaling factor (must be between ``0.0`` and ``1.0``).
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        `scale` is not convertible to C `int`.
+        ``scale`` is not convertible to a C int.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdSetMotRatioMax(scale, ID)
@@ -1288,12 +1289,12 @@ def getMotRatioMax(ID: int = -1) -> float:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: float
 
     :returns:
-        The maximum joint torque ratio (between `0.0` and `1.0`)
+        The maximum joint torque ratio (between ``0.0`` and ``1.0``)
     """
 
     return _libdrd.drdGetMotRatioMax(ID)
@@ -1317,21 +1318,21 @@ def setEncMoveParam(
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :raises ValueError:
-        `vmax` is not convertible to C `int`.
+        ``vmax`` is not convertible to a C int.
 
     :raises ValueError:
-        `amax` is not convertible to C `int`.
+        ``amax`` is not convertible to a C int.
 
     :raises ValueError:
-        `jerk` is not convertible to C `int`.
+        ``jerk`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdSetEncMoveParam(amax, vmax, jerk, ID)
@@ -1360,21 +1361,21 @@ def setEncTrackParam(
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :raises ValueError:
-        `vmax` is not convertible to C `int`.
+        ``vmax`` is not convertible to a C int.
 
     :raises ValueError:
-        `amax` is not convertible to C `int`.
+        ``amax`` is not convertible to a C int.
 
     :raises ValueError:
-        `jerk` is not convertible to C `int`.
+        ``jerk`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdSetEncMoveParam(amax, vmax, jerk, ID)
@@ -1403,21 +1404,21 @@ def setPosMoveParam(
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :raises ValueError:
-        `vmax` is not convertible to C `int`.
+        ``vmax`` is not convertible to a C int.
 
     :raises ValueError:
-        `amax` is not convertible to C `int`.
+        ``amax`` is not convertible to a C int.
 
     :raises ValueError:
-        `jerk` is not convertible to C `int`.
+        ``jerk`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdSetPosMoveParam(amax, vmax, jerk, ID)
@@ -1446,21 +1447,21 @@ def setPosTrackParam(
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :raises ValueError:
-        `vmax` is not convertible to C `int`.
+        ``vmax`` is not convertible to a C int.
 
     :raises ValueError:
-        `amax` is not convertible to C `int`.
+        ``amax`` is not convertible to a C int.
 
     :raises ValueError:
-        `jerk` is not convertible to C `int`.
+        ``jerk`` is not convertible to a C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, and -1 otherwise.
     """
 
     return _libdrd.drdSetPosMoveParam(amax, vmax, jerk, ID)
@@ -1480,14 +1481,15 @@ def getEncMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: Tuple[int, float, float, float]
 
     :returns:
-        A tuple in the form `(vmax, amax, jerk, err)`. `err` is `0` on success,
-        and `-1` otherwise. `vmax` is the max velocity in [m/s], `amax` is the
-        max acceleration in [m/s^2], and `jerk` is the jerk in [m/s^3].
+        A tuple in the form ``(vmax, amax, jerk, err)``.
+        ``vmax`` is the max velocity in [m/s], ``amax`` is the
+        max acceleration in [m/s^2], and ``jerk`` is the jerk in [m/s^3].
+        ``err`` is 0 on success, and -1 otherwise.
     """
     amax = c_double()
     vmax = c_double()
@@ -1512,14 +1514,14 @@ def getEncTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: Tuple[int, float, float, float]
 
     :returns:
-        A tuple in the form `(vmax, amax, jerk, err)`. `vmax` is the max
-        velocity in [m/s], `amax` is the max acceleration in [m/s^2], and
-        `jerk` is the jerk in [m/s^3]. `err` is `0` on success, and `-1`
+        A tuple in the form ``(vmax, amax, jerk, err)``. ``vmax`` is the max
+        velocity in [m/s], ``amax`` is the max acceleration in [m/s^2], and
+        ``jerk`` is the jerk in [m/s^3]. ``err`` is 0 on success, and -1
         otherwise.
     """
     amax = c_double()
@@ -1546,14 +1548,14 @@ def getPosMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: Tuple[int, float, float, float]
 
     :returns:
-        A tuple in the form `(vmax, amax, jerk, err)`. `vmax` is the max
-        velocity in [m/s], `amax` is the max acceleration in [m/s^2], and
-        `jerk` is the jerk in [m/s^3]. `err` is `0` on success, and `-1`
+        A tuple in the form ``(vmax, amax, jerk, err)``. ``vmax`` is the max
+        velocity in [m/s], ``amax`` is the max acceleration in [m/s^2], and
+        ``jerk`` is the jerk in [m/s^3]. ``err`` is 0 on success, and -1
         otherwise.
     """
     amax = c_double()
@@ -1579,14 +1581,14 @@ def getPosTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `int`.
+        If ``ID`` is not convertible to a C int.
 
     :rtype: Tuple[float, float, float, int]
 
     :returns:
-        A tuple in the form `(vmax, amax, jerk, err)`. `vmax` is the max
-        velocity in [m/s], `amax` is the max acceleration in [m/s^2], and
-        `jerk` is the jerk in [m/s^3]. `err` is `0` on success, and `-1`
+        A tuple in the form ``(vmax, amax, jerk, err)``. ``vmax`` is the max
+        velocity in [m/s], ``amax`` is the max acceleration in [m/s^2], and
+        ``jerk`` is the jerk in [m/s^3]. ``err`` is 0 on success, and -1
         otherwise.
     """
     amax = c_double()

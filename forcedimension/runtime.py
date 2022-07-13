@@ -1,13 +1,18 @@
 import ctypes
-import os, sys, platform
-import re, glob
+import glob
+import os
+import platform
+import re
+import sys
+
+from functools import lru_cache
 
 VERSION_TARGET_FULL = "3.9.1-3454"
 VERSION_TARGET = VERSION_TARGET_FULL.partition("-")[0]
 
 
 def version_tuple(version_string):
-    res = re.search("(\d+)\.(\d+)\.(\d+)\-(\d+)", version_string)
+    res = re.search(r"(\d+)\.(\d+)\.(\d+)\-(\d+)", version_string)
 
     if (res.groups()):
         if (len(res.groups()) != 4):
@@ -18,6 +23,7 @@ def version_tuple(version_string):
     return tuple(int(v) for v in res.groups())
 
 
+@lru_cache
 def load(lib_name, search_dirs=(), silent=False):
     if (sys.platform == "win32"):
         lib_ext = ".dll"
@@ -46,11 +52,11 @@ def load(lib_name, search_dirs=(), silent=False):
         )
 
         print(os.path.join(
-                        "c:",
-                        os.sep,
-                        "Program Files",
-                        "Force Dimension"
-                    ))
+            "c:",
+            os.sep,
+            "Program Files",
+            "Force Dimension"
+        ))
     elif sys.platform.startswith("linux"):
         search_dirs.extend([
             "/usr/local",
@@ -134,5 +140,6 @@ def load(lib_name, search_dirs=(), silent=False):
 
             return lib
     if (not silent):
-        sys.stderr.write("Could not find {}. Is it installed?\n".format(lib_name))
+        sys.stderr.write(
+            "Could not find {}. Is it installed?\n".format(lib_name))
     return None

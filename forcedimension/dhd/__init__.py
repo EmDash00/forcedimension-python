@@ -1,30 +1,36 @@
-__all__ = ['expert']
-
-
-import forcedimension.runtime as runtime
-
-from typing import Tuple, MutableSequence, Union, Optional, cast
-
-from ctypes import c_int, c_uint, c_bool, c_byte, c_ushort, c_char_p, c_double
-from ctypes import byref, POINTER
-
-from forcedimension.dhd.constants import (
-    MAX_DOF, MAX_BUTTONS, TIMEGUARD,
-    VELOCITY_WINDOWING, VELOCITY_WINDOW,
-    MAX_STATUS,
-    MOTOR_SATURATED,
-    DeviceType, ErrorNum,
-    DeltaMotorID, DeltaEncID,
-    WristMotorID, WristEncID,
-    State, StatusIndex, ComMode, ThreadPriority
-)
+from ctypes import c_bool, c_byte, c_char_p, c_double, c_int, c_uint, c_ushort
+from ctypes import POINTER, byref
+from typing import MutableSequence, Optional, Tuple, Union, cast
 
 from forcedimension.dhd.adaptors import (
-    StatusTuple, VersionTuple, CartesianTuple
+    CartesianTuple, StatusTuple, VersionTuple
 )
 
+from forcedimension.dhd.constants import (
+    ComMode,
+    DeltaEncID,
+    DeltaMotorID,
+    DeviceType,
+    ErrorNum,
+    MAX_BUTTONS,
+    MAX_DOF,
+    MAX_STATUS,
+    MOTOR_SATURATED,
+    State,
+    StatusIndex,
+    TIMEGUARD,
+    ThreadPriority,
+    VELOCITY_WINDOW,
+    VELOCITY_WINDOWING,
+    WristEncID,
+    WristMotorID,
+)
+import forcedimension.runtime as _runtime
+
+from . import expert
+
 # Load the runtime from the backend
-_libdhd = runtime.load("libdrd")
+_libdhd = _runtime.load("libdrd")
 
 if _libdhd is None:
     raise ImportError("There were problems loading libdhd.")
@@ -39,7 +45,7 @@ def enableSimulator(enable: bool) -> None:
     loopback interface.
 
     :param enable:
-        `True` to enable, `False` to disable
+        ``True`` to enable, ``False`` to disable
     """
     _libdhd.dhdEnableSimulator(enable)
 
@@ -60,7 +66,7 @@ def getDeviceCount() -> int:
     :rtype: int
 
     :returns:
-        The number of connected devices on success, and `-1` otherwise.
+        The number of connected devices on success, -1 otherwise.
     """
 
     return _libdhd.dhdGetDeviceCount()
@@ -82,7 +88,7 @@ def getAvailableCount() -> int:
     :rtype: int
 
     :returns:
-        The number of devices available on success, and `-1` otherwise.
+        The number of devices available on success, -1 otherwise.
     """
     return _libdhd.dhdGetAvailableCount()
 
@@ -105,12 +111,12 @@ def setDevice(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `char`.
+        If ``ID`` is not convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.setDevice(ID)
@@ -145,13 +151,13 @@ def getSerialNumber(ID: int = -1) -> Tuple[int, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C char.
+        If ``ID`` is not convertible to C char.
 
     :rtype: Tuple[int, int]
 
     :returns:
-        A tuple in the form `(serial number, err)`. `serial` is the device
-        serial number. `err` is `0` on success, and `-1` otherwise.
+        A tuple in the form ``(serial number, err)``. ``serial`` is the device
+        serial number. ``err`` is 0 on success, -1 otherwise.
     """
     sn = c_ushort()
 
@@ -172,14 +178,15 @@ def open() -> int:
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
-    See also
-    --------
-    :func:`forcedimension`dhd.libdhd.openID()
-
     :rtype: int
 
     :returns:
-        The device ID on success, and `-1` otherwise.
+        The device ID on success, -1 otherwise.
+
+    See Also
+    --------
+    :func:`forcedimension`dhd.libdhd.openID()
+
     """
     return _libdhd.dhdOpen()
 
@@ -198,18 +205,18 @@ def openType(device_type: DeviceType) -> int:
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
-    See also
-    --------
-    :func:`forcedimension.dhd.openID()`
-    :class:`forcedimension.dhd.adaptors.DeviceType`
-
     :param int device_type:
         Requested DeviceType to open.
 
     :rtype: int
 
     :returns:
-        The device ID on success, and `-1` otherwise.
+        The device ID on success, -1 otherwise.
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.openID()`
+    :class:`forcedimension.dhd.adaptors.DeviceType`
     """
 
     return _libdhd.dhdOpenType(device_type)
@@ -228,17 +235,17 @@ def openSerial(serial: int) -> int:
     device. See the multiple device section for more information on using
     multiple devices on the same computer.
 
-    See also
-    --------
-    :func:`forcedimension.dhd.libdhd.openID()`
-
     :param int serial:
         Requested system serial number.
 
     :rtype: int
 
     :returns:
-        The device ID on success, and `-1` otherwise.
+        The device ID on success, -1 otherwise.
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.libdhd.openID()`
     """
 
     return _libdhd.dhdOpenSerial(serial)
@@ -259,22 +266,22 @@ def openID(index: int) -> int:
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
-    See also
-    --------
-    :func:`forcedimension.dhd.libdhd.open()`
-
-    :param in index:
+    :param int index:
         The device enumeration index, as assigned by the
         underlying operating system (must be between 0 and the number of
         devices connected to the system).
 
     :raises ValueError:
-        If `index` is not convertible to C `int`.
+        If ``index`` is not convertible to C int.
 
     :rtype: int
 
     :returns:
-        The device ID on success, and `-1` otherwise.
+        The device ID on success, -1 otherwise.
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.libdhd.open()`
     """
 
     return _libdhd.dhdOpenID(index)
@@ -292,12 +299,12 @@ def close(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
     return _libdhd.dhdClose(ID)
 
@@ -315,12 +322,12 @@ def stop(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
     return _libdhd.dhdStop(ID)
 
@@ -337,12 +344,12 @@ def getComMode(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        The current COM operation mode on success, and `-1` otherwise.
+        The current COM operation mode on success, -1 otherwise.
     """
 
     return _libdhd.dhdGetComMode(ID)
@@ -357,21 +364,21 @@ def enableForce(enable: bool, ID: int = -1) -> int:
     Enable the force mode in the device controller.
 
     :param bool enable:
-        `True` to enable force, `False` to disable it.
+        ``True`` to enable force, ``False`` to disable it.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `val` is not implicitly convertible to C `bool`.
+        If ``val`` is not implicitly convertible to C bool.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `int`.
+        If ``ID`` is not implicitly convertible to C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdEnableForce(enable, ID)
@@ -386,21 +393,21 @@ def enableGripperForce(enable: bool, ID: int = -1) -> int:
     Enable the force mode in the device controller.
 
     :param bool enable:
-        `True` to enable force, `False` to disable it.
+        ``True`` to enable force, ``False`` to disable it.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `val` is not implicitly convertible to C `bool`.
+        If ``val`` is not implicitly convertible to C bool.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `int`.
+        If ``ID`` is not implicitly convertible to C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdEnableGripperForce(enable, ID)
@@ -420,12 +427,12 @@ def getSystemType(ID: int = -1) -> DeviceType:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        The device type on success, and `-1` otherwise.
+        The device type on success, -1 otherwise.
     """
 
     return DeviceType(_libdhd.dhdGetSystemType(ID))
@@ -445,7 +452,7 @@ def getSystemName(ID: int = -1) -> Union[str, None]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
@@ -475,13 +482,13 @@ def getVersion(ID: int = -1) -> Tuple[float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `char`.
+        If ``ID`` is not convertible to C char.
 
     :rtype: Tuple[float, int]
 
     :returns:
-        A tuple in the form `(version, err)`. `version` is the device
-        controller version. `err` is `0` on success, and `-1` otherwise.
+        A tuple in the form ``(version, err)``. ``version`` is the device
+        controller version. ``err`` is 0 on success, -1 otherwise.
     """
 
     ver = c_double()
@@ -504,14 +511,14 @@ def getSDKVersion() -> VersionTuple:
     release, revision). Versions of the ForceDimensionSDK
     are reported as major.minor.release-revision by ForceDimension.
 
-    See also
-    --------
-    :class:`forcedimension.dhd.adaptors.VersionTuple`
-
     :rtype: VersionTuple
 
     :returns:
-        A `VersionTuple` that represents the version.
+        A ``VersionTuple`` that represents the version.
+
+    See Also
+    --------
+    :class:`forcedimension.dhd.adaptors.VersionTuple`
     """
     major = c_int()
     minor = c_int()
@@ -546,13 +553,13 @@ def getStatus(ID: int = -1) -> Tuple[StatusTuple, int]:
         Device ID (see multiple devices section for details), defaults to -1
 
     :raises ValueError:
-        If `ID` is not convertible to C `char`.
+        If ``ID`` is not convertible to C char.
 
     :rtype: Tuple[StatusTuple, int]
 
     :returns:
-        A tuple in the form `(status, err)`. `status` is a `StatusTuple`
-        containing status information. `err` is `0` on success, and `-1`
+        A tuple in the form ``(status, err)``. ``status`` is a ``StatusTuple``
+        containing status information. ``err`` is 0 on success, -1
         otherwise.
     """
 
@@ -576,14 +583,14 @@ def getDeviceAngleRad(ID: int = -1) -> Tuple[float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `char`.
+        If ``ID`` is not convertible to C char.
 
     :rtype: Tuple[float, int]
 
     :returns:
-        A tuple in the form `(angle_rad, err)`. `angle_rad` is the device
-        baseplate angle (in [rad]) around the Y axis. `err` is `0` on success,
-        and `-1` otherwise.
+        A tuple in the form ``(angle_rad, err)``. ``angle_rad`` is the device
+        baseplate angle (in [rad]) around the Y axis. ``err`` is 0 on success,
+        and -1 otherwise.
     """
 
     angle_rad = c_double()
@@ -605,14 +612,14 @@ def getDeviceAngleDeg(ID: int = -1) -> Tuple[float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not convertible to C `char`.
+        If ``ID`` is not convertible to C char.
 
     :rtype: Tuple[float, int]
 
     :returns:
-        A tuple in the form `(angle_deg, err)`. `angle_deg` is the device
-        baseplate angle (in [deg]) around the Y axis. `err` is `0` on success,
-        and `-1` otherwise.
+        A tuple in the form ``(angle_deg, err)``. ``angle_deg`` is the device
+        baseplate angle (in [deg]) around the Y axis. ``err`` is 0 on success,
+        and -1 otherwise.
     """
 
     angle_deg = c_double()
@@ -635,13 +642,13 @@ def getEffectorMass(ID: int = -1) -> Tuple[float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: Tuple[float, int]
 
     :returns:
-        A tuple in the form `(mass, err)`. `mass` is the currently defined mass
-        for the end-effector. `err` is `0` on success, and `-1` otherwise.
+        A tuple in the form ``(mass, err)``. ``mass`` is the currently defined
+        mass for the end-effector. ``err`` is 0 on success, -1 otherwise.
     """
 
     mass = c_double()
@@ -664,7 +671,7 @@ def getButton(index: int, ID: int = -1) -> Union[int, State]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: Union[int, State]
 
@@ -691,7 +698,7 @@ def getButtonMask(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
@@ -723,15 +730,15 @@ def setOutput(output: int, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-        If `output` is not implicitly convertible to C `uint`.
+        If ``output`` is not implicitly convertible to C uint.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetOutput(output, ID)
@@ -743,8 +750,8 @@ _libdhd.dhdIsLeftHanded.restype = c_bool
 
 def isLeftHanded(ID: int = -1) -> bool:
     """
-     `True` if the device is configured for left-handed use,
-    `False` otherwise.
+     ``True`` if the device is configured for left-handed use,
+    ``False`` otherwise.
 
     This feature only applies to the following devices:
     :data:`forcedimension.dhd.constants.DeviceType.OMEGA3`
@@ -758,12 +765,12 @@ def isLeftHanded(ID: int = -1) -> bool:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: bool
 
     :returns:
-        `True` if the device is configured for left-handed use, and `False`
+        ``True`` if the device is configured for left-handed use, and ``False``
         otherwise.
     """
 
@@ -776,7 +783,7 @@ _libdhd.dhdHasBase.restype = c_bool
 
 def hasBase(ID: int = -1) -> bool:
     """
-     `True` if the device has a base, `False` otherwise.
+     ``True`` if the device has a base, ``False`` otherwise.
 
     This feature only applies to the following devices:
 
@@ -793,12 +800,12 @@ def hasBase(ID: int = -1) -> bool:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: bool
 
     :returns:
-        `True` if the device has a base, and `False` otherwise.
+        ``True`` if the device has a base, and ``False`` otherwise.
     """
 
     return _libdhd.dhdHasBase(ID)
@@ -810,7 +817,7 @@ _libdhd.dhdHasWrist.restype = c_bool
 
 def hasWrist(ID: int = -1) -> bool:
     """
-     `True` if the device has a wrist, `False` otherwise.
+     ``True`` if the device has a wrist, ``False`` otherwise.
 
     This feature only applies to the following devices:
 
@@ -825,12 +832,12 @@ def hasWrist(ID: int = -1) -> bool:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: bool
 
     :returns:
-        `True` if the device has a wrist, and `False` otherwise.
+        ``True`` if the device has a wrist, and ``False`` otherwise.
     """
 
     return _libdhd.dhdHasWrist(ID)
@@ -842,7 +849,7 @@ _libdhd.dhdHasActiveWrist.restype = c_bool
 
 def hasActiveWrist(ID: int = -1) -> bool:
     """
-     `True` if the device has an active wrist, `False` otherwise.
+     ``True`` if the device has an active wrist, ``False`` otherwise.
 
     This feature only applies to the following devices:
 
@@ -857,12 +864,12 @@ def hasActiveWrist(ID: int = -1) -> bool:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: bool
 
     :returns:
-        `True` if the device has an active wrist, and `False` otherwise.
+        ``True`` if the device has an active wrist, and ``False`` otherwise.
     """
 
     return _libdhd.dhdHasActiveWrist(ID)
@@ -887,12 +894,12 @@ def hasGripper(ID: int = -1) -> bool:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: bool
 
     :returns:
-        `True` if the device has a gripper, and `False` otherwise.
+        ``True`` if the device has a gripper, and ``False`` otherwise.
     """
 
     return _libdhd.dhdHasGripper(ID)
@@ -917,12 +924,12 @@ def hasActiveGripper(ID: int = -1) -> bool:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: bool
 
     :returns:
-        `True` if the device has an active gripper, and `False` otherwise.
+        ``True`` if the device has an active gripper, and ``False`` otherwise.
     """
 
     return _libdhd.dhdHasActiveGripper(ID)
@@ -940,12 +947,12 @@ def reset(ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-         `0` on success, and `-1` otherwise.
+         0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdReset(ID)
@@ -971,15 +978,15 @@ def waitForReset(timeout: Optional[int] = None, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `timeout` is specified and not implicitly convertible to C `int`.
+        If ``timeout`` is specified and not implicitly convertible to C int.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     if timeout is not None:
@@ -1004,15 +1011,15 @@ def setStandardGravity(g: float, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `g` is not implicitly convertible to C `double`.
+        If ``g`` is not implicitly convertible to C double.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetStandardGravity(g, ID)
@@ -1027,22 +1034,22 @@ def setGravityCompensation(enable: bool, ID: int = -1) -> int:
     Enable/disable gravity compensation.
 
     :param bool enable:
-        `True` to turn on gravity compensation, `False` to turn off
+        ``True`` to turn on gravity compensation, ``False`` to turn off
         gravity compensation.
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `val` is not implicitly convertible to C `bool`.
+        If ``val`` is not implicitly convertible to C bool.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetStandardGravity(enable, ID)
@@ -1057,22 +1064,22 @@ def setBrakes(enable: bool, ID: int = -1) -> int:
     Enable/disable [device electromagnetic brakes].
 
     :param bool enable:
-        `True` to turn on the device electromagnetic brakes, `False` to turn
-        off the device electromagnetic brakes.
+        ``True`` to turn on the device electromagnetic brakes, ``False`` to
+        turn off the device electromagnetic brakes.
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `val` is not implicitly convertible to C `bool`.
+        If ``val`` is not implicitly convertible to C bool.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetBrakes(enable, ID)
@@ -1086,13 +1093,9 @@ def setDeviceAngleRad(angle: float, ID: int = -1) -> int:
     """
     Set the device base plate angle around the (inverted) Y axis. Please refer
     to your device user manual for more information on your device coordinate
-    system. An angle value of 0 corresponds to the device "upright" position,
+    system. An angle value of 0 refers to the device "upright" position,
     with its base plate perpendicular to axis X. An angle value of π/2
-    corresponds to the device base plate resting horizontally.
-
-    See also
-    --------
-    :func:`forcedimension.dhd.setDeviceAngleDeg()`
+    refers to the device base plate resting horizontally.
 
     :param float angle:
         device base plate angle [rad]
@@ -1101,15 +1104,19 @@ def setDeviceAngleRad(angle: float, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `angle` is not implicitly convertible to C `double`.
+        If ``angle`` is not implicitly convertible to C double.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-         `0` on success, and `-1` otherwise.
+         0 on success, -1 otherwise.
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.setDeviceAngleDeg()`
     """
 
     return _libdhd.dhdSetDeviceAngleRad(angle, ID)
@@ -1123,13 +1130,9 @@ def setDeviceAngleDeg(angle: float, ID: int = -1) -> int:
     """
     Set the device base plate angle around the (inverted) Y axis. Please refer
     to your device user manual for more information on your device coordinate
-    system. An angle value of 0 corresponds to the device "upright" position,
+    system. An angle value of 0 refers to the device "upright" position,
     with its base plate perpendicular to axis X. An angle value of 90
-    corresponds to the device base plate resting horizontally.
-
-    See also
-    --------
-    :func:`forcedimension.dhd.setDeviceAngleRad()`
+    refers to the device base plate resting horizontally.
 
     :param float angle:
         device base plate angle [deg]
@@ -1138,15 +1141,19 @@ def setDeviceAngleDeg(angle: float, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `angle` is not implicitly convertible to C `double`.
+        If ``angle`` is not implicitly convertible to C double.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-         `0` on success, and `-1` otherwise.
+         0 on success, -1 otherwise.
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.setDeviceAngleRad()`
     """
 
     return _libdhd.dhdSetDeviceAngleDeg(angle, ID)
@@ -1162,10 +1169,6 @@ def setEffectorMass(mass: float, ID: int = -1) -> int:
     accurate gravity compensation when custom-made or modified end-effectors
     are used.
 
-    See also
-    --------
-    :func:`forcedimension.dhd.getEffectorMass()`
-
     :param float mass:
         The actual end-effector mass in [kg].
 
@@ -1173,15 +1176,19 @@ def setEffectorMass(mass: float, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `angle` is not implicitly convertible to C `double`.
+        If ``angle`` is not implicitly convertible to C double.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-         `0` on success, and `-1` otherwise.
+         0 on success, -1 otherwise.
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.getEffectorMass()`
     """
 
     return _libdhd.dhdSetEffectorMass(mass, ID)
@@ -1215,20 +1222,20 @@ def getPosition(
         mutable sequence passed in.
 
     :raises TypeError:
-        If `out` is specified and does not support item assignment either
+        If ``out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `out` is specified and `len(out) < 3`.
+        If ``out`` is specified and ``len(out) < 3``.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `([px, py, pz], err)`. `[px, py, pz]` is the
+        A tuple in the form ``([px, py, pz], err)``. ``[px, py, pz]`` is the
         position (in [m]) of the end-effector about the X, Y, and Z axes,
-        respectively. `err` is either 0 or
-        :data:`forcedimension.dhd.TIMEGUARD` on success, and `-1` otherwise.
+        respectively. ``err`` is either 0 or
+        :data:`forcedimension.dhd.TIMEGUARD` on success, -1 otherwise.
 
     :rtype: Tuple[MutableSequence[float], int]
     """
@@ -1277,22 +1284,22 @@ def getForce(
         mutable sequence passed in.
 
     :raises TypeError:
-        If `out` is specified and does not support item.
+        If ``out`` is specified and does not support item.
         assignment either because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `out` is specified and `len(out) < 3`.
+        If ``out`` is specified and ``len(out) < 3``.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `([fx, fy, fz], err)`. `[fx, fy, fz]` are the
+        A tuple in the form ``([fx, fy, fz], err)``. ``[fx, fy, fz]`` are the
         translational forces applied to the end-effector (in [N]) about the
-        X, Y, and Z axes, respectively. `err` is `0` on success, and `-1`
+        X, Y, and Z axes, respectively. ``err`` is 0 on success, -1
         otherwise.
 
     :rtype: Tuple[MutableSequence[float], int]
@@ -1336,14 +1343,14 @@ def setForce(f: CartesianTuple, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-        If `any` members of f are not implicitly convertible to C `double`.
+        If ``any`` members of f are not implicitly convertible to C double.
 
     :returns:
         0 or :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on
-        success, and `-1` otherwise.
+        success, -1 otherwise.
 
     :rtype: Tuple[MutableSequence[float], int]
     """
@@ -1365,7 +1372,7 @@ def getOrientationRad(
 
     Note:
 
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33` and
     :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
 
     have angles that are instead computed with respect to their internal
@@ -1393,23 +1400,23 @@ def getOrientationRad(
         sequence passed in.
 
     :raises TypeError:
-        If `out` is specified and does not support item.
+        If ``out`` is specified and does not support item.
     assignment either because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `out` is specified and `len(out) < 3`.
+        If ``out`` is specified and ``len(out) < 3``.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `([oa, ob, og], err)`.
-        `[oa, ob, og]` is the device orientation (in [rad]) around the
-        first, second, and third wrist joints, respectively. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        A tuple in the form ``([oa, ob, og], err)``.
+        ``[oa, ob, og]`` is the device orientation (in [rad]) around the
+        first, second, and third wrist joints, respectively. ``err`` is 0 or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
     :rtype: Tuple[MutableSequence[float], int]
@@ -1479,20 +1486,20 @@ def getOrientationDeg(
         sequence passed in.
 
     :raises TypeError:
-        If `out` is specified and does not support item assignment either
+        If ``out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `out` is specified and `len(out) < 3`.
+        If ``out`` is specified and ``len(out) < 3``.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `([oa, ob, og], err)`. `[oa, ob, og]` is
+        A tuple in the form ``([oa, ob, og], err)``. ``[oa, ob, og]`` is
         the device orientation  (in [deg]) around the first, second, and third
-        wrist joints, respectively. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        wrist joints, respectively. ``err`` is 0 or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
     :rtype: Tuple[MutableSequence[float], int]
@@ -1579,30 +1586,30 @@ def getPositionAndOrientationRad(
         sequence passed in.
 
     :raises TypeError:
-        If `p_out` is specified and does not support item assignment either
+        If ``p_out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises TypeError:
-        If `o_out` is specified and does not support item assignment either
+        If ``o_out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `p_out` is specified and len(p_out) < 3.
+        If ``p_out`` is specified and len(p_out) < 3.
 
     :raises IndexError:
-        If `o_out` is specified and len(p_out) < 3.
+        If ``o_out`` is specified and len(p_out) < 3.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `([px, py, pz], [oa, ob, og], err)`.
-        `[oa, ob, og]` is the device orientation (in [rad]) around the first,
+        A tuple in the form ``([px, py, pz], [oa, ob, og], err)``.
+        ``[oa, ob, og]`` is the device orientation (in [rad]) around the first,
         second, and third wrist joints, respectively. [px, py, pz] the
         end-effector's position (in [m]) about the X, Y, and Z axes,
         respectively.
-        `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        ``err`` is 0 or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
     :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
@@ -1698,29 +1705,29 @@ def getPositionAndOrientationDeg(
         sequence passed in.
 
     :raises TypeError:
-        If `p_out` is specified and does not support item assignment either
+        If ``p_out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises TypeError:
-        If `o_out` is specified and does not support item assignment either
+        If ``o_out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `p_out` is specified and len(p_out) < 3.
+        If ``p_out`` is specified and len(p_out) < 3.
 
     :raises IndexError:
-        If `o_out` is specified and len(p_out) < 3.
+        If ``o_out`` is specified and len(p_out) < 3.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `([px, py, pz], [oa, ob, og], err)`.
-        `[px, py, pz]` is the end-effector's position (in [m]) about the X, Y,
-        and Z axes, respectively. `[oa, ob, og]` is the device orientation
-        (in [deg]) around the first, second, and third wrist joints,
-        respectively. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        A tuple in the form ``([px, py, pz], [oa, ob, og], err)``.
+        ``[px, py, pz]`` is the end-effector's position (in [m]) about the
+        X, Y, and Z axes, respectively. ``[oa, ob, og]`` is the device
+        orientation (in [deg]) around the first, second, and third wrist
+        joints, respectively. ``err`` is 0 or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
     :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
@@ -1783,31 +1790,31 @@ def getPositionAndOrientationFrame(
     information on your device coordinate system.
 
     :raises TypeError:
-        If `matrix_out` is specified and does not support item assignment,
+        If ``matrix_out`` is specified and does not support item assignment,
         either because it is not subscriptable or because it is not mutable.
 
     :raises IndexError:
-        If `matrix_out` is specified any dimension is less than length 3.
+        If ``matrix_out`` is specified any dimension is less than length 3.
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises TypeError:
-        If `p_out` is specified and does not support item assignment either
+        If ``p_out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `p_out` is specified and `len(out) < 3`.
+        If ``p_out`` is specified and ``len(out) < 3``.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `([px, py, pz], frame, err)`.
-        `[px, py, pz]` is the end-effector's position (in [m]) about the X, Y,
-        and  Z axes, respectively. `frame` is a 3x3 rotation matrix that
-        describes the orientation of your device. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        A tuple in the form ``([px, py, pz], frame, err)``.
+        ``[px, py, pz]`` is the end-effector's position (in [m]) about the X,
+        Y, and  Z axes, respectively. ``frame`` is a 3x3 rotation matrix that
+        describes the orientation of your device. ``err`` is 0 or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
     :rtype Tuple[
@@ -1885,14 +1892,14 @@ def getForceAndTorque(
         sequence passed in.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form  `([fx, fy, fz], [tx, ty, tz], err)`.
-        `[fx, fy, fz]` are translation forces applied to the end-effector
-        (in [N])  about the X, Y, and Z axes, respectively. `[tx, ty, tz]`
-        corresponds to the torques applied to the end-effector (in [Nm]) about
-        the X, Y, and Z axes. `err` is 0, on success, and `-1` otherwise.
+        A tuple in the form  ``([fx, fy, fz], [tx, ty, tz], err)``.
+        ``[fx, fy, fz]`` are translation forces applied to the end-effector
+        (in [N])  about the X, Y, and Z axes, respectively. ``[tx, ty, tz]``
+        refers to the torques applied to the end-effector (in [Nm]) about
+        the X, Y, and Z axes. ``err`` is 0, on success, -1 otherwise.
 
     :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
 
@@ -1951,12 +1958,12 @@ def setForceAndTorque(
     end-effector.
 
     :param CartesianTuple f:
-        Translational force vector `(fx, fy, fz)` where `fx`, `fy`, and `fz`
-        are the translation force (in [N]) on the end-effector about the X, Y,
-        and Z axes, respectively.
+        Translational force vector ``(fx, fy, fz)`` where ``fx``, ``fy``, and
+        ``fz`` are the translation force (in [N]) on the end-effector about the
+        X, Y, and Z axes, respectively.
 
     :param CartesianTuple t:
-        Torque vector `(tx, ty, tz)` where `tx`, `ty`, and `tz`
+        Torque vector ``(tx, ty, tz)`` where ``tx``, ``ty``, and ``tz``
         are the torque (in [Nm]) on the end-effector about the X, Y, and Z
         axes, respectively.
 
@@ -1964,17 +1971,17 @@ def setForceAndTorque(
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-       If a member of `f` is not implicitly to C `double`.
+       If a member of ``f`` is not implicitly to C double.
 
     :raises ValueError:
-       If a member of `t` is not implicitly to C `double`.
+       If a member of ``t`` is not implicitly to C double.
 
     :returns:
-        `0` or :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success,
-        and `-1` otherwise.
+        0 or :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success,
+        and -1 otherwise.
 
     :rtype: int
     """
@@ -2007,22 +2014,22 @@ def getOrientationFrame(
         sequence passed in.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :raises TypeError:
-        If `out` is specified and does not support item
+        If ``out`` is specified and does not support item
         assignment, either because it is not subscriptable or because it is not
         mutable.
 
     :raises IndexError:
-        If `out` any dimension of out is less than length 3.
+        If ``out`` any dimension of out is less than length 3.
 
     :returns:
-        A tuple in the form `(frame, err)`.
-        `frame` is a 3x3 rotation matrix that describes the device's
+        A tuple in the form ``(frame, err)``.
+        ``frame`` is a 3x3 rotation matrix that describes the device's
         orientation.  If the device doesn't support orientations, the returned
-        `frame` will be the identity matrix. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        ``frame`` will be the identity matrix. ``err`` is 0 or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
     :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
@@ -2063,24 +2070,23 @@ def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]:
     :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
     :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    See also
-    --------
-    :func:`forcedimension.dhd.getGripperAngleRad()`
-
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `(angle, err)`.
-        `angle` is the gripper angle in [deg]. `err` is `0` or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        A tuple in the form ``(angle, err)``.
+        ``angle`` is the gripper angle in [deg]. ``err`` is 0 or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
     :rtype: Tuple[float, int]
 
+    See Also
+    --------
+    :func:`forcedimension.dhd.getGripperAngleRad()`
     """
 
     angle = c_double()
@@ -2103,23 +2109,22 @@ def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]:
     :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
     :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    See also
-    --------
-    :data:`forcdimension.dhd.getGripperAngleRad()`
-
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `(angle, err)`. `angle` is the griper angle in
-        [rad]. `err` is `0` or :data:`forcedimension.dhd.constants.TIMEGUARD`
-        on success, and -1 otherwise.
+        A tuple in the form ``(angle, err)``. ``angle`` is the griper angle in
+        [rad]. ``err`` is 0 or :data:`forcedimension.dhd.constants.TIMEGUARD`
+        on success, -1 otherwise.
 
     :rtype: Tuple[float, int]
 
+    See Also
+    --------
+    :data:`forcdimension.dhd.getGripperAngleRad()`
     """
 
     angle = c_double()
@@ -2145,12 +2150,13 @@ def getGripperGap(ID: int = -1) -> Tuple[float, int]:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `(gap, err)`. `gap` is the gripper opening distance
-        in [m]. `err` is `0` or :data:`forcedimension.dhd.constants.TIMEGUARD`
-        on success, and `-1` otherwise.
+        A tuple in the form ``(gap, err)``. ``gap`` is the gripper opening
+        distance in [m]. ``err`` is 0 or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
 
     :rtype: Tuple[float, int]
 
@@ -2195,13 +2201,13 @@ def getGripperThumbPos(
         sequence passed in.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `([px, py, pz], err)`.
-        `[px, py, pz]` is the the positions (in [m]) about the X, Y, and Z
-        axes, respectively. `err` is 0 or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and `-1`
+        A tuple in the form ``([px, py, pz], err)``.
+        ``[px, py, pz]`` is the the positions (in [m]) about the X, Y, and Z
+        axes, respectively. ``err`` is 0 or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
     :rtype: Tuple[float, int]
@@ -2269,20 +2275,20 @@ def getGripperFingerPos(
         sequence passed in.
 
     :raises TypeError:
-        If `out` is specified and does not support item assignment either
+        If ``out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `out` is specified and `len(out) < 3`.
+        If ``out`` is specified and ``len(out) < 3``.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form `([px, py, pz], err)`. `[px, py, pz]` are the
-        positions (in [m]) about the X, Y, and Z axes, respectively. `err` is
-        `0` or :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and
-        `-1` otherwise.
+        A tuple in the form ``([px, py, pz], err)``. ``[px, py, pz]`` are the
+        positions (in [m]) about the X, Y, and Z axes, respectively. ``err`` is
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and
+        -1 otherwise.
 
     :rtype: Tuple[float, int]
 
@@ -2332,12 +2338,12 @@ def getComFreq(ID: int = -1) -> float:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: float
 
     :returns:
-        The refresh rate in [kHz], `0.0` otherwise.
+        The refresh rate in [kHz], ``0.0`` otherwise.
     """
 
     return _libdhd.dhdGetComFreq(ID)
@@ -2364,24 +2370,24 @@ def setForceAndGripperForce(f: CartesianTuple,
          Device ID (see multiple devices section for details), defaults to -1.
 
     :param CartesianTuple f:
-        Translational force vector `(fx, fy, fz)` where `fx`, `fy`, and `fz`
-        are the translation force (in [N]) about the X, Y, and Z axes,
+        Translational force vector ``(fx, fy, fz)`` where ``fx``, ``fy``, and
+        ``fz`` are the translation force (in [N]) about the X, Y, and Z axes,
         respectively.
 
     :param float fg:
         Grasping force of the gripper in [N].
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-        If `any` members of f are not implicitly convertible to C `double`.
+        If ``any`` members of f are not implicitly convertible to C double.
 
     :rtype: int
 
     :returns:
-        `0` or :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on
-        success, and `-1` otherwise.
+        0 or :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on
+        success, -1 otherwise.
     """
 
     return _libdhd.dhdSetForceAndGripperForce(f[0], f[1], f[2], fg, ID)
@@ -2409,12 +2415,12 @@ def setForceAndTorqueAndGripperForce(f: CartesianTuple,
     end-effector and gripper.
 
     :param CartesianTuple f:
-        Translational force vector `(fx, fy, fz)` where `fx`, `fy`, and `fz`
-        are the translation force (in [N]) on the end-effector about the X, Y,
-        and Z axes, respectively.
+        Translational force vector ``(fx, fy, fz)`` where ``fx``, ``fy``, and
+        ``fz`` are the translation force (in [N]) on the end-effector about the
+        X, Y, and Z axes, respectively.
 
     :param CartesianTuple t:
-        Torque vector `(tx, ty, tz)` where `tx`, `ty`, and `tz`
+        Torque vector ``(tx, ty, tz)`` where ``tx``, ``ty``, and ``tz``
         are the torque (in [Nm]) on the end-effector about the X, Y, and Z
         axes, respectively.
 
@@ -2425,18 +2431,18 @@ def setForceAndTorqueAndGripperForce(f: CartesianTuple,
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-        If a member of `f` is not implicitly to C `double`.
+        If a member of ``f`` is not implicitly to C double.
 
     :raises ValueError:
-        If a member of `t` is not implicitly to C `double`.
+        If a member of ``t`` is not implicitly to C double.
 
     :returns:
-        `0` or
+        0 or
         :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success, and
-        `-1` otherwise.
+        -1 otherwise.
 
     :rtype: int
 
@@ -2480,18 +2486,18 @@ def configLinearVelocity(
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-        If `ms` is not implicitly convertible to C `int`.
+        If ``ms`` is not implicitly convertible to C int.
 
     :raises ValueError:
-        If `mode` is not implicitly convertible to C `int`.
+        If ``mode`` is not implicitly convertible to C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdConfigLinearVelocity(ms, mode, ID)
@@ -2525,10 +2531,6 @@ def getLinearVelocity(
     or :func:`forcedimension.dhd.getLinearVelocity()` will return an error
     (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
 
-    See also
-    --------
-    :func:`forcedimension.dhd.configLinearVelocity()`
-
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
@@ -2539,21 +2541,25 @@ def getLinearVelocity(
         sequence passed in.
 
     :raises TypeError:
-        If `out` is specified and does not support item assignment either
+        If ``out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `out` is specified and `len(out) < 3`.
+        If ``out`` is specified and ``len(out) < 3``.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        A tuple in the form `([vx, vy, vz], err)`. `[vx, vy, vz]` is the linear
-        velocity (in [m/s]) about the X, Y, and Z axes, respectively.
-        `err` is `0` on success, and `-1` otherwise.
+        A tuple in the form ``([vx, vy, vz], err)``. ``[vx, vy, vz]`` is the
+        estimated linear velocity (in [m/s]) about the X, Y, and Z axes,
+        respectively. ``err`` is 0 on success, -1 otherwise.
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.configLinearVelocity()`
     """
 
     vx = c_double()
@@ -2611,18 +2617,18 @@ def configAngularVelocity(
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-        If `ms` is not implicitly convertible to C `int`.
+        If ``ms`` is not implicitly convertible to C int.
 
     :raises ValueError:
-        If `mode` is not implicitly convertible to C `int`.
+        If ``mode`` is not implicitly convertible to C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdConfigAngularVelocity(ms, mode, ID)
@@ -2652,10 +2658,11 @@ def getAngularVelocityRad(
     or :func:`forcedimension.dhd.getLinearVelocity()` will return an error
     (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
 
-    See also
+    See Also
     --------
     :func:`forcedimension.dhd.configAngularVelocity()`
     :func:`forcedimension.dhd.getAngularVelocityDeg()`
+
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2667,22 +2674,21 @@ def getAngularVelocityRad(
         sequence passed in.
 
     :raises TypeError:
-        If `out` is specified and does not support item assignment either
+        If ``out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `out` is specified and `len(out) < 3`.
+        If ``out`` is specified and ``len(out) < 3``.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        A tuple in the form `([wx, wy, wz], err)`. `[vx, vy, vz]` is the
+        A tuple in the form ``([wx, wy, wz], err)``. ``[vx, vy, vz]`` is the
         angular velocity (in [rad/s]) about the X, Y, and Z axes, respectively.
-        `err` is `0` on success, and `-1` otherwise.
-
+        ``err`` is 0 on success, -1 otherwise.
     """
 
     wx = c_double()
@@ -2738,10 +2744,11 @@ def getAngularVelocityDeg(
     or :func:`forcedimension.dhd.getLinearVelocity()` will return an error
     (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
 
-    See also
+    See Also
     --------
     :func:`forcedimension.dhd.configAngularVelocity()`
     :func:`forcedimension.dhd.getAngularVelocityRad()`
+
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2753,21 +2760,21 @@ def getAngularVelocityDeg(
         sequence passed in.
 
     :raises TypeError:
-        If `out` is specified and does not support item assignment either
+        If ``out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `out` is specified and `len(out) < 3`
+        If ``out`` is specified and ``len(out) < 3``
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        A tuple in the form `([wx, wy, wz], err)`. `[vx, vy, vz]` is the
+        A tuple in the form ``([wx, wy, wz], err)``. ``[vx, vy, vz]`` is the
         angular velocity (in [deg/s]) about the X, Y, and Z axes, respectively.
-        `err` is `0` on success, and `-1` otherwise.
+        ``err`` is 0 on success, -1 otherwise.
     """
 
     wx = c_double()
@@ -2831,18 +2838,18 @@ def configGripperVelocity(
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-        If `ms` is not implicitly convertible to C `int`.
+        If ``ms`` is not implicitly convertible to C int.
 
     :raises ValueError:
-        If `mode` is not implicitly convertible to C `int`.
+        If ``mode`` is not implicitly convertible to C int.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdConfigAngularVelocity(ms, mode, ID)
@@ -2864,11 +2871,12 @@ def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]:
     or :func:`forcedimension.dhd.getLinearVelocity()` will return an error
     (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
 
-    See also
+    See Also
     --------
     :data:`forcedimension.dhd.configGripperVelocity()`
     :data:`forcedimension.dhd.getGripperAngularVelocityRad()`
     :func:`forcedimension.dhd.getGripperAngularVelocityDeg()`
+
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2880,20 +2888,20 @@ def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]:
         sequence passed in.
 
     :raises TypeError:
-        If `out` is specified and does not support item assignment either
+        If ``out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `out` is specified and `len(out) < 3`.
+        If ``out`` is specified and ``len(out) < 3``.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        A tuple in the form `(vg, err)`. `vg` is the linear velocity of the
-        gripper (in [m/s]). `err` is `0` on success, and `-1` otherwise.
+        A tuple in the form ``(vg, err)``. ``vg`` is the linear velocity of the
+        gripper (in [m/s]). ``err`` is 0 on success, -1 otherwise.
     """
 
     vg = c_double()
@@ -2913,16 +2921,17 @@ def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]:
     updates during the time interval defined in
     :func:`forcedimension.dhd.configGripperVelocity()` in order to be able to
     compute the estimate. Otherwise, e.g. if there are no calls to
-    :func:`forcedimension.dhd.getPosition(),
-    dhd.libdhd.getGripperAngularVelocityRad()`,
+    :func:`forcedimension.dhd.getPosition()`,
+    :func:`forcedimension.dhd.getGripperAngularVelocityRad()`,
     or :func:`forcedimension.dhd.getGripperAngularVelocityRad()` will return an
     error (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
 
-    See also
+    See Also
     --------
     :func:`forcedimension.dhd.configGripperVelocity()`
     :func:`forcedimension.dhd.getGripperLinearVelocity()`
     :func:`forcedimension.dhd.getGripperAngularVelocityDeg()`
+
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2934,20 +2943,21 @@ def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]:
         sequence passed in.
 
     :raises TypeError:
-        If `out` is specified and does not support item assignment either
+        If ``out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If `out` is specified and `len(out) < 3`.
+        If ``out`` is specified and ``len(out) < 3``.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: Tuple[MutableSequence[float], int]
 
     :returns:
-        A tuple in the form `(v, err)`. `v` is the linear velocity of the
-        gripper (in [m/s]). `err` is `0` on success, and `-1` otherwise.
+        A tuple in the form ``(v, err)``. ``v`` is the linear velocity of the
+        gripper (in [m/s]). ``err`` is 0 on success, -1 otherwise.
+
     """
 
     wg = c_double()
@@ -2982,24 +2992,24 @@ def getGripperAngularVelocityDeg(ID: int = -1) -> Tuple[float, int]:
     within the time interval window, this function will set an error with:
     dhd.libdhd.Error.TIMEOUT
 
+    :param int ID:
+         Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ValueError:
+        If ``ID`` is not implicitly convertible to C char.
+
+    :rtype: Tuple[float, int]
+
+    :returns:
+        A tuple in the form ``(wg, err)``. ``wg`` is the gripper's estimated
+        instanteous linear velocity in [deg/s]. ``err`` is 0 on success, and
+        -1 otherwise.
+
     See Also
     --------
     :func:`forcedimension.dhd.configGripperVelocity()`
     :func:`forcedimension.dhd.getGripperLinearVelocity()`
     :func:`forcedimension.dhd.getGripperAngularVelocityRad()`
-
-    :param int ID:
-         Device ID (see multiple devices section for details), defaults to -1.
-
-    :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
-
-    :rtype: Tuple[float, int]
-
-    :returns:
-        A tuple in the form `(wg, err)`. `wg` is the gripper's estimated
-        instanteous linear velocity in [deg/s]. `err` is `0` on success, and
-        `-1` otherwise.
     """
 
     wg = c_double()
@@ -3025,18 +3035,18 @@ def emulateButton(enable: bool, ID: int = -1) -> int:
     for the button emulation to report the emulated button status.
 
     :param enable:
-        `True` to enable, `False` to disable.
+        ``True`` to enable, ``False`` to disable.
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdEmulateButton(enable, ID)
@@ -3054,17 +3064,18 @@ def getBaseAngleXRad(ID: int = -1) -> Tuple[float, int]:
     --------
     :func:`forcedimension.dhd.getBaseAngleXDeg()`
 
+
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: Tuple[float, int]
 
     :returns:
-        A tuple in the form `(angle, err)`. `angle` is the device angle in
-        [rad]. `err` is `0` on success, and `-1` otherwise.
+        A tuple in the form ``(angle, err)``. ``angle`` is the device angle in
+        [rad]. ``err`` is 0 on success, -1 otherwise.
     """
 
     angle = c_double()
@@ -3088,13 +3099,13 @@ def getBaseAngleXDeg(ID: int = -1) -> Tuple[float, int]:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: Tuple[int, float]
 
     :returns:
-        A tuple in the form `(err, angle)`. `angle` is the device angle in
-        [deg]. err` is `0` on success, and `-1` otherwise.
+        A tuple in the form ``(err, angle)``. ``angle`` is the device angle in
+        [deg]. err`` is 0 on success, -1 otherwise.
     """
 
     angle = c_double()
@@ -3115,6 +3126,7 @@ def setBaseAngleXRad(angle: float, ID: int = -1) -> int:
     --------
     :func:`forcedimension.dhd.setBaseAngleXDeg()`
 
+
     :param float angle:
         device base plate angle around the X axis in [rad].
 
@@ -3122,12 +3134,12 @@ def setBaseAngleXRad(angle: float, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetBaseAngleXRad(angle, ID)
@@ -3146,6 +3158,7 @@ def setBaseAngleXDeg(angle: float, ID: int = -1) -> int:
     --------
     :func:`forcedimension.dhd.setBaseAngleXRad()`
 
+
     :param float angle:
         device base plate angle around the X axis in [deg].
 
@@ -3153,12 +3166,12 @@ def setBaseAngleXDeg(angle: float, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetBaseAngleXDeg(angle, ID)
@@ -3176,17 +3189,18 @@ def getBaseAngleZRad(ID: int = -1) -> Tuple[int, float]:
     --------
     :func:`forcedimension.dhd.getBaseAngleZDeg()`
 
+
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: Tuple[int, float]
 
     :returns:
-        A tuple in the form `(err, angle)`.`angle` is the device angle in
-        [rad]. `err` is `0` on success, and `-1` otherwise.
+        A tuple in the form ``(err, angle)``.``angle`` is the device angle in
+        [rad]. ``err`` is 0 on success, -1 otherwise.
     """
 
     angle = c_double()
@@ -3206,17 +3220,18 @@ def getBaseAngleZDeg(ID: int = -1) -> Tuple[int, float]:
     --------
     :func:`forcedimension.dhd.getBaseAngleZRad()`
 
+
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: Tuple[int,  float]
 
     :returns:
-        A tuple in the form `(err, angle)`. `angle` is the device angle in
-        [deg]. `err` is `0` on success, and `-1` otherwise.
+        A tuple in the form ``(err, angle)``. ``angle`` is the device angle in
+        [deg]. ``err`` is 0 on success, -1 otherwise.
     """
 
     angle = c_double()
@@ -3237,6 +3252,7 @@ def setBaseAngleZRad(angle: float, ID: int = -1) -> int:
     --------
     :func:`forcedimension.dhd.setBaseAngleZDeg()`
 
+
     :param float angle:
         device base plate angle around the Z axis in [rad].
 
@@ -3244,12 +3260,12 @@ def setBaseAngleZRad(angle: float, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetBaseAngleZRad(angle, ID)
@@ -3268,6 +3284,7 @@ def setBaseAngleZDeg(angle: float, ID: int = -1) -> int:
     --------
     :func:`forcedimension.dhd.setBaseAngleZRad()`
 
+
     :param float angle:
         device base plate angle around the Z axis in [deg]
 
@@ -3275,15 +3292,15 @@ def setBaseAngleZDeg(angle: float, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `angle` is not implicitly convertible to C `double`
+        If ``angle`` is not implicitly convertible to C double
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetBaseAngleZDeg(angle, ID)
@@ -3300,6 +3317,11 @@ def setVibration(
     Apply a vibration to the end-effector. The vibration is added to the force
     requested by :func:`forcedimension.dhd.setForce()`.
 
+    See Also
+    --------
+    :class:`forcedimension.dhd.adaptors.DeviceType`
+
+
     :param float f:
         Vibration frequency in [Hz].
 
@@ -3312,26 +3334,22 @@ def setVibration(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    See also
-    --------
-    :class:`forcedimension.dhd.adaptors.DeviceType`
+    :raises ValueError:
+        If ``f`` is not implicitly convertible to C double.
 
     :raises ValueError:
-        If `f` is not implicitly convertible to C `double`.
+        If ``A`` is not implicitly convertible to C double.
 
     :raises ValueError:
-        If `A` is not implicitly convertible to C `double`.
+        If ``device_type`` is not implicitly convertible to C int.
 
     :raises ValueError:
-        If `device_type` is not implicitly convertible to C `int`.
-
-    :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetVibration(f, A, device_type, ID)
@@ -3362,6 +3380,7 @@ def setMaxForce(limit: float, ID: int = -1) -> int:
     :func:`forcedimension.dhd.expert.setMaxPower()`
     :func:`forcedimension.dhd.expert.setMaxUsablePower()`
 
+
     :param float limit:
         max magnitude of force that can be applied in [N].
 
@@ -3369,15 +3388,15 @@ def setMaxForce(limit: float, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `limit` is not implicitly convertible to C `double`.
+        If ``limit`` is not implicitly convertible to C double.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetMaxForce(limit, ID)
@@ -3407,6 +3426,7 @@ def setMaxTorque(limit: float, ID: int = -1) -> int:
     :func:`forcedimension.dhd.expert.setMaxPower()`
     :func:`forcedimension.dhd.expert.setMaxUsablePower()`
 
+
     :param float limit:
         max magnitude of torque that can be applied in [Nm].
 
@@ -3414,15 +3434,15 @@ def setMaxTorque(limit: float, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `limit` is not implicitly convertible to C `double`.
+        If ``limit`` is not implicitly convertible to C double.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetMaxTorque(limit, ID)
@@ -3453,6 +3473,7 @@ def setMaxGripperForce(limit: float, ID: int = -1) -> int:
     :func:`forcedimension.dhd.expert.setMaxPower()`
     :func:`forcedimension.dhd.expert.setMaxUsablePower()`
 
+
     :param float limit:
         Max magnitude of force that can be applied in [N].
 
@@ -3460,15 +3481,15 @@ def setMaxGripperForce(limit: float, ID: int = -1) -> int:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `limit` is not implicitly convertible to C `double`.
+        If ``limit`` is not implicitly convertible to C double.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
     :returns:
-        `0` on success, and `-1` otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdSetMaxGripperForce(limit, ID)
@@ -3492,16 +3513,17 @@ def getMaxForce(ID: int = -1) -> float:
     :func:`forcedimension.dhd.expert.getMaxPower()`
     :func:`forcedimension.dhd.expert.getMaxUsablePower()`
 
+
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: float
 
     :returns:
-        The current force limit (in N) if set, and `-1.0` if no limit is
+        The current force limit (in N) if set, and ``-1.0`` if no limit is
         enforced.
     """
 
@@ -3526,16 +3548,17 @@ def getMaxTorque(ID: int = -1) -> float:
     :func:`forcedimension.dhd.expert.getMaxPower()`
     :func:`forcedimension.dhd.expert.getMaxUsablePower()`
 
+
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: float
 
     :returns:
-        The current torque limit (in [Nm]) if set, and `-1.0` if no limit is
+        The current torque limit (in [Nm]) if set, and ``-1.0`` if no limit is
         enforced.
     """
 
@@ -3560,17 +3583,18 @@ def getMaxGripperForce(ID: int = -1) -> float:
     :func:`forcedimension.dhd.expert.getMaxPower()`
     :func:`forcedimension.dhd.expert.getMaxUsablePower()`
 
+
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If `ID` is not implicitly convertible to C `char`.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: float
 
     :returns:
         The current force limit (in [N]) if set, and
-        `-1.0` if no limit is enforced.
+        ``-1.0`` if no limit is enforced.
     """
 
     return _libdhd.dhdGetMaxGripperForce(ID)
@@ -3589,7 +3613,7 @@ def errorGetLast() -> ErrorNum:
     :rtype: class:`forcedimension.dhd.adaptors.ErrorNum`:
 
     :returns:
-        :class:`forcedimension.dhd.adaptors.ErrorNum` enum member corresponding
+        :class:`forcedimension.dhd.adaptors.ErrorNum` enum member refering
         to the last error encountered in the current thread.
     """
     return ErrorNum(_libdhd.dhdErrorGetLast())
