@@ -27,7 +27,8 @@ def open() -> int:
 
     See Also
     --------
-    func:`forcedimension.dhd.libdrd.openID()`
+    :func:`forcedimension.dhd.openID()`
+
 
     :rtype: int
 
@@ -54,7 +55,7 @@ def openID(ID: int) -> int:
 
     See Also
     --------
-    func:`forcedimension.dhd.libdrd.open()`
+    :func:`forcedimension.drd.open()`
 
 
     :param int ID:
@@ -89,7 +90,7 @@ def setDevice(ID: int) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``ID`` is not implicitly convertible to a C int.
+        If ``ID`` is not implicitly convertible to a C int.
 
     :rtype: int
 
@@ -127,7 +128,7 @@ def close(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``ID`` is not implicitly convertible to a C int.
+        If ``ID`` is not implicitly convertible to a C int.
 
     :rtype: int
 
@@ -153,7 +154,7 @@ def isSupported(ID: int) -> bool:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``ID`` is not implicitly convertible to a C int.
+        If ``ID`` is not implicitly convertible to a C int.
 
     :rtype: bool
 
@@ -193,8 +194,8 @@ def isFiltering(ID: int = -1) -> bool:
     """
     Checks whether the particular robot control thread is applying a motion
     filter while tracking a target using
-    :func:`forcedimension.drd.libdrd.trackPos()` or
-    :func:`forcedimension.drd.libdrd.trackEnc()`),
+    :func:`forcedimension.drd.trackPos()` or
+    :func:`forcedimension.drd.trackEnc()`),
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -219,7 +220,7 @@ def isInitialized(ID: int = -1) -> bool:
     Checks the initialization status of a particular robot. The initialization
     status reflects the status of the controller RESET LED.
     The robot can be (re)initialized by calling
-    :func:`forcedimension.drd.libdrd.autoInit()`.
+    :func:`forcedimension.drd.autoInit()`.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -242,10 +243,10 @@ _libdrd.drdIsMoving.restype = c_int
 def isMoving(ID: int = -1) -> bool:
     """
     Checks whether the particular robot is moving (following a call to
-    :func:`forcedimension.drd.libdrd.moveToPos()`,
-    :func:`forcedimension.drd.libdrd.moveToEnc()`,
-    :func:`forcedimension.drd.libdrd.trackPos()` or
-    :func:`forcedimension.drd.libdrd.trackEnc()`),
+    :func:`forcedimension.drd.moveToPos()`,
+    :func:`forcedimension.drd.moveToEnc()`,
+    :func:`forcedimension.drd.trackPos()` or
+    :func:`forcedimension.drd.trackEnc()`),
     as opposed to holding the target position after successfully reaching it.
 
     :param int ID:
@@ -409,7 +410,7 @@ def getPositionAndOrientationFrame(
         If ``o_out`` is specified and ``len(o_out) < 3``.
 
     :raises ValueError:
-        ``ID`` is not implicitly convertible to a C int.
+        If ``ID`` is not implicitly convertible to a C int.
 
     :returns:
         A tuple in the form ``([px, py, pz], [oa, ob, og], pg, matrix, err)``.
@@ -524,7 +525,7 @@ def getLinearVelocity(
     :raises IndexError: If ``w_out`` is specified and ``len(w_out) < 3``.
 
     :raises ValueError:
-        ``ID`` is not implicitly convertible to a C int.
+        If ``ID`` is not implicitly convertible to a C int.
 
     :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
 
@@ -603,8 +604,8 @@ def start(ID: int = -1) -> int:
     """
     Start the robotic control loop for the given robot. The robot must be
     initialized (either manually or with
-    :func:`forcedimension.drd.libdrd.autoInit()`) before
-    :func:`forcedimension.drd.libdrd.drdStart()` can be called successfully.
+    :func:`forcedimension.drd.autoInit()`) before
+    :func:`forcedimension.drd.drdStart()` can be called successfully.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -642,10 +643,10 @@ def regulatePos(enable: bool, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``val`` is not implicitly convertible to a C int.
+        If ``val`` is not implicitly convertible to a C int.
 
     :raises ValueError:
-        ``ID`` is not implicitly convertible to a C int.
+        If ``ID`` is not implicitly convertible to a C int.
 
     :rtype: int
 
@@ -676,10 +677,10 @@ def regulateRot(enable: bool, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``val`` is not implicitly convertible to a C int.
+        If ``val`` is not implicitly convertible to a C int.
 
     :raises ValueError:
-        ``ID`` is not implicitly convertible to a C int.
+        If ``ID`` is not implicitly convertible to a C int.
 
     :rtype: int
 
@@ -710,10 +711,10 @@ def regulateGrip(enable: bool, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``val`` is not implicitly convertible to a C int.
+        If ``val`` is not implicitly convertible to a C int.
 
     :raises ValueError:
-        ``ID`` is not implicitly convertible to a C int.
+        If ``ID`` is not implicitly convertible to a C int.
 
     :rtype: int
 
@@ -731,8 +732,8 @@ _libdrd.drdEnableFilter.restype = c_int
 def enableFilter(enabled: bool, ID: int = -1) -> int:
     """
     Enable or disable motion filtering for subsequent calls to
-    :func:`forcedimension.drd.libdrd.trackPos()` and
-    :func:`forcedimension.drd.libdrd.trackEnc()`
+    :func:`forcedimension.drd.trackPos()` and
+    :func:`forcedimension.drd.trackEnc()`
 
     :param bool enabled:
         ``True`` to enable motion filtering, ``False`` to disable it.
@@ -741,10 +742,10 @@ def enableFilter(enabled: bool, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``enabled`` is not implicitly convertible to a C int.
+        If ``enabled`` is not implicitly convertible to a C int.
 
     :raises ValueError:
-        ``ID`` is not implicitly convertible to a C int.
+        If ``ID`` is not implicitly convertible to a C int.
 
     :returns:
         0 on success, and -1 otherwise.
@@ -1049,8 +1050,9 @@ def setPriorities(prio: int, ctrlprio: int, ID: int = -1) -> int:
     ----
     Please keep in mind that administrator/superuser access is required on many
     platforms in order to increase thread priority. The first argument,
-    ``prio`` is always applied to the calling thread, even when the call returns
-    an error.
+    ``prio`` is always applied to the calling thread, even when the call
+    returns an error.
+
 
     :param int prio:
         Calling thread priority level (value is system dependent)
@@ -1062,10 +1064,10 @@ def setPriorities(prio: int, ctrlprio: int, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``prio`` is not convertible to a C int.
+        If ``prio`` is not convertible to a C int.
 
     :raises ValueError:
-        ``ctrlprio`` is not convertible to a C int.
+        If ``ctrlprio`` is not convertible to a C int.
 
     :raises ValueError:
         If ``ID`` is not convertible to a C int.
@@ -1093,7 +1095,7 @@ def getEncPGain(gain: float, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``gain`` is not convertible to a C int.
+        If ``gain`` is not convertible to a C int.
 
     :raises ValueError:
         If ``ID`` is not convertible to a C int.
@@ -1148,7 +1150,7 @@ def setEncIGain(gain: float, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``gain`` is not convertible to a C int.
+        If ``gain`` is not convertible to a C int.
 
     :raises ValueError:
         If ``ID`` is not convertible to a C int.
@@ -1203,7 +1205,7 @@ def setEncDGain(gain: float, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``gain`` is not convertible to a C int.
+        If ``gain`` is not convertible to a C int.
 
     :raises ValueError:
         If ``ID`` is not convertible to a C int.
@@ -1262,7 +1264,7 @@ def setMotRatioMax(scale: float, ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        ``scale`` is not convertible to a C int.
+        If ``scale`` is not convertible to a C int.
 
     :raises ValueError:
         If ``ID`` is not convertible to a C int.
@@ -1321,13 +1323,13 @@ def setEncMoveParam(
         If ``ID`` is not convertible to a C int.
 
     :raises ValueError:
-        ``vmax`` is not convertible to a C int.
+        If ``vmax`` is not convertible to a C int.
 
     :raises ValueError:
-        ``amax`` is not convertible to a C int.
+        If ``amax`` is not convertible to a C int.
 
     :raises ValueError:
-        ``jerk`` is not convertible to a C int.
+        If ``jerk`` is not convertible to a C int.
 
     :rtype: int
 
@@ -1364,13 +1366,13 @@ def setEncTrackParam(
         If ``ID`` is not convertible to a C int.
 
     :raises ValueError:
-        ``vmax`` is not convertible to a C int.
+        If ``vmax`` is not convertible to a C int.
 
     :raises ValueError:
-        ``amax`` is not convertible to a C int.
+        If ``amax`` is not convertible to a C int.
 
     :raises ValueError:
-        ``jerk`` is not convertible to a C int.
+        If ``jerk`` is not convertible to a C int.
 
     :rtype: int
 
@@ -1407,13 +1409,13 @@ def setPosMoveParam(
         If ``ID`` is not convertible to a C int.
 
     :raises ValueError:
-        ``vmax`` is not convertible to a C int.
+        If ``vmax`` is not convertible to a C int.
 
     :raises ValueError:
-        ``amax`` is not convertible to a C int.
+        If ``amax`` is not convertible to a C int.
 
     :raises ValueError:
-        ``jerk`` is not convertible to a C int.
+        If ``jerk`` is not convertible to a C int.
 
     :rtype: int
 
@@ -1450,13 +1452,13 @@ def setPosTrackParam(
         If ``ID`` is not convertible to a C int.
 
     :raises ValueError:
-        ``vmax`` is not convertible to a C int.
+        If ``vmax`` is not convertible to a C int.
 
     :raises ValueError:
-        ``amax`` is not convertible to a C int.
+        If ``amax`` is not convertible to a C int.
 
     :raises ValueError:
-        ``jerk`` is not convertible to a C int.
+        If ``jerk`` is not convertible to a C int.
 
     :rtype: int
 

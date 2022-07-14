@@ -3420,7 +3420,7 @@ def setWatchdog(duration: int, ID: int = -1) -> int:
 
     See Also
     --------
-    :func`forcedimension.dhd.expert.getWatchdog()`
+    :func:`forcedimension.dhd.expert.getWatchdog()`
 
 
     :param int duration:
@@ -3454,7 +3454,7 @@ def getWatchdog(ID: int = -1) -> Tuple[int, int]:
 
     See Also
     --------
-    :func`forcedimension.dhd.expert.setWatchdog()`
+    :func:`forcedimension.dhd.expert.setWatchdog()`
 
 
     :param int ID:

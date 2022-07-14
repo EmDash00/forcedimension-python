@@ -178,15 +178,15 @@ def open() -> int:
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
+    See Also
+    --------
+    :func:`forcedimension.dhd.openID()`
+
+
     :rtype: int
 
     :returns:
         The device ID on success, -1 otherwise.
-
-    See Also
-    --------
-    :func:`forcedimension`dhd.libdhd.openID()
-
     """
     return _libdhd.dhdOpen()
 
@@ -205,6 +205,12 @@ def openType(device_type: DeviceType) -> int:
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
+    See Also
+    --------
+    :func:`forcedimension.dhd.openID()`
+    :class:`forcedimension.dhd.adaptors.DeviceType`
+
+
     :param int device_type:
         Requested DeviceType to open.
 
@@ -212,11 +218,6 @@ def openType(device_type: DeviceType) -> int:
 
     :returns:
         The device ID on success, -1 otherwise.
-
-    See Also
-    --------
-    :func:`forcedimension.dhd.openID()`
-    :class:`forcedimension.dhd.adaptors.DeviceType`
     """
 
     return _libdhd.dhdOpenType(device_type)
@@ -235,6 +236,11 @@ def openSerial(serial: int) -> int:
     device. See the multiple device section for more information on using
     multiple devices on the same computer.
 
+    See Also
+    --------
+    :func:`forcedimension.dhd.openID()`
+
+
     :param int serial:
         Requested system serial number.
 
@@ -242,10 +248,6 @@ def openSerial(serial: int) -> int:
 
     :returns:
         The device ID on success, -1 otherwise.
-
-    See Also
-    --------
-    :func:`forcedimension.dhd.libdhd.openID()`
     """
 
     return _libdhd.dhdOpenSerial(serial)
@@ -266,6 +268,10 @@ def openID(index: int) -> int:
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
+    See Also
+    --------
+    :func:`forcedimension.dhd.open()`
+
     :param int index:
         The device enumeration index, as assigned by the
         underlying operating system (must be between 0 and the number of
@@ -278,10 +284,6 @@ def openID(index: int) -> int:
 
     :returns:
         The device ID on success, -1 otherwise.
-
-    See Also
-    --------
-    :func:`forcedimension.dhd.libdhd.open()`
     """
 
     return _libdhd.dhdOpenID(index)
@@ -511,14 +513,15 @@ def getSDKVersion() -> VersionTuple:
     release, revision). Versions of the ForceDimensionSDK
     are reported as major.minor.release-revision by ForceDimension.
 
+    See Also
+    --------
+    :class:`forcedimension.dhd.adaptors.VersionTuple`
+
+
     :rtype: VersionTuple
 
     :returns:
         A ``VersionTuple`` that represents the version.
-
-    See Also
-    --------
-    :class:`forcedimension.dhd.adaptors.VersionTuple`
     """
     major = c_int()
     minor = c_int()
@@ -1092,6 +1095,11 @@ def setDeviceAngleRad(angle: float, ID: int = -1) -> int:
     with its base plate perpendicular to axis X. An angle value of π/2
     refers to the device base plate resting horizontally.
 
+    See Also
+    --------
+    :func:`forcedimension.dhd.setDeviceAngleDeg()`
+
+
     :param float angle:
         device base plate angle [rad]
 
@@ -1108,10 +1116,6 @@ def setDeviceAngleRad(angle: float, ID: int = -1) -> int:
 
     :returns:
          0 on success, -1 otherwise.
-
-    See Also
-    --------
-    :func:`forcedimension.dhd.setDeviceAngleDeg()`
     """
 
     return _libdhd.dhdSetDeviceAngleRad(angle, ID)
@@ -1129,6 +1133,11 @@ def setDeviceAngleDeg(angle: float, ID: int = -1) -> int:
     with its base plate perpendicular to axis X. An angle value of 90
     refers to the device base plate resting horizontally.
 
+    See Also
+    --------
+    :func:`forcedimension.dhd.setDeviceAngleRad()`
+
+
     :param float angle:
         device base plate angle [deg]
 
@@ -1145,10 +1154,6 @@ def setDeviceAngleDeg(angle: float, ID: int = -1) -> int:
 
     :returns:
          0 on success, -1 otherwise.
-
-    See Also
-    --------
-    :func:`forcedimension.dhd.setDeviceAngleRad()`
     """
 
     return _libdhd.dhdSetDeviceAngleDeg(angle, ID)
@@ -1163,6 +1168,11 @@ def setEffectorMass(mass: float, ID: int = -1) -> int:
     Define the mass of the end-effector. This function is required to provide
     accurate gravity compensation when custom-made or modified end-effectors
     are used.
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.getEffectorMass()`
+
 
     :param float mass:
         The actual end-effector mass in [kg].
@@ -1180,10 +1190,6 @@ def setEffectorMass(mass: float, ID: int = -1) -> int:
 
     :returns:
          0 on success, -1 otherwise.
-
-    See Also
-    --------
-    :func:`forcedimension.dhd.getEffectorMass()`
     """
 
     return _libdhd.dhdSetEffectorMass(mass, ID)
@@ -2060,6 +2066,11 @@ def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]:
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
+    See Also
+    --------
+    :func:`forcedimension.dhd.getGripperAngleRad()`
+
+
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
@@ -2073,10 +2084,6 @@ def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]:
         otherwise.
 
     :rtype: Tuple[float, int]
-
-    See Also
-    --------
-    :func:`forcedimension.dhd.getGripperAngleRad()`
     """
 
     angle = c_double()
@@ -2098,6 +2105,10 @@ def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]:
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
+    See Also
+    --------
+    :data:`forcdimension.dhd.getGripperAngleRad()`
+
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
@@ -2110,10 +2121,6 @@ def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]:
         on success, -1 otherwise.
 
     :rtype: Tuple[float, int]
-
-    See Also
-    --------
-    :data:`forcdimension.dhd.getGripperAngleRad()`
     """
 
     angle = c_double()
@@ -2517,6 +2524,11 @@ def getLinearVelocity(
     or :func:`forcedimension.dhd.getLinearVelocity()` will return an error
     (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
 
+    See Also
+    --------
+    :func:`forcedimension.dhd.configLinearVelocity()`
+
+
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
@@ -2542,10 +2554,6 @@ def getLinearVelocity(
         A tuple in the form ``([vx, vy, vz], err)``. ``[vx, vy, vz]`` is the
         estimated linear velocity (in [m/s]) about the X, Y, and Z axes,
         respectively. ``err`` is 0 on success, -1 otherwise.
-
-    See Also
-    --------
-    :func:`forcedimension.dhd.configLinearVelocity()`
     """
 
     vx = c_double()
@@ -2726,7 +2734,8 @@ def getAngularVelocityDeg(
     updates during the time interval defined in
     :func:`forcedimension.dhd.configLinearVelocity()` in order to be able to
     compute the estimate. Otherwise, e.g. if there are no calls to
-    :func:`forcedimension.dhd.getPosition(), dhd.libdhd.getLinearVelocity()`,
+    :func:`forcedimension.dhd.getPosition()`,
+    :func:`forcedimension.dhd.getLinearVelocity()`,
     or :func:`forcedimension.dhd.getLinearVelocity()` will return an error
     (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
 
@@ -2976,7 +2985,14 @@ def getGripperAngularVelocityDeg(ID: int = -1) -> Tuple[float, int]:
     :func:`forcedimension.dhd.getPosition()`
     :func:`forcedimension.dhd.getGripperLinearVelocity()`
     within the time interval window, this function will set an error with:
-    dhd.libdhd.Error.TIMEOUT
+    :data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.configGripperVelocity()`
+    :func:`forcedimension.dhd.getGripperLinearVelocity()`
+    :func:`forcedimension.dhd.getGripperAngularVelocityRad()`
+
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2990,12 +3006,6 @@ def getGripperAngularVelocityDeg(ID: int = -1) -> Tuple[float, int]:
         A tuple in the form ``(wg, err)``. ``wg`` is the gripper's estimated
         instanteous linear velocity in [deg/s]. ``err`` is 0 on success, and
         -1 otherwise.
-
-    See Also
-    --------
-    :func:`forcedimension.dhd.configGripperVelocity()`
-    :func:`forcedimension.dhd.getGripperLinearVelocity()`
-    :func:`forcedimension.dhd.getGripperAngularVelocityRad()`
     """
 
     wg = c_double()
@@ -3080,6 +3090,7 @@ def getBaseAngleXDeg(ID: int = -1) -> Tuple[float, int]:
     See Also
     --------
     :func:`forcedimension.dhd.getBaseAngleXRad()`
+
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
