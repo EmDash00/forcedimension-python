@@ -52,15 +52,15 @@ def openID(ID: int) -> int:
     opened device. See the multiple device section for more information on
     using multiple devices on the same computer.
 
-    :param int ID:
-        The device enumeration index, as assigned by the underlying operating
-        system (must be between 0 and the number of devices connected to the
-        system)
-
     See Also
     --------
     func:`forcedimension.dhd.libdrd.open()`
 
+
+    :param int ID:
+        The device enumeration index, as assigned by the underlying operating
+        system (must be between 0 and the number of devices connected to the
+        system)
 
     :raises ValueError:
         index is not convertible to a C int.

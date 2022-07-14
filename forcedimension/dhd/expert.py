@@ -53,7 +53,7 @@ def preset(val: DOFTuple, mask: int = 0xff, ID: int = -1) -> int:
 
     :param DOFTuple val:
         Sequence of encoder offsets refering to each DOF with length
-        :data`forcedimension.dhd.constants.MAX_DOF`.
+        :data:`forcedimension.dhd.constants.MAX_DOF`.
 
     :param int mask:
         Bitwise mask of which encoder should be set, defaults to ``0xff``.
@@ -247,7 +247,7 @@ def getDeltaEncoders(
         A tuple in the form ``([enc0, enc1, enc2], err)``.
         ``[enc0, enc1, enc2]`` are the axis 0, 1, and 2 raw encoder readings,
         respectively. ``err`` is 0 or
-        :data`forcedimension.dhd.constants.TIMEGUARD` on success, and
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and
         -1 otherwise.
     """
 
@@ -288,14 +288,13 @@ def getWristEncoders(
     """
     Read all encoders values of the wrist structure.
 
-    This feature only applies to the following devices:
-
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA33`
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -325,7 +324,7 @@ def getWristEncoders(
         A tuple in the form ``([enc0, enc1, enc2], err)``.
         ``[enc0, enc1, enc2]`` are the axis 0, 1, and 2 raw encoder readings,
         respectively. ``err`` is 0 or
-        :data`forcedimension.dhd.constants.TIMEGUARD` on success, -1 otherwise.
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1 otherwise.
     """
 
     enc0 = c_int()
@@ -357,11 +356,11 @@ def getGripperEncoder(ID: int = -1) -> Tuple[int, int]:
     """
     Read the encoder value of the force gripper.
 
-    This feature only applies to the following devices:
-        :data`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -373,7 +372,7 @@ def getGripperEncoder(ID: int = -1) -> Tuple[int, int]:
 
     :returns:
         A tuple in the form ``(enc, err)``. ``enc`` is the gripper raw encoder
-        reading. ``err`` is 0 or :data`forcedimension.dhd.constants.TIMEGUARD`
+        reading. ``err`` is 0 or :data:`forcedimension.dhd.constants.TIMEGUARD`
         on success, -1 otherwise.
     """
 
@@ -392,7 +391,7 @@ def getEncoder(index: int, ID: int = -1) -> int:
 
     :param int index:
         The motor index number as defined by
-        :data`forcedimension.dhd.constants.MAX_DOF`
+        :data:`forcedimension.dhd.constants.MAX_DOF`
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -421,7 +420,7 @@ def setMotor(index: int, output: int, ID: int = -1) -> int:
 
     :param int index:
         The motor index number as defined by
-        :data`forcedimension.dhd.constants.MAX_DOF`
+        :data:`forcedimension.dhd.constants.MAX_DOF`
 
     :param int output:
         The motor DAa C char.
@@ -869,7 +868,7 @@ def deltaForceToMotor(
         A tuple in the form ``([output0, output1, output2], err)``.
         ``[output0, output1, output2]`` refer to the DELTA end-effector
         motor commands on axes 0, 1, and 2, respectively. ``err`` is 0 or
-        :data`forcedimension.dhd.constants.MOTOR_SATURATED` on success, and
+        :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success, and
         -1 otherwise.
     """
 
@@ -919,20 +918,19 @@ def wristEncoderToOrientation(
     """
     For devices with a wrist structure, compute the individual angle of each
     joint, starting with the one located nearest to the wrist base plate. For
-    the :data`forcedimension.dhd.constants.DeviceType.OMEGA33` and the
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT` devices,
+    the :data:`forcedimension.dhd.constants.DeviceType.OMEGA33` and the
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT` devices,
     angles are computed with respect to their internal reference frame, which
     is rotated 45 degrees or π/4 radians about the Y axis. Please refer to your
     device user manual for more information on your device coordinate system.
 
-    This feature only applies to the following devices:
-
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA33`
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param DeviceTuple enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
@@ -1020,13 +1018,13 @@ def wristOrientationToEncoder(
     or π/4 radians about the Y axis. Please refer to your device user manual
     for more information on your device coordinate system.
 
-    This feature only applies to the following devices:
-        :data`forcedimension.dhd.constants.DeviceType.OMEGA33`
-        :data`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-        :data`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param CartesianTuple orientation:
         Sequence of ``(oa, ob, og)`` where ``oa``, ``ob``, and ``og`` refer to
@@ -1288,12 +1286,11 @@ def gripperEncoderToAngleRad(enc: int,
     This routine computes and returns the opening of the gripper as an angle in
     [rad] for a given encoder reading.
 
-    This feature only applies to the following devices:
-
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int enc:
         Gripper encoder reading.
@@ -1311,7 +1308,7 @@ def gripperEncoderToAngleRad(enc: int,
 
     :returns:
         A tuple in the form ``(angle, err)``. err is 0 or
-        :data`forcedimension.dhd.constants.TIMEGUARD` on success, -1 on
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1 on
         otherwise. ``angle`` is the gripper opening in [rad]
     """
 
@@ -1338,12 +1335,11 @@ def gripperEncoderToGap(enc: int, ID: int = -1) -> Tuple[float, int]:
     This routine computes and returns the opening of the gripper as a distance
     in [m] for a given encoder reading.
 
-    This feature only applies to the following devices:
-
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int enc:
         Gripper encoder reading.
@@ -1387,11 +1383,11 @@ def gripperAngleRadToEncoder(angle: float, ID: int = -1) -> Tuple[int, int]:
     This routine computes and returns the gripper encoder value for a given
     gripper opening distance in [rad].
 
-    This feature only applies to the following devices:
-        :data`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param float angle:
         Gripper opening as an angle in [rad].
@@ -1436,13 +1432,11 @@ def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]:
     This routine computes and returns the gripper encoder value for a given
     gripper opening distance in [m].
 
-    This feature only applies to the following devices:
-
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
-
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param float gap:
         Gripper opening distance in [m].
@@ -1490,13 +1484,11 @@ def gripperMotorToForce(output: int,
     This routine computes the force applied to the end-effector for a given
     motor command.
 
-    This feature only applies to the following devices:
-
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
-
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int output:
         Motor command on gripper axis.
@@ -1561,12 +1553,11 @@ def gripperForceToMotor(force: float,
     Given a desired force to be displayed by the force gripper, this routine
     computes and returns the refering motor command.
 
-    This feature only applies to the following devices:
-        :data`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
-
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int force:
         Force on the gripper end-effector in [N].
@@ -1599,7 +1590,7 @@ def gripperForceToMotor(force: float,
     :returns:
         A tuple in the form ``(output, err)``. ``output`` is the motor command
         on the gripper axis. ``err`` is 0 or
-        :data`forcedimension.dhd.constants.MOTOR_SATURATED` on success,
+        :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success,
         -1 otherwise.
     """
 
@@ -1736,7 +1727,7 @@ def getEnc(
     :returns:
         A tuple in the form ``(enc, err)``. ``enc`` is a mutable sequence of
         encoder values. ``err`` is 0 or
-        :data`forcedimension.dhd.constants.TIMEGUARD` on success, -1
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
     """
     enc = (c_int * MAX_DOF)()
@@ -1791,11 +1782,11 @@ def getEncRange(
 
     :raises IndexError:
         If ``encMin_out`` is specified and
-        len(out) < :data:forcedimension.dhd.constants.MAX_DOF``
+        ``len(out) < MAX_DOF``
 
     :raises IndexError:
         If ``encMin_out`` is specified and
-        ``len(encMin_out) < :data:forcedimension.dhd.constants.MAX_DOF``
+        ``len(encMin_out) < MAX_DOF``
 
 
     :raises ValueError:
@@ -1842,10 +1833,13 @@ def setBrk(mask: int = 0xff, ID: int = -1) -> int:
     when using the generic controller directly, without a device model
     attached.
 
-    The motors on the generic controller are grouped as follows:
+    Generic control motor groups
         group1 - [mot0, mot1, mot2]
+
         group2 - [mot3, mot4, mot5]
+
         group3 - [mot6]
+
         group4 - [mot7]
 
     The mask parameter addresses all 8 motors bitwise. If a single bit within
@@ -1916,7 +1910,7 @@ def getDeltaJointAngles(
     :returns:
         A tuple in the form ``([j0, j1, j2], err)``. ``[j0, j1, j2]`` are joint
         angles for axes 0, 1, and 2, respectively. ``err`` is 0 or
-        :data`forcedimension.dhd.constants.TIMEGUARD` on success, -1
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
     """
 
@@ -1980,7 +1974,7 @@ def getDeltaJacobian(
 
     :returns:
         A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
-        ``err`` is 0 or :data`forcedimension.dhd.constants.TIMEGUARD` on
+        ``err`` is 0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on
         success, -1 otherwise.
     """
 
@@ -2497,7 +2491,7 @@ def getWristJointAngles(
         A tuple in the form ``([j0, j1, j2], err)``. ``[j0, j1, j2]`` is a
         mutable sequence of floats which refers to the joint angle for joint
         angles for joint 0, 1, and 2, respectively. ``err`` is 0 or
-        :data`forcedimension.dhd.constants.TIMEGUARD` on success, -1
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
     """
 
@@ -2560,7 +2554,7 @@ def getWristJacobian(
 
     :returns:
         A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
-        ``err`` is 0 or :data`forcedimension.dhd.constants.TIMEGUARD` on
+        ``err`` is 0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on
         success, and -1 otherwise.
 
     """
@@ -3190,10 +3184,10 @@ def getJointAngles(
 
     :returns:
         A tuple in the form ``(joint_angles, err)``. err is 0 or
-        :data`forcedimension.dhd.constants.TIMEGUARD` on success, -1
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise. ``joint_angles`` is a mutable sequence of joint angles
         (in [rad]) with a length equal to
-        :data`forcedimension.dhd.constants.MAX_DOF`.
+        :data:`forcedimension.dhd.constants.MAX_DOF`.
     """
 
     joint_angles = (c_int * MAX_DOF)()
@@ -3246,8 +3240,8 @@ def getJointVelocities(
     :returns:
         A tuple in the form ``(v, err)``. ``v`` is a mutable sequence of joint
         angle velocities (in [rad/s]) with length
-        :data`forcedimension.dhd.constants.MAX_DOF`. ``err`` is 0 or
-        :data`forcedimension.dhd.constants.TIMEGUARD` on success,
+        :data:`forcedimension.dhd.constants.MAX_DOF`. ``err`` is 0 or
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
         -1 otherwise.
     """
 
@@ -3300,7 +3294,7 @@ def getEncVelocities(
     :returns:
         A tuple in the form ``(v, err)``. ``v`` is a mutable sequence of
         encoder angle velocities (in [increments/s]). ``err`` is 0 or
-        :data`forcedimension.dhd.constants.TIMEGUARD` on success, -1
+        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
     """
 

@@ -26,21 +26,64 @@ class StatusTuple(NamedTuple):
     Named tuple adapting the status array returned by
     forcedimension.bindings.dhd.getStatus()
     """
+    #: This flag indicates if the device is powered or not.
     power: int
+
+    #: This flag indicates if the device is connected or not.
     connected: int
+
+    #: This flag indicates if the device controller is running.
     started: int
+
+    #: This flag indicates if the device is in RESET mode or not.
+    #: See device modes for details.
     reset: int
+
+    #: This flag indicates if the device is in IDLE mode or not.
+    #: See device modes for details.
     idle: int
+
+    #: This flag indicates if the device is in FORCE mode or not.
+    #: See device modes for details.
     force: int
+
+    #: This flag indicates if the device is in BRAKE mode or not.
+    #: See device modes for details.
     brake: int
+
+    #: This flag indicates if the torques are active or not when the device is
+    #: in FORCE mode. See device modes for details.
     torque: int
+
+    #: This flag indicates if the device has a wrist or not.
+    #: See device types for details.
     wrist_detected: int
+
+    #: This flag indicates if the an error happened on the device controller.
     error: int
+
+    #: This flag indicates if the gravity compensation option is enabled or
+    #: not.
     gravity: int
+
+    #: This flag indicates if the TimeGuard feature is enabled or not.
+    #: See TimeGuard feature for details.
     timeguard: int
+
+    #: This flag indicates if the device wrist is initialized or not.
+    #: See device types for details.
     wrist_init: int
+
+    #: The status of the redundant encoder consistency check. For devices
+    #: equipped with redundant encoders, a value of 1 indicates that the
+    #: redundancy check is successful. A value of 0 is reported otherwise, or
+    # if the device does not feature redundant encoders.
     redundancy: int
+
+    #: The event that caused forces to be disabled on the device (the last time
+    #: forces were turned off).
     forceoffcause: int
+
     unknown_status: int  # TODO: figure out what this is
 
 

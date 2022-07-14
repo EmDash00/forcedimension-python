@@ -719,9 +719,9 @@ def setOutput(output: int, ID: int = -1) -> int:
     Set the user programmable output bits on devices that support it.
 
     This feature only applies to the following devices:
-        :data:`forcedimension.dhd.adaptors.DeviceType.DELTA3`
-        :data:`forcedimension.dhd.adaptors.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.adaptors.DeviceType.SIGMA331_LEFT`
+    :data:`forcedimension.dhd.adaptors.DeviceType.DELTA3`
+    :data:`forcedimension.dhd.adaptors.DeviceType.SIGMA331`
+    :data:`forcedimension.dhd.adaptors.DeviceType.SIGMA331_LEFT`
 
     :param int output:
         A bitwise mask that toggles the programmable output bits.
@@ -750,16 +750,16 @@ _libdhd.dhdIsLeftHanded.restype = c_bool
 
 def isLeftHanded(ID: int = -1) -> bool:
     """
-     ``True`` if the device is configured for left-handed use,
+    ``True`` if the device is configured for left-handed use,
     ``False`` otherwise.
 
-    This feature only applies to the following devices:
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA3`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA3`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -785,16 +785,15 @@ def hasBase(ID: int = -1) -> bool:
     """
      ``True`` if the device has a base, ``False`` otherwise.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.DELTA3`
-    :data:`forcedimension.dhd.constants.DeviceType.FALCON`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.DELTA3`
+        :data:`forcedimension.dhd.constants.DeviceType.FALCON`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -819,14 +818,13 @@ def hasWrist(ID: int = -1) -> bool:
     """
      ``True`` if the device has a wrist, ``False`` otherwise.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -851,14 +849,13 @@ def hasActiveWrist(ID: int = -1) -> bool:
     """
      ``True`` if the device has an active wrist, ``False`` otherwise.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -884,7 +881,6 @@ def hasGripper(ID: int = -1) -> bool:
     Checks if the device has a gripper.
 
     This feature only applies to the following devices:
-
     :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
     :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
     :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
@@ -913,12 +909,11 @@ def hasActiveGripper(ID: int = -1) -> bool:
     """
     Checks if the specified device has an active gripper.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -1370,24 +1365,23 @@ def getOrientationRad(
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
 
-    Note:
-
+    Note
+    ----
     :data:`forcedimension.dhd.constants.DeviceType.OMEGA33` and
     :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-
     have angles that are instead computed with respect to their internal
     reference frame, which is rotated π/4 radians around the Y axis.
     Please refer to your device user manual for more information on your
     device coordinate system.
 
-    This feature only applies to the following devices:
 
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
 
     :param int ID:
@@ -1401,7 +1395,7 @@ def getOrientationRad(
 
     :raises TypeError:
         If ``out`` is specified and does not support item.
-    assignment either because its immutable or not subscriptable.
+        assignment either because its immutable or not subscriptable.
 
     :raises IndexError:
         If ``out`` is specified and ``len(out) < 3``.
@@ -1467,14 +1461,13 @@ def getOrientationDeg(
     Please refer to your device user manual for more information on your
     device coordinate system.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -1561,14 +1554,13 @@ def getPositionAndOrientationRad(
     Please refer to your device user manual for more information on your
     device coordinate system.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -1680,14 +1672,13 @@ def getPositionAndOrientationDeg(
     Please refer to your device user manual for more information on your
     device coordinate system.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2063,12 +2054,11 @@ def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]:
     """
     Get the gripper opening angle in degrees.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2102,12 +2092,11 @@ def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]:
     """
     Get the gripper opening angle in degrees.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2139,12 +2128,11 @@ def getGripperGap(ID: int = -1) -> Tuple[float, int]:
     """
     Get the gripper opening distance in meters.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2184,12 +2172,11 @@ def getGripperThumbPos(
     Read the position in Cartesian coordinates of thumb rest location of the
     force gripper structure if present.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2258,12 +2245,11 @@ def getGripperFingerPos(
     Read the position in Cartesian coordinates of forefinger rest location of
     the force gripper structure if present.
 
-    This feature only applies to the following devices:
-
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-    :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2983,7 +2969,7 @@ def getGripperAngularVelocityDeg(ID: int = -1) -> Tuple[float, int]:
 
     Please note that the velocity estimator requires at least 2 position
     updates during the time interval defined in:
-        :func:`forcedimension.dhd.configGripperVelocity()`
+    :func:`forcedimension.dhd.configGripperVelocity()`
 
     in order to be able to compute the estimate. Otherwise, e.g. if there are
     no calls to:

@@ -1020,7 +1020,7 @@ class Gripper:
         self._parent.check_threadex()
 
 
-class Poller(Thread):
+class _Poller(Thread):
     def __init__(
         self,
         f: Callable[[], None],
@@ -1130,7 +1130,7 @@ class HapticDaemon(Thread):
             )
 
             self._pollers.extend(
-                Poller(update, 1/freq)
+                _Poller(update, 1/freq)
                 for freq, update in zip(update_list[:-2], funcs)
                 if freq is not None
             )
@@ -1141,7 +1141,7 @@ class HapticDaemon(Thread):
                     self._dev.gripper is not None
                 ):
                     self._pollers.append(
-                        Poller(
+                        _Poller(
                             self._dev.update_force_and_torque,
                             1/update_list.ft
                         )
@@ -1149,7 +1149,7 @@ class HapticDaemon(Thread):
                 else:
                     f = self._dev.update_force_and_torque_and_gripper_force
                     self._pollers.append(
-                        Poller(f, 1/update_list.ft)
+                        _Poller(f, 1/update_list.ft)
                     )
         if update_list.gripper is not None and self._dev.gripper is not None:
             funcs = (
@@ -1161,13 +1161,13 @@ class HapticDaemon(Thread):
             )
 
             self._pollers.extend(
-                Poller(update, 1/freq)
+                _Poller(update, 1/freq)
                 for freq, update in zip(update_list.gripper, funcs)
                 if freq is not None
             )
 
             self._force_poller = (
-                Poller(
+                _Poller(
                     self._dev.gripper.submit,
                     1/update_list.req,
                     self._forceon
@@ -1175,7 +1175,7 @@ class HapticDaemon(Thread):
             )
         else:
             self._force_poller = (
-                Poller(self._dev.submit, 1/update_list.req, self._forceon)
+                _Poller(self._dev.submit, 1/update_list.req, self._forceon)
             )
 
         self._paused = False
