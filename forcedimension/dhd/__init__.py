@@ -1,10 +1,12 @@
 from ctypes import c_bool, c_byte, c_char_p, c_double, c_int, c_uint, c_ushort
 from ctypes import POINTER, byref
-from typing import MutableSequence, Optional, Tuple, Union, cast
+from typing import List, Optional, Tuple, Union, cast
 
 from forcedimension.dhd.adaptors import (
     CartesianTuple, StatusTuple, VersionTuple
 )
+
+from forcedimension.typing import VectorLike, MatrixLike
 
 from forcedimension.dhd.constants import (
     ComMode,
@@ -375,7 +377,7 @@ def enableForce(enable: bool, ID: int = -1) -> int:
         If ``val`` is not implicitly convertible to C bool.
 
     :raises ValueError:
-        If ``ID`` is not implicitly convertible to C int.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
@@ -404,7 +406,7 @@ def enableGripperForce(enable: bool, ID: int = -1) -> int:
         If ``val`` is not implicitly convertible to C bool.
 
     :raises ValueError:
-        If ``ID`` is not implicitly convertible to C int.
+        If ``ID`` is not implicitly convertible to C char.
 
     :rtype: int
 
@@ -1206,8 +1208,8 @@ _libdhd.dhdGetPosition.restype = c_int
 
 def getPosition(
     ID: int = -1,
-    out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], int]:
+    out: Optional[VectorLike] = None
+) -> Tuple[Union[VectorLike, List[float]], int]:
     """
     Retrieve the position of the end-effector in Cartesian coordinates. Please
     refer to your device user manual for more information on your device
@@ -1216,11 +1218,10 @@ def getPosition(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out:
-        Optional mutable sequence to use instead of generating a new List.
-        If this is specified, the mutable sequence provided will be updated
-        with the new values and the return will be a reference to the same
-        mutable sequence passed in.
+    :param Optional[VectorLike] out:
+        An output buffer to store the position of the end-effector. If
+        specified, the return will contain a reference to this buffer rather to
+        a newly allocated list, optional.
 
     :raises TypeError:
         If ``out`` is specified and does not support item assignment either
@@ -1238,7 +1239,7 @@ def getPosition(
         respectively. ``err`` is either 0 or
         :data:`forcedimension.dhd.TIMEGUARD` on success, -1 otherwise.
 
-    :rtype: Tuple[MutableSequence[float], int]
+    :rtype: Tuple[Union[VectorLike, List[float]], int]
     """
 
     px = c_double()
@@ -1268,8 +1269,8 @@ _libdhd.dhdGetForce.restype = c_int
 
 def getForce(
     ID: int = -1,
-    out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], int]:
+    out: Optional[VectorLike] = None
+) -> Tuple[Union[VectorLike, List[float]], int]:
     """
     Retrieve the force vector applied to the end-effector in Cartesian
     coordinates. Please refer to your device user manual for more information
@@ -1278,11 +1279,10 @@ def getForce(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out:
-        Optional mutable sequence to use instead of generating a new list.
-        If this is specified, the mutable sequence provided will be updated
-        with the new values and the return will be a reference to the same
-        mutable sequence passed in.
+    :param Optional[VectorLike] out:
+        An output buffer to store the applied forces on the end-effector. If
+        specified, the return will contain a reference to this buffer rather to
+        a newly allocated list, optional.
 
     :raises TypeError:
         If ``out`` is specified and does not support item.
@@ -1303,7 +1303,7 @@ def getForce(
         X, Y, and Z axes, respectively. ``err`` is 0 on success, -1
         otherwise.
 
-    :rtype: Tuple[MutableSequence[float], int]
+    :rtype: Tuple[Union[VectorLike, List[float]], int]
     """
 
     fx = c_double()
@@ -1353,7 +1353,7 @@ def setForce(f: CartesianTuple, ID: int = -1) -> int:
         0 or :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on
         success, -1 otherwise.
 
-    :rtype: Tuple[MutableSequence[float], int]
+    :rtype: Tuple[Union[VectorLike, List[float]], int]
     """
 
     return _libdhd.dhdSetForce(f[0], f[1], f[2], ID)
@@ -1365,8 +1365,8 @@ _libdhd.dhdGetOrientationRad.restype = c_int
 
 def getOrientationRad(
     ID: int = -1,
-    out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], int]:
+    out: Optional[VectorLike] = None
+) -> Tuple[Union[VectorLike, List[float]], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1393,11 +1393,10 @@ def getOrientationRad(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] out:
+        An output buffer to store the joint angles. If specified, the return
+        will contain a reference to this buffer rather to a newly allocated
+        list, optional.
 
     :raises TypeError:
         If ``out`` is specified and does not support item.
@@ -1419,7 +1418,7 @@ def getOrientationRad(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[MutableSequence[float], int]
+    :rtype: Tuple[Union[VectorLike, List[float]], int]
     """
 
     oa = c_double()
@@ -1451,8 +1450,8 @@ _libdhd.dhdGetOrientationDeg.restype = c_int
 
 def getOrientationDeg(
     ID: int = -1,
-    out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], int]:
+    out: Optional[VectorLike] = None
+) -> Tuple[Union[VectorLike, List[float]], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1478,11 +1477,10 @@ def getOrientationDeg(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] out:
+        An output buffer to store the joint angles. If specified, the return
+        will contain a reference to this buffer rather to a newly allocated
+        list, optional.
 
     :raises TypeError:
         If ``out`` is specified and does not support item assignment either
@@ -1501,7 +1499,7 @@ def getOrientationDeg(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[MutableSequence[float], int]
+    :rtype: Tuple[Union[VectorLike, List[float]], int]
     """
 
     oa = c_double()
@@ -1541,9 +1539,11 @@ _libdhd.dhdGetPositionAndOrientationRad.restype = c_int
 
 def getPositionAndOrientationRad(
     ID: int = -1,
-    p_out: Optional[MutableSequence[float]] = None,
-    o_out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], MutableSequence[float], int]:
+    p_out: Optional[VectorLike] = None,
+    o_out: Optional[VectorLike] = None
+) -> Tuple[
+    Union[VectorLike, List[float]], Union[VectorLike, List[float]], int
+]:
     """
     Retrieve the position and orientation of the end-effector in Cartesian
     coordinates. For devices with a wrist structure, retrieve individual angle
@@ -1571,17 +1571,15 @@ def getPositionAndOrientationRad(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] p_out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] p_out:
+        An output buffer to store the position. If specified, the return will
+        contain a reference to this buffer rather to a newly allocated
+        list, optional.
 
-    :param Optional[MutableSequence[float]] o_out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] o_out:
+        An output buffer to store the joint angles. If specified, the return
+        will contain a reference to this buffer rather to a newly allocated
+        list, optional.
 
     :raises TypeError:
         If ``p_out`` is specified and does not support item assignment either
@@ -1610,7 +1608,13 @@ def getPositionAndOrientationRad(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
+    :rtype:
+        Tuple
+        [
+        Union[VectorLike, List[float]],
+        Union[VectorLike, List[float]],
+        int
+        ]
 
     """
 
@@ -1629,20 +1633,24 @@ def getPositionAndOrientationRad(
     )
 
     if p_out is None:
-        p_out = [px.value, py.value, pz.value]
+        p_ret = [px.value, py.value, pz.value]
     else:
+        p_ret = p_out
+
         p_out[0] = px.value
         p_out[1] = py.value
         p_out[2] = pz.value
 
     if o_out is None:
-        o_out = [oa.value, ob.value, og.value]
+        o_ret = [oa.value, ob.value, og.value]
     else:
+        o_ret = o_out
+
         o_out[0] = oa.value
         o_out[1] = ob.value
         o_out[2] = og.value
 
-    return (p_out, o_out, err)
+    return (p_ret, o_ret, err)
 
 
 _libdhd.dhdGetPositionAndOrientationDeg.argtypes = [
@@ -1659,9 +1667,9 @@ _libdhd.dhdGetPositionAndOrientationDeg.restype = c_int
 
 def getPositionAndOrientationDeg(
     ID: int = -1,
-    p_out: Optional[MutableSequence[float]] = None,
-    o_out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], MutableSequence[float], int]:
+    p_out: Optional[VectorLike] = None,
+    o_out: Optional[VectorLike] = None
+) -> Tuple[Union[VectorLike, List[float]], Union[VectorLike, List[float]], int]:
     """
     Retrieve the position and orientation of the end-effector in Cartesian
     coordinates. For devices with a wrist structure, retrieve individual angle
@@ -1689,17 +1697,15 @@ def getPositionAndOrientationDeg(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] p_out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] p_out:
+        An output buffer to store the position. If specified, the return will
+        contain a reference to this buffer rather to a newly allocated
+        list, optional.
 
-    :param Optional[MutableSequence[float]] t_out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] o_out:
+        An output buffer to store the joint angles. If specified, the return
+        will contain a reference to this buffer rather to a newly allocated
+        list, optional.
 
     :raises TypeError:
         If ``p_out`` is specified and does not support item assignment either
@@ -1727,7 +1733,8 @@ def getPositionAndOrientationDeg(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
+    :rtype:
+        Tuple[Union[VectorLike, List[float]], Union[VectorLike, List[float]], int]
 
     """
 
@@ -1746,20 +1753,24 @@ def getPositionAndOrientationDeg(
     )
 
     if p_out is None:
-        p_out = [px.value, py.value, pz.value]
+        p_ret = [px.value, py.value, pz.value]
     else:
+        p_ret = p_out
+
         p_out[0] = px.value
         p_out[1] = py.value
         p_out[2] = pz.value
 
     if o_out is None:
-        o_out = [oa.value, ob.value, og.value]
+        o_ret = [oa.value, ob.value, og.value]
     else:
+        o_ret = o_out
+
         o_out[0] = oa.value
         o_out[1] = ob.value
         o_out[2] = og.value
 
-    return (p_out, o_out, err)
+    return (p_ret, o_ret, err)
 
 
 _libdhd.dhdGetPositionAndOrientationFrame.argtypes = [
@@ -1774,24 +1785,17 @@ _libdhd.dhdGetPositionAndOrientationFrame.restype = c_int
 
 def getPositionAndOrientationFrame(
         ID: int = -1,
-        p_out: Optional[MutableSequence[float]] = None,
-        matrix_out: Optional[MutableSequence[MutableSequence[float]]] = None
+        p_out: Optional[VectorLike] = None,
+        matrix_out: Optional[MatrixLike] = None
     ) -> Tuple[
-    MutableSequence[float],
-    MutableSequence[MutableSequence[float]],
-    int
-]:
+        Union[VectorLike, List[float]],
+        Union[MatrixLike, List[List[float]]],
+        int
+    ]:
     """
     Retrieve the position and orientation matrix of the end-effector in
     Cartesian coordinates. Please refer to your device user manual for more
     information on your device coordinate system.
-
-    :raises TypeError:
-        If ``matrix_out`` is specified and does not support item assignment,
-        either because it is not subscriptable or because it is not mutable.
-
-    :raises IndexError:
-        If ``matrix_out`` is specified any dimension is less than length 3.
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -1802,6 +1806,13 @@ def getPositionAndOrientationFrame(
 
     :raises IndexError:
         If ``p_out`` is specified and ``len(out) < 3``.
+
+    :raises TypeError:
+        If ``matrix_out`` is specified and does not support item assignment,
+        either because it is not subscriptable or because it is not mutable.
+
+    :raises IndexError:
+        If ``matrix_out`` is specified any dimension is less than length 3.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
@@ -1814,11 +1825,12 @@ def getPositionAndOrientationFrame(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype Tuple[
-        MutableSequence[float],
-        MutableSequence[MutableSequence[float]],
+    :rtype:
+        Tuple[
+        VectorLike,
+        MatrixLike
         int
-    ]:
+        ]
     """
 
     px = c_double()
@@ -1834,23 +1846,24 @@ def getPositionAndOrientationFrame(
     )
 
     if p_out is None:
-        p_out = [px.value, py.value, pz.value]
+        p_ret = [px.value, py.value, pz.value]
     else:
+        p_ret = p_out
+
         p_out[0] = px.value
         p_out[1] = py.value
         p_out[2] = pz.value
 
     if matrix_out is None:
-        matrix_out = cast(
-            MutableSequence[MutableSequence[float]],
-            [list(row) for row in matrix]
-        )
+        matrix_ret = [list(row) for row in matrix]
     else:
+        matrix_ret = matrix_out
+
         for i in range(3):
             for j in range(3):
                 matrix_out[i][j] = matrix[i][j]
 
-    return (p_out, matrix_out, err)
+    return (p_ret, matrix_ret, err)
 
 
 _libdhd.dhdGetForceAndTorque.argtypes = [
@@ -1867,26 +1880,24 @@ _libdhd.dhdGetForceAndTorque.restype = c_int
 
 def getForceAndTorque(
     ID: int = -1,
-    f_out: Optional[MutableSequence[float]] = None,
-    t_out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], MutableSequence[float], int]:
+    f_out: Optional[VectorLike] = None,
+    t_out: Optional[VectorLike] = None
+) -> Tuple[Union[VectorLike, List[float]], Union[VectorLike, List[float]], int]:
     """
     Retrieve the force and torque vectors applied to the device end-effector.
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] f_out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] f_out:
+        An output buffer to store the applied forces on the end-effector. If
+        specified, the return will contain a reference to this buffer rather to
+        a newly allocated list, optional.
 
-    :param Optional[MutableSequence[float]] t_out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] t_out:
+        An output buffer to store the applied torques on the end-effector. If
+        specified, the return will contain a reference to this buffer rather to
+        a newly allocated list, optional.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
@@ -1898,7 +1909,13 @@ def getForceAndTorque(
         refers to the torques applied to the end-effector (in [Nm]) about
         the X, Y, and Z axes. ``err`` is 0, on success, -1 otherwise.
 
-    :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
+    :rtype:
+        Tuple
+        [
+        Union[VectorLike, List[float]],
+        Union[VectorLike, List[float]],
+        int
+        ]
 
     """
 
@@ -1917,20 +1934,24 @@ def getForceAndTorque(
     )
 
     if f_out is None:
-        f_out = [fx.value, fy.value, fz.value]
+        f_ret = [fx.value, fy.value, fz.value]
     else:
+        f_ret = f_out
+
         f_out[0] = fx.value
         f_out[1] = fy.value
         f_out[2] = fz.value
 
     if t_out is None:
-        t_out = [tx.value, ty.value, tz.value]
+        t_ret = [tx.value, ty.value, tz.value]
     else:
+        t_ret = t_out
+
         t_out[0] = tx.value
         t_out[1] = ty.value
         t_out[2] = tz.value
 
-    return (f_out, t_out, err)
+    return (f_ret, t_ret, err)
 
 
 _libdhd.dhdSetForceAndTorque.argtypes = [
@@ -1995,8 +2016,8 @@ _libdhd.dhdGetOrientationFrame.restype = c_int
 
 def getOrientationFrame(
     ID: int = -1,
-    out: Optional[MutableSequence[MutableSequence[float]]] = None
-) -> Tuple[MutableSequence[MutableSequence[float]], int]:
+    out: Optional[MatrixLike] = None
+) -> Tuple[Union[MatrixLike, List[List[float]]], int]:
     """
     Retrieve the rotation matrix of the wrist structure. The identity matrix
     is returned for devices that do not support orientations.
@@ -2004,11 +2025,10 @@ def getOrientationFrame(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[MutableSequence[float]]] out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[MatrixLike] out:
+        An output buffer to store the orientation frame. If specified, the
+        return will contain a reference to this buffer rather to a newly allocated
+        list, optional.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
@@ -2029,20 +2049,14 @@ def getOrientationFrame(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[MutableSequence[MutableSequence[float]], int]
+    :rtype: Tuple[Union[MatrixLike, List[List[float]]], int]
     """
 
     matrix = ((c_double * 3) * 3)()
 
     if out is None:
         err = _libdhd.dhdGetOrientationFrame(matrix, ID)
-        return (
-            cast(
-                MutableSequence[MutableSequence[float]],
-                [list(row) for row in matrix]
-            ),
-            err
-        )
+        return ([list(row) for row in matrix], err)
     else:
         err = _libdhd.dhdGetOrientationFrame(matrix, ID)
         for i in range(3):
@@ -2173,8 +2187,8 @@ _libdhd.dhdGetGripperThumbPos.restype = c_int
 
 def getGripperThumbPos(
     ID: int = -1,
-    out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], int]:
+    out: Optional[VectorLike] = None
+) -> Tuple[Union[VectorLike, List[float]], int]:
     """
     Read the position in Cartesian coordinates of thumb rest location of the
     force gripper structure if present.
@@ -2188,11 +2202,10 @@ def getGripperThumbPos(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] out:
+        An output buffer to store the grippper thumb position. If specified,
+        the return will contain a reference to this buffer rather to a newly
+        allocated list, optional.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
@@ -2246,8 +2259,8 @@ _libdhd.dhdGetGripperFingerPos.restype = c_int
 
 def getGripperFingerPos(
     ID: int = -1,
-    out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], int]:
+    out: Optional[VectorLike] = None
+) -> Tuple[Union[VectorLike, List[float]], int]:
     """
     Read the position in Cartesian coordinates of forefinger rest location of
     the force gripper structure if present.
@@ -2261,11 +2274,10 @@ def getGripperFingerPos(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] out:
+        An output buffer to store the gripper finger position. If specified,
+        the return will contain a reference to this buffer rather to a newly
+        allocated list, optional.
 
     :raises TypeError:
         If ``out`` is specified and does not support item assignment either
@@ -2507,8 +2519,8 @@ _libdhd.dhdGetLinearVelocity.restype = c_int
 
 def getLinearVelocity(
     ID: int = -1,
-    out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], int]:
+    out: Optional[VectorLike] = None
+) -> Tuple[Union[VectorLike, List[float]], int]:
     """
     Retrieve the estimated instanteous linear velocity in [m/s].
 
@@ -2532,11 +2544,10 @@ def getLinearVelocity(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] out:
+        An output buffer to store the linear velocity. If specified, the return will
+        contain a reference to this buffer rather to a newly allocated
+        list, optional.
 
     :raises TypeError:
         If ``out`` is specified and does not support item assignment either
@@ -2548,7 +2559,7 @@ def getLinearVelocity(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[MutableSequence[float], int]
+    :rtype: Tuple[Union[VectorLike, List[float]], int]
 
     :returns:
         A tuple in the form ``([vx, vy, vz], err)``. ``[vx, vy, vz]`` is the
@@ -2639,8 +2650,8 @@ _libdhd.dhdGetAngularVelocityRad.restype = c_int
 
 def getAngularVelocityRad(
     ID: int = -1,
-    out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], int]:
+    out: Optional[VectorLike] = None
+) -> Tuple[Union[VectorLike, List[float]], int]:
     """
     Retrieve the estimated angular velocity in [rad/s].
 
@@ -2661,11 +2672,10 @@ def getAngularVelocityRad(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] out:
+        An output buffer to store the angular velocity. If specified, the
+        return will contain a reference to this buffer rather to a newly
+        allocated list, optional.
 
     :raises TypeError:
         If ``out`` is specified and does not support item assignment either
@@ -2677,7 +2687,7 @@ def getAngularVelocityRad(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[MutableSequence[float], int]
+    :rtype: Tuple[Union[VectorLike, List[float]], int]
 
     :returns:
         A tuple in the form ``([wx, wy, wz], err)``. ``[vx, vy, vz]`` is the
@@ -2724,8 +2734,8 @@ _libdhd.dhdGetAngularVelocityDeg.restype = c_int
 
 def getAngularVelocityDeg(
     ID: int = -1,
-    out: Optional[MutableSequence[float]] = None
-) -> Tuple[MutableSequence[float], int]:
+    out: Optional[VectorLike] = None
+) -> Tuple[Union[VectorLike, List[float]], int]:
 
     """
     Retrieve the estimated angular velocity in [deg/s].
@@ -2748,11 +2758,10 @@ def getAngularVelocityDeg(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] out:
+        An output buffer to store the angular velocity. If specified, the
+        return will contain a reference to this buffer rather to a newly
+        allocated list, optional.
 
     :raises TypeError:
         If ``out`` is specified and does not support item assignment either
@@ -2764,7 +2773,7 @@ def getAngularVelocityDeg(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[MutableSequence[float], int]
+    :rtype: Tuple[Union[VectorLike, List[float]], int]
 
     :returns:
         A tuple in the form ``([wx, wy, wz], err)``. ``[vx, vy, vz]`` is the
@@ -2876,11 +2885,10 @@ def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]:
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] out:
+        An output buffer to store the gripper linear velocity. If specified,
+        the return will contain a reference to this buffer rather to a newly
+        allocated list, optional.
 
     :raises TypeError:
         If ``out`` is specified and does not support item assignment either
@@ -2892,7 +2900,7 @@ def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[MutableSequence[float], int]
+    :rtype: Tuple[Union[VectorLike, List[float]], int]
 
     :returns:
         A tuple in the form ``(vg, err)``. ``vg`` is the linear velocity of the
@@ -2931,11 +2939,10 @@ def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]:
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] out:
-        Optional mutable sequence to use instead of generating a new list. If
-        this is specified, the mutable sequence provided will be updated with
-        the new values and the return will be a reference to the same mutable
-        sequence passed in.
+    :param Optional[VectorLike] out:
+        An output buffer to store the gripper angular velocity. If specified,
+        the return will contain a reference to this buffer rather to a newly
+        allocated list, optional.
 
     :raises TypeError:
         If ``out`` is specified and does not support item assignment either
@@ -2947,7 +2954,7 @@ def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[MutableSequence[float], int]
+    :rtype: Tuple[Union[VectorLike, List[float]], int]
 
     :returns:
         A tuple in the form ``(v, err)``. ``v`` is the linear velocity of the
