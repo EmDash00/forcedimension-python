@@ -1,8 +1,12 @@
-from typing import Any, TypeVar, Protocol
-from _typeshed import SupportsGetItem
+from typing import Any, Container, TypeVar, Protocol
 
 _KT_contra = TypeVar("_KT_contra", contravariant=True)
 _VT = TypeVar("_VT")
+_VT_co = TypeVar("_VT_co", covariant=True)
+
+
+class SupportsGetItem(Container[_KT_contra], Protocol[_KT_contra, _VT_co]):
+    def __getitem__(self, __k: _KT_contra) -> _VT_co: ...
 
 
 class SupportsGetSetItem(
@@ -19,4 +23,3 @@ VectorLike = TypeVar('VectorLike', bound=SupportsGetSetItem[int, float])
 MatrixLike = TypeVar(
     'MatrixLike', bound=SupportsGetSetItem[int, Any]
 )
-

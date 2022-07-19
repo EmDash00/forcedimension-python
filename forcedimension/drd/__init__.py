@@ -426,11 +426,11 @@ def getPositionAndOrientation(
 
     :rtype:
         Tuple[
-            Union[VectorLike, List[float]],
-            Union[VectorLike, List[float]],
-            float,
-            Union[MatrixLike, List[List[float]]],
-            int
+        Union[VectorLike, List[float]],
+        Union[VectorLike, List[float]],
+        float,
+        Union[MatrixLike, List[List[float]]],
+        int
         ]
     """
 
@@ -539,7 +539,9 @@ def getLinearVelocity(
 
     :rtype:
         Tuple[
-            Union[VectorLike, List[float]], Union[VectorLike, List[float]], int
+        Union[VectorLike, List[float]],
+        Union[VectorLike, List[float]],
+        int
         ]
 
     :returns:

@@ -443,7 +443,7 @@ def getSystemType(ID: int = -1) -> DeviceType:
 
 
 _libdhd.dhdGetSystemName.argtypes = [c_byte]
-_libdhd.dhdGetSystemName.restype = c_byte_p
+_libdhd.dhdGetSystemName.restype = c_char_p
 
 
 def getSystemName(ID: int = -1) -> Union[str, None]:
@@ -1609,10 +1609,11 @@ def getPositionAndOrientationRad(
         otherwise.
 
     :rtype:
-        Tuple[
-            Union[VectorLike, List[float]],
-            Union[VectorLike, List[float]],
-            int
+        Tuple
+        [
+        Union[VectorLike, List[float]],
+        Union[VectorLike, List[float]],
+        int
         ]
 
     """
@@ -1732,7 +1733,8 @@ def getPositionAndOrientationDeg(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[Union[VectorLike, List[float]], Union[VectorLike, List[float]], int]
+    :rtype:
+        Tuple[Union[VectorLike, List[float]], Union[VectorLike, List[float]], int]
 
     """
 
@@ -1823,11 +1825,12 @@ def getPositionAndOrientationFrame(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype Tuple[
+    :rtype:
+        Tuple[
         VectorLike,
         MatrixLike
         int
-    ]:
+        ]
     """
 
     px = c_double()
@@ -1907,10 +1910,11 @@ def getForceAndTorque(
         the X, Y, and Z axes. ``err`` is 0, on success, -1 otherwise.
 
     :rtype:
-        Tuple[
-            Union[VectorLike, List[float]],
-            Union[VectorLike, List[float]],
-            int
+        Tuple
+        [
+        Union[VectorLike, List[float]],
+        Union[VectorLike, List[float]],
+        int
         ]
 
     """
