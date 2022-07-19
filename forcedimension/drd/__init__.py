@@ -1,6 +1,8 @@
 from ctypes import POINTER, byref, c_bool, c_byte, c_double, c_int
-from typing import MutableSequence, Sequence, Tuple
-from typing import Optional, cast
+from typing import List, Sequence, Tuple
+from typing import Union, Optional
+
+from forcedimension.typing import VectorLike, MatrixLike
 
 from forcedimension.dhd.adaptors import CartesianTuple
 import forcedimension.runtime as runtime
@@ -176,7 +178,7 @@ def isRunning(ID: int = -1) -> bool:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: bool
 
@@ -201,7 +203,7 @@ def isFiltering(ID: int = -1) -> bool:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: bool
 
@@ -226,7 +228,7 @@ def isInitialized(ID: int = -1) -> bool:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: bool
 
@@ -253,7 +255,7 @@ def isMoving(ID: int = -1) -> bool:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: bool
 
@@ -281,7 +283,7 @@ def enableSimulator(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -306,7 +308,7 @@ def autoInit(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -334,7 +336,7 @@ def checkInit(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -359,16 +361,16 @@ _libdrd.drdGetPositionAndOrientation.argtypes = [
 _libdrd.drdGetPositionAndOrientation.restype = c_int
 
 
-def getPositionAndOrientationFrame(
+def getPositionAndOrientation(
         ID: int = -1,
-        p_out: Optional[MutableSequence[float]] = None,
-        o_out: Optional[MutableSequence[float]] = None,
-        matrix_out: Optional[MutableSequence[MutableSequence[float]]] = None
+        p_out: Optional[VectorLike] = None,
+        o_out: Optional[VectorLike] = None,
+        matrix_out: Optional[MatrixLike] = None
     ) -> Tuple[
-    MutableSequence[float],
-    MutableSequence[float],
+    Union[VectorLike, List[float]],
+    Union[VectorLike, List[float]],
     float,
-    MutableSequence[MutableSequence[float]],
+    Union[MatrixLike, List[List[float]]],
     int
 ]:
     """
@@ -377,20 +379,15 @@ def getPositionAndOrientationFrame(
     end-effector. Please refer to your device user manual for more
     information on your device coordinate system.
 
-    :param Optional[MutableSequence[float]] p_out:
-        Optional output buffer for the position. If specified, loads
-        the position into p_out rather than creating a new buffer, defaults to
-        None.
+    :param Optional[VectorLike] p_out:
+        Optional output buffer to store the end-effector position. If this is
+        specified, the return will be a reference to this buffer rather than a
+        newly allocated list of lists.
 
-    :param Optional[MutableSequence[float]] o_out:
-        Optional output buffer for the orientation. If specified, loads
-        the position into p_out rather than creating a new buffer, defaults to
-        None.
-
-    :param Optional[MutableSequence[float]] o_out:
-        Optional output buffer for the matrix orientation frame. If specified,
-        loads the position into p_out rather than creating a new buffer,
-        defaults to None.
+    :param Optional[Matrix] matrix_out:
+        Optional output buffer to store the return. If this is specified, the
+        return will be a reference to this buffer rather than a newly allocated
+        list of lists.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -409,6 +406,14 @@ def getPositionAndOrientationFrame(
     :raises IndexError:
         If ``o_out`` is specified and ``len(o_out) < 3``.
 
+    :raises TypeError:
+        If ``matrix_out`` is specified and does not support item assignment,
+        either because it is not subscriptable or because it is not mutable.
+
+    :raises IndexError:
+        If ``matrix_out`` is specified any dimension is less than length 3.
+
+
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
 
@@ -421,10 +426,10 @@ def getPositionAndOrientationFrame(
 
     :rtype:
         Tuple[
-            MutableSequence[float],
-            MutableSequence[float],
+            Union[VectorLike, List[float]],
+            Union[VectorLike, List[float]],
             float,
-            MutableSequence[MutableSequence[float]],
+            Union[MatrixLike, List[List[float]]],
             int
         ]
     """
@@ -441,7 +446,7 @@ def getPositionAndOrientationFrame(
 
     matrix = ((c_double * 3) * 3)()
 
-    err: int = _libdrd.drdGetPositionAndOrientationFrame(
+    err: int = _libdrd.drdGetPositionAndOrientation(
         byref(px), byref(py), byref(pz),
         byref(oa), byref(ob), byref(og),
         byref(pg),
@@ -450,30 +455,31 @@ def getPositionAndOrientationFrame(
     )
 
     if p_out is None:
-        p_out = [px.value, py.value, pz.value]
+        p_ret = [px.value, py.value, pz.value]
     else:
+        p_ret = p_out
+
         p_out[0] = px.value
         p_out[1] = py.value
         p_out[2] = pz.value
 
     if o_out is None:
-        o_out = [oa.value, ob.value, og.value]
+        o_ret = [oa.value, ob.value, og.value]
     else:
+        o_ret = o_out
         o_out[0] = oa.value
         o_out[1] = ob.value
         o_out[2] = og.value
 
     if matrix_out is None:
-        matrix_out = cast(
-            MutableSequence[MutableSequence[float]],
-            [list(row) for row in matrix]
-        )
+        matrix_ret = [list(row) for row in matrix]
     else:
+        matrix_ret = matrix_out
         for i in range(3):
             for j in range(3):
                 matrix_out[i][j] = matrix[i][j]
 
-    return (p_out, o_out, pg.value, matrix_out, err)
+    return (p_ret, o_ret, pg.value, matrix_ret, err)
 
 
 _libdrd.drdGetVelocity.argtypes = [
@@ -490,9 +496,13 @@ _libdrd.drdGetVelocity.restype = c_int
 
 def getLinearVelocity(
     ID: int = -1,
-    v_out: Optional[MutableSequence[float]] = None,
-    w_out: Optional[MutableSequence[float]] = None,
-) -> Tuple[MutableSequence[float], MutableSequence[float], int]:
+    v_out: Optional[VectorLike] = None,
+    w_out: Optional[VectorLike] = None,
+) -> Tuple[
+    Union[VectorLike, List[float]],
+    Union[VectorLike, List[float]],
+    int
+]:
     """
         Retrieve the linear velocity of the end-effector position in Cartesian
         coordinates as well as the angular velocity about the X, Y, and Z axes.
@@ -502,12 +512,12 @@ def getLinearVelocity(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[float]] v_out:
+    :param Optional[VectorLike] v_out:
         Optional output buffer for the linear velocity. If specified, loads
-        the position into p_out rather than creating a new buffer, defaults to
+        the position into p_out rather than allocating a new buffer, defaults to
         None.
 
-    :param Optional[MutableSequence[float]] w_out:
+    :param Optional[VectorLike] w_out:
         Optional output buffer for the angular velocity. If specified, loads
         the position into p_out rather than creating a new buffer, defaults to
         None.
@@ -527,7 +537,10 @@ def getLinearVelocity(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
 
-    :rtype: Tuple[MutableSequence[float], MutableSequence[float], int]
+    :rtype:
+        Tuple[
+            Union[VectorLike, List[float]], Union[VectorLike, List[float]], int
+        ]
 
     :returns:
         A tuple in the form ``([vx, vy, vz], [wx, wy, wz], err)``.
@@ -556,20 +569,24 @@ def getLinearVelocity(
     )
 
     if v_out is None:
-        v_out = [vx.value, vy.value, vz.value]
+        v_ret = [vx.value, vy.value, vz.value]
     else:
+        v_ret = v_out
+
         v_out[0] = vx.value
         v_out[1] = vy.value
         v_out[2] = vz.value
 
     if w_out is None:
-        w_out = [wx.value, wy.value, wz.value]
+        w_ret = [wx.value, wy.value, wz.value]
     else:
+        w_ret = w_out
+
         w_out[0] = wx.value
         w_out[1] = wy.value
         w_out[2] = wz.value
 
-    return (v_out, w_out, err)
+    return (v_ret, w_ret, err)
 
 
 _libdrd.drdGetCtrlFreq.argtypes = [c_byte]
@@ -585,7 +602,7 @@ def getComFreq(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -611,7 +628,7 @@ def start(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -775,7 +792,7 @@ def moveToPos(pos: CartesianTuple, block: bool, ID: int = -1):
         A tuple of x, y, and z coordinates to move the end effector to.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -808,7 +825,7 @@ def moveToRot(o: CartesianTuple, block: bool, ID: int = -1):
         A tuple of angles about the first, second, and third joints in [rad].
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -841,7 +858,7 @@ def moveToGrip(pg: float, block: bool, ID: int = -1):
         Target gripper opening distance in [m].
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -869,7 +886,7 @@ def moveTo(p: Sequence[float], block: bool, ID: int = -1):
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -906,7 +923,7 @@ def moveToEnc(enc: Sequence[int], block: bool, ID: int = -1) -> int:
         If any of elements of enc are not implicitly convertible to a C int.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -970,7 +987,7 @@ def hold(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -993,7 +1010,7 @@ def stop(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -1018,7 +1035,7 @@ def getPriorities(ID: int = -1) -> Tuple[int, int, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: Tuple[int, int, int]
 
@@ -1070,7 +1087,7 @@ def setPriorities(prio: int, ctrlprio: int, ID: int = -1) -> int:
         If ``ctrlprio`` is not convertible to a C int.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -1098,7 +1115,7 @@ def getEncPGain(gain: float, ID: int = -1) -> int:
         If ``gain`` is not convertible to a C int.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -1122,7 +1139,7 @@ def setEncPGain(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -1153,7 +1170,7 @@ def setEncIGain(gain: float, ID: int = -1) -> int:
         If ``gain`` is not convertible to a C int.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -1177,7 +1194,7 @@ def getEncIGain(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -1208,7 +1225,7 @@ def setEncDGain(gain: float, ID: int = -1) -> int:
         If ``gain`` is not convertible to a C int.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -1232,7 +1249,7 @@ def getEncDGain(ID: int = -1) -> int:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -1267,7 +1284,7 @@ def setMotRatioMax(scale: float, ID: int = -1) -> int:
         If ``scale`` is not convertible to a C int.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: int
 
@@ -1291,7 +1308,7 @@ def getMotRatioMax(ID: int = -1) -> float:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: float
 
@@ -1320,7 +1337,7 @@ def setEncMoveParam(
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :raises ValueError:
         If ``vmax`` is not convertible to a C int.
@@ -1363,7 +1380,7 @@ def setEncTrackParam(
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :raises ValueError:
         If ``vmax`` is not convertible to a C int.
@@ -1406,7 +1423,7 @@ def setPosMoveParam(
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :raises ValueError:
         If ``vmax`` is not convertible to a C int.
@@ -1449,7 +1466,7 @@ def setPosTrackParam(
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :raises ValueError:
         If ``vmax`` is not convertible to a C int.
@@ -1483,7 +1500,7 @@ def getEncMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: Tuple[int, float, float, float]
 
@@ -1516,7 +1533,7 @@ def getEncTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: Tuple[int, float, float, float]
 
@@ -1550,7 +1567,7 @@ def getPosMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: Tuple[int, float, float, float]
 
@@ -1583,7 +1600,7 @@ def getPosTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``ID`` is not convertible to a C int.
+        If ``ID`` is not convertible to a C char.'
 
     :rtype: Tuple[float, float, float, int]
 
