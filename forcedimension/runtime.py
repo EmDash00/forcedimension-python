@@ -1,28 +1,99 @@
 import ctypes
+from functools import lru_cache
+import glob
 import os
-import sys
+import platform
 import re
+import sys
+from typing import NamedTuple
 
-VERSION_TARGET_FULL = "3.9.1-3454"
+VERSION_TARGET_FULL = "3.14.0-1681794874)"
 VERSION_TARGET = VERSION_TARGET_FULL.partition("-")[0]
 
 
-def version_tuple(version_string):
-    res = re.search("(\d+)\.(\d+)\.(\d+)\-(\d+)", version_string)
+class _Version(NamedTuple):
+    major: int
+    minor: int
+    release: int
+    revision: int = 0
 
-    if (res.groups()):
+    def __eq__(self, v):
+        if self == v:
+            return True
+        else:
+            return False
+
+    def __lt__(self, v):
+        if self.major < v.major:
+            return True
+
+        if self.major == v.major:
+            if self.minor < v.minor:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def __le__(self, v):
+        if self.major <= v.major:
+            print('hi')
+            if self.minor <= v.minor:
+                print('hi')
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def __ge__(self, v):
+        if self.major >= v.major:
+            if self.minor >= v.minor:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def __gt__(self, v):
+        if self.major > v.major:
+            return True
+
+        if self.major == v.major:
+            if self.minor > v.minor:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def __ne__(self, v):
+        if self != v:
+            return True
+        else:
+            return False
+
+
+def version_tuple(version_string: str):
+    res = re.search(r"(\d+)\.(\d+)\.(\d+)-(\d+)", version_string)
+
+    if (res.groups() is not None):
         if (len(res.groups()) != 4):
             raise ValueError("Invalid version string.")
     else:
         raise ValueError("Invalid version string.")
 
-    return tuple(int(v) for v in res.groups())
+    return _Version(*(int(v) for v in res.groups()))
 
 
+@lru_cache
 def load(lib_name, search_dirs=(), silent=False):
     if (sys.platform == "win32"):
         lib_ext = ".dll"
         lib_dir = "bin"
+
+        if platform.architecture()[0] == "64bit":
+            lib_name = lib_name[3:] + "64"
     else:
         lib_ext = ".so"
         lib_dir = "lib"
@@ -30,11 +101,18 @@ def load(lib_name, search_dirs=(), silent=False):
     search_dirs = list(search_dirs)
 
     if sys.platform == "win32":
-        search_dirs.append(os.path.join(
-            "c:",
-            "Program Files",
-            "ForceDimension",
-            "sdk-{}".format(VERSION_TARGET)))
+        search_dirs.append(
+            glob.glob(
+                "{}\\sdk-*".format(
+                    os.path.join(
+                        "c:",
+                        os.sep,
+                        "Program Files",
+                        "Force Dimension"
+                    )
+                )
+            )[0]
+        )
     elif sys.platform.startswith("linux"):
         search_dirs.extend([
             "/usr/local",
@@ -58,7 +136,6 @@ def load(lib_name, search_dirs=(), silent=False):
 
         return None
 
-    search_path = os.environ.get('PATH', '')
     for directory in search_dirs:
 
         if directory is None:
@@ -72,7 +149,10 @@ def load(lib_name, search_dirs=(), silent=False):
 
         if (os.path.isfile(lib_path)):
             if sys.platform == "win32":
-                os.environ["PATH"] = search_path + ";" + directory
+
+                path = os.getenv("PATH")
+                if (path is not None and directory not in path):
+                    os.environ["PATH"] = "{};{}".format(path, directory)
 
             try:
                 lib = ctypes.CDLL(lib_path)
@@ -84,37 +164,37 @@ def load(lib_name, search_dirs=(), silent=False):
                                        "have missing dependencies?\n"
                                        "Ensure you have libusb-1.")
 
-            if (lib_name == "libdhd"):
-                major = ctypes.c_int32()
-                minor = ctypes.c_int32()
-                release = ctypes.c_int32()
-                revision = ctypes.c_int32()
+            major = ctypes.c_int()
+            minor = ctypes.c_int()
+            release = ctypes.c_int()
+            revision = ctypes.c_int()
 
-                lib.dhdGetSDKVersion(ctypes.byref(major),
-                                     ctypes.byref(minor),
-                                     ctypes.byref(release),
-                                     ctypes.byref(revision))
+            lib.dhdGetSDKVersion(ctypes.byref(major),
+                                 ctypes.byref(minor),
+                                 ctypes.byref(release),
+                                 ctypes.byref(revision))
 
-                version = (
-                    major.value,
-                    minor.value,
-                    release.value,
-                    revision.value
-                )
+            version = _Version(
+                major.value,
+                minor.value,
+                release.value,
+                revision.value
+            )
 
-                if (not version == version_tuple(VERSION_TARGET_FULL)):
-                    if not silent:
-                        sys.stderr.write(
-                            "Invalid version {}.{}.{}-{} found"
-                            "but {} is required.\n".format(
-                                *version,
-                                VERSION_TARGET_FULL
-                            )
+            if (version < version_tuple(VERSION_TARGET_FULL)):
+                if not silent:
+                    sys.stderr.write(
+                        "Invalid version. v{}.{}.{}-{} found "
+                        "but {} is required.\n".format(
+                            *version,
+                            VERSION_TARGET_FULL
                         )
+                    )
 
-                    return None
+                return None
 
             return lib
     if (not silent):
-        sys.stderr.write("Could not find {}.\n".format(lib_name))
+        sys.stderr.write(
+            "Could not find {}. Is it installed?\n".format(lib_name))
     return None
