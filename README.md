@@ -2,7 +2,7 @@
 
 ![license](https://img.shields.io/github/v/release/EmDash00/forcedimension-python?display_name=tag)
 
-Written and Mantained By: The Rothlab at IU: Bloomington. Looking for the documentation? You can find it here:
+Written and Mantained Ember Chow. Looking for the documentation? You can find it here:
 
 https://forcedimension-python-documentation.readthedocs.io/en/latest/
 
