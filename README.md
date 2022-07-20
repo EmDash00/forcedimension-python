@@ -1,14 +1,10 @@
 # forcedimension-python
 
-Written and Mantained By: The Rothlab at IU: Bloomington
+![license](https://img.shields.io/github/v/release/EmDash00/forcedimension-python?display_name=tag)
 
-### Specific Contributors and Contributions:
+Written and Mantained By: The Rothlab at IU: Bloomington. Looking for the documentation? You can find it here:
 
-* Drason Chow ([EmDash00](https://github.com/EmDash00))
-    - forcedimension.runtime
-    - forcedimension.dhd.bindings
-    - forcedimension.dhd.bindings.expert
-    - forcedimension.dhd.bindings.adaptors
+https://forcedimension-python-documentation.readthedocs.io/en/latest/
 
 ## About
 
@@ -30,12 +26,21 @@ The ForceDimensionSDK is a very well written interface that solves the problem o
 
 ### PyPI Package (recommended)
 
-Not available at this time.
+```
+pip install forcedimension
+```
 
-### Manually
+`numpy` is an optional dependency. If you want to install that as well:
 
-#### Install the [ForceDimensionSDK](https://www.forcedimension.com/download/sdk) for your computer. 
+```
+pip install forcedimension\[numpy\]
+```
+
+
+
+#### Install the [ForceDimensionSDK](https://www.forcedimension.com/software/sdk) for your computer. 
 By default, the bindings will search in the following system-wide install locations.
+
 * System-wide install locations (Linux):
     - `/usr/local/lib`
     - `/usr/lib`
@@ -51,6 +56,7 @@ If you do not wish to make a system-wide installation set the FORCEDIM_SDK envir
 This requires extra steps since the Makefile for the ForceDimensionSDK does not offer a `make install` target for a system-wide install.
 
 1. Copy all files from `lib/release/lin-*-gcc` to `/usr/local/lib`  
+
 2. Copy all files from `include` to `/usr/local/include`  
 
 3. MAKE SURE the libraries have `755` level access using `chmod`. If they don't applications cannot link or load them.
@@ -63,12 +69,12 @@ These steps can be automated by adding these targets to the Makefile.
 install:
 	cp include/* /usr/local/include
 	cp lib/release/lin-*-gcc/* /usr/local/lib
-	chmod 755 /usr/local/lib/libdhd.so.3.9.1
-	chmod 755 /usr/local/lib/libdrd.so.3.9.1
+	chmod 755 /usr/local/lib/libdhd.so.X.X.X
+	chmod 755 /usr/local/lib/libdrd.so.X.X.X
 	chmod 755 /usr/local/lib/libdhd.a
 	chmod 755 /usr/local/lib/libdrd.a
-	ln -s /usr/local/lib/libdhd.so /usr/local/lib/libdhd.so.3.9.1
-	ln -s /usr/local/lib/libdrd.so /usr/local/lib/libdrd.so.3.9.1
+	ln -s /usr/local/lib/libdhd.so /usr/local/lib/libdhd.so.X.X.X
+	ln -s /usr/local/lib/libdrd.so /usr/local/lib/libdrd.so.X.X.X
 ```
 
 ```makefile
@@ -82,7 +88,7 @@ uninstall:
 	rm /usr/local/lib/libdrd.so.3.9.1
 	rm /usr/local/lib/libdrd.so
 ```
-#### Driver installation
+#### Additional Setup
 
 ##### Windows
 
@@ -103,22 +109,4 @@ A good way to find the USB bus of the device is by unplugging the device, doing 
 MAKE SURE you unplug the USB and not just the power because the unpowering the device does not unpower the USB communications (which get power through the computer).
 
 Then perform `lsusb` and note the ID of your device, which is in the format `idVendor:idPorduct`
-
-#### Python Bindings Installation
-
-##### System wide
-
-Clone this repository using `git clone https://github.com/EmDash00/forcedimension-python.git` or your choice in version control software.
-
-Add the folder you cloned the repo into to your `PYTHONPATH` environment variable.
-
-##### Locally (recommended)
-
-Add this repository as a submodule to a project
-
-```bash
-cd /path/to/project/folder
-git submodule add https://github.com/EmDash00/forcedimension-python.git 
-git commit -m "Added forcedimension to my project"
-```
 
