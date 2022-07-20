@@ -88,6 +88,14 @@ def version_tuple(version_string: str):
 
 @lru_cache
 def load(lib_name, search_dirs=(), silent=False):
+
+    try:
+        if __sphinx_build__:
+            from mock import Mock
+            return Mock()
+    except NameError:
+        pass
+
     if (sys.platform == "win32"):
         lib_ext = ".dll"
         lib_dir = "bin"
