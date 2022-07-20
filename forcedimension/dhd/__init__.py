@@ -2,12 +2,7 @@ from ctypes import c_bool, c_byte, c_char_p, c_double, c_int, c_uint, c_ushort
 from ctypes import POINTER, byref
 from typing import List, Optional, Tuple, Union, cast
 
-from forcedimension.dhd.adaptors import (
-    CartesianTuple, StatusTuple, VersionTuple
-)
-
-from forcedimension.typing import VectorLike, MatrixLike
-
+from forcedimension.dhd.adaptors import StatusTuple, VersionTuple
 from forcedimension.dhd.constants import (
     ComMode,
     DeltaEncID,
@@ -28,6 +23,9 @@ from forcedimension.dhd.constants import (
     WristMotorID,
 )
 import forcedimension.runtime as _runtime
+from forcedimension.typing import (
+    FloatVectorLike, MutableFloatVectorLike, MutableFloatMatrixLike
+)
 
 from . import expert
 
@@ -340,7 +338,7 @@ _libdhd.dhdGetComMode.argtypes = [c_byte]
 _libdhd.dhdGetComMode.restype = c_int
 
 
-def getComMode(ID: int = -1) -> int:
+def getComMode(ID: int = -1) -> ComMode:
     """
     Retrive the COM operation mode on compatible devices.
 
@@ -356,7 +354,7 @@ def getComMode(ID: int = -1) -> int:
         The current COM operation mode on success, -1 otherwise.
     """
 
-    return _libdhd.dhdGetComMode(ID)
+    return ComMode(_libdhd.dhdGetComMode(ID))
 
 
 _libdhd.dhdEnableForce.argtypes = [c_bool, c_byte]
@@ -1208,8 +1206,8 @@ _libdhd.dhdGetPosition.restype = c_int
 
 def getPosition(
     ID: int = -1,
-    out: Optional[VectorLike] = None
-) -> Tuple[Union[VectorLike, List[float]], int]:
+    out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
     """
     Retrieve the position of the end-effector in Cartesian coordinates. Please
     refer to your device user manual for more information on your device
@@ -1218,7 +1216,7 @@ def getPosition(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] out:
+    :param Optional[MutableFloatVectorLike] out:
         An output buffer to store the position of the end-effector. If
         specified, the return will contain a reference to this buffer rather to
         a newly allocated list, optional.
@@ -1239,7 +1237,7 @@ def getPosition(
         respectively. ``err`` is either 0 or
         :data:`forcedimension.dhd.TIMEGUARD` on success, -1 otherwise.
 
-    :rtype: Tuple[Union[VectorLike, List[float]], int]
+    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
     """
 
     px = c_double()
@@ -1269,8 +1267,8 @@ _libdhd.dhdGetForce.restype = c_int
 
 def getForce(
     ID: int = -1,
-    out: Optional[VectorLike] = None
-) -> Tuple[Union[VectorLike, List[float]], int]:
+    out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
     """
     Retrieve the force vector applied to the end-effector in Cartesian
     coordinates. Please refer to your device user manual for more information
@@ -1279,7 +1277,7 @@ def getForce(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] out:
+    :param Optional[MutableFloatVectorLike] out:
         An output buffer to store the applied forces on the end-effector. If
         specified, the return will contain a reference to this buffer rather to
         a newly allocated list, optional.
@@ -1303,7 +1301,7 @@ def getForce(
         X, Y, and Z axes, respectively. ``err`` is 0 on success, -1
         otherwise.
 
-    :rtype: Tuple[Union[VectorLike, List[float]], int]
+    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
     """
 
     fx = c_double()
@@ -1332,12 +1330,12 @@ _libdhd.dhdSetForce.argtypes = [c_double, c_double, c_double, c_byte]
 _libdhd.dhdSetForce.restype = c_int
 
 
-def setForce(f: CartesianTuple, ID: int = -1) -> int:
+def setForce(f: FloatVectorLike, ID: int = -1) -> int:
     """
     Set the desired force vector in Cartesian coordinates to be applied
     to the end-effector of the device.
 
-    :param CartesianTuple f:
+    :param VectorLike f:
         Translation force vector (fx, fy, fz) in [N].
 
     :param int ID:
@@ -1347,13 +1345,19 @@ def setForce(f: CartesianTuple, ID: int = -1) -> int:
         If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-        If ``any`` members of f are not implicitly convertible to C double.
+        If any elements of ``f`` are not implicitly convertible to C double.
+
+    :raises IndexError:
+        If ``len(f) < 3)``.
+
+    :raises TypeError:
+        If ``f`` is not subscriptable.
 
     :returns:
         0 or :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on
         success, -1 otherwise.
 
-    :rtype: Tuple[Union[VectorLike, List[float]], int]
+    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
     """
 
     return _libdhd.dhdSetForce(f[0], f[1], f[2], ID)
@@ -1365,8 +1369,8 @@ _libdhd.dhdGetOrientationRad.restype = c_int
 
 def getOrientationRad(
     ID: int = -1,
-    out: Optional[VectorLike] = None
-) -> Tuple[Union[VectorLike, List[float]], int]:
+    out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1393,7 +1397,7 @@ def getOrientationRad(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] out:
+    :param Optional[MutableFloatVectorLike] out:
         An output buffer to store the joint angles. If specified, the return
         will contain a reference to this buffer rather to a newly allocated
         list, optional.
@@ -1408,9 +1412,6 @@ def getOrientationRad(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :raises ValueError:
-        If ``ID`` is not implicitly convertible to C char.
-
     :returns:
         A tuple in the form ``([oa, ob, og], err)``.
         ``[oa, ob, og]`` is the device orientation (in [rad]) around the
@@ -1418,7 +1419,7 @@ def getOrientationRad(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[Union[VectorLike, List[float]], int]
+    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
     """
 
     oa = c_double()
@@ -1450,8 +1451,8 @@ _libdhd.dhdGetOrientationDeg.restype = c_int
 
 def getOrientationDeg(
     ID: int = -1,
-    out: Optional[VectorLike] = None
-) -> Tuple[Union[VectorLike, List[float]], int]:
+    out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1477,7 +1478,7 @@ def getOrientationDeg(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] out:
+    :param Optional[MutableFloatVectorLike] out:
         An output buffer to store the joint angles. If specified, the return
         will contain a reference to this buffer rather to a newly allocated
         list, optional.
@@ -1499,7 +1500,7 @@ def getOrientationDeg(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[Union[VectorLike, List[float]], int]
+    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
     """
 
     oa = c_double()
@@ -1539,10 +1540,12 @@ _libdhd.dhdGetPositionAndOrientationRad.restype = c_int
 
 def getPositionAndOrientationRad(
     ID: int = -1,
-    p_out: Optional[VectorLike] = None,
-    o_out: Optional[VectorLike] = None
+    p_out: Optional[MutableFloatVectorLike] = None,
+    o_out: Optional[MutableFloatVectorLike] = None
 ) -> Tuple[
-    Union[VectorLike, List[float]], Union[VectorLike, List[float]], int
+    Union[MutableFloatVectorLike, List[float]],
+    Union[MutableFloatVectorLike, List[float]],
+    int
 ]:
     """
     Retrieve the position and orientation of the end-effector in Cartesian
@@ -1571,12 +1574,12 @@ def getPositionAndOrientationRad(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] p_out:
+    :param Optional[MutableFloatVectorLike] p_out:
         An output buffer to store the position. If specified, the return will
         contain a reference to this buffer rather to a newly allocated
         list, optional.
 
-    :param Optional[VectorLike] o_out:
+    :param Optional[MutableFloatVectorLike] o_out:
         An output buffer to store the joint angles. If specified, the return
         will contain a reference to this buffer rather to a newly allocated
         list, optional.
@@ -1611,8 +1614,8 @@ def getPositionAndOrientationRad(
     :rtype:
         Tuple
         [
-        Union[VectorLike, List[float]],
-        Union[VectorLike, List[float]],
+        Union[MutableFloatVectorLike, List[float]],
+        Union[MutableFloatVectorLike, List[float]],
         int
         ]
 
@@ -1667,9 +1670,13 @@ _libdhd.dhdGetPositionAndOrientationDeg.restype = c_int
 
 def getPositionAndOrientationDeg(
     ID: int = -1,
-    p_out: Optional[VectorLike] = None,
-    o_out: Optional[VectorLike] = None
-) -> Tuple[Union[VectorLike, List[float]], Union[VectorLike, List[float]], int]:
+    p_out: Optional[MutableFloatVectorLike] = None,
+    o_out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[
+    Union[MutableFloatVectorLike, List[float]],
+    Union[MutableFloatVectorLike, List[float]],
+    int
+]:
     """
     Retrieve the position and orientation of the end-effector in Cartesian
     coordinates. For devices with a wrist structure, retrieve individual angle
@@ -1697,12 +1704,12 @@ def getPositionAndOrientationDeg(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] p_out:
+    :param Optional[MutableFloatVectorLike] p_out:
         An output buffer to store the position. If specified, the return will
         contain a reference to this buffer rather to a newly allocated
         list, optional.
 
-    :param Optional[VectorLike] o_out:
+    :param Optional[MutableFloatVectorLike] o_out:
         An output buffer to store the joint angles. If specified, the return
         will contain a reference to this buffer rather to a newly allocated
         list, optional.
@@ -1734,7 +1741,12 @@ def getPositionAndOrientationDeg(
         otherwise.
 
     :rtype:
-        Tuple[Union[VectorLike, List[float]], Union[VectorLike, List[float]], int]
+        Tuple
+        [
+        Union[MutableFloatVectorLike, List[float]],
+        Union[MutableFloatVectorLike, List[float]],
+        int
+        ]
 
     """
 
@@ -1785,13 +1797,13 @@ _libdhd.dhdGetPositionAndOrientationFrame.restype = c_int
 
 def getPositionAndOrientationFrame(
         ID: int = -1,
-        p_out: Optional[VectorLike] = None,
-        matrix_out: Optional[MatrixLike] = None
+        p_out: Optional[MutableFloatVectorLike] = None,
+        matrix_out: Optional[MutableFloatMatrixLike] = None
     ) -> Tuple[
-        Union[VectorLike, List[float]],
-        Union[MatrixLike, List[List[float]]],
+        Union[MutableFloatVectorLike, List[float]],
+        Union[MutableFloatMatrixLike, List[List[float]]],
         int
-    ]:
+]:
     """
     Retrieve the position and orientation matrix of the end-effector in
     Cartesian coordinates. Please refer to your device user manual for more
@@ -1827,7 +1839,7 @@ def getPositionAndOrientationFrame(
 
     :rtype:
         Tuple[
-        VectorLike,
+        MutableFloatVectorLike,
         MatrixLike
         int
         ]
@@ -1880,21 +1892,25 @@ _libdhd.dhdGetForceAndTorque.restype = c_int
 
 def getForceAndTorque(
     ID: int = -1,
-    f_out: Optional[VectorLike] = None,
-    t_out: Optional[VectorLike] = None
-) -> Tuple[Union[VectorLike, List[float]], Union[VectorLike, List[float]], int]:
+    f_out: Optional[MutableFloatVectorLike] = None,
+    t_out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[
+    Union[MutableFloatVectorLike, List[float]],
+    Union[MutableFloatVectorLike, List[float]],
+    int
+]:
     """
     Retrieve the force and torque vectors applied to the device end-effector.
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] f_out:
+    :param Optional[MutableFloatVectorLike] f_out:
         An output buffer to store the applied forces on the end-effector. If
         specified, the return will contain a reference to this buffer rather to
         a newly allocated list, optional.
 
-    :param Optional[VectorLike] t_out:
+    :param Optional[MutableFloatVectorLike] t_out:
         An output buffer to store the applied torques on the end-effector. If
         specified, the return will contain a reference to this buffer rather to
         a newly allocated list, optional.
@@ -1912,8 +1928,8 @@ def getForceAndTorque(
     :rtype:
         Tuple
         [
-        Union[VectorLike, List[float]],
-        Union[VectorLike, List[float]],
+        Union[MutableFloatVectorLike, List[float]],
+        Union[MutableFloatVectorLike, List[float]],
         int
         ]
 
@@ -1967,20 +1983,20 @@ _libdhd.dhdSetForceAndTorque.restype = c_int
 
 
 def setForceAndTorque(
-    f: CartesianTuple,
-    t: CartesianTuple,
+    f: FloatVectorLike,
+    t: FloatVectorLike,
     ID: int = -1
 ) -> int:
     """
     Set the desired force and torque vectors to be applied to the device
     end-effector.
 
-    :param CartesianTuple f:
+    :param VectorLike f:
         Translational force vector ``(fx, fy, fz)`` where ``fx``, ``fy``, and
         ``fz`` are the translation force (in [N]) on the end-effector about the
         X, Y, and Z axes, respectively.
 
-    :param CartesianTuple t:
+    :param VectorLike t:
         Torque vector ``(tx, ty, tz)`` where ``tx``, ``ty``, and ``tz``
         are the torque (in [Nm]) on the end-effector about the X, Y, and Z
         axes, respectively.
@@ -1992,10 +2008,31 @@ def setForceAndTorque(
         If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-       If a member of ``f`` is not implicitly to C double.
+        If any elements of ``f`` is not implicitly convertible to a C double.
+
+    :raises IndexError:
+        If ``len(f) < 3``.
+
+    :raises TypeError:
+        If ``f`` is not subscriptable.
 
     :raises ValueError:
-       If a member of ``t`` is not implicitly to C double.
+        If any elements of ``t`` is not implicitly convertible to a C double.
+
+    :raises IndexError:
+        If ``len(t) < 3``.
+
+    :raises TypeError:
+        If ``t`` is not subscriptable.
+
+   :raises ValueError:
+        If ``gripper_force`` is not implicitly convertible to a C double.
+
+    :raises IndexError:
+        If ``len(f) < 3``.
+
+    :raises IndexError:
+        If ``len(t) < 3``.
 
     :returns:
         0 or :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success,
@@ -2016,8 +2053,8 @@ _libdhd.dhdGetOrientationFrame.restype = c_int
 
 def getOrientationFrame(
     ID: int = -1,
-    out: Optional[MatrixLike] = None
-) -> Tuple[Union[MatrixLike, List[List[float]]], int]:
+    out: Optional[MutableFloatMatrixLike] = None
+) -> Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]:
     """
     Retrieve the rotation matrix of the wrist structure. The identity matrix
     is returned for devices that do not support orientations.
@@ -2025,10 +2062,10 @@ def getOrientationFrame(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MatrixLike] out:
+    :param Optional[MutableFloatMatrixLike] out:
         An output buffer to store the orientation frame. If specified, the
-        return will contain a reference to this buffer rather to a newly allocated
-        list, optional.
+        return will contain a reference to this buffer rather to a newly
+        allocated list, optional.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
@@ -2049,7 +2086,7 @@ def getOrientationFrame(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[Union[MatrixLike, List[List[float]]], int]
+    :rtype: Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]
     """
 
     matrix = ((c_double * 3) * 3)()
@@ -2123,6 +2160,7 @@ def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]:
     --------
     :data:`forcdimension.dhd.getGripperAngleRad()`
 
+
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
@@ -2187,8 +2225,8 @@ _libdhd.dhdGetGripperThumbPos.restype = c_int
 
 def getGripperThumbPos(
     ID: int = -1,
-    out: Optional[VectorLike] = None
-) -> Tuple[Union[VectorLike, List[float]], int]:
+    out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
     """
     Read the position in Cartesian coordinates of thumb rest location of the
     force gripper structure if present.
@@ -2202,7 +2240,7 @@ def getGripperThumbPos(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] out:
+    :param Optional[MutableFloatVectorLike] out:
         An output buffer to store the grippper thumb position. If specified,
         the return will contain a reference to this buffer rather to a newly
         allocated list, optional.
@@ -2259,8 +2297,8 @@ _libdhd.dhdGetGripperFingerPos.restype = c_int
 
 def getGripperFingerPos(
     ID: int = -1,
-    out: Optional[VectorLike] = None
-) -> Tuple[Union[VectorLike, List[float]], int]:
+    out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
     """
     Read the position in Cartesian coordinates of forefinger rest location of
     the force gripper structure if present.
@@ -2274,7 +2312,7 @@ def getGripperFingerPos(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] out:
+    :param Optional[MutableFloatVectorLike] out:
         An output buffer to store the gripper finger position. If specified,
         the return will contain a reference to this buffer rather to a newly
         allocated list, optional.
@@ -2364,7 +2402,7 @@ _libdhd.dhdSetForceAndGripperForce.argtypes = [
 _libdhd.dhdSetForceAndGripperForce.restype = c_int
 
 
-def setForceAndGripperForce(f: CartesianTuple,
+def setForceAndGripperForce(f: FloatVectorLike,
                             fg: float,
                             ID: int = -1) -> int:
     """
@@ -2374,7 +2412,7 @@ def setForceAndGripperForce(f: CartesianTuple,
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param CartesianTuple f:
+    :param VectorLike f:
         Translational force vector ``(fx, fy, fz)`` where ``fx``, ``fy``, and
         ``fz`` are the translation force (in [N]) about the X, Y, and Z axes,
         respectively.
@@ -2383,10 +2421,22 @@ def setForceAndGripperForce(f: CartesianTuple,
         Grasping force of the gripper in [N].
 
     :raises ValueError:
-        If ``ID`` is not implicitly convertible to C char.
+        If any elements of ``f`` is not implicitly convertible to a C double.
+
+    :raises IndexError:
+        If ``len(f) < 3``.
+
+    :raises TypeError:
+        If ``f`` is not subscriptable.
+
+   :raises ValueError:
+        If ``gripper_force`` is not implicitly convertible to a C double.
 
     :raises ValueError:
-        If ``any`` members of f are not implicitly convertible to C double.
+        If ``ID`` is not implicitly convertible to C char.
+
+    :raises IndexError:
+        If ``len(f) < 3``
 
     :rtype: int
 
@@ -2411,20 +2461,20 @@ _libdhd.dhdSetForceAndTorqueAndGripperForce.argtypes = [
 _libdhd.dhdSetForceAndTorqueAndGripperForce.restype = c_int
 
 
-def setForceAndTorqueAndGripperForce(f: CartesianTuple,
-                                     t: CartesianTuple,
+def setForceAndTorqueAndGripperForce(f: FloatVectorLike,
+                                     t: FloatVectorLike,
                                      fg: float,
                                      ID: int = -1) -> int:
     """
     Set the desired force and torque vectors to be applied to the device
     end-effector and gripper.
 
-    :param CartesianTuple f:
+    :param VectorLike f:
         Translational force vector ``(fx, fy, fz)`` where ``fx``, ``fy``, and
         ``fz`` are the translation force (in [N]) on the end-effector about the
         X, Y, and Z axes, respectively.
 
-    :param CartesianTuple t:
+    :param VectorLike t:
         Torque vector ``(tx, ty, tz)`` where ``tx``, ``ty``, and ``tz``
         are the torque (in [Nm]) on the end-effector about the X, Y, and Z
         axes, respectively.
@@ -2439,10 +2489,31 @@ def setForceAndTorqueAndGripperForce(f: CartesianTuple,
         If ``ID`` is not implicitly convertible to C char.
 
     :raises ValueError:
-        If a member of ``f`` is not implicitly to C double.
+        If any elements of ``f`` is not implicitly convertible to a C double.
+
+    :raises IndexError:
+        If ``len(f) < 3``.
+
+    :raises TypeError:
+        If ``f`` is not subscriptable.
 
     :raises ValueError:
-        If a member of ``t`` is not implicitly to C double.
+        If any elements of ``t`` is not implicitly convertible to a C double.
+
+    :raises IndexError:
+        If ``len(t) < 3``.
+
+    :raises TypeError:
+        If ``t`` is not subscriptable.
+
+   :raises ValueError:
+        If ``gripper_force`` is not implicitly convertible to a C double.
+
+    :raises IndexError:
+        If ``len(f) < 3``.
+
+    :raises IndexError:
+        If ``len(t) < 3``.
 
     :returns:
         0 or
@@ -2519,8 +2590,8 @@ _libdhd.dhdGetLinearVelocity.restype = c_int
 
 def getLinearVelocity(
     ID: int = -1,
-    out: Optional[VectorLike] = None
-) -> Tuple[Union[VectorLike, List[float]], int]:
+    out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
     """
     Retrieve the estimated instanteous linear velocity in [m/s].
 
@@ -2544,9 +2615,9 @@ def getLinearVelocity(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] out:
-        An output buffer to store the linear velocity. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
+    :param Optional[MutableFloatVectorLike] out:
+        An output buffer to store the linear velocity. If specified, the return
+        will contain a reference to this buffer rather to a newly allocated
         list, optional.
 
     :raises TypeError:
@@ -2559,7 +2630,7 @@ def getLinearVelocity(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[Union[VectorLike, List[float]], int]
+    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
 
     :returns:
         A tuple in the form ``([vx, vy, vz], err)``. ``[vx, vy, vz]`` is the
@@ -2650,8 +2721,8 @@ _libdhd.dhdGetAngularVelocityRad.restype = c_int
 
 def getAngularVelocityRad(
     ID: int = -1,
-    out: Optional[VectorLike] = None
-) -> Tuple[Union[VectorLike, List[float]], int]:
+    out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
     """
     Retrieve the estimated angular velocity in [rad/s].
 
@@ -2672,7 +2743,7 @@ def getAngularVelocityRad(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] out:
+    :param Optional[MutableFloatVectorLike] out:
         An output buffer to store the angular velocity. If specified, the
         return will contain a reference to this buffer rather to a newly
         allocated list, optional.
@@ -2687,7 +2758,7 @@ def getAngularVelocityRad(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[Union[VectorLike, List[float]], int]
+    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
 
     :returns:
         A tuple in the form ``([wx, wy, wz], err)``. ``[vx, vy, vz]`` is the
@@ -2734,9 +2805,8 @@ _libdhd.dhdGetAngularVelocityDeg.restype = c_int
 
 def getAngularVelocityDeg(
     ID: int = -1,
-    out: Optional[VectorLike] = None
-) -> Tuple[Union[VectorLike, List[float]], int]:
-
+    out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
     """
     Retrieve the estimated angular velocity in [deg/s].
 
@@ -2758,7 +2828,7 @@ def getAngularVelocityDeg(
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] out:
+    :param Optional[MutableFloatVectorLike] out:
         An output buffer to store the angular velocity. If specified, the
         return will contain a reference to this buffer rather to a newly
         allocated list, optional.
@@ -2768,12 +2838,12 @@ def getAngularVelocityDeg(
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``
+        If ``out`` is specified and ``len(out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[Union[VectorLike, List[float]], int]
+    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
 
     :returns:
         A tuple in the form ``([wx, wy, wz], err)``. ``[vx, vy, vz]`` is the
@@ -2885,7 +2955,7 @@ def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]:
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] out:
+    :param Optional[MutableFloatVectorLike] out:
         An output buffer to store the gripper linear velocity. If specified,
         the return will contain a reference to this buffer rather to a newly
         allocated list, optional.
@@ -2900,7 +2970,7 @@ def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[Union[VectorLike, List[float]], int]
+    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
 
     :returns:
         A tuple in the form ``(vg, err)``. ``vg`` is the linear velocity of the
@@ -2939,7 +3009,7 @@ def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]:
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] out:
+    :param Optional[MutableFloatVectorLike] out:
         An output buffer to store the gripper angular velocity. If specified,
         the return will contain a reference to this buffer rather to a newly
         allocated list, optional.
@@ -2954,7 +3024,7 @@ def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[Union[VectorLike, List[float]], int]
+    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
 
     :returns:
         A tuple in the form ``(v, err)``. ``v`` is the linear velocity of the
@@ -3617,7 +3687,7 @@ def errorGetLast() -> ErrorNum:
     :rtype: class:`forcedimension.dhd.adaptors.ErrorNum`:
 
     :returns:
-        :class:`forcedimension.dhd.adaptors.ErrorNum` enum member refering
+        :class:`forcedimension.dhd.adaptors.ErrorNum` enum elements refering
         to the last error encountered in the current thread.
     """
     return ErrorNum(_libdhd.dhdErrorGetLast())

@@ -6,7 +6,7 @@
 .. moduleauthor:: Drason Chow <drasonchow@gmail.com>
 """
 
-from typing import NamedTuple, Callable, Optional, Any
+from typing import NamedTuple, Callable, Optional, Any, Sequence
 from forcedimension.dhd.constants import ErrorNum
 
 
@@ -85,44 +85,6 @@ class StatusTuple(NamedTuple):
     forceoffcause: int
 
     unknown_status: int  # TODO: figure out what this is
-
-
-class CartesianTuple(NamedTuple):
-    """
-    Named tuple adapting an immutable triple of (x, y, z) floats.
-
-    Used to meaningfully talk about 3-Vectors.
-    """
-    x: float
-    y: float
-    z: float
-
-
-class DeviceTuple(NamedTuple):
-    """
-    Named tuple adapting an immutable triple of (axis0, axis1, axis2) ints.
-
-    Used to meaningfully talk about device motors or encoders as a group.
-    """
-    axis0: int
-    axis1: int
-    axis2: int
-
-
-class DOFTuple(NamedTuple):
-    """
-    Named tuple adapting a way to specify an int assignment to the device
-    associated with that degree-of-freedom up to but not including
-    dhd.bindings.MAX_DOF
-    """
-    dof0: int
-    dof1: int
-    dof2: int
-    dof3: int
-    dof4: int
-    dof5: int
-    dof6: int
-    dof7: int
 
 
 class DHDError(Exception):
@@ -342,4 +304,7 @@ _error = [
 
 
 def errno_to_exception(errno: ErrorNum):
+    """
+    Convert a DHD error number to an exception.
+    """
     return _error[errno]

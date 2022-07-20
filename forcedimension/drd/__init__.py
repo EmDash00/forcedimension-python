@@ -2,9 +2,12 @@ from ctypes import POINTER, byref, c_bool, c_byte, c_double, c_int
 from typing import List, Sequence, Tuple
 from typing import Union, Optional
 
-from forcedimension.typing import VectorLike, MatrixLike
+from forcedimension.dhd.constants import MAX_DOF
 
-from forcedimension.dhd.adaptors import CartesianTuple
+from forcedimension.typing import (
+    FloatVectorLike, MutableFloatVectorLike, MutableFloatMatrixLike
+)
+
 import forcedimension.runtime as runtime
 
 # Load the runtime from the backend
@@ -363,14 +366,14 @@ _libdrd.drdGetPositionAndOrientation.restype = c_int
 
 def getPositionAndOrientation(
         ID: int = -1,
-        p_out: Optional[VectorLike] = None,
-        o_out: Optional[VectorLike] = None,
-        matrix_out: Optional[MatrixLike] = None
+        p_out: Optional[MutableFloatVectorLike] = None,
+        o_out: Optional[MutableFloatVectorLike] = None,
+        matrix_out: Optional[MutableFloatMatrixLike] = None
     ) -> Tuple[
-    Union[VectorLike, List[float]],
-    Union[VectorLike, List[float]],
+    Union[MutableFloatVectorLike, List[float]],
+    Union[MutableFloatVectorLike, List[float]],
     float,
-    Union[MatrixLike, List[List[float]]],
+    Union[MutableFloatMatrixLike, List[List[float]]],
     int
 ]:
     """
@@ -413,16 +416,18 @@ def getPositionAndOrientation(
     :raises IndexError:
         If ``matrix_out`` is specified any dimension is less than length 3.
 
-
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
 
     :returns:
         A tuple in the form ``([px, py, pz], [oa, ob, og], pg, matrix, err)``.
         ``[px, py, pz]`` is the position (in [m]) about the X, Y, and Z axes,
-        respectively. ``matrix`` is a 3x3 rotation matrix that describes
-        the orientation of your device. ``err`` is 0 or
-        :data:`forcedimension.dhd.libdhd.TIMEGUARD` on success, -1 otherwise.
+        respectively. ``[oa, ob, og]`` is the device orientation (in [rad])
+        around the first, second, and third joints, respectively.
+        ``pg`` is the device gripper opening gap (in [m]). ``matrix`` is a 3x3
+        rotation matrix that describes the orientation of your device. ``err``
+        is 0 or :data:`forcedimension.dhd.libdhd.TIMEGUARD` on success, -1
+        otherwise.
 
     :rtype:
         Tuple[
@@ -496,11 +501,11 @@ _libdrd.drdGetVelocity.restype = c_int
 
 def getLinearVelocity(
     ID: int = -1,
-    v_out: Optional[VectorLike] = None,
-    w_out: Optional[VectorLike] = None,
+    v_out: Optional[MutableFloatVectorLike] = None,
+    w_out: Optional[MutableFloatVectorLike] = None,
 ) -> Tuple[
-    Union[VectorLike, List[float]],
-    Union[VectorLike, List[float]],
+    Union[MutableFloatVectorLike, List[float]],
+    Union[MutableFloatVectorLike, List[float]],
     int
 ]:
     """
@@ -514,13 +519,11 @@ def getLinearVelocity(
 
     :param Optional[VectorLike] v_out:
         Optional output buffer for the linear velocity. If specified, loads
-        the position into p_out rather than allocating a new buffer, defaults to
-        None.
+        the position into p_out rather than allocating a new buffer, optional.
 
     :param Optional[VectorLike] w_out:
         Optional output buffer for the angular velocity. If specified, loads
-        the position into p_out rather than creating a new buffer, defaults to
-        None.
+        the position into p_out rather than creating a new buffer, optional.
 
     :raises TypeError:
         if v_out is specified and does not support item assignment either
@@ -776,7 +779,7 @@ _libdrd.drdMoveToPos.argtypes = [c_double, c_double, c_double, c_bool, c_byte]
 _libdrd.drdMoveToPos.restype = c_int
 
 
-def moveToPos(pos: CartesianTuple, block: bool, ID: int = -1):
+def moveToPos(pos: FloatVectorLike, block: bool, ID: int = -1):
     """
     Send the robot end-effector to a desired Cartesian position. The motion
     follows a straight line, with smooth acceleration/deceleration. The
@@ -790,8 +793,9 @@ def moveToPos(pos: CartesianTuple, block: bool, ID: int = -1):
         If ``True``, the call blocks until the destination is reached. If
         ``False``, the call returns immediately.
 
-    :param CartesianTuple pos:
-        A tuple of x, y, and z coordinates to move the end effector to.
+    :param FloatVectorLike pos:
+        A vector of ``[px, py, pz]`` where ``px``, ``py``, and ``pz``` are the
+        position (in [m]) about the X, Y, and Z axes, respectively.
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
@@ -809,7 +813,7 @@ _libdrd.drdMoveToRot.argtypes = [c_double, c_double, c_double, c_bool, c_byte]
 _libdrd.drdMoveToRot.restype = c_int
 
 
-def moveToRot(o: CartesianTuple, block: bool, ID: int = -1):
+def moveToRot(orientation: FloatVectorLike, block: bool, ID: int = -1):
     """
     Send the robot end-effector to a desired Cartesian rotation. The motion
     follows a straight curve, with smooth acceleration/deceleration. The
@@ -823,8 +827,10 @@ def moveToRot(o: CartesianTuple, block: bool, ID: int = -1):
         If ``True``, the call blocks until the destination is reached. If
         ``False``, the call returns immediately.
 
-    :param CartesianTuple o:
-        A tuple of angles about the first, second, and third joints in [rad].
+    :param FloatVectorLike orientation:
+        A vector of ``[oa, ob, og]`` where ``oa``, ``ob``, and ``og`` are the
+        device orientation (in [rad])  around the first, second, and third
+        joints, respectively.
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
@@ -835,7 +841,7 @@ def moveToRot(o: CartesianTuple, block: bool, ID: int = -1):
         0 on success, and -1 otherwise.
 
     """
-    return _libdrd.drdMoveToRot(o[0], o[1], o[2], block, ID)
+    return _libdrd.drdMoveToRot(orientation[0], orientation[1], orientation[2], block, ID)
 
 
 _libdrd.drdMoveToGrip.argtypes = [c_double, c_bool, c_byte]
@@ -871,21 +877,35 @@ def moveToGrip(pg: float, block: bool, ID: int = -1):
     return _libdrd.drdMoveToGrip(pg, block, ID)
 
 
-_libdrd.drdMoveTo.argtypes = [c_double * 7, c_bool, c_byte]
+_libdrd.drdMoveTo.argtypes = [c_double * MAX_DOF, c_bool, c_byte]
 _libdrd.drdMoveTo.restype = c_int
 
 
-def moveTo(p: Sequence[float], block: bool, ID: int = -1):
+def moveTo(p: FloatVectorLike, block: bool, ID: int = -1):
     """
     Send the robot end-effector to a desired Cartesian 7-DOF configuration.
     The motion uses smooth acceleration/deceleration. The acceleration and
     velocity profiles can be controlled by adjusting the trajectory generation
     parameters.
 
-    :param float p: Target positions/orientations in [m]/[rad], respectively.
+    :param float p:
+        Target positions/orientations in [m]/[rad], respectively.
+
+    :param bool block:
+        If ``True``, the call blocks until the destination is reached. If
+        ``False``, the call returns immediately.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ValueError:
+        If any member of ``p`` is not convertible to a C double.
+
+    :raises IndexError:
+        If ``len(p) < MAX_DOF``.
+
+    :raises TypeError:
+        If ``p`` is not subscriptable.
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
@@ -896,14 +916,27 @@ def moveTo(p: Sequence[float], block: bool, ID: int = -1):
         0 on success, and -1 otherwise.
     """
 
-    return _libdrd.drdMoveTo((c_double * 7)(*p), block, ID)
+    return _libdrd.drdMoveTo(
+        (c_double * 8)(
+            p[0],
+            p[1],
+            p[2],
+            p[3],
+            p[4],
+            p[5],
+            p[6],
+            p[7],
+        ),
+        block,
+        ID
+    )
 
 
 _libdrd.drdMoveToEnc.argtypes = [c_int, c_int, c_int, c_bool, c_byte]
 _libdrd.drdMoveToEnc.restype = c_int
 
 
-def moveToEnc(enc: Sequence[int], block: bool, ID: int = -1) -> int:
+def moveToEnc(enc: IntVectorLike, block: bool, ID: int = -1) -> int:
     """
     Send the robot end-effector to a desired encoder position. The motion
     follows a straight line in the encoder space, with smooth
@@ -911,12 +944,21 @@ def moveToEnc(enc: Sequence[int], block: bool, ID: int = -1) -> int:
     controlled by adjusting the trajectory generation parameters.
 
     :param int enc:
-        A sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
+        A vector of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
         ``enc2`` are the target encoder position on axis 0, 1, and 2.
 
     :param bool block:
         If ``True``, the call blocks until the destination is reached. If
         ``False``, the call returns immediately.
+
+    :raises ValueError:
+        If any member of ``enc`` is not convertible to a C int.
+
+    :raises IndexError:
+        If ``len(enc) < 3``.
+
+    :raises TypeError:
+        If ``enc`` is not subscriptable.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -936,19 +978,28 @@ def moveToEnc(enc: Sequence[int], block: bool, ID: int = -1) -> int:
     return _libdrd.drdMoveToEnc(enc[0], enc[1], enc[2], block, ID)
 
 
-_libdrd.drdMoveToAllEnc = [c_int * 7, c_bool, c_byte]
+_libdrd.drdMoveToAllEnc = [c_int * MAX_DOF, c_bool, c_byte]
 _libdrd.drdMoveToAllEnc = c_int
 
 
-def moveToAllEnc(enc: Sequence[int], block: bool, ID: int = -1):
+def moveToAllEnc(enc: IntVectorLike, block: bool, ID: int = -1):
     """
     Send the robot end-effector to a desired encoder position. The motion
     follows a straight line in the encoder space, with smooth
     acceleration/deceleration. The acceleration and velocity profiles can be
     controlled by adjusting the trajectory generation parameters.
 
+    :param int enc:
+        Target encoder positions.
 
-    :param int enc: Target encoder positions.
+    :raises ValueError:
+        If any member of ``enc`` is not convertible to a C int.
+
+    :raises IndexError:
+        If ``len(enc) < MAX_DOF``.
+
+    :raises TypeError:
+        If ``enc`` is not subscriptable.
 
     :param bool block:
         If ``True``, the call blocks until the destination is reached.
@@ -968,7 +1019,20 @@ def moveToAllEnc(enc: Sequence[int], block: bool, ID: int = -1):
     :returns:
         0 on success, and -1 otherwise.
     """
-    return _libdrd.drdMoveToAllEnc((c_int * 7)(*enc), block, ID)
+    return _libdrd.drdMoveToAllEnc(
+        (c_int * MAX_DOF)(
+            enc[0],
+            enc[1],
+            enc[2],
+            enc[3],
+            enc[4],
+            enc[5],
+            enc[6],
+            enc[7]
+        ),
+        block,
+        ID
+    )
 
 
 _libdrd.drdLock.argtypes = [c_byte]
