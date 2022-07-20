@@ -59,8 +59,9 @@ def preset(val: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
     --------
     :data:`forcedimension.dhd.constants.MAX_DOF`
 
+
     :param IntVectorLike val:
-        Sequence of encoder offsets refering to each DOF with length
+        Vector of encoder offsets refering to each DOF with length
         :data:`forcedimension.dhd.constants.MAX_DOF`.
 
     :param int mask:
@@ -410,6 +411,11 @@ def getEncoder(index: int, ID: int = -1) -> int:
     """
     Read a single encoder value from the haptic device.
 
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
+
     :param int index:
         The motor index number as defined by
         :data:`forcedimension.dhd.constants.MAX_DOF`
@@ -438,6 +444,11 @@ _libdhd.dhdSetMotor.restype = c_int
 def setMotor(index: int, output: int, ID: int = -1) -> int:
     """
     Program a command to a single motor channel.
+
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
 
     :param int index:
         The motor index number as defined by
@@ -1733,6 +1744,11 @@ def setMot(cmds: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
     useful when using the generic controller directly, without a device model
     attached.
 
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
+
     :param IntVectorLike cmds:
         List of motor command values.
 
@@ -1789,6 +1805,11 @@ def preloadMot(cmds: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
     dhd.libdhd.expert.setMot, this function saves the requested commands
     internally for later application by calling dhd.libdhd.standard.setForce
     and the likes.
+
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
 
     :param IntVectorLike outputs:
         List of motor command values.
@@ -1847,6 +1868,11 @@ def getEnc(
     """
     Get a selective list of encoder values. Particularly useful when using the
     generic controller directly, without a device model attached.
+
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
 
     :param int mask:
         Bitwise mask of which motor should be set, default to ``0xff``
@@ -1909,6 +1935,11 @@ def getEncRange(
     Get the expected min and max encoder values for all axes present on the
     current device. Axis indices that do not exist on the device will return
     a range of 0.
+
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -2253,6 +2284,11 @@ def deltaJointTorquesExtrema(
     angle configuration. Please refer to your device user manual for more
     information on your device coordinate system.
 
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
+
     :param FloatVectorLike joint_angles:
         Sequence of ``(j0, j1, j2)`` where ``j0``, ``j1``, ``j2`` refer to the
         joint angles for axis 0, 1, and 2, respectively.
@@ -2276,7 +2312,7 @@ def deltaJointTorquesExtrema(
 
     :raises IndexError:
         If ``minq_out`` is specified and
-        ``len(encMin_out) < :data:forcedimension.dhd.constants.MAX_DOF``
+        ``len(encMin_out) < MAX_DOF``
 
     :raises TypeError:
         If ``maxq_out`` is specified and does not support item assignment
@@ -2284,7 +2320,7 @@ def deltaJointTorquesExtrema(
 
     :raises IndexError:
         If ``maxq_out`` is specified and
-        ``len(out) < :data:forcedimension.dhd.constants.MAX_DOF``
+        ``len(out) < MAX_DOF``
 
     :raises ValueError:
         If any element of ``joint_angles`` is not implicitly convertible to
@@ -2299,11 +2335,12 @@ def deltaJointTorquesExtrema(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[
-    Union[MutableFloatVectorLike, List[float]],
-    MutableSequence[float],
-    int
-    ]
+    :rtype:
+        Tuple[
+        Union[MutableFloatVectorLike, List[float]],
+        MutableSequence[float],
+        int
+        ]
 
     :returns:
         A tuple in the form ``(minq, maxq, err)``. ``minq`` is a mutable
@@ -2905,7 +2942,7 @@ def wristJointTorquesExtrema(
 
     :raises IndexError:
         If ``minq_out`` is specified and
-        ``len(encMin_out) < :data:forcedimension.dhd.constants.MAX_DOF``
+        ``len(encMin_out) < MAX_DOF``
 
     :raises TypeError:
         If ``maxq_out`` is specified and does not support item assignment
@@ -2913,7 +2950,7 @@ def wristJointTorquesExtrema(
 
     :raises IndexError:
         If ``maxq_out`` is specified and
-        ``len(out) < :data:forcedimension.dhd.constants.MAX_DOF``
+        ``len(out) < MAX_DOF``
 
     :raises ValueError:
         If any element of ``joint_angles`` is not implicitly convertible to C
@@ -2928,12 +2965,13 @@ def wristJointTorquesExtrema(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[
-    Union[MutableFloatVectorLike,
-    List[float]],
-    MutableSequence[float],
-    int
-    ]
+    :rtype:
+        Tuple[
+        Union[MutableFloatVectorLike,
+        List[float]],
+        MutableSequence[float],
+        int
+        ]
 
     :returns:
         A tuple in the form ``(minq, maxq, err)``. ``minq`` is a mutable
@@ -3432,6 +3470,11 @@ def getJointAngles(
     Retrieve the joint angles in [rad] for all sensed degrees-of-freedom of the
     current device.
 
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
+
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
@@ -3446,7 +3489,7 @@ def getJointAngles(
 
     :raises IndexError:
         If ``out`` is specified and.
-        ``len(out) < :data:forcedimension.dhd.constants.MAX_DOF``
+        ``len(out) < MAX_DOF``
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -3487,6 +3530,11 @@ def getJointVelocities(
     """
     Retrieve the joint angle velocities in [rad/s] for all sensed
     degrees-of-freedom of the current device.
+
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -3543,6 +3591,11 @@ def getEncVelocities(
     Retrieve the encoder angle velocities in [increments/s] for all sensed
     degrees-of-freedom of the current device
 
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
+
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
@@ -3557,7 +3610,7 @@ def getEncVelocities(
 
     :raises IndexError:
         If ``out`` is specified and
-        ``len(out) < :data:forcedimension.dhd.constants.MAX_DOF``
+        ``len(out) < MAX_DOF``
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -3602,6 +3655,11 @@ def jointAnglesToIntertiaMatrix(
     Retrieve the (Cartesian) inertia matrix based on a given joint
     configuration. Please refer to your device user manual for more information
     on your device coordinate system.
+
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.

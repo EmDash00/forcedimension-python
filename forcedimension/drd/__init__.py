@@ -1,11 +1,14 @@
 from ctypes import POINTER, byref, c_bool, c_byte, c_double, c_int
-from typing import List, Sequence, Tuple
+from typing import List, Tuple
 from typing import Union, Optional
 
 from forcedimension.dhd.constants import MAX_DOF
 
 from forcedimension.typing import (
-    FloatVectorLike, MutableFloatVectorLike, MutableFloatMatrixLike
+    FloatVectorLike,
+    IntVectorLike,
+    MutableFloatVectorLike,
+    MutableFloatMatrixLike
 )
 
 import forcedimension.runtime as runtime
@@ -387,10 +390,15 @@ def getPositionAndOrientation(
         specified, the return will be a reference to this buffer rather than a
         newly allocated list of lists.
 
-    :param Optional[Matrix] matrix_out:
-        Optional output buffer to store the return. If this is specified, the
-        return will be a reference to this buffer rather than a newly allocated
-        list of lists.
+    :param Optional[VectorLike] p_out:
+        Optional output buffer to store the angle of each joint. If this is
+        specified, the return will be a reference to this buffer rather than a
+        newly allocated list of lists.
+
+    :param Optional[MutableFloatMatrixLike] matrix_out:
+        Optional output buffer to store the orientation matrix. If this is
+        specified, the return will be a reference to this buffer rather than a
+        newly allocated list of lists.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -841,7 +849,9 @@ def moveToRot(orientation: FloatVectorLike, block: bool, ID: int = -1):
         0 on success, and -1 otherwise.
 
     """
-    return _libdrd.drdMoveToRot(orientation[0], orientation[1], orientation[2], block, ID)
+    return _libdrd.drdMoveToRot(
+        orientation[0], orientation[1], orientation[2], block, ID
+    )
 
 
 _libdrd.drdMoveToGrip.argtypes = [c_double, c_bool, c_byte]
@@ -887,6 +897,11 @@ def moveTo(p: FloatVectorLike, block: bool, ID: int = -1):
     The motion uses smooth acceleration/deceleration. The acceleration and
     velocity profiles can be controlled by adjusting the trajectory generation
     parameters.
+
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
 
     :param float p:
         Target positions/orientations in [m]/[rad], respectively.
@@ -988,6 +1003,11 @@ def moveToAllEnc(enc: IntVectorLike, block: bool, ID: int = -1):
     follows a straight line in the encoder space, with smooth
     acceleration/deceleration. The acceleration and velocity profiles can be
     controlled by adjusting the trajectory generation parameters.
+
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
 
     :param int enc:
         Target encoder positions.

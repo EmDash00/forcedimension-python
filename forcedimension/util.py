@@ -86,7 +86,7 @@ try:
         This allows you to simply pass in this class to any and all numpy
         methods.
         """
-        def __new__(cls, data: MutableSequence[float] = [0, 0, 0]):
+        def __new__(cls, data: MutableSequence[float] = [0.0, 0.0, 0.0]):
             if len(data) != 3:
                 raise ValueError
 
@@ -102,7 +102,7 @@ try:
         ndarray. This allows you to simply pass in this class to any and all
         numpy methods.
         """
-        def __new__(cls, data: MutableSequence[float] = [0, 0, 0]):
+        def __new__(cls, data: MutableSequence[float] = [0.0, 0.0, 0.0]):
             if len(data) != 3:
                 raise ValueError
 

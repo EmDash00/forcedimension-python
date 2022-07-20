@@ -5,9 +5,9 @@ from math import nan
 
 from time import sleep, monotonic
 
-from forcedimension.dhd.adaptors import CartesianTuple, DeviceTuple
 import forcedimension.dhd as dhd
 import forcedimension.drd as drd
+from forcedimension.typing import IntVectorLike
 
 from forcedimension.util import (
     EuclidianVector,
@@ -340,7 +340,7 @@ class HapticDevice:
 
         dhd.expert.deltaEncoderToPosition(
             ID=cast(int, self._id),
-            enc=cast(DeviceTuple, self._enc),
+            enc=self._enc,
             out=self._pos
         )
 
@@ -351,7 +351,7 @@ class HapticDevice:
         """
         dhd.expert.deltaEncodersToJointAngles(
             ID=cast(int, self._id),
-            enc=cast(DeviceTuple, self._enc),
+            enc=self._enc,
             out=cast(MutableSequence[float], self._joint_angles)
         )
 
@@ -364,7 +364,7 @@ class HapticDevice:
 
         dhd.expert.deltaJointAnglesToJacobian(
             ID=cast(int, self._id),
-            joint_angles=cast(CartesianTuple, self._joint_angles),
+            joint_angles=self._joint_angles,
             out=self._J
         )
 
@@ -484,11 +484,10 @@ class HapticDevice:
 
         if err and err != dhd.TIMEGUARD:
             raise errno_to_exception(ErrorNum(
-                dhd.errorGetLast())(
+                dhd.errorGetLast()))(
                     ID=cast(int, self._id),
                     feature=dhd.getForce
                 )
-            )
 
     def update_force_and_torque(self):
         """
@@ -572,19 +571,19 @@ class HapticDevice:
 
     def req(
         self,
-        f: CartesianTuple,
-        t: CartesianTuple = CartesianTuple(0, 0, 0)
+        f: IntVectorLike,
+        t: IntVectorLike = (0, 0, 0)
     ) -> None:
         """
         Load the request force and request torque buffer for this device.
         This won't send the request to the device. This is used by the
         HapticDaemon.
 
-        :param CartesianTuple f:
+        :param IntVectorLike f:
             The force in [N] to apply to the end effector about
             the x, y, and z axes.
 
-        :param CartesianTuple t:
+        :param IntVectorLike t:
             The torque in [Nm] to apply to the end effector about the
             x, y,and z axes.
 
@@ -593,8 +592,13 @@ class HapticDevice:
         :func:`HapticDevice.submit`
         """
         self._req = True
-        self._f_req[0:3] = f
-        self._t_req[0:3] = t
+        self._f_req[0] = f[0]
+        self._f_req[1] = f[1]
+        self._f_req[2] = f[2]
+
+        self._t_req[0] = t[0]
+        self._t_req[1] = t[1]
+        self._t_req[2] = t[2]
 
     def req_vibration(self, f: float, A: float):
         """
@@ -655,7 +659,7 @@ class HapticDevice:
         if err:
             raise errno_to_exception(ErrorNum(dhd.errorGetLast()))(
                     ID=cast(int, self._id),
-                    feature=dhd.getEnc
+                    feature=dhd.expert.getEnc
                 )
 
     def enable_force(self, enabled: bool = True):
@@ -850,7 +854,7 @@ class Gripper:
         dhd.setForceAndTorqueAndGripperForce(
             f=self._parent._f_req,
             t=self._parent._t_req,
-            fg=self
+            fg=self.fg
         )
 
     def req(self, fg: float):
@@ -1073,12 +1077,14 @@ class _Poller(Thread):
 
                     self._f()
 
-                    sleep(self._min_period * 0.9)
-                    while (monotonic() - t) < self._min_period:
-                        pass
+                    if self._min_period is not None:
+                        sleep(self._min_period * 0.9)
+                        while (monotonic() - t) < self._min_period:
+                            pass
 
                 while self._paused and not self._stopped:
-                    sleep(self._min_period)
+                    if self._min_period is not None:
+                        sleep(self._min_period)
 
         except DHDIOError as ex:
             self.ex = ex
