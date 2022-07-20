@@ -1,29 +1,30 @@
-from threading import Thread, Lock, Condition
-from typing import MutableSequence, Optional, Callable, List
-from typing import cast
 from math import nan
-
-from time import sleep, monotonic
+from threading import Condition, Lock, Thread
+from time import monotonic, sleep
+from typing import Callable, List, MutableSequence, Optional
+from typing import cast
 
 import forcedimension.dhd as dhd
+from forcedimension.dhd import DeviceType
+from forcedimension.dhd.adaptors import (
+    DHDErrorNoDeviceFound,
+    DHDIOError,
+    ErrorNum,
+    StatusTuple,
+    errno_to_exception,
+)
 import forcedimension.drd as drd
 from forcedimension.typing import IntVectorLike
-
 from forcedimension.util import (
     EuclidianVector,
-    JacobianMatrix,
     ImmutableWrapper,
+    JacobianMatrix,
     UpdateOpts,
 )
 
-from forcedimension.dhd import DeviceType
-from forcedimension.dhd.adaptors import (
-    StatusTuple,
-    DHDIOError,
-    DHDErrorNoDeviceFound,
-    ErrorNum,
-    errno_to_exception
-)
+
+__version__ = '0.1.1'
+
 
 DefaultVecType = EuclidianVector
 
@@ -48,6 +49,7 @@ class HapticDevice:
     dhd and provides a peformant portable Pythonic interface for doing
     high-level control.
     """
+
     def __init__(
             self,
             ID: Optional[int] = None,
@@ -385,6 +387,7 @@ class HapticDevice:
         self.calculate_jacobian()
 
     """
+
     def update_enc_and_calculate(self) -> None:
         self.update_enc()
         self.calculate_joint_angles()
@@ -401,16 +404,16 @@ class HapticDevice:
         """
 
         _, err = dhd.expert.getDeltaEncoders(
-                    ID=cast(int, self._id),
-                    out=self._enc
-                )
+            ID=cast(int, self._id),
+            out=self._enc
+        )
 
         if err and err != dhd.TIMEGUARD:
             raise errno_to_exception(
                 ErrorNum(dhd.errorGetLast()))(
                     ID=cast(int, self.ID),
                     feature=dhd.expert.getDeltaEncoders
-                )
+            )
 
     def update_position(self) -> None:
         """
@@ -428,7 +431,7 @@ class HapticDevice:
                 ErrorNum(dhd.errorGetLast()))(
                     ID=cast(int, self.ID),
                     feature=dhd.getPosition
-                )
+            )
 
     def update_velocity(self) -> None:
         """
@@ -458,8 +461,8 @@ class HapticDevice:
         :rtype: None
         """
         _, err = dhd.getAngularVelocityRad(
-                    ID=cast(int, self._id),
-                    out=self._w
+            ID=cast(int, self._id),
+            out=self._w
         )
 
         if (err):
@@ -487,7 +490,7 @@ class HapticDevice:
                 dhd.errorGetLast()))(
                     ID=cast(int, self._id),
                     feature=dhd.getForce
-                )
+            )
 
     def update_force_and_torque(self):
         """
@@ -505,9 +508,9 @@ class HapticDevice:
 
         if (err):
             raise errno_to_exception(dhd.errorGetLast())(
-                    ID=cast(int, self._id),
-                    feature=dhd.getForceAndTorque
-                )
+                ID=cast(int, self._id),
+                feature=dhd.getForceAndTorque
+            )
 
     def update_force_and_torque_and_gripper_force(self):
         """
@@ -555,19 +558,19 @@ class HapticDevice:
         """
         self._req = False
         err = dhd.setForceAndTorque(
-                self._f_req,
-                self._t_req,
-                cast(int, self._id)
-            )
+            self._f_req,
+            self._t_req,
+            cast(int, self._id)
+        )
 
         if err:
             if err == dhd.MOTOR_SATURATED:
                 pass
             else:
                 raise errno_to_exception(ErrorNum(dhd.errorGetLast()))(
-                        ID=cast(int, self._id),
-                        feature=dhd.setForceAndTorqueAndGripperForce
-                    )
+                    ID=cast(int, self._id),
+                    feature=dhd.setForceAndTorqueAndGripperForce
+                )
 
     def req(
         self,
@@ -635,19 +638,19 @@ class HapticDevice:
 
     def submit_vibration(self):
         err = dhd.setVibration(
-                    ID=cast(int, self._id),
-                    f=self._vibration_req[0],
-                    A=self._vibration_req[1],
-                    device_type=self.devtype
-                )
+            ID=cast(int, self._id),
+            f=self._vibration_req[0],
+            A=self._vibration_req[1],
+            device_type=self.devtype
+        )
 
         if err:
             if err == dhd.MOTOR_SATURATED:
                 pass
             raise errno_to_exception(ErrorNum(dhd.errorGetLast()))(
-                    ID=cast(int, self._id),
-                    feature=dhd.setVibration
-                )
+                ID=cast(int, self._id),
+                feature=dhd.setVibration
+            )
 
     def submit_enc(self):
         _, err = dhd.expert.getEnc(
@@ -658,9 +661,9 @@ class HapticDevice:
 
         if err:
             raise errno_to_exception(ErrorNum(dhd.errorGetLast()))(
-                    ID=cast(int, self._id),
-                    feature=dhd.expert.getEnc
-                )
+                ID=cast(int, self._id),
+                feature=dhd.expert.getEnc
+            )
 
     def enable_force(self, enabled: bool = True):
         """
@@ -680,9 +683,9 @@ class HapticDevice:
         err = dhd.setBrakes(enabled)
         if err:
             raise errno_to_exception(ErrorNum(dhd.errorGetLast()))(
-                    ID=cast(int, self._id),
-                    feature=dhd.setVibration
-                )
+                ID=cast(int, self._id),
+                feature=dhd.setVibration
+            )
 
     def get_max_force(self) -> Optional[float]:
         """
@@ -907,9 +910,9 @@ class Gripper:
                 raise ValueError
 
             err = dhd.setMaxGripperForce(
-                    ID=cast(int, self._id),
-                    limit=limit
-                )
+                ID=cast(int, self._id),
+                limit=limit
+            )
 
         if err:
             raise errno_to_exception(ErrorNum(dhd.errorGetLast()))
@@ -952,25 +955,25 @@ class Gripper:
     def calculate_gap(self):
         if self._enc is not None:
             self._gap = dhd.expert.gripperEncoderToGap(
-                            ID=cast(int, self._id),
-                            enc=self._enc
-                        )
+                ID=cast(int, self._id),
+                enc=self._enc
+            )
         else:
             raise ValueError
 
     def calculate_angle(self):
         if self._enc is not None:
             self._angle = dhd.expert.gripperEncoderToAngleRad(
-                            ID=cast(int, self._id),
-                            enc=self._enc
-                        )
+                ID=cast(int, self._id),
+                enc=self._enc
+            )
         else:
             raise ValueError
 
     def update_enc(self):
         self._enc, err = dhd.expert.getGripperEncoder(
-                            ID=cast(int, self._id)
-                        )
+            ID=cast(int, self._id)
+        )
 
         if err and err != dhd.TIMEGUARD:
             raise errno_to_exception(dhd.errorGetLast())
@@ -987,8 +990,8 @@ class Gripper:
 
     def update_angular_velocity(self):
         self._w, err = dhd.getGripperAngularVelocityRad(
-                            ID=cast(int, self._id)
-                        )
+            ID=cast(int, self._id)
+        )
 
         if err and err != dhd.TIMEGUARD:
             raise errno_to_exception(dhd.errorGetLast())
@@ -1005,18 +1008,18 @@ class Gripper:
 
     def update_thumb_pos(self):
         _, err = dhd.getGripperThumbPos(
-                    cast(int, self._id),
-                    out=self._thumb_pos
-                )
+            cast(int, self._id),
+            out=self._thumb_pos
+        )
 
         if err and err != dhd.TIMEGUARD:
             raise errno_to_exception(dhd.errorGetLast())
 
     def update_finger_pos(self):
         _, err = dhd.getGripperFingerPos(
-                    cast(int, self._id),
-                    out=self._finger_pos
-                )
+            cast(int, self._id),
+            out=self._finger_pos
+        )
         if err and err != dhd.TIMEGUARD:
             raise errno_to_exception(dhd.errorGetLast())
 
@@ -1093,11 +1096,11 @@ class _Poller(Thread):
 
 class HapticDaemon(Thread):
     def __init__(
-                self,
-                dev: HapticDevice,
-                update_list: UpdateOpts = UpdateOpts(),
-                forceon=False
-            ):
+        self,
+        dev: HapticDevice,
+        update_list: UpdateOpts = UpdateOpts(),
+        forceon=False
+    ):
 
         super().__init__()
 
