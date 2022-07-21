@@ -27,7 +27,7 @@ from forcedimension.typing import (
     FloatVectorLike, MutableFloatVectorLike, MutableFloatMatrixLike
 )
 
-from . import expert
+from . import expert, os_independent
 
 # Load the runtime from the backend
 _libdhd = _runtime.load("libdrd")

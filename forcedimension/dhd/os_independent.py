@@ -39,7 +39,7 @@ def kbGet() -> str:
     :returns:
         The character hit on the keyboard.
     """
-    return _libdhd.dhdKbGet().decode('utf-8')
+    return chr(_libdhd.dhdKbGet())
 
 
 _libdhd.dhdGetTime.argtypes = []
