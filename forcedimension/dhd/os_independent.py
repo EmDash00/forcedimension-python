@@ -7,8 +7,13 @@
 """
 
 from ctypes import c_bool, c_byte, c_double
+from forcedimension import runtime
 
-from forcedimension.dhd import _libdhd
+_libdhd = runtime.load("libdrd")
+
+if _libdhd is None:
+    raise ImportError("There were problems loading libdhd.")
+
 
 _libdhd.dhdKbHit.argtypes = []
 _libdhd.dhdKbHit.restype = c_bool
