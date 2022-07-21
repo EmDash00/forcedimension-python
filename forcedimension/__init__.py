@@ -23,7 +23,7 @@ from forcedimension.util import (
 )
 
 
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 
 
 DefaultVecType = EuclidianVector
