@@ -1,11 +1,3 @@
-"""
-.. module::expert
-   :platform: Windows, Unix
-   :synopsis: libdhd "OS Independent SDK" Python libdhd
-
-.. moduleauthor:: Ember "Emmy" Chow <emberchow.business@gmail.com>
-"""
-
 from ctypes import c_bool, c_byte, c_double
 from forcedimension import runtime
 

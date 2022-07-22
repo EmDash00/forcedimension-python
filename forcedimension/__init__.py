@@ -1,3 +1,10 @@
+"""
+.. module::forcedimension
+   :platform: Windows, Unix
+   :synopsis: ForceDimensionSDK high level wrappers.
+
+.. moduleauthor:: Ember "Emmy" Chow <emberchow.business@gmail.com>
+"""
 from math import nan
 from threading import Condition, Lock, Thread
 from time import monotonic, sleep
@@ -558,7 +565,7 @@ class HapticDevice:
 
         See Also
         --------
-        :func:HapticDevice.req
+        :func:`HapticDevice.req`
 
         """
         self._req = False
@@ -739,7 +746,7 @@ class HapticDevice:
             applied by the haptic device to the end-effector. If there is no
             limit, None is returned instead.
 
-        rtype: Optional[float]
+        :rtype: Optional[float]
         """
 
         limit = dhd.getMaxTorque(ID=cast(int, self._id))
@@ -785,14 +792,15 @@ class HapticDevice:
         """
         See if the button on the device is being pressed.
 
+        See Also
+        --------
+        :class:`forcedimension.dhd.constants.NovintButtonID`
+
+
         :param int button_id: The button to check
 
         :rtype: bool
-        :returns: True if the button is being pressed, False otherwise.
-
-        See Also
-        --------
-        :class:forcedimension.dhd.constants.NovintButtonID
+        :returns: True if the button is being pressed, False otherwise
         """
         return bool(self._buttons & cast(int, 1 << button_id))
 
