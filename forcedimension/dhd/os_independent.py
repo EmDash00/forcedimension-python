@@ -68,7 +68,7 @@ def getTime() -> float:
 
 
 _libdhd.dhdSleep.argtypes = [c_double]
-_libdhd.dhd.restype = None
+_libdhd.dhdSleep.restype = None
 
 
 def sleep(sec: float) -> None:
@@ -81,5 +81,4 @@ def sleep(sec: float) -> None:
 
 
 def startThread():
-    # TODO implement startThread
-    pass
+    raise NotImplementedError()
