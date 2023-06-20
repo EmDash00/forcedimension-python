@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "forcedimension"
-version = "0.1.5"
-authors = [ 
+version = "0.1.6"
+authors = [
     { name="Ember Chow", email="emberchow.business@gmail.com" },
 ]
 description = "Python Bindings for the ForceDimension SDK"
