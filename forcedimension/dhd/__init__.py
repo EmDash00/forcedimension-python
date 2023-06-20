@@ -2537,13 +2537,13 @@ def setForceAndTorqueAndGripperForce(f: FloatVectorLike,
 
 
 _libdhd.dhdGetForceAndTorqueAndGripperForce.argtypes = [
-    c_double,
-    c_double,
-    c_double,
-    c_double,
-    c_double,
-    c_double,
-    c_double,
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
     c_byte
 ]
 _libdhd.dhdGetForceAndTorqueAndGripperForce.restype = c_int
