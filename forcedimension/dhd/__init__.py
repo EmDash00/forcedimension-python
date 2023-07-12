@@ -2536,6 +2536,103 @@ def setForceAndTorqueAndGripperForce(f: FloatVectorLike,
     )
 
 
+_libdhd.dhdGetForceAndTorqueAndGripperForce.argtypes = [
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    POINTER(c_double),
+    c_byte
+]
+_libdhd.dhdGetForceAndTorqueAndGripperForce.restype = c_int
+
+def getForceAndTorqueAndGripperForce(
+    ID: int = -1,
+    f_out: Optional[MutableFloatVectorLike] = None,
+    t_out: Optional[MutableFloatVectorLike] = None
+) -> Tuple[
+    Union[MutableFloatVectorLike, List[float]],
+    Union[MutableFloatVectorLike, List[float]],
+    float,
+    int
+]:
+    """
+    Retrieve the force and torque vectors applied to the device end-effector.
+
+    :param int ID:
+         Device ID (see multiple devices section for details), defaults to -1.
+
+    :param Optional[MutableFloatVectorLike] f_out:
+        An output buffer to store the applied forces on the end-effector. If
+        specified, the return will contain a reference to this buffer rather to
+        a newly allocated list, optional.
+
+    :param Optional[MutableFloatVectorLike] t_out:
+        An output buffer to store the applied torques on the end-effector. If
+        specified, the return will contain a reference to this buffer rather to
+        a newly allocated list, optional.
+
+    :raises ValueError:
+        If ``ID`` is not implicitly convertible to C char.
+
+    :returns:
+        A tuple in the form  ``([fx, fy, fz], [tx, ty, tz], fg, err)``.
+        ``[fx, fy, fz]`` are translation forces applied to the end-effector
+        (in [N])  about the X, Y, and Z axes, respectively. ``[tx, ty, tz]``
+        refers to the torques applied to the end-effector (in [Nm]) about
+        the X, Y, and Z axes.  ``fg`` refers to the gripper force (in [Nm]).
+        ``err`` is 0, on success, -1 otherwise.
+
+    :rtype:
+        Tuple
+        [
+        Union[MutableFloatVectorLike, List[float]],
+        Union[MutableFloatVectorLike, List[float]],
+        int
+        ]
+
+    """
+
+    fx = c_double()
+    fy = c_double()
+    fz = c_double()
+
+    tx = c_double()
+    ty = c_double()
+    tz = c_double()
+
+    fg = c_double()
+
+    err = _libdhd.dhdGetForceAndTorqueAndGripperForce(
+        byref(fx), byref(fy), byref(fz),
+        byref(tx), byref(ty), byref(tz),
+        byref(fg),
+        ID
+    )
+
+    if f_out is None:
+        f_ret = [fx.value, fy.value, fz.value]
+    else:
+        f_ret = f_out
+
+        f_out[0] = fx.value
+        f_out[1] = fy.value
+        f_out[2] = fz.value
+
+    if t_out is None:
+        t_ret = [tx.value, ty.value, tz.value]
+    else:
+        t_ret = t_out
+
+        t_out[0] = tx.value
+        t_out[1] = ty.value
+        t_out[2] = tz.value
+
+    return (f_ret, t_ret, fg.value, err)
+
+
 _libdhd.dhdConfigLinearVelocity.argtypes = [c_int, c_int, c_byte]
 _libdhd.dhdConfigLinearVelocity.restype = c_int
 

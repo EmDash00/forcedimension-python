@@ -1,11 +1,3 @@
-"""
-.. module::expert
-   :platform: Windows, Unix
-   :synopsis: libdhd "OS Independent SDK" Python libdhd
-
-.. moduleauthor:: Ember "Emmy" Chow <emberchow.business@gmail.com>
-"""
-
 from ctypes import c_bool, c_byte, c_double
 from forcedimension import runtime
 
@@ -68,7 +60,7 @@ def getTime() -> float:
 
 
 _libdhd.dhdSleep.argtypes = [c_double]
-_libdhd.dhd.restype = None
+_libdhd.dhdSleep.restype = None
 
 
 def sleep(sec: float) -> None:
@@ -81,5 +73,4 @@ def sleep(sec: float) -> None:
 
 
 def startThread():
-    # TODO implement startThread
-    pass
+    raise NotImplementedError()

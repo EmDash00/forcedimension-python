@@ -1,3 +1,10 @@
+"""
+.. module::forcedimension
+   :platform: Windows, Unix
+   :synopsis: ForceDimensionSDK high level wrappers.
+
+.. moduleauthor:: Ember "Emmy" Chow <emberchow.business@gmail.com>
+"""
 from math import nan
 from threading import Condition, Lock, Thread
 from time import monotonic, sleep
@@ -23,7 +30,7 @@ from forcedimension.util import (
 )
 
 
-__version__ = '0.1.5'
+__version__ = '0.1.6'
 
 
 DefaultVecType = EuclidianVector
@@ -238,8 +245,9 @@ class HapticDevice:
 
         :rtype: Optional[MutableSequence[float]]
 
-        :returns: A mutable sequence of [x, y, z] where x, y, and z are the
-        end-effector's position given in [m].
+        :returns:
+            A mutable sequence of [x, y, z] where x, y, and z are the
+            end-effector's position given in [m].
         """
         self.check_threadex()
         return self._pos_view
@@ -266,8 +274,9 @@ class HapticDevice:
 
         :rtype: Optional[MutableSequence[float]]
 
-        :returns: A mutable sequence of [vx, vy, vz] where vx, vy, and vz are
-        the end-effector's linear velocity given in [m/s].
+        :returns:
+            A mutable sequence of [vx, vy, vz] where vx, vy, and vz are
+            the end-effector's linear velocity given in [m/s].
         """
         self.check_threadex()
         return self._v_view
@@ -280,8 +289,9 @@ class HapticDevice:
 
         :rtype: Optional[MutableSequence[float]]
 
-        :returns: A mutable sequence of [wx, wy, wz] where wx, wy, and wz are
-        the end-effector's linear velocity given in [rad/s].
+        :returns:
+            A mutable sequence of [wx, wy, wz] where wx, wy, and wz are
+            the end-effector's linear velocity given in [rad/s].
         """
         self.check_threadex()
         return self._w_view
@@ -294,8 +304,9 @@ class HapticDevice:
 
         :rtype: Optional[MutableSequence[float]]
 
-        :returns: A mutable sequence of [tx, ty, tz] where tx, ty, and tz are
-        the torque experienced by the end-effector in [Nm]
+        :returns:
+            A mutable sequence of [tx, ty, tz] where tx, ty, and tz are
+            the torque experienced by the end-effector in [Nm]
         """
         self.check_threadex()
         return self._t_view
@@ -308,8 +319,9 @@ class HapticDevice:
 
         :rtype: Optional[MutableSequence[float]]
 
-        :returns: A mutable sequence of [fx, fy, fz] where fx, fy, and fz are
-        the torque experienced by the end-effector in [N]
+        :returns:
+            A mutable sequence of [fx, fy, fz] where fx, fy, and fz are
+            the torque experienced by the end-effector in [N]
         """
 
         self.check_threadex()
@@ -553,7 +565,7 @@ class HapticDevice:
 
         See Also
         --------
-        :func:HapticDevice.req
+        :func:`HapticDevice.req`
 
         """
         self._req = False
@@ -692,11 +704,12 @@ class HapticDevice:
         Retrieve the current limit (in N) to the force magnitude that can be
         applied by the haptic device.
 
-        :returns: The current limit (in N) to the force magnitude that can be
-        applied by the haptic device to the end-effector. If there is no limit,
-        None is returned instead.
+        :returns:
+            The current limit (in N) to the force magnitude that can be
+            applied by the haptic device to the end-effector. If there is no
+            limit, None is returned instead.
 
-        rtype: Optional[float]
+        :rtype: Optional[float]
         """
 
         limit = dhd.getMaxForce(ID=cast(int, self._id))
@@ -708,9 +721,9 @@ class HapticDevice:
         Define or disable a limit (in N) to the force magnitude that can be
         applied by the haptic device.
 
-        :param Optional[float] limit: The desired limit (in N) to the force
-        magnitude that can be applied. If the limit is None, the force limit is
-        disabled.
+        :param Optional[float] limit:
+            The desired limit (in N) to the force magnitude that can be
+            applied. If the limit is None, the force limit is disabled.
         """
         if limit is None:
             err = dhd.setMaxForce(ID=cast(int, self._id), limit=-1.0)
@@ -728,11 +741,12 @@ class HapticDevice:
         Retrieve the current limit (in Nm) to the torque magnitude that can be
         applied by the haptic device.
 
-        :returns: The current limit (in Nm) to the force magnitude that can be
-        applied by the haptic device to the end-effector. If there is no limit,
-        None is returned instead.
+        :returns:
+            The current limit (in Nm) to the force magnitude that can be
+            applied by the haptic device to the end-effector. If there is no
+            limit, None is returned instead.
 
-        rtype: Optional[float]
+        :rtype: Optional[float]
         """
 
         limit = dhd.getMaxTorque(ID=cast(int, self._id))
@@ -744,9 +758,9 @@ class HapticDevice:
         Define or disable a limit (in N) to the force magnitude that can be
         applied by the haptic device.
 
-        :param Optional[float] limit: The desired limit (in N) to the force
-        magnitude that can be applied. If the limit is None, the force limit is
-        disabled.
+        :param Optional[float] limit:
+            The desired limit (in N) to the force magnitude that can be
+            applied. If the limit is None, the force limit is disabled.
         """
         if limit is None:
             err = dhd.setMaxTorque(ID=cast(int, self._id), limit=-1.0)
@@ -778,14 +792,15 @@ class HapticDevice:
         """
         See if the button on the device is being pressed.
 
+        See Also
+        --------
+        :class:`forcedimension.dhd.constants.NovintButtonID`
+
+
         :param int button_id: The button to check
 
         :rtype: bool
-        :returns: True if the button is being pressed, False otherwise.
-
-        See Also
-        --------
-        :class:forcedimension.dhd.dhd.constants.NovintButtonID
+        :returns: True if the button is being pressed, False otherwise
         """
         return bool(self._buttons & cast(int, 1 << button_id))
 
@@ -811,6 +826,12 @@ class Gripper:
     case, a Gripper object will be instantiated as well containing methods to
     get kinematic information about the Gripper.
     """
+    _enc: int
+    _angle: float
+    _gap: float
+    _v: float
+    _w: float
+    _fg: float
 
     def __init__(
             self,
@@ -827,12 +848,12 @@ class Gripper:
 
         VecType = vecgen
 
-        self._enc: int = 0
-        self._angle: float = nan
-        self._gap: float = nan
-        self._v: float = nan
-        self._w: float = nan
-        self._fg: float = nan
+        self._enc = 0
+        self._angle = nan
+        self._gap = nan
+        self._v = nan
+        self._w = nan
+        self._fg = nan
 
         self._thumb_pos: MutFSeq = VecType()
         self._finger_pos: MutFSeq = VecType()
@@ -883,11 +904,12 @@ class Gripper:
         Retrieve the current limit (in N) to the force magnitude that can be
         applied by the haptic device.
 
-        :returns: The current limit (in N) to the force magnitude that can be
-        applied by the haptic device to the end-effector. If there is no limit,
-        None is returned instead.
+        :returns:
+            The current limit (in N) to the force magnitude that can be
+            applied by the haptic device to the end-effector. If there is no
+            limit, None is returned instead.
 
-        rtype: Optional[float]
+        :rtype: Optional[float]
         """
 
         limit = dhd.getMaxGripperForce(ID=cast(int, self._id))
@@ -899,9 +921,9 @@ class Gripper:
         Define or disable a limit (in N) to the force magnitude that can be
         applied by the haptic device.
 
-        :param Optional[float] limit: The desired limit (in N) to the force
-        magnitude that can be applied. If the limit is None, the force limit is
-        disabled.
+        :param Optional[float] limit:
+            The desired limit (in N) to the force magnitude that can be
+            applied. If the limit is None, the force limit is disabled.
         """
         if limit is None:
             err = dhd.setMaxGripperForce(ID=cast(int, self._id), limit=-1.0)
