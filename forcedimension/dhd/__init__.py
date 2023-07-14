@@ -1,35 +1,57 @@
-from ctypes import c_bool, c_byte, c_char_p, c_double, c_int, c_uint, c_ushort
-from ctypes import POINTER, byref
-from typing import List, Optional, Tuple, Union, cast
+from ctypes import (
+    POINTER, byref,
+    c_bool, c_byte, c_char_p, c_double, c_int, c_uint, c_ushort
+)
+from typing import List, Optional, Tuple, Union
 
-from forcedimension.dhd.adaptors import StatusTuple, VersionTuple
+import forcedimension.runtime as _runtime
+from forcedimension.dhd.adaptors import (
+    DHDError,
+    DHDErrorCom,
+    DHDErrorConfiguration,
+    DHDErrorDeviceInUse,
+    DHDErrorDeviceNotReady,
+    DHDErrorDHCBusy,
+    DHDErrorExpertModeDisabled,
+    DHDErrorFeatureNotAvailable,
+    DHDErrorFeatureNotEnabled,
+    DHDErrorGeometry,
+    DHDErrorNoDeviceFound,
+    DHDErrorNoDriverFound,
+    DHDErrorRedundantFail,
+    DHDErrorTimeout, DHDFeatureError,
+    DHDIOError,
+    StatusTuple,
+    VersionTuple,
+    errno_to_exception
+)
 from forcedimension.dhd.constants import (
+    MAX_BUTTONS,
+    MAX_DOF,
+    MAX_STATUS,
+    MOTOR_SATURATED,
+    TIMEGUARD,
+    VELOCITY_WINDOW,
+    VELOCITY_WINDOWING,
     ComMode,
     DeltaEncID,
     DeltaMotorID,
     DeviceType,
     ErrorNum,
-    MAX_BUTTONS,
-    MAX_DOF,
-    MAX_STATUS,
-    MOTOR_SATURATED,
     State,
     StatusIndex,
-    TIMEGUARD,
     ThreadPriority,
-    VELOCITY_WINDOW,
-    VELOCITY_WINDOWING,
     WristEncID,
-    WristMotorID,
+    WristMotorID
 )
-import forcedimension.runtime as _runtime
 from forcedimension.typing import (
-    FloatVectorLike, MutableFloatVectorLike, MutableFloatMatrixLike
+    FloatVectorLike, MutableFloatMatrixLike, MutableFloatVectorLike
 )
 
 from . import expert, os_independent
 
-# Load the runtime from the backend
+# DRD contains DHD and you should use the DRD versions for compatibility with
+# DRD
 _libdhd = _runtime.load("libdrd")
 
 if _libdhd is None:
@@ -2547,6 +2569,7 @@ _libdhd.dhdGetForceAndTorqueAndGripperForce.argtypes = [
     c_byte
 ]
 _libdhd.dhdGetForceAndTorqueAndGripperForce.restype = c_int
+
 
 def getForceAndTorqueAndGripperForce(
     ID: int = -1,
