@@ -6,7 +6,7 @@
 .. moduleauthor:: Drason Chow <drasonchow@gmail.com>
 """
 
-from typing import NamedTuple, Callable, Optional, Any, Sequence
+from typing import NamedTuple, Callable, Optional, Any
 from forcedimension.dhd.constants import ErrorNum
 
 
@@ -123,6 +123,7 @@ class DHDErrorExpertModeDisabled(DHDFeatureError):
             reason="expert mode is disabled",
             ID=None,
             feature=feature,
+            **kwargs
         )
 
 
@@ -138,7 +139,8 @@ class DHDErrorFeatureNotAvailable(DHDFeatureError):
         return super().__init__(
             reason="it is not supported on this device",
             ID=ID,
-            feature=feature
+            feature=feature,
+            **kwargs
         )
 
 
@@ -154,7 +156,8 @@ class DHDErrorFeatureNotEnabled(DHDFeatureError):
         return super().__init__(
             reason="it was previously disabled for this device",
             ID=ID,
-            feature=feature
+            feature=feature,
+            **kwargs
         )
 
 
@@ -169,7 +172,8 @@ class DHDErrorDeviceNotReady(DHDFeatureError):
         return super().__init__(
             reason="the device isn't ready to proccess a new command",
             feature=feature,
-            ID=ID
+            ID=ID,
+            **kwargs
         )
 
 
@@ -180,8 +184,10 @@ class DHDErrorRedundantFail(DHDError):
         else:
             spec = ""
 
-        super().__init__("The redundant encoder integrity "
-                         "test failed{}.".format(spec))
+        super().__init__(
+            f"The redundant encoder integrity test failed{spec}",
+            **kwargs
+        )
 
 
 class DHDIOError(DHDError, OSError):
@@ -211,7 +217,8 @@ class DHDErrorTimeout(DHDIOError):
         return super().__init__(
             err="timeout",
             ID=ID,
-            op=op
+            op=op,
+            **kwargs
         )
 
 
@@ -224,7 +231,8 @@ class DHDErrorCom(DHDIOError):
     ):
         return super().__init__(
             err="A communication error between the host and the HapticDevice",
-            ID=ID
+            ID=ID,
+            **kwargs
         )
 
 
@@ -232,14 +240,16 @@ class DHDErrorDHCBusy(DHDIOError):
     def __init__(self, *, ID: Optional[int] = None, **kwargs):
         return super().__init__(
             err="The device controller is busy.",
-            ID=ID
+            ID=ID,
+            **kwargs
         )
 
 
 class DHDErrorNoDeviceFound(DHDIOError):
     def __init__(self, **kwargs):
         return super().__init__(
-            err="No compatible ForceDimension devices found"
+            err="No compatible ForceDimension devices found",
+            **kwargs
         )
 
 
@@ -247,7 +257,8 @@ class DHDErrorDeviceInUse(DHDIOError):
     def __init__(self, *, ID: Optional[int] = None, **kwargs):
         super().__init__(
             err="Open error (because the device is already in use)",
-            ID=ID
+            ID=ID,
+            **kwargs
         )
 
 
@@ -256,7 +267,9 @@ class DHDErrorNoDriverFound(DHDIOError):
         return super().__init__(
             err="A required driver is not installed (see device manual for"
                 "details)",
-            ID=ID)
+            ID=ID,
+            **kwargs
+        )
 
 
 class DHDErrorConfiguration(DHDIOError):
@@ -264,7 +277,8 @@ class DHDErrorConfiguration(DHDIOError):
         super().__init__(
             err="IO error trying to read/write calibration data from "
                 "device memory",
-            ID=ID
+            ID=ID,
+            **kwargs
         )
 
 
