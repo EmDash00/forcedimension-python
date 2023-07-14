@@ -5,7 +5,7 @@ import os
 import platform
 import re
 import sys
-from typing import NamedTuple
+from typing import NamedTuple, cast
 
 VERSION_TARGET_FULL = "3.14.0-1681794874)"
 VERSION_TARGET = VERSION_TARGET_FULL.partition("-")[0]
@@ -90,7 +90,7 @@ def version_tuple(version_string: str):
 def load(lib_name, search_dirs=(), silent=False):
 
     try:
-        if __sphinx_build__:
+        if __sphinx_build__:  # type: ignore
             from mock import Mock
             return Mock()
     except NameError:
@@ -131,7 +131,7 @@ def load(lib_name, search_dirs=(), silent=False):
         if (os.environ.get("FORCEDIM_SDK")):
             search_dirs.append(
                 os.path.realpath(os.path.join(
-                    os.environ.get("FORCEDIM_SDK"),
+                    cast(str, os.environ.get("FORCEDIM_SDK")),
                     "lib",
                     "release",
                     "lin-x86_64-gcc"))
