@@ -7,7 +7,7 @@ import re
 import sys
 from typing import NamedTuple, cast
 
-VERSION_TARGET_FULL = "3.14.0-1681794874)"
+VERSION_TARGET_FULL = "3.14.0-1681794874"
 VERSION_TARGET = VERSION_TARGET_FULL.partition("-")[0]
 
 
@@ -37,9 +37,7 @@ class _Version(NamedTuple):
 
     def __le__(self, v):
         if self.major <= v.major:
-            print('hi')
             if self.minor <= v.minor:
-                print('hi')
                 return True
             else:
                 return False
@@ -75,8 +73,8 @@ class _Version(NamedTuple):
 
 
 def version_tuple(version_string: str):
+    search_pattern = r"(\d+)\.(\d+)\.(\d+)-(\d+)"
     res = re.search(r"(\d+)\.(\d+)\.(\d+)-(\d+)", version_string)
-
     if (res.groups() is not None):
         if (len(res.groups()) != 4):
             raise ValueError("Invalid version string.")
