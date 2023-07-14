@@ -3,7 +3,7 @@
    :platform: Windows, Unix
    :synopsis: pythonic adaptors for libdhd args and returns.
 
-.. moduleauthor:: Drason Chow <drasonchow@gmail.com>
+.. moduleauthor:: Ember Chow <emberchow.business@gmail.com>
 """
 
 from typing import NamedTuple, Callable, Optional, Any
@@ -103,13 +103,15 @@ class DHDFeatureError(DHDError):
         ID: Optional[int] = None,
         feature: Optional[Callable[[Any], Any]]
     ):
-        err_msg = "{} is not available {} because {}."
+        err_msg =
         feature_seg = (
             "A particular feature" if feature is None else str(feature)
         )
-        id_seg = "" if ID is None else "on device {}".format(ID)
+        id_seg = "" if ID is None else f" on device {ID} "
 
-        return super().__init__(err_msg.format(feature_seg, id_seg, reason))
+        return super().__init__(
+            f"{feature_seg} is not available{id_seg}because {reason}."
+        )
 
 
 class DHDErrorExpertModeDisabled(DHDFeatureError):
@@ -180,7 +182,7 @@ class DHDErrorDeviceNotReady(DHDFeatureError):
 class DHDErrorRedundantFail(DHDError):
     def __init__(self, *, ID: Optional[int] = None, **kwargs):
         if ID is not None:
-            spec = " on device ID {}".format(ID)
+            spec = f" on device ID {ID}"
         else:
             spec = ""
 
@@ -198,11 +200,10 @@ class DHDIOError(DHDError, OSError):
         ID: Optional[int] = None,
         op: Optional[Callable[[Any], Any]] = None
     ):
-        err_msg = "{}{}{}."
-        op_seg = "" if op is None else "{} failed.".format(op)
-        id_seg = "" if ID is None else " occured on device {}".format(ID)
+        op_seg = "" if op is None else f"{op} failed."
+        id_seg = "" if ID is None else f" occured on device {ID}"
 
-        return super().__init__(err_msg.format(op_seg, err, id_seg))
+        return super().__init__(f"{op_seg}{err}{id_seg}")
 
 
 class DHDErrorTimeout(DHDIOError):
@@ -286,12 +287,13 @@ class DHDErrorGeometry(DHDError):
     def __init__(self, ID: Optional[int] = None):
 
         if (ID is not None):
-            spec = "device ID {}".format(ID)
+            spec = f"device ID {ID}'s"
         else:
-            spec = "the device"
+            spec = "the device's"
 
-        return super().__init__("An error has occured within {} "
-                                "geometric model".format(spec))
+        return super().__init__(
+            f"An error has occured within {spec} geometric model"
+        )
 
 
 _error = [
