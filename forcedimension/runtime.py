@@ -74,8 +74,8 @@ class _Version(NamedTuple):
 
 def version_tuple(version_string: str):
     search_pattern = r"(\d+)\.(\d+)\.(\d+)-(\d+)"
-    res = re.search(r"(\d+)\.(\d+)\.(\d+)-(\d+)", version_string)
-    if (res.groups() is not None):
+
+    if ((res := re.search(search_pattern, version_string)) is not None):
         if (len(res.groups()) != 4):
             raise ValueError("Invalid version string.")
     else:
