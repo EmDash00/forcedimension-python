@@ -230,7 +230,7 @@ _libdhd.dhdGetDeltaEncoders.argtypes = [
     POINTER(c_int),
     c_byte
 ]
-_libdhd.dhdGetDeltaEncoders.restypes = c_int
+_libdhd.dhdGetDeltaEncoders.restype = c_int
 
 
 def getDeltaEncoders(
@@ -299,7 +299,7 @@ _libdhd.dhdGetWristEncoders.argtypes = [
     POINTER(c_int),
     c_byte
 ]
-_libdhd.dhdGetWristEncoders.restypes = c_int
+_libdhd.dhdGetWristEncoders.restype = c_int
 
 
 def getWristEncoders(
@@ -2128,7 +2128,7 @@ _libdhd.dhdGetDeltaJacobian.restype = c_int
 
 def getDeltaJacobian(
     ID: int = -1,
-    out: MutableFloatMatrixLike = None
+    out: Optional[MutableFloatMatrixLike] = None
 ) -> Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]:
     """
     Retrieve the 3x3 jacobian matrix for the DELTA structure based on the
@@ -2393,7 +2393,7 @@ _libdhd.dhdDeltaGravityJointTorques.argtypes = [
     POINTER(c_double),
     c_byte
 ]
-_libdhd.dhdDeltaGravityJointTorques.retype = c_int
+_libdhd.dhdDeltaGravityJointTorques.restype = c_int
 
 
 def deltaGravityJointTorques(
@@ -3025,7 +3025,7 @@ _libdhd.dhdWristGravityJointTorques.argtypes = [
     POINTER(c_double),
     c_byte
 ]
-_libdhd.dhdWristGravityJointTorques.retype = c_int
+_libdhd.dhdWristGravityJointTorques.restype = c_int
 
 
 def wristGravityJointTorques(

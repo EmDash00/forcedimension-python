@@ -993,8 +993,8 @@ def moveToEnc(enc: IntVectorLike, block: bool, ID: int = -1) -> int:
     return _libdrd.drdMoveToEnc(enc[0], enc[1], enc[2], block, ID)
 
 
-_libdrd.drdMoveToAllEnc = [c_int * MAX_DOF, c_bool, c_byte]
-_libdrd.drdMoveToAllEnc = c_int
+_libdrd.drdMoveToAllEnc.argtypes = [c_int * MAX_DOF, c_bool, c_byte]
+_libdrd.drdMoveToAllEnc.restype = c_int
 
 
 def moveToAllEnc(enc: IntVectorLike, block: bool, ID: int = -1):
