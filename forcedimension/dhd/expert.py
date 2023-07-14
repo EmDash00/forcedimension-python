@@ -1,6 +1,10 @@
 from ctypes import c_byte, c_double, c_int, c_ubyte, c_uint, c_ushort
 from ctypes import POINTER, byref
 from typing import List, MutableSequence, Optional, Tuple, Union
+from numpy import ndarray
+
+from numpy import float64
+from numpy.typing import NDArray
 
 from forcedimension.dhd.constants import ComMode, MAX_DOF
 import forcedimension.runtime as runtime
@@ -96,7 +100,6 @@ def preset(val: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
         mask,
         ID
     )
-
 
 # TODO add a page about TimeGuard
 _libdhd.dhdSetTimeGuard.argtypes = [c_int, c_byte]
@@ -2188,8 +2191,10 @@ _libdhd.dhdDeltaJointAnglesToJacobian.restype = c_int
 def deltaJointAnglesToJacobian(
     joint_angles: FloatVectorLike,
     ID: int = -1,
-    out: Optional[MutableFloatMatrixLike] = None
-) -> Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]:
+    out: Optional[Union[MutableFloatMatrixLike, NDArray[float64]]] = None
+) -> Tuple[
+    Union[MutableFloatMatrixLike, List[List[float]], NDArray[float64]], int
+]:
     """
     Retrieve the 3x3 jacobian matrix for the DELTA structure
     based on a given joint configuration. Please refer to your device user
