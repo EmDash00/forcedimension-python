@@ -158,7 +158,7 @@ def load(lib_name, search_dirs=(), silent=False):
 
                 path = os.getenv("PATH")
                 if (path is not None and directory not in path):
-                    os.environ["PATH"] = "{};{}".format(path, directory)
+                    os.environ["PATH"] = f"{path};{directory}"
 
             try:
                 lib = ctypes.CDLL(lib_path)
@@ -202,5 +202,6 @@ def load(lib_name, search_dirs=(), silent=False):
             return lib
     if (not silent):
         sys.stderr.write(
-            "Could not find {}. Is it installed?\n".format(lib_name))
+            f"Could not find {lib_name}. Is it installed?\n"
+        )
     return None
