@@ -88,7 +88,9 @@ class StatusTuple(NamedTuple):
 
 
 class DHDError(Exception):
-    def __init__(self, msg: Optional[str] = "Undocumented error."):
+    def __init__(
+        self, msg: Optional[str] = "An undocumented error has occured."
+    ):
         if msg is not None:
             return super().__init__(msg)
         else:
@@ -103,9 +105,8 @@ class DHDFeatureError(DHDError):
         ID: Optional[int] = None,
         feature: Optional[Callable[[Any], Any]]
     ):
-        err_msg =
         feature_seg = (
-            "A particular feature" if feature is None else str(feature)
+            "A feature" if feature is None else str(feature)
         )
         id_seg = "" if ID is None else f" on device {ID} "
 
