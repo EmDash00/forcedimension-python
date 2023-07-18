@@ -3220,7 +3220,7 @@ def setForceAndWristJointTorques(
     )
 
 
-_libdhd.dhdSetForceAndWristJointTorques.argtypes = [
+_libdhd.dhdSetForceAndWristJointTorquesAndGripperForce.argtypes = [
     c_double,
     c_double,
     c_double,
