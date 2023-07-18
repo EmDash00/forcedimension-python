@@ -1,7 +1,6 @@
 from ctypes import c_byte, c_double, c_int, c_ubyte, c_uint, c_ushort
 from ctypes import POINTER, byref
-from typing import List, MutableSequence, Optional, Tuple, Union
-from numpy import ndarray
+from typing import MutableSequence, Optional, Tuple, Union
 
 from numpy import float64
 from numpy.typing import NDArray
@@ -598,7 +597,7 @@ def deltaEncoderToPosition(
     enc: IntVectorLike,
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     This routine computes and returns the position of the end-effector for a
     given set of encoder readings.
@@ -780,7 +779,7 @@ def deltaMotorToForce(
     mot: IntVectorLike,
     enc: IntVectorLike,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     This routine computes and returns the force applied to the end-effector for
     a given set of motor commands at a given position (defined by encoder
@@ -836,7 +835,7 @@ def deltaMotorToForce(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([fx, fy, fz], err)``. ``[fx, fy, fz]`` refer to
@@ -989,7 +988,7 @@ def wristEncoderToOrientation(
     enc: IntVectorLike,
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None,
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     For devices with a wrist structure, compute the individual angle of each
     joint, starting with the one located nearest to the wrist base plate. For
@@ -1040,7 +1039,7 @@ def wristEncoderToOrientation(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([oa, ob, og], err)``. ``[oa, ob, og]`` is a
@@ -1192,7 +1191,7 @@ def wristMotorToTorque(
     output: IntVectorLike,
     enc: IntVectorLike,
     out: Optional[MutableFloatVectorLike] = None,
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     This routine computes and returns the torque applied to the wrist
     end-effector for a given set of motor commands at a given orientation
@@ -1243,7 +1242,7 @@ def wristMotorToTorque(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([tx, ty, tz], err)``.  ``[tx, ty, tz]`` is the
@@ -2069,7 +2068,7 @@ _libdhd.dhdGetDeltaJointAngles.restype = c_int
 def getDeltaJointAngles(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Retrieve the joint angles in [rad] for the DELTA structure.
 
@@ -2094,7 +2093,7 @@ def getDeltaJointAngles(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([j0, j1, j2], err)``. ``[j0, j1, j2]`` are joint
@@ -2132,7 +2131,7 @@ _libdhd.dhdGetDeltaJacobian.restype = c_int
 def getDeltaJacobian(
     ID: int = -1,
     out: Optional[MutableFloatMatrixLike] = None
-) -> Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]:
+) -> Tuple[MutableFloatMatrixLike, int]:
     """
     Retrieve the 3x3 jacobian matrix for the DELTA structure based on the
     current end-effector position. Please refer to your device user manual for
@@ -2156,7 +2155,7 @@ def getDeltaJacobian(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]
+    :rtype: Tuple[MutableFloatMatrixLike, int]
 
     :returns:
         A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
@@ -2192,9 +2191,7 @@ def deltaJointAnglesToJacobian(
     joint_angles: FloatVectorLike,
     ID: int = -1,
     out: Optional[Union[MutableFloatMatrixLike, NDArray[float64]]] = None
-) -> Tuple[
-    Union[MutableFloatMatrixLike, List[List[float]], NDArray[float64]], int
-]:
+) -> Tuple[MutableFloatMatrixLike, int]:
     """
     Retrieve the 3x3 jacobian matrix for the DELTA structure
     based on a given joint configuration. Please refer to your device user
@@ -2235,7 +2232,7 @@ def deltaJointAnglesToJacobian(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]
+    :rtype: Tuple[MutableFloatMatrixLike, int]
 
     :returns:
         A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
@@ -2280,8 +2277,8 @@ def deltaJointTorquesExtrema(
     minq_out: Optional[MutableFloatVectorLike] = None,
     maxq_out: Optional[MutableFloatVectorLike] = None,
 ) -> Tuple[
-    Union[MutableFloatVectorLike, List[float]],
-    Union[MutableFloatVectorLike, List[float]],
+    MutableFloatVectorLike,
+    MutableFloatVectorLike,
     int
 ]:
     """
@@ -2342,7 +2339,7 @@ def deltaJointTorquesExtrema(
 
     :rtype:
         Tuple[
-        Union[MutableFloatVectorLike, List[float]],
+        MutableFloatVectorLike,
         MutableSequence[float],
         int
         ]
@@ -2405,7 +2402,7 @@ def deltaGravityJointTorques(
     joint_angles: FloatVectorLike,
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Compute the DELTA joint torques required to compensate for gravity in a
     given DELTA joint angle configuration. Please refer to your device user
@@ -2443,7 +2440,7 @@ def deltaGravityJointTorques(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([q0, q1, q2], err)``.``[q0, q1, q2]`` is a
@@ -2532,7 +2529,7 @@ def deltaEncodersToJointAngles(
     enc: IntVectorLike,
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     This routine computes and returns the DELTA joint angles for a given set of
     encoder readings.
@@ -2568,7 +2565,7 @@ def deltaEncodersToJointAngles(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([j0, j1, j2], err)``. ``err`` is 0 on success,
@@ -2702,7 +2699,7 @@ _libdhd.dhdGetWristJointAngles.restype = c_int
 def getWristJointAngles(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Retrieve the joint angles in [rad] for the wrist structure.
 
@@ -2724,7 +2721,7 @@ def getWristJointAngles(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([j0, j1, j2], err)``. ``[j0, j1, j2]`` is a
@@ -2763,7 +2760,7 @@ _libdhd.dhdGetWristJacobian.restype = c_int
 def getWristJacobian(
     ID: int = -1,
     out: Optional[MutableFloatMatrixLike] = None
-) -> Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]:
+) -> Tuple[MutableFloatMatrixLike, int]:
     """
     Retrieve the 3x3 jacobian matrix for the wrist structure based on the
     current end-effector position. Please refer to your device user manual for
@@ -2790,7 +2787,7 @@ def getWristJacobian(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]
+    :rtype: Tuple[MutableFloatMatrixLike, int]
 
     :returns:
         A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
@@ -2829,7 +2826,7 @@ def wristJointAnglesToJacobian(
     joint_angles: FloatVectorLike,
     ID: int = -1,
     out: Optional[MutableFloatMatrixLike] = None
-) -> Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]:
+) -> Tuple[MutableFloatMatrixLike, int]:
     """
     Retrieve the 3x3 jacobian matrix for the wrist structure
     based on a given joint configuration. Please refer to your device user
@@ -2870,7 +2867,7 @@ def wristJointAnglesToJacobian(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]
+    :rtype: Tuple[MutableFloatMatrixLike, int]
 
     :returns:
         A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
@@ -2915,8 +2912,8 @@ def wristJointTorquesExtrema(
     minq_out: Optional[MutableFloatVectorLike] = None,
     maxq_out: Optional[MutableFloatVectorLike] = None,
 ) -> Tuple[
-    Union[MutableFloatVectorLike, List[float]],
-    Union[MutableFloatVectorLike, List[float]],
+    MutableFloatVectorLike,
+    MutableFloatVectorLike,
     int
 ]:
     """
@@ -3037,7 +3034,7 @@ def wristGravityJointTorques(
     joint_angles: FloatVectorLike,
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Compute the wrist joint torques required to compensate for gravity in a
     given wrist joint angle configuration. Please refer to your device user
@@ -3075,7 +3072,7 @@ def wristGravityJointTorques(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([q0, q1, q2], err)``. ``[q0, q1, q2]`` are the
@@ -3313,7 +3310,7 @@ def wristEncodersToJointAngles(
     enc: IntVectorLike,
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     This routine computes and returns the wrist joint angles for a given set of
     encoder readings.
@@ -3342,7 +3339,7 @@ def wristEncodersToJointAngles(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([j0, j1, j2], err)``. ``[j0, j1, j1]`` are the
@@ -3470,7 +3467,7 @@ _libdhd.dhdGetJointAngles.restype = c_int
 def getJointAngles(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Retrieve the joint angles in [rad] for all sensed degrees-of-freedom of the
     current device.
@@ -3499,7 +3496,7 @@ def getJointAngles(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``(joint_angles, err)``. err is 0 or
@@ -3531,7 +3528,7 @@ _libdhd.dhdGetJointVelocities.restype = c_int
 def getJointVelocities(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Retrieve the joint angle velocities in [rad/s] for all sensed
     degrees-of-freedom of the current device.
@@ -3560,7 +3557,7 @@ def getJointVelocities(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``(v, err)``. ``v`` is a container of joint
@@ -3591,7 +3588,7 @@ _libdhd.dhdGetEncVelocities.restype = c_int
 def getEncVelocities(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Retrieve the encoder angle velocities in [increments/s] for all sensed
     degrees-of-freedom of the current device
@@ -3620,7 +3617,7 @@ def getEncVelocities(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``(v, err)``. ``v`` is a container of ints
@@ -3655,7 +3652,7 @@ def jointAnglesToIntertiaMatrix(
     joint_angles: FloatVectorLike,
     ID: int = -1,
     out: Optional[MutableFloatMatrixLike] = None
-) -> Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]:
+) -> Tuple[MutableFloatMatrixLike, int]:
     """
     Retrieve the (Cartesian) inertia matrix based on a given joint
     configuration. Please refer to your device user manual for more information
@@ -3694,7 +3691,7 @@ def jointAnglesToIntertiaMatrix(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]
+    :rtype: Tuple[MutableFloatMatrixLike, int]
 
     :returns:
         A tuple in the form ``(inertia, err)``. ``inertia`` is the 6x6

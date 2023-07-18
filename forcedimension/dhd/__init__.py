@@ -2,7 +2,7 @@ from ctypes import (
     POINTER, byref,
     c_bool, c_byte, c_char_p, c_double, c_int, c_uint, c_ushort
 )
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 import forcedimension.runtime as _runtime
 from forcedimension.dhd.adaptors import (
@@ -1229,7 +1229,7 @@ _libdhd.dhdGetPosition.restype = c_int
 def getPosition(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Retrieve the position of the end-effector in Cartesian coordinates. Please
     refer to your device user manual for more information on your device
@@ -1259,7 +1259,7 @@ def getPosition(
         respectively. ``err`` is either 0 or
         :data:`forcedimension.dhd.TIMEGUARD` on success, -1 otherwise.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
     """
 
     px = c_double()
@@ -1290,7 +1290,7 @@ _libdhd.dhdGetForce.restype = c_int
 def getForce(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Retrieve the force vector applied to the end-effector in Cartesian
     coordinates. Please refer to your device user manual for more information
@@ -1323,7 +1323,7 @@ def getForce(
         X, Y, and Z axes, respectively. ``err`` is 0 on success, -1
         otherwise.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
     """
 
     fx = c_double()
@@ -1379,7 +1379,7 @@ def setForce(f: FloatVectorLike, ID: int = -1) -> int:
         0 or :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on
         success, -1 otherwise.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
     """
 
     return _libdhd.dhdSetForce(f[0], f[1], f[2], ID)
@@ -1392,7 +1392,7 @@ _libdhd.dhdGetOrientationRad.restype = c_int
 def getOrientationRad(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1441,7 +1441,7 @@ def getOrientationRad(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
     """
 
     oa = c_double()
@@ -1474,7 +1474,7 @@ _libdhd.dhdGetOrientationDeg.restype = c_int
 def getOrientationDeg(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     For devices with a wrist structure, retrieve individual angle of each
     joint, starting with the one located nearest to the wrist base plate.
@@ -1522,7 +1522,7 @@ def getOrientationDeg(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
     """
 
     oa = c_double()
@@ -1565,8 +1565,8 @@ def getPositionAndOrientationRad(
     p_out: Optional[MutableFloatVectorLike] = None,
     o_out: Optional[MutableFloatVectorLike] = None
 ) -> Tuple[
-    Union[MutableFloatVectorLike, List[float]],
-    Union[MutableFloatVectorLike, List[float]],
+    MutableFloatVectorLike,
+    MutableFloatVectorLike,
     int
 ]:
     """
@@ -1636,8 +1636,8 @@ def getPositionAndOrientationRad(
     :rtype:
         Tuple
         [
-        Union[MutableFloatVectorLike, List[float]],
-        Union[MutableFloatVectorLike, List[float]],
+        MutableFloatVectorLike,
+        MutableFloatVectorLike,
         int
         ]
 
@@ -1695,8 +1695,8 @@ def getPositionAndOrientationDeg(
     p_out: Optional[MutableFloatVectorLike] = None,
     o_out: Optional[MutableFloatVectorLike] = None
 ) -> Tuple[
-    Union[MutableFloatVectorLike, List[float]],
-    Union[MutableFloatVectorLike, List[float]],
+    MutableFloatVectorLike,
+    MutableFloatVectorLike,
     int
 ]:
     """
@@ -1765,8 +1765,8 @@ def getPositionAndOrientationDeg(
     :rtype:
         Tuple
         [
-        Union[MutableFloatVectorLike, List[float]],
-        Union[MutableFloatVectorLike, List[float]],
+        MutableFloatVectorLike,
+        MutableFloatVectorLike,
         int
         ]
 
@@ -1822,8 +1822,8 @@ def getPositionAndOrientationFrame(
         p_out: Optional[MutableFloatVectorLike] = None,
         matrix_out: Optional[MutableFloatMatrixLike] = None
     ) -> Tuple[
-        Union[MutableFloatVectorLike, List[float]],
-        Union[MutableFloatMatrixLike, List[List[float]]],
+        MutableFloatVectorLike,
+        MutableFloatMatrixLike,
         int
 ]:
     """
@@ -1917,8 +1917,8 @@ def getForceAndTorque(
     f_out: Optional[MutableFloatVectorLike] = None,
     t_out: Optional[MutableFloatVectorLike] = None
 ) -> Tuple[
-    Union[MutableFloatVectorLike, List[float]],
-    Union[MutableFloatVectorLike, List[float]],
+    MutableFloatVectorLike,
+    MutableFloatVectorLike,
     int
 ]:
     """
@@ -1950,8 +1950,8 @@ def getForceAndTorque(
     :rtype:
         Tuple
         [
-        Union[MutableFloatVectorLike, List[float]],
-        Union[MutableFloatVectorLike, List[float]],
+        MutableFloatVectorLike,
+        MutableFloatVectorLike,
         int
         ]
 
@@ -2076,7 +2076,7 @@ _libdhd.dhdGetOrientationFrame.restype = c_int
 def getOrientationFrame(
     ID: int = -1,
     out: Optional[MutableFloatMatrixLike] = None
-) -> Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]:
+) -> Tuple[MutableFloatMatrixLike, int]:
     """
     Retrieve the rotation matrix of the wrist structure. The identity matrix
     is returned for devices that do not support orientations.
@@ -2108,7 +2108,7 @@ def getOrientationFrame(
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
 
-    :rtype: Tuple[Union[MutableFloatMatrixLike, List[List[float]]], int]
+    :rtype: Tuple[MutableFloatMatrixLike, int]
     """
 
     matrix = ((c_double * 3) * 3)()
@@ -2248,7 +2248,7 @@ _libdhd.dhdGetGripperThumbPos.restype = c_int
 def getGripperThumbPos(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Read the position in Cartesian coordinates of thumb rest location of the
     force gripper structure if present.
@@ -2320,7 +2320,7 @@ _libdhd.dhdGetGripperFingerPos.restype = c_int
 def getGripperFingerPos(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Read the position in Cartesian coordinates of forefinger rest location of
     the force gripper structure if present.
@@ -2576,8 +2576,8 @@ def getForceAndTorqueAndGripperForce(
     f_out: Optional[MutableFloatVectorLike] = None,
     t_out: Optional[MutableFloatVectorLike] = None
 ) -> Tuple[
-    Union[MutableFloatVectorLike, List[float]],
-    Union[MutableFloatVectorLike, List[float]],
+    MutableFloatVectorLike,
+    MutableFloatVectorLike,
     float,
     int
 ]:
@@ -2611,8 +2611,8 @@ def getForceAndTorqueAndGripperForce(
     :rtype:
         Tuple
         [
-        Union[MutableFloatVectorLike, List[float]],
-        Union[MutableFloatVectorLike, List[float]],
+        MutableFloatVectorLike,
+        MutableFloatVectorLike,
         int
         ]
 
@@ -2711,7 +2711,7 @@ _libdhd.dhdGetLinearVelocity.restype = c_int
 def getLinearVelocity(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Retrieve the estimated instanteous linear velocity in [m/s].
 
@@ -2750,7 +2750,7 @@ def getLinearVelocity(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([vx, vy, vz], err)``. ``[vx, vy, vz]`` is the
@@ -2842,7 +2842,7 @@ _libdhd.dhdGetAngularVelocityRad.restype = c_int
 def getAngularVelocityRad(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Retrieve the estimated angular velocity in [rad/s].
 
@@ -2878,7 +2878,7 @@ def getAngularVelocityRad(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([wx, wy, wz], err)``. ``[vx, vy, vz]`` is the
@@ -2926,7 +2926,7 @@ _libdhd.dhdGetAngularVelocityDeg.restype = c_int
 def getAngularVelocityDeg(
     ID: int = -1,
     out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[Union[MutableFloatVectorLike, List[float]], int]:
+) -> Tuple[MutableFloatVectorLike, int]:
     """
     Retrieve the estimated angular velocity in [deg/s].
 
@@ -2963,7 +2963,7 @@ def getAngularVelocityDeg(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([wx, wy, wz], err)``. ``[vx, vy, vz]`` is the
@@ -3090,7 +3090,7 @@ def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``(vg, err)``. ``vg`` is the linear velocity of the
@@ -3144,7 +3144,7 @@ def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Tuple[Union[MutableFloatVectorLike, List[float]], int]
+    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``(v, err)``. ``v`` is the linear velocity of the

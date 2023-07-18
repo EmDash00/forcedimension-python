@@ -1,17 +1,13 @@
 from ctypes import POINTER, byref, c_bool, c_byte, c_double, c_int, c_ubyte
-from typing import List, Tuple
-from typing import Union, Optional
-from numpy import float64
-from numpy import empty
-
-from numpy.typing import NDArray
+from typing import Tuple
+from typing import Optional
 
 from forcedimension.dhd.constants import MAX_DOF
 
 from forcedimension.typing import (
-    MutableFloatVectorLike,
     IntVectorLike,
     FloatVectorLike,
+    MutableFloatVectorLike,
     MutableFloatMatrixLike
 )
 
@@ -390,8 +386,8 @@ def getLinearVelocity(
     v_out: Optional[MutableFloatVectorLike] = None,
     w_out: Optional[MutableFloatVectorLike] = None,
 ) -> Tuple[
-    Union[MutableFloatVectorLike, List[float]],
-    Union[MutableFloatVectorLike, List[float]],
+    MutableFloatVectorLike,
+    MutableFloatVectorLike,
     int
 ]:
     """
@@ -819,10 +815,10 @@ def getPositionAndOrientation(
         matrix_out: Optional[MutableFloatMatrixLike] = None,
         ID: int = -1,
     ) -> Tuple[
-       Union[List[float], MutableFloatVectorLike],
-       Union[List[float], MutableFloatVectorLike],
+       MutableFloatVectorLike,
+       MutableFloatVectorLike,
        float,
-       Union[List[List[float]], MutableFloatMatrixLike], int
+       MutableFloatMatrixLike, int
     ]:
     """
     Retrieve the position (in Cartesian coordinates), angle of each joint
@@ -956,11 +952,7 @@ def getVelocity(
     v_out: Optional[MutableFloatVectorLike] = None,
     w_out: Optional[MutableFloatVectorLike] = None,
     ID: int = -1
-) -> Tuple[
-    Union[MutableFloatVectorLike, List[float]],
-    Union[MutableFloatVectorLike, List[float]],
-    int
-]:
+) -> Tuple[MutableFloatVectorLike, MutableFloatVectorLike, int]:
     vx = c_double()
     vy = c_double()
     vz = c_double()
