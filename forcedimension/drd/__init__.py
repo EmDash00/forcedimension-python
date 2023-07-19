@@ -2244,3 +2244,21 @@ def getPosTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
         byref(amax), byref(vmax), byref(jerk), ID)
 
     return (vmax.value, amax.value, jerk.value, err)
+
+
+_libdrd.drdWaitForTick.argtypes = [c_byte]
+_libdrd.drdWaitForTick.restype = None
+
+def waitForTick(ID: int = -1):
+    """
+    Puts the current thread to sleep until the next iteration of the robotic
+    control loop begins.
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ValueError:
+        If ``ID`` is not convertible to a C char.'
+    """
+    _libdrd.drdWaitForTick(ID)
+
