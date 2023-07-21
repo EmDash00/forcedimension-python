@@ -18,7 +18,7 @@ except ImportError:
     MutableIntReturnArray = List[int]
 
 
-class _Array(Sized, Container[_KT_contra], Protocol[_KT_contra, _VT_co]):
+class _Array(Sized, Container[_VT_co], Protocol[_KT_contra, _VT_co]):
     def __getitem__(self, __k: _KT_contra) -> _VT_co: ...
 
 
@@ -30,18 +30,16 @@ class _MutableArray(
 
 #: Represents the type of a homogenous array of floats
 #: specifically, it implements ``__getitem__`` and ``__len__``
-FloatArray = TypeVar('FloatArray', bound=_Array[int, float])
+FloatArray = _Array[int, float]
 
 #: Represents the type of a homogenous array of ints
 #: specifically, it implements ``__getitem__`` and ``__len__``
-IntArray = TypeVar('IntArray', bound=_Array[int, int])
+IntArray = _Array[int, int]
 
 #: Represents the type of a mutable homogenous array of floats
 #: specifically, it implements ``__setitem__``, ``__getitem__``, and
 #: ``__len__``
-MutableFloatArray = TypeVar(
-    'MutableFloatArray', bound=_MutableArray[int, float]
-)
+MutableFloatArray = _MutableArray[int, float]
 
 #: Represents the type of a homogenous array of floats.
 #: Used specifically to simplify the typing of various returns since
@@ -62,9 +60,7 @@ MutableFloatVectorLike = Union[MutableFloatArray, MutableFloatReturnArray]
 IntVectorLike = Union[IntArray, MutableIntReturnArray]
 
 #: Represents a 2D array of floats
-MutableFloatArray2D = TypeVar(
-    'MutableFloatArray2D', bound=_MutableArray[int, MutableFloatVectorLike]
-)
+MutableFloatArray2D = _MutableArray[int, MutableFloatVectorLike]
 
 #: Represents the type of a homogenous 2D array of floats.
 #: Used specifically to simplify the typing of various returns since
