@@ -15,8 +15,6 @@ def kbHit() -> bool:
     """
     Check keyboard for a key hit. This function is OS independent.
 
-    :rtype: bool
-
     :returns:
         `True` if a key on the keyboard was hit, and `False` otherwise.
     """
@@ -30,8 +28,6 @@ _libdhd.dhdKbGet.restype = c_byte
 def kbGet() -> str:
     """
     Retrieve a character from the keyboard. This function is OS independent.
-
-    :rtype: str
 
     :returns:
         The character hit on the keyboard.
@@ -50,8 +46,6 @@ def getTime() -> float:
     usually derived from one of the CPU clock signals. The time returned,
     however, is guarunteed to be monotonic.
 
-    :rtype: float
-
     :returns:
         The current monotonic time in [s] from the high-resolution system
         counter.
@@ -66,8 +60,6 @@ _libdhd.dhdSleep.restype = None
 def sleep(sec: float) -> None:
     """
     Sleep for a given period of time in [s]. This function is OS independent.
-
-    :rtype: None
     """
     _libdhd.dhdSleep(sec)
 

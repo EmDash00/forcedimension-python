@@ -38,8 +38,6 @@ def open() -> int:
     :func:`forcedimension.dhd.openID()`
 
 
-    :rtype: int
-
     :returns: The device ID on success, -1 otherwise.
 
     """
@@ -74,8 +72,6 @@ def openID(ID: int) -> int:
     :raises ValueError:
         index is not convertible to a C int.
 
-    :rtype: int
-
     :returns: The device ID on success, -1 otherwise.
     """
 
@@ -100,8 +96,6 @@ def setDevice(ID: int) -> int:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -115,8 +109,6 @@ _libdrd.drdGetDeviceID.restype = c_int
 def getDeviceID() -> int:
     """
     Return the ID of the current default device.
-
-    :rtype: int
 
     :returns:
         The device ID on success, -1 otherwise.
@@ -137,8 +129,6 @@ def close(ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -171,8 +161,6 @@ def isSupported(ID: int) -> bool:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
 
-    :rtype: bool
-
     :returns: ``True`` if the device is supported, ``False`` otherwise.
 
     """
@@ -192,8 +180,6 @@ def isRunning(ID: int = -1) -> bool:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: bool
 
     :returns: ``True`` if the control thread is running, ``False`` otherwise.
     """
@@ -217,8 +203,6 @@ def isFiltering(ID: int = -1) -> bool:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: bool
 
     :returns: ``True`` if the motion filter is enabled, ``False`` otherwise.
     """
@@ -248,8 +232,6 @@ def isInitialized(ID: int = -1) -> bool:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: bool
-
     :returns: ``True`` if the robot is initialized, ``False`` otherwise
     """
 
@@ -274,8 +256,6 @@ def isMoving(ID: int = -1) -> bool:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: bool
 
     :returns: ``True`` if the robot is moving, ``False`` otherwise
     """
@@ -303,8 +283,6 @@ def enableSimulator(ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -327,8 +305,6 @@ def autoInit(ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -359,8 +335,6 @@ def checkInit(ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -491,8 +465,6 @@ def getCtrlFreq(ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -516,8 +488,6 @@ def start(ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -552,8 +522,6 @@ def regulatePos(enable: bool, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -586,8 +554,6 @@ def regulateRot(enable: bool, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -619,8 +585,6 @@ def regulateGrip(enable: bool, ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -703,8 +667,6 @@ def setForceAndTorqueAndGripperForce(
         :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success, and
         -1 otherwise.
 
-    :rtype: int
-
     """
 
     return _libdrd.dhdSetForceAndTorqueAndGripperForce(
@@ -779,8 +741,6 @@ def setForceAndWristJointTorquesAndGripperForce(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: int
 
     :returns: 0 on success, -1 otherwise
     """
@@ -1041,8 +1001,6 @@ def moveToPos(pos: FloatVectorLike, block: bool, ID: int = -1):
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
 
@@ -1076,8 +1034,6 @@ def moveToRot(orientation: FloatVectorLike, block: bool, ID: int = -1):
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
 
@@ -1110,8 +1066,6 @@ def moveToGrip(pg: float, block: bool, ID: int = -1):
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -1157,8 +1111,6 @@ def moveTo(p: FloatVectorLike, block: bool, ID: int = -1):
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -1223,8 +1175,6 @@ def moveToEnc(enc: IntVectorLike, block: bool, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -1274,8 +1224,6 @@ def moveToAllEnc(enc: IntVectorLike, block: bool, ID: int = -1):
     :raises ValueError:
         If ID is not convertible to a C int.
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -1313,8 +1261,6 @@ def hold(ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -1362,8 +1308,6 @@ def lock(mask: int, init: bool, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
 
@@ -1385,8 +1329,6 @@ def stop(ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -1410,8 +1352,6 @@ def getPriorities(ID: int = -1) -> Tuple[int, int, int]:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: Tuple[int, int, int]
 
     :returns:
         A tuple in the form ``(prio, ctrlprio, err)``. ``prio`` is the calling
@@ -1463,8 +1403,6 @@ def setPriorities(prio: int, ctrlprio: int, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -1491,8 +1429,6 @@ def getEncPGain(gain: float, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -1514,8 +1450,6 @@ def setEncPGain(ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         The P term of the PID controller that regulates the base joint
@@ -1546,8 +1480,6 @@ def setEncIGain(gain: float, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -1569,8 +1501,6 @@ def getEncIGain(ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         The I term of the PID controller that regulates the base joint
@@ -1601,8 +1531,6 @@ def setEncDGain(gain: float, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -1624,8 +1552,6 @@ def getEncDGain(ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         The D term of the PID controller that regulates the base joint
@@ -1656,8 +1582,6 @@ def trackPos(pos: FloatVectorLike, ID: int = -1):
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -1685,8 +1609,6 @@ def trackRot(orientation: FloatVectorLike, ID: int = -1):
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -1716,8 +1638,6 @@ def trackGrip(pg: float, ID: int = -1):
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -1759,8 +1679,6 @@ def track(p: FloatVectorLike, ID: int = -1):
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -1820,8 +1738,6 @@ def trackEnc(enc: IntVectorLike, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -1867,8 +1783,6 @@ def trackAllEnc(enc: IntVectorLike, ID: int = -1):
     :raises ValueError:
         If ID is not convertible to a C int.
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -1912,8 +1826,6 @@ def setMotRatioMax(scale: float, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -1935,8 +1847,6 @@ def getMotRatioMax(ID: int = -1) -> float:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: float
 
     :returns:
         The maximum joint torque ratio (between ``0.0`` and ``1.0``)
@@ -1973,8 +1883,6 @@ def setEncMoveParam(
 
     :raises ValueError:
         If ``jerk`` is not convertible to a C int.
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -2017,8 +1925,6 @@ def setEncTrackParam(
     :raises ValueError:
         If ``jerk`` is not convertible to a C int.
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -2059,8 +1965,6 @@ def setPosMoveParam(
 
     :raises ValueError:
         If ``jerk`` is not convertible to a C int.
-
-    :rtype: int
 
     :returns:
         0 on success, and -1 otherwise.
@@ -2103,8 +2007,6 @@ def setPosTrackParam(
     :raises ValueError:
         If ``jerk`` is not convertible to a C int.
 
-    :rtype: int
-
     :returns:
         0 on success, and -1 otherwise.
     """
@@ -2127,8 +2029,6 @@ def getEncMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: Tuple[int, float, float, float]
 
     :returns:
         A tuple in the form ``(vmax, amax, jerk, err)``.
@@ -2160,8 +2060,6 @@ def getEncTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: Tuple[int, float, float, float]
 
     :returns:
         A tuple in the form ``(vmax, amax, jerk, err)``. ``vmax`` is the max
@@ -2195,8 +2093,6 @@ def getPosMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
-    :rtype: Tuple[int, float, float, float]
-
     :returns:
         A tuple in the form ``(vmax, amax, jerk, err)``. ``vmax`` is the max
         velocity in [m/s], ``amax`` is the max acceleration in [m/s^2], and
@@ -2227,8 +2123,6 @@ def getPosTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
 
     :raises ValueError:
         If ``ID`` is not convertible to a C char.'
-
-    :rtype: Tuple[float, float, float, int]
 
     :returns:
         A tuple in the form ``(vmax, amax, jerk, err)``. ``vmax`` is the max

@@ -27,8 +27,6 @@ def enableExpertMode() -> int:
     """
     Enable expert mode.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise.
     """
     return _libdhd.dhdEnableExpertMode()
@@ -41,8 +39,6 @@ _libdhd.dhdDisableExpertMode.restype = c_int
 def disableExpertMode() -> int:
     """
     Enable expert mode.
-
-    :rtype: int
 
     :returns: 0 on success, -1 otherwise.
     """
@@ -88,8 +84,6 @@ def preset(val: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise
     """
     return _libdhd.dhdPreset(
@@ -122,8 +116,6 @@ def setTimeGuard(min_period: int, ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: int
 
     :returns: 0 on success, -1 otherwise.
     """
@@ -161,8 +153,6 @@ def setVelocityThreshold(thresh: int, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise.
     """
 
@@ -191,8 +181,6 @@ def getVelocityThreshold(ID: int = -1) -> Tuple[int, int]:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[int, int]
-
     :returns:
         A tuple in the form ``(thresh, err)``. ``thresh`` is the value of the
         velocity threshold (in [m/s]). ``err`` is 0 on success, -1
@@ -218,8 +206,6 @@ def updateEncoders(ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[int, int]
 
     :returns: 0 on success, -1 otherwise.
     """
@@ -262,8 +248,6 @@ def getDeltaEncoders(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
         A tuple in the form ``([enc0, enc1, enc2], err)``.
@@ -340,8 +324,6 @@ def getWristEncoders(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableSequence[int], int]
-
     :returns:
         A tuple in the form ``([enc0, enc1, enc2], err)``.
         ``[enc0, enc1, enc2]`` are the axis 0, 1, and 2 raw encoder readings,
@@ -392,8 +374,6 @@ def getGripperEncoder(ID: int = -1) -> Tuple[int, int]:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[int, int]
-
     :returns:
         A tuple in the form ``(enc, err)``. ``enc`` is the gripper raw encoder
         reading. ``err`` is 0 or :data:`forcedimension.dhd.constants.TIMEGUARD`
@@ -430,8 +410,6 @@ def getEncoder(index: int, ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: int
 
     :returns: The (positive) encoder reading on success, -1 otherwise.
     """
@@ -471,8 +449,6 @@ def setMotor(index: int, output: int, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise.
     """
 
@@ -507,8 +483,6 @@ def setDeltaMotor(mot: IntVectorLike, ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: int
 
     :returns: 0 on success, -1 otherwise.
 
@@ -545,8 +519,6 @@ def setWristMotor(output: IntVectorLike, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise.
 
     """
@@ -573,8 +545,6 @@ def setGripperMotor(output: int, ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: int
 
     :returns: 0 on success, -1 otherwise.
     """
@@ -636,8 +606,6 @@ def deltaEncoderToPosition(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: int
 
     :returns:
         A tuple in the form ``([px, py, pz], err)``. ``err`` is 0 on success,
@@ -725,8 +693,6 @@ def deltaPositionToEncoder(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
         A tuple in the form ``([enc0, enc1, enc2], err). ``[enc0, enc1, enc2]``
@@ -835,8 +801,6 @@ def deltaMotorToForce(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableFloatVectorLike, int]
-
     :returns:
         A tuple in the form ``([fx, fy, fz], err)``. ``[fx, fy, fz]`` refer to
         the translational force applied on the DELTA end-effector on the X, Y
@@ -934,8 +898,6 @@ def deltaForceToMotor(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
         A tuple in the form ``([output0, output1, output2], err)``.
@@ -1039,8 +1001,6 @@ def wristEncoderToOrientation(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableFloatVectorLike, int]
-
     :returns:
         A tuple in the form ``([oa, ob, og], err)``. ``[oa, ob, og]`` is a
         container of floats refering to the wrist end-effector's
@@ -1138,8 +1098,6 @@ def wristOrientationToEncoder(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
         A tuple in the form ``([enc0, enc1, enc2], err)``.
@@ -1241,8 +1199,6 @@ def wristMotorToTorque(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([tx, ty, tz], err)``.  ``[tx, ty, tz]`` is the
@@ -1347,8 +1303,6 @@ def wristTorqueToMotor(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableSequence[int], int]
-
     :returns:
         A tuple in the form ``([output0, output1, output2], err)``.
         ``[output0, output1, output2]`` refer to the motor commands on the
@@ -1421,8 +1375,6 @@ def gripperEncoderToAngleRad(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[float, int]
-
     :returns:
         A tuple in the form ``(angle, err)``. err is 0 or
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1 on
@@ -1470,8 +1422,6 @@ def gripperEncoderToGap(enc: int, ID: int = -1) -> Tuple[float, int]:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[float, int]
-
     :returns:
         A tuple in the form ``(gap, err)``. ``gap`` is the gripper opening in
         [m] ``err`` is 0 on success, -1 otherwise.
@@ -1517,8 +1467,6 @@ def gripperAngleRadToEncoder(angle: float, ID: int = -1) -> Tuple[int, int]:
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[int, int]
 
     :returns:
         A tuple in the form ``(enc, err)``. ``enc`` is the gripper raw encoder
@@ -1566,8 +1514,6 @@ def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]:
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[int, int]
 
     :returns:
         A tuple in the form ``(enc, err)``. ``enc`` is the gripper encoder
@@ -1638,8 +1584,6 @@ def gripperMotorToForce(cmd: int,
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[float, int]
 
     :returns:
         A tuple in the form ``(force, err)``. ``force`` is the force on the
@@ -1714,8 +1658,6 @@ def gripperForceToMotor(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[int, int]
-
     :returns:
         A tuple in the form ``(cmd, err)``.  ``cmd`` is the motor command on
         the gripper axis. ``err`` is 0 or
@@ -1776,8 +1718,6 @@ def setMot(cmds: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise
     """
 
@@ -1836,8 +1776,6 @@ def preloadMot(cmds: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: int
 
     :returns: 0 on success, -1 otherwise
     """
@@ -1900,8 +1838,6 @@ def getEnc(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableSequence[int], int]
 
     :returns:
         A tuple in the form ``(enc, err)``. ``enc`` is a container of
@@ -1978,8 +1914,6 @@ def getEncRange(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableSequence[int], MutableSequence[int], int]
-
     :returns:
         A tuple in the form ``(encMin, encMax err)``. ``encMin`` and ``encMax``
         are a container of minimum and maximum encoder values for each
@@ -2048,8 +1982,6 @@ def setBrk(mask: int = 0xff, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise
     """
 
@@ -2092,8 +2024,6 @@ def getDeltaJointAngles(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([j0, j1, j2], err)``. ``[j0, j1, j2]`` are joint
@@ -2154,8 +2084,6 @@ def getDeltaJacobian(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableFloatMatrixLike, int]
 
     :returns:
         A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
@@ -2231,8 +2159,6 @@ def deltaJointAnglesToJacobian(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableFloatMatrixLike, int]
 
     :returns:
         A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
@@ -2337,13 +2263,6 @@ def deltaJointTorquesExtrema(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype:
-        Tuple[
-        MutableFloatVectorLike,
-        MutableSequence[float],
-        int
-        ]
-
     :returns:
         A tuple in the form ``(minq, maxq, err)``. ``minq`` is a mutable
         sequence of floats, ``[minq1, minq2, minq3]``, refering to the minimum
@@ -2440,8 +2359,6 @@ def deltaGravityJointTorques(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableFloatVectorLike, int]
-
     :returns:
         A tuple in the form ``([q0, q1, q2], err)``.``[q0, q1, q2]`` is a
         container of the gravity compensation joint torques for axes 0,
@@ -2506,8 +2423,6 @@ def setDeltaJointTorques(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise
     """
     return _libdhd.dhdSetDeltaJointTorques(t[0], t[1], t[2], ID)
@@ -2564,8 +2479,6 @@ def deltaEncodersToJointAngles(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([j0, j1, j2], err)``. ``err`` is 0 on success,
@@ -2652,8 +2565,6 @@ def deltaJointAnglesToEncoders(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableSequence[int], int]
-
     :returns:
         A tuple in the form ``([enc0, enc1, enc2], err)``.
         ``[enc0, enc1, enc2]`` is a container of floats refering to the
@@ -2721,8 +2632,6 @@ def getWristJointAngles(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableFloatVectorLike, int]
-
     :returns:
         A tuple in the form ``([j0, j1, j2], err)``. ``[j0, j1, j2]`` is a
         container of floats which refers to the joint angle for joint
@@ -2786,8 +2695,6 @@ def getWristJacobian(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableFloatMatrixLike, int]
 
     :returns:
         A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
@@ -2866,8 +2773,6 @@ def wristJointAnglesToJacobian(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableFloatMatrixLike, int]
 
     :returns:
         A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
@@ -2967,14 +2872,6 @@ def wristJointTorquesExtrema(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype:
-        Tuple[
-        Union[MutableFloatVectorLike,
-        List[float]],
-        MutableSequence[float],
-        int
-        ]
-
     :returns:
         A tuple in the form ``(minq, maxq, err)``. ``minq`` is a mutable
         sequence of floats, ``[minq1, minq2, minq3]``, refering to the minimum
@@ -3072,8 +2969,6 @@ def wristGravityJointTorques(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableFloatVectorLike, int]
-
     :returns:
         A tuple in the form ``([q0, q1, q2], err)``. ``[q0, q1, q2]`` are the
         gravity compensation joint torques (in [Nm]) for axes 0, 1, and 2,
@@ -3141,8 +3036,6 @@ def setWristJointTorques(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise.
     """
     return _libdhd.dhdSetWristJointTorques(t[0], t[1], t[2], ID)
@@ -3201,8 +3094,6 @@ def setForceAndWristJointTorques(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: int
 
     :returns: 0 on success, -1 otherwise
     """
@@ -3278,8 +3169,6 @@ def setForceAndWristJointTorquesAndGripperForce(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise
     """
     return _libdhd.dhdSetForceAndWristJointTorquesAndGripperForce(
@@ -3338,8 +3227,6 @@ def wristEncodersToJointAngles(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``([j0, j1, j2], err)``. ``[j0, j1, j1]`` are the
@@ -3426,8 +3313,6 @@ def wristJointAnglesToEncoders(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableSequence[int], int]
-
     :returns:
         A tuple in the form ``([enc0, enc1, enc2], err)``.
         ``[enc0, enc1, enc2]`` refer to the wrist joint angles (in [rad]) on
@@ -3496,8 +3381,6 @@ def getJointAngles(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableFloatVectorLike, int]
-
     :returns:
         A tuple in the form ``(joint_angles, err)``. err is 0 or
         :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
@@ -3557,8 +3440,6 @@ def getJointVelocities(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableFloatVectorLike, int]
-
     :returns:
         A tuple in the form ``(v, err)``. ``v`` is a container of joint
         angle velocities (in [rad/s]) with length
@@ -3616,8 +3497,6 @@ def getEncVelocities(
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[MutableFloatVectorLike, int]
 
     :returns:
         A tuple in the form ``(v, err)``. ``v`` is a container of ints
@@ -3691,8 +3570,6 @@ def jointAnglesToIntertiaMatrix(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: Tuple[MutableFloatMatrixLike, int]
-
     :returns:
         A tuple in the form ``(inertia, err)``. ``inertia`` is the 6x6
         Cartesian inertia matrix. ``err`` is 0 on success, -1 otherwise.
@@ -3746,8 +3623,6 @@ def setComMode(mode: ComMode, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise.
     """
 
@@ -3783,8 +3658,6 @@ def setWatchdog(duration: int, ID: int = -1) -> int:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :rtype: int
-
     :returns: 0 on success, -1 otherwise.
     """
 
@@ -3810,8 +3683,6 @@ def getWatchdog(ID: int = -1) -> Tuple[int, int]:
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
-
-    :rtype: Tuple[int, int]
 
     :returns:
         A tuple in the form ``(duration, err)``. ``duration`` is the watchdog
