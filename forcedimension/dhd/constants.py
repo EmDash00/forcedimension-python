@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Final
+from typing import Final, Literal, Tuple
 
 MAX_DOF: Final[int] = 8   #: Maximum number of DOF a device can have
 MAX_BUTTONS: Final[int] = 16  #: Maximum number of buttons a device can have
@@ -62,32 +62,18 @@ class ErrorNum(IntEnum):
     NOT_ENABLED = 17
     DEVICE_IN_USE = 18
 
+#: Array index for motors/encoders of the WRIST structure.
+#: i.e. DELTA motor/encoder 0 has index 0
+DELTA_IDX: Final[Tuple[Literal[0], Literal[1], Literal[2]]] = (0, 1, 2)
 
-class DeltaMotorID(IntEnum):
-    MOTOR0 = 0
-    MOTOR1 = 1
-    MOTOR2 = 2
-
-
-class DeltaEncID(IntEnum):
-    ENC0 = 0
-    ENC1 = 1
-    ENC2 = 2
-
-
-class WristMotorID(IntEnum):
-    MOTOR0 = 3
-    MOTOR1 = 4
-    MOTOR2 = 5
-
-
-class WristEncID(IntEnum):
-    ENC0 = 3
-    ENC1 = 4
-    ENC2 = 5
-
+#: Array index for motors/encoders of the WRIST structure.
+#: i.e. WRIST motor/encoder 0 has index 3
+WRIST_IDX: Final[Tuple[Literal[3], Literal[4], Literal[5]]] = (3, 4, 5)
 
 class NovintButtonID(IntEnum):
+    """
+    Enumeration mapping button type to button ID for the Novint Falcon.
+    """
     CENTER = 0
     LEFT = 1
     UP = 2
@@ -115,7 +101,29 @@ class StatusIndex(IntEnum):
     FORCEOFFCAUSE = 14
 
 
+class ForceOffCause(IntEnum):
+    """
+    The event that caused forces to be disabled on the device (the last time
+    forces were turned off).
+
+    Info
+    ----
+    Not all devices suppport all the force-disabling mechanisms listed above.
+    """
+    FORCES_NOT_OFF = 0
+    BUTTON = 1
+    VELOCITY = 2
+    WATCHDOG = 3
+    SOFTWARE = 4
+    USBDISCN = 5
+    DEADMAN = 6
+
+
 class State(IntEnum):
+    """
+    Enuemration representing whether something is on or off. Used by
+    ForceDimension natively.
+    """
     OFF = 0
     ON = 1
 
