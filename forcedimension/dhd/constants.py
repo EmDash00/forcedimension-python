@@ -119,15 +119,6 @@ class ForceOffCause(IntEnum):
     DEADMAN = 6
 
 
-class State(IntEnum):
-    """
-    Enuemration representing whether something is on or off. Used by
-    ForceDimension natively.
-    """
-    OFF = 0
-    ON = 1
-
-
 class ComMode(IntEnum):
     """
     Communication mode with the device. USB operations using

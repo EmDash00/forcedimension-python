@@ -34,15 +34,12 @@ from forcedimension.dhd.constants import (
     VELOCITY_WINDOW,
     VELOCITY_WINDOWING,
     ComMode,
-    DeltaEncID,
-    DeltaMotorID,
+    DELTA_IDX,
     DeviceType,
     ErrorNum,
-    State,
     StatusIndex,
     ThreadPriority,
-    WristEncID,
-    WristMotorID
+    WRIST_IDX
 )
 from forcedimension.typing import (
     FloatVectorLike, MutableFloatMatrixLike, MutableFloatVectorLike
@@ -684,7 +681,7 @@ _libdhd.dhdGetButton.argtypes = [c_int, c_byte]
 _libdhd.dhdGetButton.restype = c_int
 
 
-def getButton(index: int, ID: int = -1) -> Union[int, State]:
+def getButton(index: int, ID: int = -1) -> Tuple[bool, int]:
     """
     Return the status of the button located on the end-effector
 
@@ -698,17 +695,20 @@ def getButton(index: int, ID: int = -1) -> Union[int, State]:
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :rtype: Union[int, State]
+    :rtype: Tuple[bool, int]
 
     :returns:
-        :data:`forcedimension.dhd.constants.State.ON` if button is pressed, and
-        :data:`forcedimension.dhd.constants.State.OFF` otherwise. and -1 on
-        error.
+        A tuple in the form ``(state, err)`` where state is True if the button
+        is pressed, and False otherwise. ``err`` is 0 on success, -1 otherwise.
     """
 
     state = _libdhd.dhdGetButton(index, ID)
 
-    return (State(state) if state != -1 else -1)
+    if (state == -1):
+        return False, -1
+
+    return bool(state), 0
+
 
 
 _libdhd.dhdGetButtonMask.argtypes = [c_byte]
