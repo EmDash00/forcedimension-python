@@ -8,6 +8,7 @@ from forcedimension.typing import (
     FloatVectorLike,
     MutableFloatVectorLike,
     MutableFloatMatrixLike,
+    SupportsPtr,
     SupportsPtrs3
 )
 
@@ -701,25 +702,25 @@ def getPositionAndOrientation(
         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises TypeError:
-        If ``p_out`` is specified and does not support item assignment either
+        If ``p_out`` does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If ``p_out`` is specified and ``len(p_out) < 3``.
+        If ``len(p_out) < 3``.
 
     :raises TypeError:
-        If ``o_out`` is specified and does not support item assignment either
+        If ``o_out`` does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises IndexError:
-        If ``o_out`` is specified and ``len(o_out) < 3``.
+        If ``len(o_out) < 3``.
 
     :raises TypeError:
-        If ``matrix_out`` is specified and does not support item assignment,
+        If ``matrix_out`` does not support item assignment,
         either because it is not subscriptable or because it is not mutable.
 
     :raises IndexError:
-        If ``matrix_out`` is specified any dimension is less than length 3.
+        If any dimension of ``matrix_out`` is less than length 3.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
@@ -797,16 +798,16 @@ def getVelocity(
         Output buffer for the angular velocity.
 
     :raises TypeError:
-        if v_out is specified and does not support item assignment either
+        if ``v_out`` does not support item assignment either
         because its immutable or not support item assignment
 
-    :raises IndexError: If ``v_out`` is specified and ``len(v_out) < 3``.
+    :raises IndexError: If ``len(v_out) < 3``.
 
     :raises TypeError:
-        If w_out is specified and does not support item assignment either
+        If w_out does not support item assignment either
         because its immutable or does not support item assignment
 
-    :raises IndexError: If ``w_out`` is specified and ``len(w_out) < 3``.
+    :raises IndexError: If ``len(w_out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
