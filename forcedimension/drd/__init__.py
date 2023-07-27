@@ -1,6 +1,5 @@
-from ctypes import POINTER, byref, c_bool, c_byte, c_double, c_int, c_ubyte
+from ctypes import POINTER, c_bool, c_byte, c_double, c_int, c_ubyte
 from typing import Tuple
-from typing import Optional
 
 from forcedimension.dhd.constants import MAX_DOF
 
@@ -356,14 +355,10 @@ _libdrd.drdGetVelocity.restype = c_int
 
 
 def getLinearVelocity(
-    ID: int = -1,
-    v_out: Optional[MutableFloatVectorLike] = None,
-    w_out: Optional[MutableFloatVectorLike] = None,
-) -> Tuple[
-    MutableFloatVectorLike,
-    MutableFloatVectorLike,
-    int
-]:
+    v_out: MutableFloatVectorLike,
+    w_out: MutableFloatVectorLike,
+    ID: int = -1
+) -> int:
     """
         Retrieve the linear velocity of the end-effector position in Cartesian
         coordinates as well as the angular velocity about the X, Y, and Z axes.
@@ -373,13 +368,11 @@ def getLinearVelocity(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[VectorLike] v_out:
-        Optional output buffer for the linear velocity. If specified, loads
-        the position into p_out rather than allocating a new buffer, optional.
+    :param VectorLike v_out:
+        Output buffer for the linear velocity.
 
-    :param Optional[VectorLike] w_out:
-        Optional output buffer for the angular velocity. If specified, loads
-        the position into p_out rather than creating a new buffer, optional.
+    :param VectorLike w_out:
+        Output buffer for the angular velocity.
 
     :raises TypeError:
         if v_out is specified and does not support item assignment either
@@ -396,19 +389,8 @@ def getLinearVelocity(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
 
-    :rtype:
-        Tuple[
-        Union[VectorLike, List[float]],
-        Union[VectorLike, List[float]],
-        int
-        ]
-
     :returns:
-        A tuple in the form ``([vx, vy, vz], [wx, wy, wz], err)``.
-        ``[vx, vy, vz]`` is the linear velocity (in [m/s]) about the X, Y, and
-        Z axes, respectively. ``[wx, wy, wz]`` is the angular velocity
-        (in [rad/s]) about the X, Y, and Z axes, respectively.
-        ``err`` is either 0 on success and -1 otherwise.
+        0 on success and -1 otherwise.
     """
 
     vx = c_double()
@@ -419,35 +401,17 @@ def getLinearVelocity(
     wy = c_double()
     wz = c_double()
 
-    err = _libdrd.drdGetVelocity(
-        byref(vx),
-        byref(vy),
-        byref(vz),
-        byref(wx),
-        byref(wy),
-        byref(wz),
-        ID
-    )
+    err = _libdrd.drdGetVelocity(vx, vy, vz, wx, wy, wz, ID)
 
-    if v_out is None:
-        v_ret = [vx.value, vy.value, vz.value]
-    else:
-        v_ret = v_out
+    v_out[0] = vx.value
+    v_out[1] = vy.value
+    v_out[2] = vz.value
 
-        v_out[0] = vx.value
-        v_out[1] = vy.value
-        v_out[2] = vz.value
+    w_out[0] = wx.value
+    w_out[1] = wy.value
+    w_out[2] = wz.value
 
-    if w_out is None:
-        w_ret = [wx.value, wy.value, wz.value]
-    else:
-        w_ret = w_out
-
-        w_out[0] = wx.value
-        w_out[1] = wy.value
-        w_out[2] = wz.value
-
-    return (v_ret, w_ret, err)
+    return err
 
 
 _libdrd.drdGetCtrlFreq.argtypes = [c_byte]
@@ -770,36 +734,25 @@ _libdrd.drdGetPositionAndOrientation.argtypes = [
 _libdrd.drdGetPositionAndOrientation.restype = c_int
 
 def getPositionAndOrientation(
-        p_out: Optional[MutableFloatVectorLike] = None,
-        o_out: Optional[MutableFloatVectorLike] = None,
-        matrix_out: Optional[MutableFloatMatrixLike] = None,
-        ID: int = -1,
-    ) -> Tuple[
-       MutableFloatVectorLike,
-       MutableFloatVectorLike,
-       float,
-       MutableFloatMatrixLike, int
-    ]:
+    p_out: MutableFloatVectorLike,
+    o_out: MutableFloatVectorLike,
+    matrix_out: MutableFloatMatrixLike,
+    ID: int = -1,
+) -> int:
     """
     Retrieve the position (in Cartesian coordinates), angle of each joint
     (if applicable), gripper position, and orientation matrix of the
     end-effector. Please refer to your device user manual for more
     information on your device coordinate system.
 
-    :param Optional[VectorLike] p_out:
-        Optional output buffer to store the end-effector position. If this is
-        specified, the return will be a reference to this buffer rather than a
-        newly allocated list of lists.
+    :param VectorLike p_out:
+        Output buffer to store the end-effector position.
 
-    :param Optional[VectorLike] p_out:
-        Optional output buffer to store the angle of each joint. If this is
-        specified, the return will be a reference to this buffer rather than a
-        newly allocated list of lists.
+    :param VectorLike o_out:
+        Output buffer to store the angle of each joint.
 
-    :param Optional[MutableFloatMatrixLike] matrix_out:
-        Optional output buffer to store the orientation matrix. If this is
-        specified, the return will be a reference to this buffer rather than a
-        newly allocated list of lists.
+    :param MutableFloatMatrixLike matrix_out:
+        Output buffer to store the orientation matrix.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -829,23 +782,8 @@ def getPositionAndOrientation(
         If ``ID`` is not implicitly convertible to a C int.
 
     :returns:
-        A tuple in the form ``([px, py, pz], [oa, ob, og], pg, matrix, err)``.
-        ``[px, py, pz]`` is the position (in [m]) about the X, Y, and Z axes,
-        respectively. ``[oa, ob, og]`` is the device orientation (in [rad])
-        around the first, second, and third joints, respectively.
-        ``pg`` is the device gripper opening gap (in [m]). ``matrix`` is a 3x3
-        rotation matrix that describes the orientation of your device. ``err``
-        is 0 or :data:`forcedimension.dhd.libdhd.TIMEGUARD` on success, -1
-        otherwise.
-
-    :rtype:
-        Tuple[
-        Union[VectorLike, List[float]],
-        Union[VectorLike, List[float]],
-        float,
-        Union[MatrixLike, List[List[float]]],
-        int
-        ]
+        0 or :data:`forcedimension.dhd.libdhd.TIMEGUARD` on success,
+        -1 otherwise.
     """
 
     px = c_double()
@@ -861,39 +799,26 @@ def getPositionAndOrientation(
     matrix = ((c_double * 3) * 3)()
 
     err: int = _libdrd.drdGetPositionAndOrientation(
-        byref(px), byref(py), byref(pz),
-        byref(oa), byref(ob), byref(og),
-        byref(pg),
-        byref(matrix),
+        px, py, pz,
+        oa, ob, og,
+        pg,
+        matrix,
         ID
     )
 
-    if p_out is None:
-        p_ret = [px.value, py.value, pz.value]
-    else:
-        p_ret = p_out
+    p_out[0] = px.value
+    p_out[1] = py.value
+    p_out[2] = pz.value
 
-        p_out[0] = px.value
-        p_out[1] = py.value
-        p_out[2] = pz.value
+    o_out[0] = oa.value
+    o_out[1] = ob.value
+    o_out[2] = og.value
 
-    if o_out is None:
-        o_ret = [oa.value, ob.value, og.value]
-    else:
-        o_ret = o_out
-        o_out[0] = oa.value
-        o_out[1] = ob.value
-        o_out[2] = og.value
+    for i in range(3):
+        for j in range(3):
+            matrix_out[i][j] = matrix[i][j]
 
-    if matrix_out is None:
-        matrix_ret = [list(row) for row in matrix]
-    else:
-        matrix_ret = matrix_out
-        for i in range(3):
-            for j in range(3):
-                matrix_out[i][j] = matrix[i][j]
-
-    return (p_ret, o_ret, pg.value, matrix_ret, err)
+    return err
 
 
 _libdrd.drdGetVelocity.argtypes = [
@@ -909,10 +834,10 @@ _libdrd.drdGetVelocity.restype = c_int
 
 
 def getVelocity(
-    v_out: Optional[MutableFloatVectorLike] = None,
-    w_out: Optional[MutableFloatVectorLike] = None,
+    v_out: MutableFloatVectorLike,
+    w_out: MutableFloatVectorLike,
     ID: int = -1
-) -> Tuple[MutableFloatVectorLike, MutableFloatVectorLike, int]:
+) -> int:
     vx = c_double()
     vy = c_double()
     vz = c_double()
@@ -921,31 +846,17 @@ def getVelocity(
     wy = c_double()
     wz = c_double()
 
-    err = _libdrd.dhdGetForceAndTorque(
-        byref(vx), byref(vy), byref(vz),
-        byref(wx), byref(wy), byref(wz),
-        ID
-    )
+    err = _libdrd.dhdGetForceAndTorque(vx, vy, vz, wx, wy, wz, ID)
 
-    if v_out is None:
-        v_ret = [vx.value, vy.value, vz.value]
-    else:
-        v_ret = v_out
+    v_out[0] = vx.value
+    v_out[1] = vy.value
+    v_out[2] = vz.value
 
-        v_out[0] = vx.value
-        v_out[1] = vy.value
-        v_out[2] = vz.value
+    w_out[0] = wx.value
+    w_out[1] = wy.value
+    w_out[2] = wz.value
 
-    if w_out is None:
-        w_ret = [wx.value, wy.value, wz.value]
-    else:
-        w_ret = w_out
-
-        w_out[0] = wx.value
-        w_out[1] = wy.value
-        w_out[2] = wz.value
-
-    return (v_ret, w_ret, err)
+    return err
 
 
 _libdrd.drdEnableFilter.argtypes = [c_bool, c_byte]
@@ -1354,15 +1265,12 @@ def getPriorities(ID: int = -1) -> Tuple[int, int, int]:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
-        A tuple in the form ``(prio, ctrlprio, err)``. ``prio`` is the calling
-        thread's priority level and ``ctrlprio`` is the control thread priority
-        level. These values are system independent. ``err`` is 0 on success,
-        and -1 otherwise.
+        0 on success, and -1 otherwise.
     """
     prio = c_int()
     ctrlprio = c_int()
 
-    err: int = _libdrd.drdGetPriorities(byref(prio), byref(ctrlprio), ID)
+    err: int = _libdrd.drdGetPriorities(prio, ctrlprio, ID)
 
     return (prio.value, ctrlprio.value, err)
 
@@ -2031,16 +1939,13 @@ def getEncMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
-        A tuple in the form ``(vmax, amax, jerk, err)``.
-        ``vmax`` is the max velocity in [m/s], ``amax`` is the
-        max acceleration in [m/s^2], and ``jerk`` is the jerk in [m/s^3].
-        ``err`` is 0 on success, and -1 otherwise.
+        0 on success, and -1 otherwise.
     """
     amax = c_double()
     vmax = c_double()
     jerk = c_double()
 
-    err = _libdrd.drdGetEncMoveParam(byref(amax), byref(vmax), byref(jerk), ID)
+    err = _libdrd.drdGetEncMoveParam(amax, vmax, jerk, ID)
 
     return (vmax.value, amax.value, jerk.value, err)
 
@@ -2062,17 +1967,14 @@ def getEncTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
-        A tuple in the form ``(vmax, amax, jerk, err)``. ``vmax`` is the max
-        velocity in [m/s], ``amax`` is the max acceleration in [m/s^2], and
-        ``jerk`` is the jerk in [m/s^3]. ``err`` is 0 on success, and -1
-        otherwise.
+        0 on success, and -1 otherwise.
     """
     amax = c_double()
     vmax = c_double()
     jerk = c_double()
 
     err = _libdrd.drdGetEncTrackParam(
-        byref(amax), byref(vmax), byref(jerk), ID)
+        amax, vmax, jerk, ID)
 
     return (vmax.value, amax.value, jerk.value, err)
 
@@ -2094,16 +1996,13 @@ def getPosMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
-        A tuple in the form ``(vmax, amax, jerk, err)``. ``vmax`` is the max
-        velocity in [m/s], ``amax`` is the max acceleration in [m/s^2], and
-        ``jerk`` is the jerk in [m/s^3]. ``err`` is 0 on success, and -1
-        otherwise.
+        0 on success, and -1 otherwise.
     """
     amax = c_double()
     vmax = c_double()
     jerk = c_double()
 
-    err = _libdrd.drdGetPosMoveParam(byref(amax), byref(vmax), byref(jerk), ID)
+    err = _libdrd.drdGetPosMoveParam(amax, vmax, jerk, ID)
 
     return (vmax.value, amax.value, jerk.value, err)
 
@@ -2125,17 +2024,13 @@ def getPosTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
-        A tuple in the form ``(vmax, amax, jerk, err)``. ``vmax`` is the max
-        velocity in [m/s], ``amax`` is the max acceleration in [m/s^2], and
-        ``jerk`` is the jerk in [m/s^3]. ``err`` is 0 on success, and -1
-        otherwise.
+        0 on success, and -1 otherwise.
     """
     amax = c_double()
     vmax = c_double()
     jerk = c_double()
 
-    err = _libdrd.drdGetPosTrackParam(
-        byref(amax), byref(vmax), byref(jerk), ID)
+    err = _libdrd.drdGetPosTrackParam(amax, vmax, jerk, ID)
 
     return (vmax.value, amax.value, jerk.value, err)
 

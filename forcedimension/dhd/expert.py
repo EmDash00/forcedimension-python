@@ -1,9 +1,6 @@
 from ctypes import c_byte, c_double, c_int, c_ubyte, c_uint, c_ushort
-from ctypes import POINTER, byref
-from typing import MutableSequence, Optional, Tuple, Union
-
-from numpy import float64
-from numpy.typing import NDArray
+from ctypes import POINTER
+from typing import Tuple
 
 from forcedimension.dhd.constants import ComMode, MAX_DOF
 import forcedimension.runtime as runtime
@@ -12,6 +9,7 @@ from forcedimension.typing import (
     IntVectorLike,
     MutableFloatMatrixLike,
     MutableFloatVectorLike,
+    MutableIntVectorLike,
 )
 
 _libdhd = runtime.load("libdrd")
@@ -104,7 +102,7 @@ def setTimeGuard(min_period: int, ID: int = -1) -> int:
     Enable/disable the [TimeGuard] feature with an arbitrary minimum period.
 
     :param int min_period:
-        Minimum refresh period in [us]. A value of 0.
+        Minimum refresh period (in [us]). A value of 0.
         disables the TimeGuard feature, while a value of -1 resets the default
         recommended value.
 
@@ -182,13 +180,11 @@ def getVelocityThreshold(ID: int = -1) -> Tuple[int, int]:
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(thresh, err)``. ``thresh`` is the value of the
-        velocity threshold (in [m/s]). ``err`` is 0 on success, -1
-        otherwise.
+        0 on success, -1 otherwise
     """
 
     thresh = c_uint()
-    return (thresh.value, _libdhd.dhdGetVelocityThreshold(byref(thresh), ID))
+    return (thresh.value, _libdhd.dhdGetVelocityThreshold(thresh, ID))
 
 
 _libdhd.dhdUpdateEncoders.argtypes = [c_byte]
@@ -198,7 +194,7 @@ _libdhd.dhdUpdateEncoders.restype = c_int
 def updateEncoders(ID: int = -1) -> int:
     """
     Force an update of the internal encoder values in the state vector. This
-    call retrieves the encoder readings from the device and places them into
+    call retrieves the encoder values from the device and places them into
     the state vector. No kinematic model is called.
 
     :param int ID:
@@ -221,27 +217,22 @@ _libdhd.dhdGetDeltaEncoders.argtypes = [
 _libdhd.dhdGetDeltaEncoders.restype = c_int
 
 
-def getDeltaEncoders(
-    ID: int = -1,
-    out: Optional[MutableSequence[int]] = None
-) -> Tuple[MutableSequence[int], int]:
+def getDeltaEncoders(out: MutableIntVectorLike, ID: int = -1) -> int:
     """
     Read all encoders values of the DELTA structure
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out:
-        An output buffer to store the encoder readings. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+    :param IntVectorLike out:
+        An output buffer to store the raw encoder values.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -250,10 +241,7 @@ def getDeltaEncoders(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([enc0, enc1, enc2], err)``.
-        ``[enc0, enc1, enc2]`` are the axis 0, 1, and 2 raw encoder readings,
-        respectively. ``err`` is 0 or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success, and
         -1 otherwise.
     """
 
@@ -261,22 +249,13 @@ def getDeltaEncoders(
     enc1 = c_int()
     enc2 = c_int()
 
-    err = _libdhd.dhdGetDeltaEncoders(
-        byref(enc0),
-        byref(enc1),
-        byref(enc2),
-        ID
-    )
+    err = _libdhd.dhdGetDeltaEncoders(enc0, enc1, enc2, ID)
 
-    if out is None:
-        ret = [enc0.value, enc1.value, enc2.value]
-    else:
-        ret = out
-        out[0] = enc0.value
-        out[1] = enc1.value
-        out[2] = enc2.value
+    out[0] = enc0.value
+    out[1] = enc1.value
+    out[2] = enc2.value
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdGetWristEncoders.argtypes = [
@@ -288,10 +267,7 @@ _libdhd.dhdGetWristEncoders.argtypes = [
 _libdhd.dhdGetWristEncoders.restype = c_int
 
 
-def getWristEncoders(
-    ID: int = -1,
-    out: Optional[MutableSequence[int]] = None
-) -> Tuple[MutableSequence[int], int]:
+def getWristEncoders(out: MutableIntVectorLike, ID: int = -1) -> int:
     """
     Read all encoders values of the wrist structure.
 
@@ -309,27 +285,22 @@ def getWristEncoders(
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
-    :param Optional[MutableSequence[int]] out:
-        An output buffer to store the wrist encoder readings. If specified,
-        the return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+    :param IntVectorLike out:
+        An output buffer to store the raw wrist encoder values.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([enc0, enc1, enc2], err)``.
-        ``[enc0, enc1, enc2]`` are the axis 0, 1, and 2 raw encoder readings,
-        respectively. ``err`` is 0 or
-        :data:`forcedimension.dhd.constants.TIMEGUARD`
-        on success, -1 otherwise.
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
     """
 
     enc0 = c_int()
@@ -337,21 +308,17 @@ def getWristEncoders(
     enc2 = c_int()
 
     err = _libdhd.dhdGetWristEncoders(
-        byref(enc0),
-        byref(enc1),
-        byref(enc2),
+        enc0,
+        enc1,
+        enc2,
         ID
     )
 
-    if out is None:
-        ret = [enc0.value, enc1.value, enc2.value]
-    else:
-        ret = out
-        out[0] = enc0.value
-        out[1] = enc1.value
-        out[2] = enc2.value
+    out[0] = enc0.value
+    out[1] = enc1.value
+    out[2] = enc2.value
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdGetGripperEncoder.argtypes = [POINTER(c_int), c_byte]
@@ -375,14 +342,13 @@ def getGripperEncoder(ID: int = -1) -> Tuple[int, int]:
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(enc, err)``. ``enc`` is the gripper raw encoder
-        reading. ``err`` is 0 or :data:`forcedimension.dhd.constants.TIMEGUARD`
-        on success, -1 otherwise.
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
     """
 
     enc = c_int()
 
-    return (enc.value, _libdhd.dhdGetGripperEncoder(byref(enc), ID))
+    return (enc.value, _libdhd.dhdGetGripperEncoder(enc, ID))
 
 
 _libdhd.dhdGetEncoder.argtypes = [c_int, c_byte]
@@ -565,32 +531,30 @@ _libdhd.dhdDeltaEncoderToPosition.restype = c_int
 
 def deltaEncoderToPosition(
     enc: IntVectorLike,
-    ID: int = -1,
-    out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[MutableFloatVectorLike, int]:
+    out: MutableFloatVectorLike,
+    ID: int = -1
+) -> int:
     """
     This routine computes and returns the position of the end-effector for a
-    given set of encoder readings.
+    given set of encoder values.
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
-        ``enc2`` refer to raw encoder readings on axis 0, 1, and 2,
+        ``enc2`` refer to raw encoder values on axis 0, 1, and 2,
         respectively.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[IntVectorLike] out:
-        An output buffer to store the end-effector position. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+    :param IntVectorLike out:
+        An output buffer to store the end-effector position (in [m]).
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -608,9 +572,7 @@ def deltaEncoderToPosition(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([px, py, pz], err)``. ``err`` is 0 on success,
-        -1 otherwise. ``[px, py, pz]`` is a container refering to the DELTA
-        end-effector position on the X, Y, and Z axes, respectively in [m].
+        0 on success, -1 otherwise.
     """
 
     px = c_double()
@@ -621,21 +583,17 @@ def deltaEncoderToPosition(
         enc[0],
         enc[1],
         enc[2],
-        byref(px),
-        byref(py),
-        byref(pz),
+        px,
+        py,
+        pz,
         ID
     )
 
-    if out is None:
-        ret = [px.value, py.value, pz.value]
-    else:
-        ret = out
-        out[0] = px.value
-        out[1] = py.value
-        out[2] = pz.value
+    out[0] = px.value
+    out[1] = py.value
+    out[2] = pz.value
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdDeltaPositionToEncoder.argtypes = [
@@ -652,32 +610,30 @@ _libdhd.dhdDeltaPositionToEncoder.restype = c_int
 
 def deltaPositionToEncoder(
     pos: FloatVectorLike,
+    out: MutableIntVectorLike,
     ID: int = -1,
-    out: Optional[MutableSequence[int]] = None
-) -> Tuple[MutableSequence[int], int]:
+) -> int:
     """
-    This routine computes and returns the encoder values of the end-effector
-    for a given Cartesian end-effector position.
+    Computes and returns the encoder values of the end-effector
+    for a given end-effector position.
 
     :param FloatVectorLike pos:
         Sequence of ``(px, py, pz)`` where ``px``, ``py``, and ``pz``
         refer to the end-effector position on the X, Y, and Z axes,
-        respectively in [m].
+        respectively (in [m]).
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out:
-        An output buffer to store the encoder readings. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+    :param IntVectorLike out:
+        An output buffer to store the raw encoder values.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item
+        If ``out`` does not support item
         assignment either because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -695,10 +651,7 @@ def deltaPositionToEncoder(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([enc0, enc1, enc2], err). ``[enc0, enc1, enc2]``
-        is a container of floats refering to the DELTA end-effector
-        encoder readings on axes 0, 1, and 2, respectively. ``err`` is 0 on
-        success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
     enc0 = c_int()
@@ -709,21 +662,17 @@ def deltaPositionToEncoder(
         pos[0],
         pos[1],
         pos[2],
-        byref(enc0),
-        byref(enc1),
-        byref(enc2),
+        enc0,
+        enc1,
+        enc2,
         ID
     )
 
-    if out is None:
-        ret = [enc0.value, enc1.value, enc2.value]
-    else:
-        ret = out
-        out[0] = enc0.value
-        out[1] = enc1.value
-        out[2] = enc2.value
+    out[0] = enc0.value
+    out[1] = enc1.value
+    out[2] = enc2.value
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdDeltaMotorToForce.argtypes = [
@@ -744,8 +693,8 @@ _libdhd.dhdDeltaMotorToForce.restype = c_int
 def deltaMotorToForce(
     mot: IntVectorLike,
     enc: IntVectorLike,
-    out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[MutableFloatVectorLike, int]:
+    out: MutableFloatVectorLike,
+) -> int:
     """
     This routine computes and returns the force applied to the end-effector for
     a given set of motor commands at a given position (defined by encoder
@@ -758,23 +707,21 @@ def deltaMotorToForce(
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
-        ``enc2`` refer to encoder readings on axis 0, 1, and 2,
+        ``enc2`` refer to encoder values on axis 0, 1, and 2,
         respectively.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the applied force to the end effector. If
-        specified, the return will contain a reference to this buffer rather to
-        a newly allocated list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the applied force to the end effector.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -802,10 +749,7 @@ def deltaMotorToForce(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([fx, fy, fz], err)``. ``[fx, fy, fz]`` refer to
-        the translational force applied on the DELTA end-effector on the X, Y
-        and Z axes, respectively in [N]. ``err`` is 0 on success, -1
-        otherwise.
+        0 on success, -1 otherwise.
     """
 
     fx = c_double()
@@ -819,20 +763,16 @@ def deltaMotorToForce(
         enc[0],
         enc[1],
         enc[2],
-        byref(fx),
-        byref(fy),
-        byref(fz)
+        fx,
+        fy,
+        fz
     )
 
-    if out is None:
-        ret = [fx.value, fy.value, fz.value]
-    else:
-        ret = out
-        out[0] = fx.value
-        out[1] = fy.value
-        out[2] = fz.value
+    out[0] = fx.value
+    out[1] = fy.value
+    out[2] = fz.value
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdDeltaForceToMotor.argtypes = [
@@ -853,8 +793,8 @@ _libdhd.dhdDeltaForceToMotor.restype = c_int
 def deltaForceToMotor(
     f: FloatVectorLike,
     enc: IntVectorLike,
-    out: Optional[MutableSequence[int]] = None
-) -> Tuple[MutableSequence[int], int]:
+    out: MutableIntVectorLike
+) -> int:
     """
     This routine computes and returns the motor commands necessary to obtain a
     given force on the end-effector at a given position (defined by encoder
@@ -867,22 +807,20 @@ def deltaForceToMotor(
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
-        ``enc2`` refer to encoder readings on axis 0, 1, and 2, respectively.
+        ``enc2`` refer to encoder values on axis 0, 1, and 2, respectively.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out:
-        An output buffer to store the applied force to the end-effector. If
-        specified, the return will contain a reference to this buffer rather to
-        a newly allocated list, optional.
+    :param IntVectorLike out:
+        An output buffer to store the applied force to the end-effector.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -900,11 +838,8 @@ def deltaForceToMotor(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([output0, output1, output2], err)``.
-        ``[output0, output1, output2]`` refer to the DELTA end-effector
-        motor commands on axes 0, 1, and 2, respectively. ``err`` is 0 or
-        :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success, and
-        -1 otherwise.
+        0 or :data:`forcedimension.dhd.constants.MOTOR_SATURATED` on success,
+        and -1 otherwise.
     """
 
     output0 = c_ushort()
@@ -918,20 +853,16 @@ def deltaForceToMotor(
         enc[0],
         enc[1],
         enc[2],
-        byref(output0),
-        byref(output1),
-        byref(output2)
+        output0,
+        output1,
+        output2
     )
 
-    if out is None:
-        ret = [output0.value, output1.value, output2.value]
-    else:
-        ret = out
-        out[0] = output0.value
-        out[1] = output1.value
-        out[2] = output2.value
+    out[0] = output0.value
+    out[1] = output1.value
+    out[2] = output2.value
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdWristEncoderToOrientation.argtypes = [
@@ -948,9 +879,9 @@ _libdhd.dhdWristEncoderToOrientation.restype = c_int
 
 def wristEncoderToOrientation(
     enc: IntVectorLike,
+    out: MutableFloatVectorLike,
     ID: int = -1,
-    out: Optional[MutableFloatVectorLike] = None,
-) -> Tuple[MutableFloatVectorLike, int]:
+) -> int:
     """
     For devices with a wrist structure, compute the individual angle of each
     joint, starting with the one located nearest to the wrist base plate. For
@@ -970,23 +901,21 @@ def wristEncoderToOrientation(
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
-        ``enc2`` refer to wrist encoder readings on the first, second, and
+        ``enc2`` refer to wrist encoder values on the first, second, and
         third joint, respectively
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the joint angles. If specified, the return
-        will contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the joint angles.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If any element of ``enc`` is not implicitly convertible
@@ -1002,10 +931,7 @@ def wristEncoderToOrientation(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([oa, ob, og], err)``. ``[oa, ob, og]`` is a
-        container of floats refering to the wrist end-effector's
-        orientation about the first, second, and third wrist joint,
-        respectively in [rad]. ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
     px = c_double()
     py = c_double()
@@ -1015,21 +941,17 @@ def wristEncoderToOrientation(
         enc[0],
         enc[1],
         enc[2],
-        byref(px),
-        byref(py),
-        byref(pz),
+        px,
+        py,
+        pz,
         ID
     )
 
-    if out is None:
-        ret = [px.value, py.value, pz.value]
-    else:
-        ret = out
-        out[0] = px.value
-        out[1] = py.value
-        out[2] = pz.value
+    out[0] = px.value
+    out[1] = py.value
+    out[2] = pz.value
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdWristOrientationToEncoder.argtypes = [
@@ -1046,9 +968,9 @@ _libdhd.dhdWristOrientationToEncoder.restype = c_int
 
 def wristOrientationToEncoder(
     orientation: FloatVectorLike,
+    out: MutableIntVectorLike,
     ID: int = -1,
-    out: Optional[MutableSequence[int]] = None,
-) -> Tuple[MutableSequence[int], int]:
+) -> int:
     """
     For devices with a wrist structure, compute the encoder values from the
     individual angle of each joint, starting witht he one located nearest to
@@ -1069,22 +991,20 @@ def wristOrientationToEncoder(
     :param FloatVectorLike orientation:
         Sequence of ``(oa, ob, og)`` where ``oa``, ``ob``, and ``og`` refer to
         wrist end effector orientation around the X, Y, and Z axes,
-        respectively in [rad].
+        respectively (in [rad]).
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out:
-        An output buffer to store the encoder readings. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+    :param IntVectorLike out:
+        An output buffer to store the encoder values.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If any element of ``orientation`` is not implicitly convertible to a C
@@ -1100,9 +1020,7 @@ def wristOrientationToEncoder(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([enc0, enc1, enc2], err)``.
-        ``[enc0, enc1, enc2]`` is the wrist end-effector orientation around the
-        X, Y, and Z axes, respectively. ``err`` is 0 on success, -1 otherwise
+        0 on success, -1 otherwise
     """
 
     enc0 = c_int()
@@ -1113,21 +1031,17 @@ def wristOrientationToEncoder(
         orientation[0],
         orientation[1],
         orientation[2],
-        byref(enc0),
-        byref(enc1),
-        byref(enc2),
+        enc0,
+        enc1,
+        enc2,
         ID
     )
 
-    if out is None:
-        ret = [enc0.value, enc1.value, enc2.value]
-    else:
-        ret = out
-        out[0] = enc0.value
-        out[1] = enc1.value
-        out[2] = enc2.value
+    out[0] = enc0.value
+    out[1] = enc1.value
+    out[2] = enc2.value
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdWristMotorToTorque.argtypes = [
@@ -1148,12 +1062,12 @@ _libdhd.dhdWristMotorToTorque.restype = c_int
 def wristMotorToTorque(
     output: IntVectorLike,
     enc: IntVectorLike,
-    out: Optional[MutableFloatVectorLike] = None,
-) -> Tuple[MutableFloatVectorLike, int]:
+    out: MutableFloatVectorLike
+) -> int:
     """
     This routine computes and returns the torque applied to the wrist
     end-effector for a given set of motor commands at a given orientation
-    (defined by encoder readings)
+    (defined by encoder values)
 
     :param IntVectorLike cmd:
         Sequence of ``(cmd0, cmd1, cmd2)`` where ``cmd0``, ``cmd1``,
@@ -1162,22 +1076,20 @@ def wristMotorToTorque(
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
-        ``enc2`` refer to encoder readings on axis 0, 1, and 2, respectively.
+        ``enc2`` refer to encoder values on axis 0, 1, and 2, respectively.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
+    :param MutableFloatVectorLike out:
         An output buffer to store the torques applied to the wrist.
-        If specified, the return will contain a reference to this buffer rather
-        to a newly allocated list, optional.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If any element of ``cmd`` is not implicitly convertible to a C ushort.
@@ -1201,9 +1113,7 @@ def wristMotorToTorque(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([tx, ty, tz], err)``.  ``[tx, ty, tz]`` is the
-        torque applied to the wrist end-effector around the X, Y, and Z axes
-        respectively in [Nm]. ``err`` is 0 on success, -1, otherwise.
+        0 on success, -1, otherwise.
     """
 
     tx = c_double()
@@ -1217,21 +1127,16 @@ def wristMotorToTorque(
         enc[0],
         enc[1],
         enc[2],
-        byref(tx),
-        byref(ty),
-        byref(tz)
+        tx,
+        ty,
+        tz
     )
 
-    if out is None:
-        ret = [tx.value, ty.value, tz.value]
-    else:
-        ret = out
+    out[0] = tx.value
+    out[1] = ty.value
+    out[2] = tz.value
 
-        out[0] = tx.value
-        out[1] = ty.value
-        out[2] = tz.value
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdWristTorqueToMotor.argtypes = [
@@ -1252,12 +1157,12 @@ _libdhd.dhdWristTorqueToMotor.restype = c_int
 def wristTorqueToMotor(
     t: FloatVectorLike,
     enc: IntVectorLike,
-    out: Optional[MutableSequence[int]] = None,
-) -> Tuple[MutableSequence[int], int]:
+    out: MutableIntVectorLike
+) -> int:
     """
     This routine computes and returns the wrist motor commands necessary to
     obtain a given torque on the wrist end-effector at a given orientation
-    (defined by encoder readings)
+    (defined by encoder values)
 
     :param FloatVectorLike t:
         Sequence of ``(t0, t1, t2)`` where ``t0``, ``t1``, and ``t2`` are the
@@ -1265,22 +1170,20 @@ def wristTorqueToMotor(
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
-        ``enc2`` refer to encoder readings on axis 0, 1, and 2, respectively.
+        ``enc2`` refer to encoder values on axis 0, 1, and 2, respectively.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out:
-        An output buffer to store the wrist motor commands. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+    :param IntVectorLike out:
+        An output buffer to store the wrist motor commands.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If any element of ``t`` is not implicitly convertible to a C double.
@@ -1304,10 +1207,7 @@ def wristTorqueToMotor(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([output0, output1, output2], err)``.
-        ``[output0, output1, output2]`` refer to the motor commands on the
-        wrist end-effector around wrist joint 0, 1, and 2, respectively.
-        ``err`` is 0 on success, -1 otherwise
+        0 on success, -1 otherwise
     """
 
     output0 = c_ushort()
@@ -1321,21 +1221,16 @@ def wristTorqueToMotor(
         enc[0],
         enc[1],
         enc[2],
-        byref(output0),
-        byref(output1),
-        byref(output2)
+        output0,
+        output1,
+        output2
     )
 
-    if out is None:
-        ret = [output0.value, output1.value, output2.value]
-    else:
-        ret = out
+    out[0] = output0.value
+    out[1] = output1.value
+    out[2] = output2.value
 
-        out[0] = output0.value
-        out[1] = output1.value
-        out[2] = output2.value
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdGripperEncoderToAngleRad.argtypes = [
@@ -1376,15 +1271,14 @@ def gripperEncoderToAngleRad(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(angle, err)``. err is 0 or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1 on
-        otherwise. ``angle`` is the gripper opening in [rad]
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
     """
 
     angle = c_double()
     err = _libdhd.dhdGripperEncoderToAngleRad(
         enc,
-        byref(angle),
+        angle,
         ID
     )
 
@@ -1402,7 +1296,7 @@ _libdhd.dhdGripperEncoderToGap.restype = c_int
 def gripperEncoderToGap(enc: int, ID: int = -1) -> Tuple[float, int]:
     """
     This routine computes and returns the opening of the gripper as a distance
-    in [m] for a given encoder reading.
+    (in [m]) for a given encoder reading.
 
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
@@ -1430,7 +1324,7 @@ def gripperEncoderToGap(enc: int, ID: int = -1) -> Tuple[float, int]:
     gap = c_double()
     err = _libdhd.dhdGripperEncoderToGap(
         enc,
-        byref(gap),
+        gap,
         ID
     )
 
@@ -1448,7 +1342,7 @@ _libdhd.dhdGripperAngleRadToEncoder.restype = c_int
 def gripperAngleRadToEncoder(angle: float, ID: int = -1) -> Tuple[int, int]:
     """
     This routine computes and returns the gripper encoder value for a given
-    gripper opening distance in [rad].
+    gripper opening distance (in [rad]).
 
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
@@ -1457,7 +1351,7 @@ def gripperAngleRadToEncoder(angle: float, ID: int = -1) -> Tuple[int, int]:
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param float angle:
-        Gripper opening as an angle in [rad].
+        Gripper opening as an angle (in [rad]).
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -1478,7 +1372,7 @@ def gripperAngleRadToEncoder(angle: float, ID: int = -1) -> Tuple[int, int]:
 
     err = _libdhd.dhdGripperEncoderToAngleRad(
         angle,
-        byref(enc),
+        enc,
         ID
     )
     return (enc.value, err)
@@ -1495,7 +1389,7 @@ _libdhd.dhdGripperEncoderToGap.restype = c_int
 def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]:
     """
     This routine computes and returns the gripper encoder value for a given
-    gripper opening distance in [m].
+    gripper opening distance (in [m]).
 
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
@@ -1504,7 +1398,7 @@ def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]:
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param float gap:
-        Gripper opening distance in [m].
+        Gripper opening distance (in [m]).
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -1523,7 +1417,7 @@ def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]:
     enc = c_int()
     err = _libdhd.dhdGripperEncoderToGap(
         gap,
-        byref(enc),
+        enc,
         ID
     )
 
@@ -1539,10 +1433,12 @@ _libdhd.dhdGripperMotorToForce.argtypes = [
 _libdhd.dhdGripperMotorToForce.restype = c_int
 
 
-def gripperMotorToForce(cmd: int,
-                        enc_wrist: IntVectorLike,
-                        enc_gripper: int,
-                        ID: int = -1) -> Tuple[float, int]:
+def gripperMotorToForce(
+    cmd: int,
+    enc_wrist: IntVectorLike,
+    enc_gripper: int,
+    ID: int = -1
+) -> Tuple[float, int]:
     """
     This routine computes the force applied to the end-effector for a given
     motor command.
@@ -1558,7 +1454,7 @@ def gripperMotorToForce(cmd: int,
 
     :param IntVectorLike enc_wrist:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, ``enc2``
-        are encoder readings about wrist joints 0, 1, and 2, respectively.
+        are encoder values about wrist joints 0, 1, and 2, respectively.
 
     :param int enc_gripper:
         Encoder reading for the gripper.
@@ -1595,7 +1491,7 @@ def gripperMotorToForce(cmd: int,
     enc = [enc_wrist[0], enc_wrist[1], enc_wrist[2], enc_gripper]
     err = _libdhd.dhdGripperMotorToForce(
         cmd,
-        byref(force),
+        force,
         enc,
         ID
     )
@@ -1632,9 +1528,7 @@ def gripperForceToMotor(
         Force on the gripper end-effector in [N].
 
     :param IntVectorLike enc_wrist:
-        An output buffer to store the wrist encoding readings. If specified,
-        the return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+        An output buffer to store the wrist encoding readings.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -1800,11 +1694,7 @@ _libdhd.dhdGetEnc.argtypes = [c_int * MAX_DOF, c_ubyte, c_byte]
 _libdhd.dhdGetEnc.restype = c_int
 
 
-def getEnc(
-    mask: int,
-    ID: int = -1,
-    out: Optional[MutableSequence[int]] = None,
-) -> Tuple[MutableSequence[int], int]:
+def getEnc(mask: int, out: MutableIntVectorLike, ID: int = -1) -> int:
     """
     Get a selective list of encoder values. Particularly useful when using the
     generic controller directly, without a device model attached.
@@ -1820,18 +1710,15 @@ def getEnc(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out:
-        An output buffer to store the encoder readings. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+    :param IntVectorLike out:
+        An output buffer to store the encoder values.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and.
-        ``len(out) < MAX_DOF``
+        If ``len(out) < MAX_DOF``
 
     :raises ValueError:
         If ``mask`` is not implicitly convertible to a C char.
@@ -1840,24 +1727,17 @@ def getEnc(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(enc, err)``. ``enc`` is a container of
-        encoder values. ``err`` is 0 or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
         otherwise.
     """
     enc = (c_int * MAX_DOF)()
 
-    if out is None:
-        return ([val for val in enc], _libdhd.dhdGetEnc(enc, mask, ID))
-    else:
-        ret = out
+    err = _libdhd.dhdGetEnc(enc, mask, ID)
 
-        err = _libdhd.dhdGetEnc(enc, mask, ID)
+    for i in range(MAX_DOF):
+        out[i] = enc[i]
 
-        for i in range(MAX_DOF):
-            out[i] = enc[i]
-
-        return (ret, err)
+    return err
 
 
 _libdhd.dhdGetEncRange.argtypes = [c_int * MAX_DOF, c_int * MAX_DOF, c_byte]
@@ -1865,10 +1745,10 @@ _libdhd.dhdGetEncRange.restype = c_int
 
 
 def getEncRange(
+    encMin_out: MutableIntVectorLike,
+    encMax_out: MutableIntVectorLike,
     ID: int = -1,
-    encMin_out: Optional[MutableSequence[int]] = None,
-    encMax_out: Optional[MutableSequence[int]] = None,
-) -> Tuple[MutableSequence[int], MutableSequence[int], int]:
+) -> int:
     """
     Get the expected min and max encoder values for all axes present on the
     current device. Axis indices that do not exist on the device will return
@@ -1882,31 +1762,25 @@ def getEncRange(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] encMin_out:
-        An output buffer to store the return. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param IntVectorLike encMin_out:
+        An output buffer to store the return.
 
-    :param Optional[MutableSequence[int]] encMax_out:
-        An output buffer to store the return. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param IntVectorLike encMax_out:
+        An output buffer to store the return.
 
     :raises TypeError:
-        If ``encMax_out`` is specified and does not support item assignment
+        If ``encMax_out`` does not support item assignment
         either because it's immutable or not subscriptable.
 
     :raises TypeError:
-        If ``encMin_out`` is specified and does not support item assignment
+        If ``encMin_out`` does not support item assignment
         either because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``encMin_out`` is specified and
-        ``len(out) < MAX_DOF``
+        If ``len(out) < MAX_DOF``
 
     :raises IndexError:
-        If ``encMin_out`` is specified and
-        ``len(encMin_out) < MAX_DOF``
+        If ``len(encMin_out) < MAX_DOF``
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -1915,9 +1789,7 @@ def getEncRange(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(encMin, encMax err)``. ``encMin`` and ``encMax``
-        are a container of minimum and maximum encoder values for each
-        axis, respectively. ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
     encMin = (c_int * MAX_DOF)()
@@ -1925,25 +1797,13 @@ def getEncRange(
 
     err = _libdhd.dhdGetEncRange(encMin, encMax, ID)
 
-    if encMin_out is None:
-        encMin_ret = encMin_out
+    for i in range(MAX_DOF):
+        encMin_out[i] = encMin[i]
 
-        encMin_ret = [val for val in encMin]
-    else:
-        encMin_ret = encMin_out
+    for i in range(MAX_DOF):
+        encMax_out[i] = encMax[i]
 
-        for i in range(MAX_DOF):
-            encMin_out[i] = encMin[i]
-
-    if encMax_out is None:
-        encMax_ret = [val for val in encMax]
-    else:
-        encMax_ret = encMax_out
-
-        for i in range(MAX_DOF):
-            encMax_out[i] = encMax[i]
-
-    return (encMin_ret, encMax_ret, err)
+    return err
 
 
 _libdhd.dhdSetBrk.argtypes = [c_ubyte, c_byte]
@@ -1997,27 +1857,22 @@ _libdhd.dhdGetDeltaJointAngles.argtypes = [
 _libdhd.dhdGetDeltaJointAngles.restype = c_int
 
 
-def getDeltaJointAngles(
-    ID: int = -1,
-    out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[MutableFloatVectorLike, int]:
+def getDeltaJointAngles(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
-    Retrieve the joint angles in [rad] for the DELTA structure.
+    Retrieve the joint angles (in [rad]) for the DELTA structure.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the joint angles. If specified, the return
-        will contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the joint angles.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -2026,10 +1881,8 @@ def getDeltaJointAngles(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([j0, j1, j2], err)``. ``[j0, j1, j2]`` are joint
-        angles for axes 0, 1, and 2, respectively. ``err`` is 0 or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
-        otherwise.
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
     """
 
     j0 = c_double()
@@ -2037,31 +1890,24 @@ def getDeltaJointAngles(
     j2 = c_double()
 
     err = _libdhd.dhdGetDeltaJointAngles(
-        byref(j0),
-        byref(j1),
-        byref(j2),
+        j0,
+        j1,
+        j2,
         ID
     )
 
-    if out is None:
-        ret = [j0.value, j1.value, j2.value]
-    else:
-        ret = out
-        out[0] = j0.value
-        out[1] = j1.value
-        out[2] = j2.value
+    out[0] = j0.value
+    out[1] = j1.value
+    out[2] = j2.value
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdGetDeltaJacobian.argtypes = [(c_double * 3) * 3, c_byte]
 _libdhd.dhdGetDeltaJacobian.restype = c_int
 
 
-def getDeltaJacobian(
-    ID: int = -1,
-    out: Optional[MutableFloatMatrixLike] = None
-) -> Tuple[MutableFloatMatrixLike, int]:
+def getDeltaJacobian(out: MutableFloatMatrixLike, ID: int = -1) -> int:
     """
     Retrieve the 3x3 jacobian matrix for the DELTA structure based on the
     current end-effector position. Please refer to your device user manual for
@@ -2070,13 +1916,11 @@ def getDeltaJacobian(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatMatrixLike] out:
-        An output buffer to store the Jacobian. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list of lists, optional.
+    :param MutableFloatMatrixLike out:
+        An output buffer to store the Jacobian.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
@@ -2086,23 +1930,18 @@ def getDeltaJacobian(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
-        ``err`` is 0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on
-        success, -1 otherwise.
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
     """
 
     J = ((c_double * 3) * 3)()
     err = _libdhd.dhdGetDeltaJacobian(J, ID)
 
-    if out is None:
-        ret = [list(row) for row in J]
-    else:
-        ret = out
-        for i in range(3):
-            for j in range(3):
-                out[i][j] = J[i][j]
+    for i in range(3):
+        for j in range(3):
+            out[i][j] = J[i][j]
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdDeltaJointAnglesToJacobian.argtypes = [
@@ -2117,9 +1956,9 @@ _libdhd.dhdDeltaJointAnglesToJacobian.restype = c_int
 
 def deltaJointAnglesToJacobian(
     joint_angles: FloatVectorLike,
+    out: MutableFloatMatrixLike,
     ID: int = -1,
-    out: Optional[Union[MutableFloatMatrixLike, NDArray[float64]]] = None
-) -> Tuple[MutableFloatMatrixLike, int]:
+) -> int:
     """
     Retrieve the 3x3 jacobian matrix for the DELTA structure
     based on a given joint configuration. Please refer to your device user
@@ -2132,17 +1971,15 @@ def deltaJointAnglesToJacobian(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatMatrixLike] out:
-        An output buffer to store the return. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list of lists, optional
+    :param MutableFloatMatrixLike out:
+        An output buffer to store the return.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -2161,8 +1998,7 @@ def deltaJointAnglesToJacobian(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
-        ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
     J = ((c_double * 3) * 3)()
@@ -2175,15 +2011,11 @@ def deltaJointAnglesToJacobian(
         ID
     )
 
-    if out is None:
-        ret = [list(row) for row in J]
-    else:
-        ret = out
-        for i in range(3):
-            for j in range(3):
-                out[i][j] = J[i][j]
+    for i in range(3):
+        for j in range(3):
+            out[i][j] = J[i][j]
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdDeltaJointTorquesExtrema.argtypes = [
@@ -2199,14 +2031,10 @@ _libdhd.dhdDeltaJointTorquesExtrema.restype = c_int
 
 def deltaJointTorquesExtrema(
     joint_angles: FloatVectorLike,
-    ID: int = -1,
-    minq_out: Optional[MutableFloatVectorLike] = None,
-    maxq_out: Optional[MutableFloatVectorLike] = None,
-) -> Tuple[
-    MutableFloatVectorLike,
-    MutableFloatVectorLike,
-    int
-]:
+    minq_out: MutableFloatVectorLike,
+    maxq_out: MutableFloatVectorLike,
+    ID: int = -1
+) -> int:
     """
     Compute the range of applicable DELTA joint torques for a given DELTA joint
     angle configuration. Please refer to your device user manual for more
@@ -2224,31 +2052,25 @@ def deltaJointTorquesExtrema(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] minq_out:
-        An output buffer to store the return. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike minq_out:
+        An output buffer to store the return.
 
-    :param Optional[MutableFloatVectorLike] maxq_out:
-        An output buffer to store the return. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike maxq_out:
+        An output buffer to store the return.
 
     :raises TypeError:
-        If ``minq_out`` is specified and does not support item assignment
+        If ``minq_out`` does not support item assignment
         either because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``minq_out`` is specified and
-        ``len(encMin_out) < MAX_DOF``
+        If ``len(encMin_out) < MAX_DOF``
 
     :raises TypeError:
-        If ``maxq_out`` is specified and does not support item assignment
+        If ``maxq_out`` does not support item assignment
         either because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``maxq_out`` is specified and
-        ``len(out) < MAX_DOF``
+        If ``len(out) < MAX_DOF``
 
     :raises ValueError:
         If any element of ``joint_angles`` is not implicitly convertible to
@@ -2264,12 +2086,7 @@ def deltaJointTorquesExtrema(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(minq, maxq, err)``. ``minq`` is a mutable
-        sequence of floats, ``[minq1, minq2, minq3]``, refering to the minimum
-        applicable joint torque to axes 0, 1, and 2, respectively in [Nm].
-        ``maxq`` is a container of floats, ``[maxq1, maxq2, maxq3]``,
-        refering to the maximium applicable joint torque to axes 0, 1, and
-        2, respectively in [Nm]. ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
     minq = (c_double * 3)()
@@ -2284,25 +2101,15 @@ def deltaJointTorquesExtrema(
         ID
     )
 
-    if minq_out is None:
-        minq_ret = [v for v in minq]
-    else:
-        minq_ret = minq_out
+    minq_out[0] = minq[0]
+    minq_out[1] = minq[1]
+    minq_out[2] = minq[2]
 
-        minq_out[0] = minq[0]
-        minq_out[1] = minq[1]
-        minq_out[2] = minq[2]
+    maxq_out[0] = maxq[0]
+    maxq_out[1] = maxq[1]
+    maxq_out[2] = maxq[2]
 
-    if maxq_out is None:
-        maxq_ret = [v for v in minq]
-    else:
-        maxq_ret = maxq_out
-
-        maxq_out[0] = maxq[0]
-        maxq_out[1] = maxq[1]
-        maxq_out[2] = maxq[2]
-
-    return (minq_ret, maxq_ret, err)
+    return err
 
 
 _libdhd.dhdDeltaGravityJointTorques.argtypes = [
@@ -2319,9 +2126,9 @@ _libdhd.dhdDeltaGravityJointTorques.restype = c_int
 
 def deltaGravityJointTorques(
     joint_angles: FloatVectorLike,
-    ID: int = -1,
-    out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[MutableFloatVectorLike, int]:
+    out: MutableFloatVectorLike,
+    ID: int = -1
+) -> int:
     """
     Compute the DELTA joint torques required to compensate for gravity in a
     given DELTA joint angle configuration. Please refer to your device user
@@ -2334,17 +2141,15 @@ def deltaGravityJointTorques(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the return. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the return.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item.
+        If ``out`` does not support item.
         assignment either because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If any element of ``joint_angles`` is not implicitly convertible to
@@ -2360,9 +2165,7 @@ def deltaGravityJointTorques(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([q0, q1, q2], err)``.``[q0, q1, q2]`` is a
-        container of the gravity compensation joint torques for axes 0,
-        1, and 2, respectively in [Nm]. ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
     q0 = c_double()
@@ -2373,22 +2176,17 @@ def deltaGravityJointTorques(
         joint_angles[0],
         joint_angles[1],
         joint_angles[2],
-        byref(q0),
-        byref(q1),
-        byref(q2),
+        q0,
+        q1,
+        q2,
         ID
     )
 
-    if out is None:
-        ret = [q0.value, q1.value, q2.value]
-    else:
-        ret = out
+    out[0] = q0.value
+    out[1] = q1.value
+    out[2] = q2.value
 
-        out[0] = q0.value
-        out[1] = q1.value
-        out[2] = q2.value
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdSetDeltaJointTorques.argtypes = [
@@ -2442,31 +2240,29 @@ _libdhd.dhdDeltaEncodersToJointAngles.restype = c_int
 
 def deltaEncodersToJointAngles(
     enc: IntVectorLike,
-    ID: int = -1,
-    out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[MutableFloatVectorLike, int]:
+    out: MutableFloatVectorLike,
+    ID: int = -1
+) -> int:
     """
     This routine computes and returns the DELTA joint angles for a given set of
-    encoder readings.
+    encoder values.
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
-        ``enc2`` refer to encoder readings on axis 0, 1, and 2, respectively.
+        ``enc2`` refer to encoder values on axis 0, 1, and 2, respectively.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the return. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the return.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item
+        If ``out`` does not support item
         assignment either because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If any element of ``enc`` is not implicitly convertible to a C int.
@@ -2481,9 +2277,7 @@ def deltaEncodersToJointAngles(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([j0, j1, j2], err)``. ``err`` is 0 on success,
-        -1 otherwise. ``[j0, j1, j1]`` are the DELTA joint angles on axes 0, 1,
-        and 2, respectively in [rad].
+        0 on success, -1 otherwise.
     """
 
     j0 = c_double()
@@ -2494,22 +2288,17 @@ def deltaEncodersToJointAngles(
         enc[0],
         enc[1],
         enc[2],
-        byref(j0),
-        byref(j1),
-        byref(j2),
+        j0,
+        j1,
+        j2,
         ID
     )
 
-    if out is None:
-        ret = [j0.value, j1.value, j2.value]
-    else:
-        ret = out
+    out[0] = j0.value
+    out[1] = j1.value
+    out[2] = j2.value
 
-        out[0] = j0.value
-        out[1] = j1.value
-        out[2] = j2.value
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdDeltaJointAnglesToEncoders.argtypes = [
@@ -2526,31 +2315,29 @@ _libdhd.dhdDeltaJointAnglesToEncoders.restype = c_int
 
 def deltaJointAnglesToEncoders(
     joint_angles: FloatVectorLike,
+    out: MutableIntVectorLike,
     ID: int = -1,
-    out: Optional[MutableSequence[int]] = None
-) -> Tuple[MutableSequence[int], int]:
+) -> int:
     """
-    This routine computes and returns the DELTA encoder readings for a given
+    This routine computes and returns the DELTA encoder values for a given
     set of joint angles.
 
     :param FloatVectorLike enc:
         Sequence of ``(j0, j1, j1)`` where ``j0``, ``j1``, and ``j2`` refer to
-        DELTA joint angles for axes 0, 1, and 2, respectively, in [rad].
+        DELTA joint angles for axes 0, 1, and 2, respectively, (in [rad]).
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the return. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the return.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item
+        If ``out`` does not support item
         assignment either because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If any element of ``joint_angles`` is not implicitly convertible to
@@ -2566,10 +2353,7 @@ def deltaJointAnglesToEncoders(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([enc0, enc1, enc2], err)``.
-        ``[enc0, enc1, enc2]`` is a container of floats refering to the
-        DELTA joint angles (in [rad]) on axes 0, 1, and 2, respectively.
-        ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
     enc0 = c_int()
@@ -2580,22 +2364,17 @@ def deltaJointAnglesToEncoders(
         joint_angles[0],
         joint_angles[1],
         joint_angles[2],
-        byref(enc0),
-        byref(enc1),
-        byref(enc2),
+        enc0,
+        enc1,
+        enc2,
         ID
     )
 
-    if out is None:
-        ret = [enc0.value, enc1.value, enc2.value]
-    else:
-        ret = out
+    out[0] = enc0.value
+    out[1] = enc1.value
+    out[2] = enc2.value
 
-        out[0] = enc0.value
-        out[1] = enc1.value
-        out[2] = enc2.value
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdGetWristJointAngles.argtypes = [
@@ -2607,69 +2386,53 @@ _libdhd.dhdGetWristJointAngles.argtypes = [
 _libdhd.dhdGetWristJointAngles.restype = c_int
 
 
-def getWristJointAngles(
-    ID: int = -1,
-    out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[MutableFloatVectorLike, int]:
+def getWristJointAngles(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
-    Retrieve the joint angles in [rad] for the wrist structure.
+    Retrieve the joint angles (in [rad]) for the wrist structure.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the wrist joint angles. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the wrist joint angles.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([j0, j1, j2], err)``. ``[j0, j1, j2]`` is a
-        container of floats which refers to the joint angle for joint
-        angles for joint 0, 1, and 2, respectively. ``err`` is 0 or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
-        otherwise.
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
     """
 
     j0 = c_double()
     j1 = c_double()
     j2 = c_double()
     err = _libdhd.dhdGetWristJointAngles(
-        byref(j0),
-        byref(j1),
-        byref(j2),
+        j0,
+        j1,
+        j2,
         ID
     )
 
-    if out is None:
-        ret = [j0.value, j1.value, j2.value]
-    else:
-        ret = out
+    out[0] = j0.value
+    out[1] = j1.value
+    out[2] = j2.value
 
-        out[0] = j0.value
-        out[1] = j1.value
-        out[2] = j2.value
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdGetWristJacobian.argtypes = [(c_double * 3) * 3, c_byte]
 _libdhd.dhdGetWristJacobian.restype = c_int
 
 
-def getWristJacobian(
-    ID: int = -1,
-    out: Optional[MutableFloatMatrixLike] = None
-) -> Tuple[MutableFloatMatrixLike, int]:
+def getWristJacobian(out: MutableFloatMatrixLike,ID: int = -1) -> int:
     """
     Retrieve the 3x3 jacobian matrix for the wrist structure based on the
     current end-effector position. Please refer to your device user manual for
@@ -2678,13 +2441,11 @@ def getWristJacobian(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the Jacobian. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
-        list of lists, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the Jacobian.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
@@ -2697,26 +2458,19 @@ def getWristJacobian(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
-        ``err`` is 0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on
-        success, and -1 otherwise.
-
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        and -1 otherwise.
     """
 
     J = ((c_double * 3) * 3)()
 
     err = _libdhd.dhdGetWristJacobian(J, ID)
 
-    if out is None:
-        ret = [list(row) for row in J]
-    else:
-        ret = out
+    for i in range(3):
+        for j in range(3):
+            out[i][j] = J[i][j]
 
-        for i in range(3):
-            for j in range(3):
-                out[i][j] = J[i][j]
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdWristJointAnglesToJacobian.argtypes = [
@@ -2731,9 +2485,9 @@ _libdhd.dhdWristJointAnglesToJacobian.restype = c_int
 
 def wristJointAnglesToJacobian(
     joint_angles: FloatVectorLike,
+    out: MutableFloatMatrixLike,
     ID: int = -1,
-    out: Optional[MutableFloatMatrixLike] = None
-) -> Tuple[MutableFloatMatrixLike, int]:
+) -> int:
     """
     Retrieve the 3x3 jacobian matrix for the wrist structure
     based on a given joint configuration. Please refer to your device user
@@ -2746,17 +2500,15 @@ def wristJointAnglesToJacobian(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatMatrixLike] out:
-        An output buffer to store the Jacobian. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
-        list of lists, optional.
+    :param MutableFloatMatrixLike out:
+        An output buffer to store the Jacobian.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -2775,8 +2527,7 @@ def wristJointAnglesToJacobian(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(J, err)``. ``J`` is the 3x3 jacobian matrix.
-        ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
     J = ((c_double * 3) * 3)()
@@ -2789,15 +2540,11 @@ def wristJointAnglesToJacobian(
         ID
     )
 
-    if out is None:
-        ret = [list(row) for row in J]
-    else:
-        ret = out
-        for i in range(3):
-            for j in range(3):
-                out[i][j] = J[i][j]
+    for i in range(3):
+        for j in range(3):
+            out[i][j] = J[i][j]
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdWristJointTorquesExtrema.argtypes = [
@@ -2813,14 +2560,10 @@ _libdhd.dhdWristJointTorquesExtrema.restype = c_int
 
 def wristJointTorquesExtrema(
     joint_angles: FloatVectorLike,
-    ID: int = -1,
-    minq_out: Optional[MutableFloatVectorLike] = None,
-    maxq_out: Optional[MutableFloatVectorLike] = None,
-) -> Tuple[
-    MutableFloatVectorLike,
-    MutableFloatVectorLike,
-    int
-]:
+    minq_out: MutableFloatVectorLike,
+    maxq_out: MutableFloatVectorLike,
+    ID: int = -1
+) -> int:
     """
     Compute the range of applicable wrist joint torques for a given wrist joint
     angle configuration. Please refer to your device user manual for more
@@ -2833,31 +2576,25 @@ def wristJointTorquesExtrema(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] minq_out:
-        An output buffer to store the return. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike minq_out:
+        An output buffer to store the return.
 
-    :param Optional[MutableFloatVectorLike] maxq_out:
-        An output buffer to store the return. If specified, the return will
-        contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike maxq_out:
+        An output buffer to store the return.
 
     :raises TypeError:
-        If ``minq_out`` is specified and does not support item assignment
+        If ``minq_out`` does not support item assignment
         either because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``minq_out`` is specified and
-        ``len(encMin_out) < MAX_DOF``
+        If ``len(minq_out) < MAX_DOF``
 
     :raises TypeError:
-        If ``maxq_out`` is specified and does not support item assignment
+        If ``maxq_out`` does not support item assignment
         either because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``maxq_out`` is specified and
-        ``len(out) < MAX_DOF``
+        If ``len(maxq_out) < MAX_DOF``
 
     :raises ValueError:
         If any element of ``joint_angles`` is not implicitly convertible to C
@@ -2873,13 +2610,7 @@ def wristJointTorquesExtrema(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(minq, maxq, err)``. ``minq`` is a mutable
-        sequence of floats, ``[minq1, minq2, minq3]``, refering to the minimum
-        applicable joint torques (in [Nm]) to axes 0, 1, and 2, respectively.
-        ``maxq`` is a container of floats ``[maxq1, maxq2, maxq3]``
-        which refer to the maximium applicable joint torques (in [Nm]) to axes
-        0, 1, and 2, respectively. ``err`` is 0 on success, -1
-        otherwise.
+        0 on success, -1 otherwise.
     """
 
     minq = (c_double * 3)()
@@ -2894,25 +2625,15 @@ def wristJointTorquesExtrema(
         ID
     )
 
-    if minq_out is None:
-        minq_ret = [v for v in minq]
-    else:
-        minq_ret = minq_out
+    minq_out[0] = minq[0]
+    minq_out[1] = minq[1]
+    minq_out[2] = minq[2]
 
-        minq_out[0] = minq[0]
-        minq_out[1] = minq[1]
-        minq_out[2] = minq[2]
+    maxq_out[0] = maxq[0]
+    maxq_out[1] = maxq[1]
+    maxq_out[2] = maxq[2]
 
-    if maxq_out is None:
-        maxq_ret = [v for v in minq]
-    else:
-        maxq_ret = maxq_out
-
-        maxq_out[0] = maxq[0]
-        maxq_out[1] = maxq[1]
-        maxq_out[2] = maxq[2]
-
-    return (minq_ret, maxq_ret, err)
+    return err
 
 
 _libdhd.dhdWristGravityJointTorques.argtypes = [
@@ -2929,9 +2650,9 @@ _libdhd.dhdWristGravityJointTorques.restype = c_int
 
 def wristGravityJointTorques(
     joint_angles: FloatVectorLike,
-    ID: int = -1,
-    out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[MutableFloatVectorLike, int]:
+    out: MutableFloatVectorLike,
+    ID: int = -1
+) -> int:
     """
     Compute the wrist joint torques required to compensate for gravity in a
     given wrist joint angle configuration. Please refer to your device user
@@ -2944,17 +2665,15 @@ def wristGravityJointTorques(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the joint torques. If specified, the return
-        will contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the joint torques.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If any element of ``joint_angles`` is not implicitly convertible to
@@ -2970,9 +2689,7 @@ def wristGravityJointTorques(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([q0, q1, q2], err)``. ``[q0, q1, q2]`` are the
-        gravity compensation joint torques (in [Nm]) for axes 0, 1, and 2,
-        respectively. ``err`` is 0 on success, -1 otherwise
+        0 on success, -1 otherwise
     """
 
     q0 = c_double()
@@ -2983,22 +2700,17 @@ def wristGravityJointTorques(
         joint_angles[0],
         joint_angles[1],
         joint_angles[2],
-        byref(q0),
-        byref(q1),
-        byref(q2),
+        q0,
+        q1,
+        q2,
         ID
     )
 
-    if out is None:
-        ret = [q0.value, q1.value, q2.value]
-    else:
-        ret = out
+    out[0] = q0.value
+    out[1] = q1.value
+    out[2] = q2.value
 
-        out[0] = q0.value
-        out[1] = q1.value
-        out[2] = q2.value
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdSetWristJointTorques.argtypes = [
@@ -3059,7 +2771,8 @@ def setForceAndWristJointTorques(
     ID: int = -1
 ) -> int:
     """
-    Set Cartesian force and wrist joint torques
+    Set force (in [N]) and wrist joint torques (in [Nm]) about the
+    x, y, and z axes.
 
     :param FloatVectorLike f:
         Sequence of ``(fx, fy, fz)`` where ``fx``, ``fy``, and ``fz`` are the
@@ -3098,13 +2811,7 @@ def setForceAndWristJointTorques(
     :returns: 0 on success, -1 otherwise
     """
     return _libdhd.dhdSetForceAndWristJointTorques(
-        f[0],
-        f[1],
-        f[2],
-        t[0],
-        t[1],
-        t[2],
-        ID
+        f[0], f[1], f[2], t[0], t[1], t[2], ID
     )
 
 
@@ -3127,7 +2834,8 @@ def setForceAndWristJointTorquesAndGripperForce(
         fg: float,
         ID: int = -1) -> int:
     """
-    Set Cartesian force, wrist joint torques, and gripper force
+    Set force (in [N]) and wrist joint torques (in [Nm]) about the x, y and z
+    axes as well as the and gripper force
 
     :param FloatVectorLike f:
         Sequence of ``(fx, fy, fz)`` where ``fx``, ``fy``, and ``fz`` are the
@@ -3172,14 +2880,7 @@ def setForceAndWristJointTorquesAndGripperForce(
     :returns: 0 on success, -1 otherwise
     """
     return _libdhd.dhdSetForceAndWristJointTorquesAndGripperForce(
-        f[0],
-        f[1],
-        f[2],
-        t[0],
-        t[1],
-        t[2],
-        fg,
-        ID
+        f[0], f[1], f[2], t[0], t[1], t[2], fg, ID
     )
 
 
@@ -3197,21 +2898,19 @@ _libdhd.dhdWristEncodersToJointAngles.restype = c_int
 
 def wristEncodersToJointAngles(
     enc: IntVectorLike,
-    ID: int = -1,
-    out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[MutableFloatVectorLike, int]:
+    out: MutableFloatVectorLike,
+    ID: int = -1
+) -> int:
     """
-    This routine computes and returns the wrist joint angles for a given set of
-    encoder readings.
+    This routine computes and returns the wrist joint angles (in [rad])
+    for a given set of encoder values.
 
     :param IntVectorLike enc:
         Sequence of (enc0, enc1, enc2) where ``enc0``, ``enc1``, and ``enc2``
-        refer to encoder readings on wrist axes 0, 1, and 2, respectively.
+        refer to encoder values on wrist axes 0, 1, and 2, respectively.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the joint angles. If specified, the return
-        will contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the joint angles (in [rad]).
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -3229,9 +2928,7 @@ def wristEncodersToJointAngles(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([j0, j1, j2], err)``. ``[j0, j1, j1]`` are the
-        wrist joint angles (in [rad]) on axes 0, 1, and 2, respectively.
-        ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
     j0 = c_double()
@@ -3239,25 +2936,14 @@ def wristEncodersToJointAngles(
     j2 = c_double()
 
     err = _libdhd.dhdWristEncodersToJointAngles(
-        enc[0],
-        enc[1],
-        enc[2],
-        byref(j0),
-        byref(j1),
-        byref(j2),
-        ID
+        enc[0], enc[1], enc[2], j0, j1, j2, ID
     )
 
-    if out is None:
-        ret = [j0.value, j1.value, j2.value]
-    else:
-        ret = out
+    out[0] = j0.value
+    out[1] = j1.value
+    out[2] = j2.value
 
-        out[0] = j0.value
-        out[1] = j1.value
-        out[2] = j2.value
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdWristJointAnglesToEncoders.argtypes = [
@@ -3274,31 +2960,29 @@ _libdhd.dhdWristJointAnglesToEncoders.restype = c_int
 
 def wristJointAnglesToEncoders(
     joint_angles: FloatVectorLike,
-    ID: int = -1,
-    out: Optional[MutableSequence[int]] = None
-) -> Tuple[MutableSequence[int], int]:
+    out: MutableIntVectorLike,
+    ID: int = -1
+) -> int:
     """
-    This routine computes and returns the wrist encoder readings for a given
-    set of wrist joint angles.
+    This routine computes and returns the wrist encoder values for a given
+    set of wrist joint angles (in [rad]).
 
     :param FloatVectorLike enc:
         Sequence of ``(j0, j1, j1)`` where ``j0``, ``j1``, and ``j2`` refer to
-        wrist joint angles for axes 0, 1, and 2, respectively, in [rad].
+        wrist joint angles for axes 0, 1, and 2, respectively, (in [rad]).
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableSequence[int]] out:
-        An output buffer to store the encoder readings. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+    :param IntVectorLike out:
+        An output buffer to store the raw encoder values.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and ``len(out) < 3``.
+        If ``len(out) < 3``.
 
     :raises ValueError:
         If any element of ``joint_angles`` is not implicitly convertible to
@@ -3314,9 +2998,7 @@ def wristJointAnglesToEncoders(
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``([enc0, enc1, enc2], err)``.
-        ``[enc0, enc1, enc2]`` refer to the wrist joint angles (in [rad]) on
-        axes 0, 1, and 2, respectively. ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
     enc0 = c_int()
@@ -3327,35 +3009,27 @@ def wristJointAnglesToEncoders(
         joint_angles[0],
         joint_angles[1],
         joint_angles[2],
-        byref(enc0),
-        byref(enc1),
-        byref(enc2),
+        enc0,
+        enc1,
+        enc2,
         ID
     )
 
-    if out is None:
-        ret = [enc0.value, enc1.value, enc2.value]
-    else:
-        ret = out
+    out[0] = enc0.value
+    out[1] = enc1.value
+    out[2] = enc2.value
 
-        out[0] = enc0.value
-        out[1] = enc1.value
-        out[2] = enc2.value
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdGetJointAngles.argtypes = [c_double * MAX_DOF, c_byte]
 _libdhd.dhdGetJointAngles.restype = c_int
 
 
-def getJointAngles(
-    ID: int = -1,
-    out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[MutableFloatVectorLike, int]:
+def getJointAngles(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
-    Retrieve the joint angles in [rad] for all sensed degrees-of-freedom of the
-    current device.
+    Retrieve the joint angles (in [rad]) for all sensed degrees-of-freedom of
+    the current device.
 
     See Also
     --------
@@ -3365,55 +3039,41 @@ def getJointAngles(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the joint angles. If specified, the return
-        will contain a reference to this buffer rather to a newly allocated
-        list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the joint angles (in [rad]).
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and.
-        ``len(out) < MAX_DOF``
+        If ``len(out) < MAX_DOF``
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(joint_angles, err)``. err is 0 or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success, -1
-        otherwise. ``joint_angles`` is a container of joint angles
-        (in [rad]) with a length equal to
-        :data:`forcedimension.dhd.constants.MAX_DOF`.
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
     """
 
     joint_angles = (c_int * MAX_DOF)()
 
     err = _libdhd.dhdGetJointAngles(joint_angles, ID)
 
-    if out is None:
-        ret = [val for val in joint_angles]
-    else:
-        ret = out
+    for i in range(MAX_DOF):
+        out[i] = joint_angles[i]
 
-        for i in range(MAX_DOF):
-            out[i] = joint_angles[i]
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdGetJointVelocities.argtypes = [c_double * MAX_DOF, c_byte]
 _libdhd.dhdGetJointVelocities.restype = c_int
 
 
-def getJointVelocities(
-    ID: int = -1,
-    out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[MutableFloatVectorLike, int]:
+def getJointVelocities(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
-    Retrieve the joint angle velocities in [rad/s] for all sensed
+    Retrieve the joint angle velocities (in [rad/s]) for all sensed
     degrees-of-freedom of the current device.
 
     See Also
@@ -3424,54 +3084,41 @@ def getJointVelocities(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the joint velocities. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the joint velocities (in [rad/s]).
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and
-        ``len(out) < :data:forcedimension.dhd.constants.MAX_DOF``
+        If ``len(out) < :data:forcedimension.dhd.constants.MAX_DOF``
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(v, err)``. ``v`` is a container of joint
-        angle velocities (in [rad/s]) with length
-        :data:`forcedimension.dhd.constants.MAX_DOF`. ``err`` is 0 or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
         -1 otherwise.
     """
 
     w = (c_int * MAX_DOF)()
 
     err = _libdhd.dhdGetJointVelocities(w, ID)
-    if out is None:
-        ret = [val for val in w]
-    else:
-        ret = out
 
-        for i in range(MAX_DOF):
-            out[i] = w[i]
+    for i in range(MAX_DOF):
+        out[i] = w[i]
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdGetEncVelocities.argtypes = [c_double * MAX_DOF, c_byte]
 _libdhd.dhdGetEncVelocities.restype = c_int
 
 
-def getEncVelocities(
-    ID: int = -1,
-    out: Optional[MutableFloatVectorLike] = None
-) -> Tuple[MutableFloatVectorLike, int]:
+def getEncVelocities(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
-    Retrieve the encoder angle velocities in [increments/s] for all sensed
+    Retrieve the encoder angle velocities (in [inc/s]) for all sensed
     degrees-of-freedom of the current device
 
     See Also
@@ -3482,41 +3129,32 @@ def getEncVelocities(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatVectorLike] out:
-        An output buffer to store the encoder velocities. If specified, the
-        return will contain a reference to this buffer rather to a newly
-        allocated list, optional.
+    :param MutableFloatVectorLike out:
+        An output buffer to store the encoder velocities (in [inc/s]).
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        If ``out`` is specified and
-        ``len(out) < MAX_DOF``
+        If ``len(out) < MAX_DOF``
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(v, err)``. ``v`` is a container of ints
-        referring to the encoder angle velocities (in [increments/s]).
-        ``err`` is 0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on
-        success, -1 otherwise.
+       0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+       -1 otherwise.
     """
 
     v = (c_int * MAX_DOF)()
 
     err = _libdhd.dhdGetEncVelocities(v, ID)
-    if out is None:
-        ret = [val for val in v]
-    else:
-        ret = out
 
-        for i in range(MAX_DOF):
-            out[i] = v[i]
+    for i in range(MAX_DOF):
+        out[i] = v[i]
 
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdJointAnglesToInertiaMatrix.argtypes = [
@@ -3529,11 +3167,11 @@ _libdhd.dhdJointAnglesToInertiaMatrix.restype = c_int
 
 def jointAnglesToIntertiaMatrix(
     joint_angles: FloatVectorLike,
+    out: MutableFloatMatrixLike,
     ID: int = -1,
-    out: Optional[MutableFloatMatrixLike] = None
-) -> Tuple[MutableFloatMatrixLike, int]:
+) -> int:
     """
-    Retrieve the (Cartesian) inertia matrix based on a given joint
+    Retrieve the inertia matrix based on a given joint
     configuration. Please refer to your device user manual for more information
     on your device coordinate system.
 
@@ -3545,10 +3183,8 @@ def jointAnglesToIntertiaMatrix(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param Optional[MutableFloatMatrixLike] out:
-        Optional output buffer for the Jacobian. If this is specified, the
-        return will be a reference to this buffer rather than a newly allocated
-        list of lists.
+    :param MutableFloatMatrixLike out:
+        Output buffer for the inertia matrix.
 
     :raises ValueError:
         If ``joint_angles`` is not implicitly convertible to a C char
@@ -3560,19 +3196,17 @@ def jointAnglesToIntertiaMatrix(
         If ``joint_angles`` is not subscriptable.
 
     :raises TypeError:
-        If ``out`` is specified and does not support item assignment either
+        If ``out`` does not support item assignment either
         because it's immutable or not subscriptable.
 
     :raises IndexError:
-        if ``out`` is specified and the length of the any dimension of ``out``
-        is less than 6.
+        If of the any dimension of ``out`` is less than 6.
 
     :raises ValueError:
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(inertia, err)``. ``inertia`` is the 6x6
-        Cartesian inertia matrix. ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
     inertia = ((c_double * 6) * 6)()
@@ -3591,16 +3225,11 @@ def jointAnglesToIntertiaMatrix(
         ID
     )
 
-    if out is None:
-        ret = [list(row) for row in inertia]
-    else:
-        ret = out
+    for i in range(6):
+        for j in range(6):
+            out[i][j] = inertia[i][j]
 
-        for i in range(6):
-            for j in range(6):
-                out[i][j] = inertia[i][j]
-
-    return (ret, err)
+    return err
 
 
 _libdhd.dhdSetComMode.argtypes = [c_int, c_byte]
@@ -3685,11 +3314,9 @@ def getWatchdog(ID: int = -1) -> Tuple[int, int]:
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(duration, err)``. ``duration`` is the watchdog
-        duration in multiples of 125 us. ``err`` is 0 on success, -1
-        otherwise.
+        0 on success, -1 otherwise.
     """
 
     duration = c_int()
 
-    return (duration.value, _libdhd.dhdSetWatchdog(byref(duration), ID))
+    return (duration.value, _libdhd.dhdSetWatchdog(duration, ID))
