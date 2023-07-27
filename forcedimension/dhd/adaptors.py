@@ -6,6 +6,7 @@
 .. moduleauthor:: Ember Chow <emberchow.business@gmail.com>
 """
 
+from ctypes import ArgumentError
 from typing import NamedTuple, Callable, Optional, Any
 from forcedimension.dhd.constants import ErrorNum
 
@@ -297,6 +298,33 @@ class DHDErrorGeometry(DHDError):
         )
 
 
+class DHDMemoryError(DHDError, MemoryError):
+    def __init__(self, *args, **kwargs):
+        return super().__init__(
+            "DHD ran out of memory."
+        )
+
+
+class DHDNotImplementedError(DHDError, NotImplementedError):
+    def __init__(self, *args, **kwargs):
+        return super().__init__(
+            "The command or feature is currently not implemented."
+        )
+
+
+class DHDFileNotFoundError(DHDError, FileNotFoundError):
+    def __init__(self, *args, **kwargs):
+        return super().__init__()
+
+
+class DHDArgumentError(DHDError, ArgumentError):
+    def __init__(self):
+        super().__init__(
+            "The function producing this error was given a null or invalid "
+            "argument."
+        )
+
+
 _error = [
     None,
     DHDError,
@@ -308,12 +336,12 @@ _error = [
     DHDErrorTimeout,
     DHDErrorGeometry,
     DHDErrorExpertModeDisabled,
-    NotImplementedError,
-    MemoryError,
+    DHDNotImplementedError,
+    DHDMemoryError,
     DHDErrorDeviceNotReady,
-    FileNotFoundError,
+    DHDFileNotFoundError,
     DHDErrorConfiguration,
-    ValueError,
+    DHDArgumentError,
     DHDErrorRedundantFail,
     DHDErrorFeatureNotEnabled,
     DHDErrorDeviceInUse
