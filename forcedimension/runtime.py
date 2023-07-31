@@ -1,75 +1,16 @@
 import ctypes
-from functools import lru_cache
 import glob
 import os
 import platform
 import re
 import sys
-from typing import NamedTuple, cast
+import typing
+from functools import lru_cache
+
+from forcedimension.containers import VersionTuple
 
 VERSION_TARGET_FULL = "3.14.0-1681794874"
 VERSION_TARGET = VERSION_TARGET_FULL.partition("-")[0]
-
-
-class _Version(NamedTuple):
-    major: int
-    minor: int
-    release: int
-    revision: int = 0
-
-    def __eq__(self, v):
-        if self == v:
-            return True
-        else:
-            return False
-
-    def __lt__(self, v):
-        if self.major < v.major:
-            return True
-
-        if self.major == v.major:
-            if self.minor < v.minor:
-                return True
-            else:
-                return False
-        else:
-            return False
-
-    def __le__(self, v):
-        if self.major <= v.major:
-            if self.minor <= v.minor:
-                return True
-            else:
-                return False
-        else:
-            return False
-
-    def __ge__(self, v):
-        if self.major >= v.major:
-            if self.minor >= v.minor:
-                return True
-            else:
-                return False
-        else:
-            return False
-
-    def __gt__(self, v):
-        if self.major > v.major:
-            return True
-
-        if self.major == v.major:
-            if self.minor > v.minor:
-                return True
-            else:
-                return False
-        else:
-            return False
-
-    def __ne__(self, v):
-        if self != v:
-            return True
-        else:
-            return False
 
 
 def version_tuple(version_string: str):
@@ -81,7 +22,7 @@ def version_tuple(version_string: str):
     else:
         raise ValueError("Invalid version string.")
 
-    return _Version(*(int(v) for v in res.groups()))
+    return VersionTuple(*(int(v) for v in res.groups()))
 
 
 @lru_cache
@@ -129,7 +70,7 @@ def load(lib_name, search_dirs=(), silent=False):
         if (os.environ.get("FORCEDIM_SDK")):
             search_dirs.append(
                 os.path.realpath(os.path.join(
-                    cast(str, os.environ.get("FORCEDIM_SDK")),
+                    typing.cast(str, os.environ.get("FORCEDIM_SDK")),
                     "lib",
                     "release",
                     "lin-x86_64-gcc"))
@@ -175,12 +116,9 @@ def load(lib_name, search_dirs=(), silent=False):
             release = ctypes.c_int()
             revision = ctypes.c_int()
 
-            lib.dhdGetSDKVersion(ctypes.byref(major),
-                                 ctypes.byref(minor),
-                                 ctypes.byref(release),
-                                 ctypes.byref(revision))
+            lib.dhdGetSDKVersion(major, minor, release, revision)
 
-            version = _Version(
+            version = VersionTuple(
                 major.value,
                 minor.value,
                 release.value,

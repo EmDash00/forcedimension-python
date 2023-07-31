@@ -5,7 +5,7 @@ MAX_DOF: Final[int] = 8   #: Maximum number of DOF a device can have
 MAX_BUTTONS: Final[int] = 16  #: Maximum number of buttons a device can have
 
 VELOCITY_WINDOWING: Final[int] = 0  #: Velocity Windowing Mode
-VELOCITY_WINDOW: Final[int] = 20   #: Default velocity window size
+DEFAULT_VELOCITY_WINDOW: Final[int] = 20   #: Default velocity window size
 
 MAX_STATUS: Final[int] = 16  #: Maximum number of elements in a status tuple
 
@@ -17,6 +17,24 @@ TIMEGUARD: Final[int] = 1
 #: requested torque. Motor groups are scaled in order to preserve force and
 #: torque direction over magnitude.
 MOTOR_SATURATED: Final[int] = 2
+
+class VelocityEstimatorMode(IntEnum):
+    """
+    Supported velocity estimator modes. Currently only WINDOWING mode is
+    available.
+    """
+    #: The default velocity estimator mode. In this mode, the velocity is
+    #: estimated by comparing the current position with the position a given
+    #: time interval ago. This time interval (or "window") can be adjusted
+    #: using dhdConfigLinearVelocity, and should be modified to best suit the
+    #: dynamic behavior of the device for a given application. The windowing
+    #: estimator mode is the least resource intensive.
+    WINDOWING = 0
+    """
+    The default velocity estimator mode. In this mode, the velocity is
+    estimated by comparing the current position with the position a given
+    time interval ago.
+    """
 
 
 class DeviceType(IntEnum):

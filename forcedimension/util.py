@@ -1,122 +1,14 @@
-from typing import List, NoReturn, Union, Any, MutableSequence, NamedTuple
-from typing import TypeVar, Generic, Optional
 from copy import deepcopy
+from threading import Event, Thread
+from time import perf_counter_ns, sleep
+from typing import Any, Generic, NoReturn,  TypeVar, Union
+from forcedimension.typing import _MutableArray
+
+
+from forcedimension import HapticDevice
+
 
 T = TypeVar('T')
-
-
-class NamedSequence(type):
-    """
-    Euclidian metaclass for MutableSequence types. Using this metaclass will
-    automatically create convience 3 read-write properties "x", "y", and "z",
-    which correspond to the 0th, 1st, and 2nd elements of an object of the
-    MutableSequence class.
-    """
-    def __new__(cls, name, bases, dct, names=['x', 'y', 'z']):
-
-        x = super().__new__(cls, name, bases, dct)
-
-        def mutable_accessor(i):
-            def getter(self):
-                return self.__getitem__(i)
-
-            def setter(self, value):
-                self.__setitem__(i, value)
-
-            return property(getter, setter)
-
-        for i, prop in enumerate(names):
-            setattr(x, prop, mutable_accessor(i))
-
-        return x
-
-
-class EuclidianVector(List[float], metaclass=NamedSequence):
-    """
-    A List[float] providing convience "x", "y", "z" read-write accessor
-    properties. This class subclasses List[float]; therefore, for all intents
-    and purposes, you can treat it as a list. This allows for it to be
-    compatible with Python's standard library functions.
-    """
-    def __init__(self, data: List[float] = [0, 0, 0]):
-        if (len(data) != 3):
-            raise ValueError
-
-        super().__init__(data)
-
-
-class EncoderVector(List[float], metaclass=NamedSequence,
-                    names=['enc1', 'enc2', 'enc3']):
-    """
-    A List[float] providing convience "x", "y", "z" read-write accessor
-    properties. This class subclasses List[float]; therefore, for all intents
-    and purposes, you can treat it as a list. This allows for it to be
-    compatible with Python's standard library functions.
-    """
-    def __init__(self, data: List[float] = [0, 0, 0]):
-        if (len(data) != 3):
-            raise ValueError
-
-        super().__init__(data)
-
-
-class JacobianMatrix(List[List[float]]):
-    """
-    Used by the library backend to create the default type of the
-    3x3 jacobian matrix.
-    """
-    def __init__(self):
-        super().__init__(
-            [
-                [0, 0, 0],
-                [0, 0, 0],
-                [0, 0, 0]
-            ]
-        )
-
-
-try:
-    from numpy import ndarray, asarray, zeros  # type: ignore
-
-    class NumpyVector(ndarray, metaclass=NamedSequence):
-        """
-        A view over a numpy ndarry, which provides convience "x", "y", and "z"
-        read-write accessor properties. This class subclasses ndarray;
-        therefore, for all intents and purposes you can treat it as an ndarray.
-        This allows you to simply pass in this class to any and all numpy
-        methods.
-        """
-        def __new__(cls, data: MutableSequence[float] = [0.0, 0.0, 0.0]):
-            if len(data) != 3:
-                raise ValueError
-
-            return asarray(data, dtype=float).view(cls)
-
-    # not sure why but throws a call-arg error in mypy
-    class NumpyEncVec(ndarray, metaclass=NamedSequence,  # type: ignore
-                      names=['enc0', 'enc1', 'enc2']):
-        """
-        A view over a numpy ndarry, which provides convience "enc0", "enc1",
-        and "enc2" read-write accessor properties. This class subclasses
-        ndarray; therefore, for all intents and purposes you can treat it as an
-        ndarray. This allows you to simply pass in this class to any and all
-        numpy methods.
-        """
-        def __new__(cls, data: MutableSequence[float] = [0.0, 0.0, 0.0]):
-            if len(data) != 3:
-                raise ValueError
-
-            return asarray(data, dtype=float).view(cls)
-
-    class NumpyJacobian(ndarray):
-        """
-        A view over a JacobianMatrix.
-        """
-        def __new__(cls):
-            return zeros(shape=(3, 3), dtype=float).view(cls)
-
-except ImportError:
-    pass
 
 
 class ImmutableWrapper(Generic[T]):
@@ -275,7 +167,7 @@ class ImmutableWrapper(Generic[T]):
 
         return instance
 
-    def __init__(self, data: MutableSequence[Any]):
+    def __init__(self, data: _MutableArray):
         object.__setattr__(self, '_data', data)
 
     def __getattribute__(self, name: str):
@@ -317,19 +209,106 @@ class ImmutableWrapper(Generic[T]):
         return (object.__getattribute__(self, '_data')).__str__()
 
 
-class GripperUpdateOpts(NamedTuple):
-    enc: float = 1000
-    thumb_pos: float = 1000
-    finger_pos: float = 1000
-    v: float = 4000
-    w: float = 4000
+class HapticPoller(Thread):
+    def __init__(
+        self,  h: HapticDevice, interval: float, *args,
+        high_prec: bool = False, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
 
+        self._h = h
 
-class UpdateOpts(NamedTuple):
-    enc: Optional[float] = 1000
-    v: Optional[float] = 4000
-    w: Optional[float] = None
-    buttons: Optional[float] = 100
-    ft: Optional[float] = 4000
-    req: Optional[float] = 4000
-    gripper: Optional[GripperUpdateOpts] = None
+        self._interval = int(interval * 1E9)
+
+        self._stop_event = Event()
+        self._pause_event = Event()
+        self._pause_sync = Event()
+
+        self._target_args = kwargs.get('args', ())
+        self._target_kwargs = kwargs.get('kwargs', {})
+        self._target = kwargs.get('target', None)
+
+        self._high_prec = high_prec
+
+    def stop(self):
+        self._stop_event.set()
+        self.join()
+
+    def pause(self):
+        self._pause_event.set()
+        self._pause_sync.wait()
+
+    def unpause(self):
+        self._pause_event.clear()
+        self._pause_sync.clear()
+
+    def _execute_target(self):
+        if self._target:
+            self._target(*self._target_args, **self._target_kwargs)
+
+    def _run_zero_interval(self):
+        while not self._stop_event.is_set():
+            if not self._pause_event.is_set():
+                self._execute_target()
+            else:
+                self._pause_sync.set()
+                sleep(0.001)
+
+    def _run_low_prec(self):
+        while not self._stop_event.wait(self._interval):
+
+            if not self._pause_event.is_set():
+                self._pause_sync.set()
+                sleep(0.001)
+                continue
+
+            self._execute_target()
+
+    def _run_high_prec(self):
+        t0 = perf_counter_ns()
+
+        wait_period = self._interval
+        if self._interval > 1_000_000:
+            sleep_period = (self._interval - 1_000_000) / 1E9
+        else:
+            sleep_period = 0
+
+        if not self._stop_event.is_set():
+            self._execute_target()
+
+        t_sleep = perf_counter_ns()
+        while not self._stop_event.wait(sleep_period):
+            while (perf_counter_ns() - t_sleep) < wait_period:
+                pass
+
+            t0 = perf_counter_ns()
+            if not self._pause_event.is_set():
+                self._execute_target()
+            else:
+                self._pause_sync.set()
+                sleep_period = 0.001
+                wait_period = 0.001
+                continue
+
+            wait_period = max(self._interval - (perf_counter_ns() - t0), 0)
+
+            if wait_period > 1_000_000:
+                sleep_period = (wait_period - 1_000_000) / 1E9
+            else:
+                sleep_period = 0
+
+            t_sleep = perf_counter_ns()
+
+    def run(self):
+        try:
+            if self._interval == 0:
+                self._run_zero_interval()
+                return
+
+            if self._high_prec:
+                self._run_high_prec()
+            else:
+                self._run_low_prec()
+
+        finally:
+            del self._target

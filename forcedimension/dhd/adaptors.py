@@ -1,89 +1,118 @@
-"""
-.. module::adaptors
-   :platform: Windows, Unix
-   :synopsis: pythonic adaptors for libdhd args and returns.
-
-.. moduleauthor:: Ember Chow <emberchow.business@gmail.com>
-"""
-
-from ctypes import ArgumentError
-from typing import NamedTuple, Callable, Optional, Any
+import ctypes
+from ctypes import ArgumentError, Structure, c_int, pointer
+from typing import Callable, Optional, Any
 from forcedimension.dhd.constants import ErrorNum
+from forcedimension.typing import Pointer, SupportsPtr, c_int_ptr
 
+class Status(Structure, SupportsPtr[c_int]):
+    """
+    Adapts the status array returned by
+    :func:`forcedimension.bindings.dhd.getStatus()`
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._ptr = ctypes.cast(pointer(self), c_int_ptr)
 
-class VersionTuple(NamedTuple):
-    """
-    Adapts the four seperate number return into a single grouped
-    NamedTuple.
-    """
-    major: int
-    minor: int
-    release: int
-    revision: int
+    @property
+    def ptr(self) -> Pointer[c_int]:
+        return self._ptr
 
+    _fields_ = (
+        ('power', c_int),
+        ('connected', c_int),
+        ('started', c_int),
+        ('idle', c_int),
+        ('force', c_int),
+        ('brake', c_int),
+        ('torque', c_int),
+        ('wrist_detected', c_int),
+        ('error', c_int),
+        ('gravity', c_int),
+        ('timeguard', c_int),
+        ('wrist_init', c_int),
+        ('redundancy', c_int),
+        ('forceoffcause', c_int),
+        ('unknown_status', c_int),
+    )
 
-class StatusTuple(NamedTuple):
-    """
-    Named tuple adapting the status array returned by
-    forcedimension.bindings.dhd.getStatus()
-    """
-    #: This flag indicates if the device is powered or not.
+    #: Indicates if the device is powered or not.
     power: int
+    "Indicates if the device is powered or not."
 
-    #: This flag indicates if the device is connected or not.
+    #: Indicates if the device is connected or not.
     connected: int
+    "Indicates if the device is connected or not."
 
-    #: This flag indicates if the device controller is running.
+    #: Indicates if the device controller is running or not.
     started: int
+    "Indicates if the device controller is running or not."
 
-    #: This flag indicates if the device is in RESET mode or not.
+    #: Indicates if the device is in RESET mode or not.
     #: See device modes for details.
     reset: int
+    "Indicates if the device controller is in RESET mode or not."
 
-    #: This flag indicates if the device is in IDLE mode or not.
-    #: See device modes for details.
+    #: Indicates if the device is in IDLE mode or not.
+    #: see device modes for details.
     idle: int
+    "Indicates if the device controller is in idle mode or not."
 
-    #: This flag indicates if the device is in FORCE mode or not.
-    #: See device modes for details.
+    #: Indicates if the device is in force mode or not.
+    #: see device modes for details.
     force: int
+    "Indicates if the device controller is in force mode or not."
 
-    #: This flag indicates if the device is in BRAKE mode or not.
-    #: See device modes for details.
+    #: Indicates if the device is in brake mode or not.
+    #: see device modes for details.
     brake: int
+    "Indicates if device controller is in break mode or not."
 
-    #: This flag indicates if the torques are active or not when the device is
-    #: in FORCE mode. See device modes for details.
+    #: indicates if the torques are active or not when the device is
+    #: in force mode. see device modes for details.
     torque: int
+    "indicates if torques are active when the device is in force mode."
 
-    #: This flag indicates if the device has a wrist or not.
-    #: See device types for details.
+    #: Indicates if the device has a wrist or not.
+    #: see device types for details.
     wrist_detected: int
+    "Indicates if the device has a wrist or not."
 
-    #: This flag indicates if the an error happened on the device controller.
+    #: Indicates if the an error happened on the device controller.
     error: int
+    "Indicates if an error happend on the device controller."
 
-    #: This flag indicates if the gravity compensation option is enabled or
-    #: not.
+    #: Indicates if the gravity compensation option is enabled or not.
     gravity: int
+    "Indicates if the gravity compensation option is enabled or not."
 
-    #: This flag indicates if the TimeGuard feature is enabled or not.
+    #: Indicates if the TimeGuard feature is enabled or not.
     #: See TimeGuard feature for details.
     timeguard: int
+    "Indicates if the TimeGuard option is enabled or not."
 
-    #: This flag indicates if the device wrist is initialized or not.
+
+    #: Indicates if the device wrist is initialized or not.
     #: See device types for details.
     wrist_init: int
+    "Indicates if the device wrist is initialized or not."
 
     #: The status of the redundant encoder consistency check. For devices
     #: equipped with redundant encoders, a value of 1 indicates that the
     #: redundancy check is successful. A value of 0 is reported otherwise, or
     # if the device does not feature redundant encoders.
     redundancy: int
+    """
+    Indicates if the redundant encoder check was successful. For devices that
+    don't feature redundant encoders, this value is 0.
+    """
 
     #: The event that caused forces to be disabled on the device (the last time
     #: forces were turned off).
     forceoffcause: int
+    """
+    The event that caused forces to be disabled on the device (the last time
+    forces were turned off).
+    """
 
     unknown_status: int  # TODO: figure out what this is
 
