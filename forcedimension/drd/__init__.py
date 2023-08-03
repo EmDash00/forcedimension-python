@@ -1394,7 +1394,7 @@ def getEncDGain(ID: int = -1) -> int:
 
     return _libdrd.drdGetEncDGain(ID)
 
-_libdrd.drdTrackToPos.argtypes = [c_double, c_double, c_double, c_byte]
+_libdrd.drdTrackPos.argtypes = [c_double, c_double, c_double, c_byte]
 _libdrd.drdTrackPos.restype = c_int
 
 
