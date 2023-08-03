@@ -5,7 +5,9 @@ from typing import Optional, Tuple, Union
 
 import forcedimension.runtime as _runtime
 from forcedimension.containers import VersionTuple
-from forcedimension.typing import c_double_ptr, c_int_ptr, c_ushort_ptr
+from forcedimension.typing import (
+    c_double_ptr, c_int_ptr, c_ushort_ptr, MutableFloatMatrixLike
+)
 from forcedimension.dhd.adaptors import (
     DHDError,
     DHDErrorCom,
@@ -42,10 +44,10 @@ from forcedimension.dhd.constants import (
     WRIST_IDX
 )
 from forcedimension.typing import (
-    FloatVectorLike, SupportsPtr, SupportsPtrs3
+    FloatVectorLike, MutableFloatVectorLike
 )
 
-from . import expert, os_independent
+from . import expert, os_independent, direct
 
 # DRD contains DHD and you should use the DRD versions for compatibility with
 # DRD
@@ -1138,36 +1140,26 @@ _libdhd.dhdGetPosition.argtypes = [
 _libdhd.dhdGetPosition.restype = c_int
 
 
-def getPosition(out: SupportsPtrs3[c_double], ID: int = -1) -> int:
+def getPosition(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
     Retrieve the position of the end-effector about the x, y, and z axes.
     Please refer to your device user manual for more information on your device
     coordinate system.
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getPosition()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
-    :param SupportsPtrs3[c_double] out:
-        An output buffer to store the position of the end-effector (in [m]).
+    :param MutableFloatVectorLike out:
+        An output buffer to store the position of the end-effector.
 
     :param int ID:
-         Device ID (see multiple devices section for details).
-
-    :raises AttributeError:
-        If ``out.ptrs`` is not a valid attribute of ``out``
+         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises TypeError:
-        If ``out.ptrs`` is not iterable.
+        If ``out`` is specified and does not support item assignment either
+        because its immutable or not subscriptable.
 
-    :raises ArgumentError:
-        If ``out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
+    :raises IndexError:
+        If ``out`` is specified and ``len(out) < 3``.
 
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
@@ -1175,7 +1167,15 @@ def getPosition(out: SupportsPtrs3[c_double], ID: int = -1) -> int:
         -1 otherwise.
     """
 
-    return _libdhd.dhdGetPosition(*out.ptrs, ID)
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    out[0] = px.value
+    out[1] = py.value
+    out[2] = pz.value
+
+    return _libdhd.dhdGetPosition(px, py, pz, ID)
 
 
 _libdhd.dhdGetForce.argtypes = [
@@ -1187,49 +1187,47 @@ _libdhd.dhdGetForce.argtypes = [
 _libdhd.dhdGetForce.restype = c_int
 
 
-def getForce(out: SupportsPtrs3[c_double], ID: int = -1) -> int:
+def getForce(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
     Retrieve the force vector applied to the end-effector (in [N])
     about the x, y, and z axes Please refer to your device user manual for more
     information on your device coordinate system.
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getForce()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
-    :param SupportsPtrs3[c_double] out:
+    :param MutableFloatVectorLike out:
         An output buffer to store the applied forces on the end-effector
         (in [N]).
 
     :param int ID:
-         Device ID (see multiple devices section for details).
-
-    :raises AttributeError:
-        If ``out.ptrs`` is not a valid attribute of ``out``
+         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises TypeError:
-        If ``out`` does not support item assignment either
-        because its immutable or not subscriptable.
+        If ``out`` is specified and does not support item.
+        assignment either because its immutable or not subscriptable.
 
-    :raises TypeError:
-        If ``out.ptrs`` is not iterable.
+    :raises IndexError:
+        If ``out`` is specified and ``len(out) < 3``.
 
-    :raises ArgumentError:
-        If ``out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
+    :raises ValueError:
+        If ``ID`` is not implicitly convertible to C char.
 
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
         0 on success, -1 otherwise.
     """
 
-    return _libdhd.dhdGetForce(*out.ptrs, ID)
+    fx = c_double()
+    fy = c_double()
+    fz = c_double()
 
+    err = _libdhd.dhdGetForce(fx, fy, fz, ID)
+
+    out[0] = fx.value
+    out[1] = fy.value
+    out[2] = fz.value
+
+    return err
 
 _libdhd.dhdSetForce.argtypes = [c_double, c_double, c_double, c_byte]
 _libdhd.dhdSetForce.restype = c_int
@@ -1275,24 +1273,13 @@ _libdhd.dhdGetOrientationRad.argtypes = [
 _libdhd.dhdGetOrientationRad.restype = c_int
 
 
-def getOrientationRad(
-    out: SupportsPtrs3[c_double], ID: int = -1
-) -> int:
+def getOrientationRad(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
     For devices with a wrist structure, retrieve individual angle (in [rad])
     of each joint, starting with the one located nearest to the wrist base
     plate.
 
-    This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
-
-
-    Info
+    Note
     ----
     :data:`forcedimension.dhd.constants.DeviceType.OMEGA33` and
     :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
@@ -1302,34 +1289,28 @@ def getOrientationRad(
     device coordinate system.
 
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getOrientationRad()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-
-    :param SupportsPtrs3[c_double] out:
+    :param MutableFloatVectorLike out:
         An output buffer to store the joint angles (in [rad]).
 
     :param int ID:
-         Device ID (see multiple devices section for details).
-
-    :raises AttributeError:
-        If ``out.ptrs`` is not a valid attribute of ``out``
+         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises TypeError:
-        If ``out`` does not support item assignment either
-        because its immutable or not subscriptable.
+        If ``out`` is specified and does not support item.
+        assignment either because its immutable or not subscriptable.
 
-    :raises TypeError:
-        If ``out.ptrs`` is not iterable.
+    :raises IndexError:
+        If ``out`` is specified and ``len(out) < 3``.
 
-    :raises ArgumentError:
-        If ``out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
@@ -1337,7 +1318,18 @@ def getOrientationRad(
         -1 otherwise.
     """
 
-    return _libdhd.dhdGetOrientationRad(*out.ptrs, ID)
+    oa = c_double()
+    ob = c_double()
+    og = c_double()
+
+
+    err = _libdhd.dhdGetOrientationRad(oa, ob, og, ID)
+
+    out[0] = oa.value
+    out[1] = ob.value
+    out[2] = og.value
+
+    return err
 
 
 _libdhd.dhdGetOrientationDeg.argtypes = [
@@ -1349,14 +1341,25 @@ _libdhd.dhdGetOrientationDeg.argtypes = [
 _libdhd.dhdGetOrientationDeg.restype = c_int
 
 
-def getOrientationDeg(
-    out: SupportsPtrs3[c_double], ID: int = -1
-) -> int:
+def getOrientationDeg(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
-    For devices with a wrist structure, retrieve individual angle (in [deg])
-    of each joint, starting with the one located nearest to the wrist base
+    For devices with a wrist structure, retrieve individual angle of each
+    joint (in [deg]), starting with the one located nearest to the wrist base
     plate.
 
+    Info
+    ----
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+
+    have angles that are instead computed with respect to their internal
+    reference frame, which is rotated 45 degrees around the Y axis.
+    Please refer to your device user manual for more information on your
+    device coordinate system.
+
+
+    Info
+    ----
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
@@ -1366,44 +1369,20 @@ def getOrientationDeg(
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
 
-    Info
-    ----
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33` and
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-    have angles that are instead computed with respect to their internal
-    reference frame, which is rotated π/4 radians around the Y axis.
-    Please refer to your device user manual for more information on your
-    device coordinate system.
+    :param int ID:
+         Device ID (see multiple devices section for details), defaults to -1.
 
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getOrientationDeg()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
-    :param SupportsPtrs3[c_double] out:
+    :param MutableFloatVectorLike out:
         An output buffer to store the joint angles (in [deg]).
 
-    :param int ID:
-         Device ID (see multiple devices section for details).
-
-    :raises AttributeError:
-        If ``out.ptrs`` is not a valid attribute of ``out``
-
     :raises TypeError:
-        If ``out`` does not support item assignment either
+        If ``out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
-    :raises TypeError:
-        If ``out.ptrs`` is not iterable.
+    :raises IndexError:
+        If ``out`` is specified and ``len(out) < 3``.
 
-    :raises ArgumentError:
-        If ``out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
@@ -1411,7 +1390,18 @@ def getOrientationDeg(
         -1 otherwise.
     """
 
-    return _libdhd.dhdGetOrientationDeg(*out.ptrs, ID)
+    oa = c_double()
+    ob = c_double()
+    og = c_double()
+
+
+    err = _libdhd.dhdGetOrientationDeg(oa, ob, og, ID)
+
+    out[0] = oa.value
+    out[1] = ob.value
+    out[2] = og.value
+
+    return err
 
 
 _libdhd.dhdGetPositionAndOrientationRad.argtypes = [
@@ -1427,8 +1417,8 @@ _libdhd.dhdGetPositionAndOrientationRad.restype = c_int
 
 
 def getPositionAndOrientationRad(
-    p_out: SupportsPtrs3[c_double],
-    o_out: SupportsPtrs3[c_double],
+    p_out: MutableFloatVectorLike,
+    o_out: MutableFloatVectorLike,
     ID: int = -1
 ) -> int:
     """
@@ -1455,47 +1445,30 @@ def getPositionAndOrientationRad(
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getPositionAndOrientationDeg()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
     :param int ID:
-         Device ID (see multiple devices section for details).
+         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param SupportsPtrs3[c_double] p_out:
+    :param MutableFloatVectorLike p_out:
         An output buffer to store the position (in [m]).
 
-    :param SupportsPtrs3[c_double] o_out:
+    :param MutableFloatVectorLike o_out:
         An output buffer to store the joint angles (in [rad]).
 
-    :raises AttributeError:
-        If ``p_out.ptrs`` is not a valid attribute of ``out``
-
     :raises TypeError:
-        If ``p_out.ptrs`` is not iterable.
-
-    :raises ArgumentError:
-        If ``p_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-    :raises AttributeError:
-        If ``o_out.ptrs`` is not a valid attribute of ``out``
-
-    :raises TypeError:
-        If ``o_out`` does not support item assignment either
+        If ``p_out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises TypeError:
-        If ``o_out.ptrs`` is not iterable.
+        If ``o_out`` is specified and does not support item assignment either
+        because its immutable or not subscriptable.
 
-    :raises ArgumentError:
-        If ``o_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
+    :raises IndexError:
+        If ``p_out`` is specified and len(p_out) < 3.
 
-    :raises ArgumentError:
+    :raises IndexError:
+        If ``o_out`` is specified and len(p_out) < 3.
+
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
@@ -1503,9 +1476,25 @@ def getPositionAndOrientationRad(
         -1 otherwise.
     """
 
-    return _libdhd.dhdGetPositionAndOrientationRad(
-        *p_out.ptrs, *o_out.ptrs, ID
-    )
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    oa = c_double()
+    ob = c_double()
+    og = c_double()
+
+    err = _libdhd.dhdGetPositionAndOrientationRad(px, py, pz, oa, ob, og, ID)
+
+    p_out[0] = px.value
+    p_out[1] = py.value
+    p_out[2] = pz.value
+
+    o_out[0] = oa.value
+    o_out[1] = ob.value
+    o_out[2] = og.value
+
+    return err
 
 
 _libdhd.dhdGetPositionAndOrientationDeg.argtypes = [
@@ -1521,15 +1510,14 @@ _libdhd.dhdGetPositionAndOrientationDeg.restype = c_int
 
 
 def getPositionAndOrientationDeg(
-    p_out: SupportsPtrs3[c_double],
-    o_out: SupportsPtrs3[c_double],
+    p_out: MutableFloatVectorLike,
+    o_out: MutableFloatVectorLike,
     ID: int = -1
 ) -> int:
     """
-    Retrieve the position (in [m]) and
-    for devices with a wrist structure, retrieve individual angle
-    of each joint in [deg], starting with the one located nearest to the wrist
-    base plate.
+    Retrieve the Cartesian position in [m], and for devices with a wrist
+    structure, retrieve individual angle of each joint in [deg], starting with
+    the one located nearest to the wrist base plate.
 
     Note:
 
@@ -1537,7 +1525,7 @@ def getPositionAndOrientationDeg(
     :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
 
     have angles that are instead computed with respect to their internal
-    reference frame, which is rotated π/4 radians around the Y axis.
+    reference frame, which is rotated 45 degrees around the Y axis.
     Please refer to your device user manual for more information on your
     device coordinate system.
 
@@ -1549,47 +1537,30 @@ def getPositionAndOrientationDeg(
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getPositionAndOrientationDeg()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
     :param int ID:
-         Device ID (see multiple devices section for details).
+         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param SupportsPtrs3[c_double] p_out:
+    :param MutableFloatVectorLike p_out:
         An output buffer to store the position (in [m]).
 
-    :param SupportsPtrs3[c_double] o_out:
-        An output buffer to store the joint angles (in [rad]).
-
-    :raises AttributeError:
-        If ``p_out.ptrs`` is not a valid attribute of ``out``
+    :param MutableFloatVectorLike o_out:
+        An output buffer to store the joint angles (in [deg]).
 
     :raises TypeError:
-        If ``p_out.ptrs`` is not iterable.
-
-    :raises ArgumentError:
-        If ``p_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-    :raises AttributeError:
-        If ``o_out.ptrs`` is not a valid attribute of ``out``
-
-    :raises TypeError:
-        If ``o_out`` does not support item assignment either
+        If ``p_out`` is specified and does not support item assignment either
         because its immutable or not subscriptable.
 
     :raises TypeError:
-        If ``o_out.ptrs`` is not iterable.
+        If ``o_out`` is specified and does not support item assignment either
+        because its immutable or not subscriptable.
 
-    :raises ArgumentError:
-        If ``o_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
+    :raises IndexError:
+        If ``p_out`` is specified and len(p_out) < 3.
 
-    :raises ArgumentError:
+    :raises IndexError:
+        If ``o_out`` is specified and len(p_out) < 3.
+
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
@@ -1597,24 +1568,41 @@ def getPositionAndOrientationDeg(
         -1 otherwise.
     """
 
-    return _libdhd.dhdGetPositionAndOrientationDeg(
-        *p_out.ptrs, *o_out.ptrs, ID
-    )
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    oa = c_double()
+    ob = c_double()
+    og = c_double()
+
+    err = _libdhd.dhdGetPositionAndOrientationDeg(px, py, pz, oa, ob, og, ID)
+
+    p_out[0] = px.value
+    p_out[1] = py.value
+    p_out[2] = pz.value
+
+
+    o_out[0] = oa.value
+    o_out[1] = ob.value
+    o_out[2] = og.value
+
+    return err
 
 
 _libdhd.dhdGetPositionAndOrientationFrame.argtypes = [
     c_double_ptr,
     c_double_ptr,
     c_double_ptr,
-    c_double_ptr,
+    (c_double * 3) * 3,
     c_byte
 ]
 _libdhd.dhdGetPositionAndOrientationFrame.restype = c_int
 
 
 def getPositionAndOrientationFrame(
-    p_out: SupportsPtrs3[c_double],
-    matrix_out: SupportsPtr[c_double],
+    p_out: MutableFloatVectorLike,
+    matrix_out: MutableFloatMatrixLike,
     ID: int = -1
 ) -> int:
     """
@@ -1622,32 +1610,24 @@ def getPositionAndOrientationFrame(
     about the x, y, and z axes. Please refer to your device user manual for
     more information on your device coordinate system.
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getPositionAndOrientationFrame()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
     :param int ID:
-         Device ID (see multiple devices section for details).
-
-    :raises AttributeError:
-        If ``p_out.ptrs`` is not a valid attribute of ``p_out``
+         Device ID (see multiple devices section for details), defaults to -1.
 
     :raises TypeError:
-        If ``p_out.ptrs`` is not iterable.
+        If ``p_out`` is specified and does not support item assignment either
+        because its immutable or not subscriptable.
 
-    :raises ArgumentError:
-        If ``p_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
+    :raises IndexError:
+        If ``p_out`` is specified and ``len(out) < 3``.
 
-    :raises AttributeError:
-        If ``matrix_out.ptr`` is not a valid attribute of ``matrix_out``
+    :raises TypeError:
+        If ``matrix_out`` is specified and does not support item assignment,
+        either because it is not subscriptable or because it is not mutable.
 
-    :raises ArgumentError:
-        If ``p_out.ptr`` is not a ``Pointer[c_double]`` type.
+    :raises IndexError:
+        If ``matrix_out`` is specified any dimension is less than length 3.
 
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
@@ -1655,9 +1635,27 @@ def getPositionAndOrientationFrame(
         -1 otherwise.
     """
 
-    return _libdhd.dhdGetPositionAndOrientationFrame(
-        *p_out.ptrs, matrix_out.ptr, ID
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    matrix = ((c_double * 3) * 3)()
+
+    err = _libdhd.dhdGetPositionAndOrientationFrame(
+        px, py, pz,
+        matrix,
+        ID
     )
+
+    p_out[0] = px.value
+    p_out[1] = py.value
+    p_out[2] = pz.value
+
+    for i in range(3):
+        for j in range(3):
+            matrix_out[i][j] = matrix[i][j]
+
+    return err
 
 
 _libdhd.dhdGetForceAndTorque.argtypes = [
@@ -1673,62 +1671,66 @@ _libdhd.dhdGetForceAndTorque.restype = c_int
 
 
 def getForceAndTorque(
-    f_out: SupportsPtrs3[c_double],
-    t_out: SupportsPtrs3[c_double],
+    f_out: MutableFloatVectorLike,
+    t_out: MutableFloatVectorLike,
     ID: int = -1
 ) -> int:
     """
-    Retrieve the forces (in [N]) and torques (in [Nm]) applied to the device
-    end-effector about the x, y, and z axes. Please refer to your device user
-    manual for more information on your device coordinate system.
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getForceAndTorque()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffers.
-
+    Retrieve the force and torque vectors applied to the device end-effector.
 
     :param int ID:
-         Device ID (see multiple devices section for details).
+         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param SupportsPtrs3[c_double] f_out:
+    :param MutableFloatVectorLike f_out:
         An output buffer to store the applied forces on the end-effector
         (in [N]).
 
-    :param SupportsPtrs3[c_double] t_out:
+    :param MutableFloatVectorLike t_out:
         An output buffer to store the applied torques on the end-effector
         (in [N]).
 
-    :raises AttributeError:
-        If ``f_out.ptrs`` is not a valid attribute of ``f_out``
-
-    :raises TypeError:
-        If ``f_out.ptrs`` is not iterable.
-
-    :raises ArgumentError:
-        If ``f_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-    :raises AttributeError:
-        If ``t_out.ptrs`` is not a valid attribute of ``t_out``
-
-    :raises TypeError:
-        If ``t_out.ptrs`` is not iterable.
-
-    :raises ArgumentError:
-        If ``t_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
         0, on success, -1 otherwise.
     """
 
-    return _libdhd.dhdGetForceAndTorque(*f_out.ptrs, *t_out.ptrs, ID)
+    fx = c_double()
+    fy = c_double()
+    fz = c_double()
 
+    tx = c_double()
+    ty = c_double()
+    tz = c_double()
+
+    err = _libdhd.dhdGetForceAndTorque(
+        fx, fy, fz,
+        tx, ty, tz,
+        ID
+    )
+
+    f_out[0] = fx.value
+    f_out[1] = fy.value
+    f_out[2] = fz.value
+
+    t_out[0] = tx.value
+    t_out[1] = ty.value
+    t_out[2] = tz.value
+
+    return err
+
+
+_libdhd.dhdSetForceAndTorque.argtypes = [
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_double,
+    c_byte
+]
+_libdhd.dhdSetForceAndTorque.restype = c_int
 
 _libdhd.dhdSetForceAndTorque.argtypes = [
     c_double,
@@ -1809,40 +1811,41 @@ _libdhd.dhdGetOrientationFrame.argtypes = [
 _libdhd.dhdGetOrientationFrame.restype = c_int
 
 
-def getOrientationFrame(out: SupportsPtr[c_double], ID: int = -1) -> int:
+def getOrientationFrame(out: MutableFloatMatrixLike, ID: int = -1) -> int:
     """
     Retrieve the rotation matrix of the wrist structure. The identity matrix
     is returned for devices that do not support orientations.
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getOrientationFrame()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
     :param int ID:
-         Device ID (see multiple devices section for details).
+         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param SupportsPtr[c_double] out:
+    :param MutableFloatMatrixLike out:
         An output buffer to store the orientation frame.
 
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
-    :raises AttributeError:
-        If ``out.ptr`` is not a valid attribute of ``p_out``
+    :raises TypeError:
+        If ``out`` is specified and does not support item
+        assignment, either because it is not subscriptable or because it is not
+        mutable.
 
-    :raises ArgumentError:
-        If ``out.ptr`` is not a ``Pointer[c_double]`` type.
+    :raises IndexError:
+        If ``out`` any dimension of out is less than length 3.
 
     :returns:
         0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
         -1 otherwise.
     """
 
-    return _libdhd.dhdGetOrientationFrame(out.ptr, ID)
+    matrix = ((c_double * 3) * 3)()
 
+    err = _libdhd.dhdGetOrientationFrame(matrix, ID)
+    for i in range(3):
+        for j in range(3):
+            out[i][j] = matrix[i][j]
+
+    return err
 
 _libdhd.dhdGetGripperAngleDeg.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetGripperAngleDeg.restype = c_int
@@ -1957,9 +1960,7 @@ _libdhd.dhdGetGripperThumbPos.argtypes = [
 _libdhd.dhdGetGripperThumbPos.restype = c_int
 
 
-def getGripperThumbPos(
-    out: SupportsPtrs3[c_double], ID: int = -1
-) -> int:
+def getGripperThumbPos(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
     Read the position (in [m]) of thumb rest location about the x, y and z axes
     of the force gripper structure if present.
@@ -1970,30 +1971,13 @@ def getGripperThumbPos(
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getGripperThumbPos()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
     :param int ID:
-         Device ID (see multiple devices section for details).
+         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param SupportsPtrs3[c_double] out:
+    :param MutableFloatVectorLike out:
         An output buffer to store the grippper thumb position (in [m]).
 
-    :raises AttributeError:
-        If ``out.ptrs`` is not a valid attribute of ``out``
-
-    :raises TypeError:
-        If ``out.ptrs`` is not iterable.
-
-    :raises ArgumentError:
-        If ``out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
@@ -2002,7 +1986,17 @@ def getGripperThumbPos(
 
     """
 
-    return _libdhd.dhdGetGripperFingerPos(*out.ptrs, ID)
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    err = _libdhd.dhdGetGripperThumbPos(px, py, pz, ID)
+
+    out[0] = px.value
+    out[1] = py.value
+    out[2] = pz.value
+
+    return err
 
 
 _libdhd.dhdGetGripperFingerPos.argtypes = [
@@ -2014,12 +2008,10 @@ _libdhd.dhdGetGripperFingerPos.argtypes = [
 _libdhd.dhdGetGripperFingerPos.restype = c_int
 
 
-def getGripperFingerPos(
-    out: SupportsPtrs3[c_double], ID: int = -1
-) -> int:
+def getGripperFingerPos(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
-    Read the position (in [m]) of forefinger rest location about the x, y, and
-    z axes of the force gripper structure if present.
+    Read the position (in [m]) of forefinger rest location about the x, y, and z
+    axes of the force gripper structure if present.
 
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
@@ -2027,30 +2019,20 @@ def getGripperFingerPos(
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getGripperFingerPos()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
     :param int ID:
-         Device ID (see multiple devices section for details).
+         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param SupportsPtrs3[c_double] out:
+    :param MutableFloatVectorLike out:
         An output buffer to store the gripper finger position (in [m]).
 
-    :raises AttributeError:
-        If ``out.ptrs`` is not a valid attribute of ``out``
-
     :raises TypeError:
-        If ``out.ptrs`` is not iterable.
+        If ``out`` is specified and does not support item assignment either
+        because its immutable or not subscriptable.
 
-    :raises ArgumentError:
-        If ``out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
+    :raises IndexError:
+        If ``out`` is specified and ``len(out) < 3``.
 
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
@@ -2059,7 +2041,21 @@ def getGripperFingerPos(
 
     """
 
-    return _libdhd.dhdGetGripperFingerPos(*out.ptrs, ID)
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    err = _libdhd.dhdGetGripperFingerPos(px, py, pz, ID)
+
+    out[0] = px.value
+    out[1] = py.value
+    out[2] = pz.value
+
+    return err
+
+
+_libdhd.dhdGetComFreq.argtypes = [c_byte]
+_libdhd.dhdGetComFreq.restype = c_double
 
 
 _libdhd.dhdGetComFreq.argtypes = [c_byte]
@@ -2239,72 +2235,58 @@ _libdhd.dhdGetForceAndTorqueAndGripperForce.restype = c_int
 
 
 def getForceAndTorqueAndGripperForce(
-    f_out: SupportsPtrs3[c_double],
-    t_out: SupportsPtrs3[c_double],
-    fg_out: c_double,
+    f_out: MutableFloatVectorLike,
+    t_out: MutableFloatVectorLike,
     ID: int = -1
 ) -> int:
     """
     Retrieve the forces (in [N]) and torques (in [Nm]) applied to the device
-    end-effector as well as the gripper force (in [N]).
-    Forces and torques are about the x, y, and z axes.
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getPosition()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
+    end-effector. Forces and torques are about the x, y, and z axes.
 
     :param int ID:
-         Device ID (see multiple devices section for details).
+         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param SupportsPtrs3[c_double] f_out:
+    :param MutableFloatVectorLike f_out:
         An output buffer to store the applied forces on the end-effector
         (in [N]).
 
-    :param SupportsPtrs3[c_double] t_out:
+    :param MutableFloatVectorLike t_out:
         An output buffer to store the applied torques on the end-effector
         (in [Nm]).
 
-    :raises AttributeError:
-        If ``f_out.ptrs`` is not a valid attribute of ``f_out``
-
-    :raises TypeError:
-        If ``f_out.ptrs`` is not iterable.
-
-    :raises ArgumentError:
-        If ``f_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-    :raises AttributeError:
-        If ``t_out.ptrs`` is not a valid attribute of ``t_out``
-
-    :raises TypeError:
-        If ``t_out.ptrs`` is not iterable.
-
-    :raises ArgumentError:
-        If ``t_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-    :raises AttributeError:
-        If ``fg_out.ptr`` is not a valid attribute of ``fg_out``
-
-    :raises ArgumentError:
-        If ``fg_out.ptr`` is not a ``Pointer[c_double]``.
-
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
        0, on success, -1 otherwise.
     """
 
-    err = _libdhd.dhdGetForceAndTorqueAndGripperForce(
-        *f_out.ptrs, *t_out.ptrs, fg_out, ID
-    )
-    return err
+    fx = c_double()
+    fy = c_double()
+    fz = c_double()
 
+    tx = c_double()
+    ty = c_double()
+    tz = c_double()
+
+    fg = c_double()
+
+    err = _libdhd.dhdGetForceAndTorqueAndGripperForce(
+        fx, fy, fz,
+        tx, ty, tz,
+        fg,
+        ID
+    )
+
+    f_out[0] = fx.value
+    f_out[1] = fy.value
+    f_out[2] = fz.value
+
+    t_out[0] = tx.value
+    t_out[1] = ty.value
+    t_out[2] = tz.value
+
+    return err
 
 def configLinearVelocity(
     ms: int = DEFAULT_VELOCITY_WINDOW,
@@ -2350,9 +2332,9 @@ _libdhd.dhdGetLinearVelocity.argtypes = [
 _libdhd.dhdGetLinearVelocity.restype = c_int
 
 
-def getLinearVelocity(out: SupportsPtrs3[c_double], ID: int = -1) -> int:
+def getLinearVelocity(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
-    Retrieve the estimated instanteous linear velocity (in [m/s]).
+    Retrieve the estimated instanteous linear velocity in [m/s].
 
     By default :data:`forcedimension.dhd.constants.VELOCITY_WINDOW` and
     :data:`forcedimension.dhd.constants.VELOCITY_WINDOWING`
@@ -2363,17 +2345,10 @@ def getLinearVelocity(out: SupportsPtrs3[c_double], ID: int = -1) -> int:
     The velocity estimator requires at least 2 position
     updates during the time interval defined in
     :func:`forcedimension.dhd.configLinearVelocity()` in order to be able to
-    compute the estimate. Otherwise, e.g. if there are no calls to
+    compute the estimate. Otherwise, e.. if there are no calls to
     :func:`forcedimension.dhd.getPosition(), dhd.libdhd.getLinearVelocity()`,
     or :func:`forcedimension.dhd.getLinearVelocity()` will return an error
     (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
-
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getLinearVelocity()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
 
 
     See Also
@@ -2382,34 +2357,36 @@ def getLinearVelocity(out: SupportsPtrs3[c_double], ID: int = -1) -> int:
 
 
     :param int ID:
-         Device ID (see multiple devices section for details).
+         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param SupportsPtr[c_double] out:
+    :param MutableFloatVectorLike out:
         An output buffer to store the linear velocity (in [m/s]).
 
-    :raises AttributeError:
-        If ``out.ptrs`` is not a valid attribute of ``out``
-
     :raises TypeError:
-        If ``out.ptrs`` is not iterable.
+        If ``out`` is specified and does not support item assignment either
+        because its immutable or not subscriptable.
 
-    :raises ArgumentError:
-        If ``out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
+    :raises IndexError:
+        If ``out`` is specified and ``len(out) < 3``.
 
-
-   :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
         0 on success, -1 otherwise.
     """
 
-    return _libdhd.dhdGetLinearVelocity(*out.ptrs, ID)
+    vx = c_double()
+    vy = c_double()
+    vz = c_double()
 
+    err = _libdhd.dhdGetLinearVelocity(vx, vy, vz, ID)
 
-_libdhd.dhdConfigAngularVelocity.argtypes = [c_int, c_int, c_byte]
-_libdhd.dhdConfigAngularVelocity.restype = c_int
+    out[0] = vx.value
+    out[1] = vy.value
+    out[2] = vz.value
+
+    return err
 
 
 def configAngularVelocity(
@@ -2457,9 +2434,7 @@ _libdhd.dhdGetAngularVelocityRad.argtypes = [
 _libdhd.dhdGetAngularVelocityRad.restype = c_int
 
 
-def getAngularVelocityRad(
-    out: SupportsPtrs3[c_double], ID: int = -1
-) -> int:
+def getAngularVelocityRad(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
     Retrieve the estimated angular velocity (in [rad/s]).
 
@@ -2468,7 +2443,7 @@ def getAngularVelocityRad(
     The velocity estimator requires at least 2 position
     updates during the time interval defined in
     :func:`forcedimension.dhd.configLinearVelocity()` in order to be able to
-    compute the estimate. Otherwise, e.g. if there are no calls to
+    compute the estimate. Otherwise, e.. if there are no calls to
     :func:`forcedimension.dhd.getPosition(), dhd.libdhd.getLinearVelocity()`,
     or :func:`forcedimension.dhd.getLinearVelocity()` will return an error
     (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
@@ -2479,38 +2454,37 @@ def getAngularVelocityRad(
     :func:`forcedimension.dhd.getAngularVelocityDeg()`
 
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getAngularVelocityRad()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
     :param int ID:
-         Device ID (see multiple devices section for details).
+         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param out:
+    :param MutableFloatVectorLike out:
         An output buffer to store the angular velocity (in [rad/s]).
 
-    :raises AttributeError:
-        If ``out.ptrs`` is not a valid attribute of ``out``
+    :raises TypeError:
+        If ``out`` is specified and does not support item assignment either
+        because its immutable or not subscriptable.
 
-   :raises TypeError:
-        If ``out.ptrs`` is not iterable.
+    :raises IndexError:
+        If ``out`` is specified and ``len(out) < 3``.
 
-    :raises ArgumentError:
-        If ``out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
         0 on success, -1 otherwise.
     """
 
-    return _libdhd.dhdGetAngularVelocityRad(*out.ptrs, ID)
+    wx = c_double()
+    wy = c_double()
+    wz = c_double()
+
+    err = _libdhd.dhdGetAngularVelocityRad(wx, wy, wz, ID)
+
+    out[0] = wx.value
+    out[1] = wy.value
+    out[2] = wz.value
+
+    return err
 
 
 _libdhd.dhdGetAngularVelocityDeg.argtypes = [
@@ -2522,60 +2496,57 @@ _libdhd.dhdGetAngularVelocityDeg.argtypes = [
 _libdhd.dhdGetAngularVelocityDeg.restype = c_int
 
 
-def getAngularVelocityDeg(
-    out: SupportsPtrs3[c_double], ID: int = -1
-) -> int:
+
+def getAngularVelocityDeg(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
     Retrieve the estimated angular velocity (in [deg/s]).
 
-    Info
-    ----
-    The velocity estimator requires at least 2 position
+    Please note that the velocity estimator requires at least 2 position
     updates during the time interval defined in
     :func:`forcedimension.dhd.configLinearVelocity()` in order to be able to
-    compute the estimate. Otherwise, e.g. if there are no calls to
-    :func:`forcedimension.dhd.getPosition(), dhd.libdhd.getLinearVelocity()`,
+    compute the estimate. Otherwise, e.. if there are no calls to
+    :func:`forcedimension.dhd.getPosition()`,
+    :func:`forcedimension.dhd.getLinearVelocity()`,
     or :func:`forcedimension.dhd.getLinearVelocity()` will return an error
     (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
 
     See Also
     --------
     :func:`forcedimension.dhd.configAngularVelocity()`
-    :func:`forcedimension.dhd.getAngularVelocityDeg()`
-
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getAngularVelocityDeg()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
+    :func:`forcedimension.dhd.getAngularVelocityRad()`
 
 
     :param int ID:
-         Device ID (see multiple devices section for details).
+         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param out:
+    :param MutableFloatVectorLike out:
         An output buffer to store the angular velocity (in [deg/s]).
 
-    :raises AttributeError:
-        If ``out.ptrs`` is not a valid attribute of ``out``
+    :raises TypeError:
+        If ``out`` is specified and does not support item assignment either
+        because its immutable or not subscriptable.
 
-   :raises TypeError:
-        If ``out.ptrs`` is not iterable.
+    :raises IndexError:
+        If ``out`` is specified and ``len(out) < 3``.
 
-    :raises ArgumentError:
-        If ``out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
         0 on success, -1 otherwise.
     """
 
-    return _libdhd.dhdGetAngularVelocityDeg(*out.ptrs, ID)
+    wx = c_double()
+    wy = c_double()
+    wz = c_double()
+
+    err = _libdhd.dhdGetAngularVelocityDeg(wx, wy, wz, ID )
+
+    out[0] = wx.value
+    out[1] = wy.value
+    out[2] = wz.value
+
+    return err
 
 
 _libdhd.dhdConfigGripperVelocity.argtypes = [c_int, c_int, c_byte]

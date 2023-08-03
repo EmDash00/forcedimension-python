@@ -4,7 +4,7 @@ from typing import Callable, Optional, Any
 from forcedimension.dhd.constants import ErrorNum
 from forcedimension.typing import Pointer, SupportsPtr, c_int_ptr
 
-class Status(Structure, SupportsPtr[c_int]):
+class Status(Structure):
     """
     Adapts the status array returned by
     :func:`forcedimension.bindings.dhd.getStatus()`

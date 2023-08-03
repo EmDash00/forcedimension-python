@@ -6,11 +6,12 @@ from forcedimension.dhd.constants import MAX_DOF
 from forcedimension.typing import (
     IntVectorLike,
     FloatVectorLike,
-    SupportsPtr,
-    SupportsPtrs3
+    MutableFloatVectorLike,
+    MutableFloatMatrixLike
 )
 
 from forcedimension.typing import c_int_ptr, c_double_ptr
+from . import direct
 
 import forcedimension.runtime as runtime
 
@@ -677,9 +678,9 @@ _libdrd.drdGetPositionAndOrientation.restype = c_int
 
 
 def getPositionAndOrientation(
-    p_out: SupportsPtrs3[c_double],
-    o_out: SupportsPtrs3[c_double],
-    matrix_out: SupportsPtr[c_double],
+    p_out: MutableFloatVectorLike,
+    o_out: MutableFloatVectorLike,
+    matrix_out: MutableFloatMatrixLike,
     ID: int = -1,
 ) -> int:
     """
@@ -688,13 +689,6 @@ def getPositionAndOrientation(
     (in [m]), and orientation frame matrix of the end-effector. Please refer
     to your device user manual for more information on your device coordinate
     system.
-
-    Info
-    ----
-    Unlike :func:`forcedimension.drd.getPositionAndOrientation()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffers.
-
 
     :param VectorLike p_out:
         Output buffer to store the end-effector position (in [m]).
@@ -708,33 +702,28 @@ def getPositionAndOrientation(
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises AttributeError:
-        If ``p_out.ptrs`` is not a valid attribute of ``p_out``
+    :raises TypeError:
+        If ``p_out`` does not support item assignment either
+        because its immutable or not subscriptable.
 
-    :raises AttributeError:
-        If ``o_out.ptrs`` is not a valid attribute of ``o_out``
-
-    :raises AttributeError:
-        If ``matrix_out.ptrs`` is not a valid attribute of ``matrix_out``
+    :raises IndexError:
+        If ``len(p_out) < 3``.
 
     :raises TypeError:
-        If ``p_out.ptrs`` is not iterable.
+        If ``o_out`` does not support item assignment either
+        because its immutable or not subscriptable.
+
+    :raises IndexError:
+        If ``len(o_out) < 3``.
 
     :raises TypeError:
-        If ``o_out.ptrs`` is not iterable.
+        If ``matrix_out`` does not support item assignment,
+        either because it is not subscriptable or because it is not mutable.
 
-    :raises ArgumentError:
-        If ``p_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
+    :raises IndexError:
+        If any dimension of ``matrix_out`` is less than length 3.
 
-    :raises ArgumentError:
-        If ``o_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-    :raises ArgumentError:
-        If ``matrix_out.ptr`` is not a Pointer[c_double] type
-
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
 
     :returns:
@@ -742,10 +731,39 @@ def getPositionAndOrientation(
         -1 otherwise.
     """
 
-    return _libdrd.drdGetPositionAndOrientation(
-        *p_out.ptrs, *o_out.ptrs, matrix_out.ptr, ID
+    px = c_double()
+    py = c_double()
+    pz = c_double()
+
+    oa = c_double()
+    ob = c_double()
+    og = c_double()
+
+    pg = c_double()
+
+    matrix = ((c_double * 3) * 3)()
+
+    err: int = _libdrd.drdGetPositionAndOrientation(
+        px, py, pz,
+        oa, ob, og,
+        pg,
+        matrix,
+        ID
     )
 
+    p_out[0] = px.value
+    p_out[1] = py.value
+    p_out[2] = pz.value
+
+    o_out[0] = oa.value
+    o_out[1] = ob.value
+    o_out[2] = og.value
+
+    for i in range(3):
+        for j in range(3):
+            matrix_out[i][j] = matrix[i][j]
+
+    return err
 
 
 _libdrd.drdGetVelocity.argtypes = [
@@ -761,60 +779,63 @@ _libdrd.drdGetVelocity.restype = c_int
 
 
 def getVelocity(
-    v_out: SupportsPtrs3[c_double],
-    w_out: SupportsPtrs3[c_double],
+    v_out: MutableFloatVectorLike,
+    w_out: MutableFloatVectorLike,
     ID: int = -1
 ) -> int:
     """
-    Retrieve the linear velocity of the end-effector (in [m/s])
-    as well as the angular velocity (in [rad/s]) about the X, Y, and Z
-    axes. Please refer to your device user manual for more information on
-    your device coordinate system.
-
-    Info
-    ----
-    Unlike :func:`forcedimension.drd.getVelocity()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffers.
-
+        Retrieve the linear velocity of the end-effector (in [m/s])
+        as well as the angular velocity (in [rad/s]) about the X, Y, and Z
+        axes. Please refer to your device user manual for more information on
+        your device coordinate system.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :param SupportsPtrs3[c_double] v_out:
-        Output buffer for the linear velocity (in [m/s]).
+    :param VectorLike v_out:
+        Output buffer for the linear velocity.
 
-    :param SupportsPtrs3[c_double] w_out:
-        Output buffer for the angular velocity (in [rad/s]).
-
-    :raises AttributeError:
-        If ``v_out.ptrs`` is not a valid attribute of ``v_out``
-
-    :raises AttributeError:
-        If ``w_out.ptrs`` is not a valid attribute of ``w_out``
+    :param VectorLike w_out:
+        Output buffer for the angular velocity.
 
     :raises TypeError:
-        If ``p_out.ptrs`` is not iterable.
+        if ``v_out`` does not support item assignment either
+        because its immutable or not support item assignment
+
+    :raises IndexError: If ``len(v_out) < 3``.
 
     :raises TypeError:
-        If ``o_out.ptrs`` is not iterable.
+        If w_out does not support item assignment either
+        because its immutable or does not support item assignment
 
-    :raises ArgumentError:
-        If ``p_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
+    :raises IndexError: If ``len(w_out) < 3``.
 
-    :raises ArgumentError:
-        If ``o_out.ptrs`` does not expand into a tuple of 3
-        ``Pointer[c_double]`` types.
-
-    :raises ArgumentError:
+    :raises ValueError:
         If ``ID`` is not implicitly convertible to a C int.
 
     :returns:
         0 on success and -1 otherwise.
     """
-    return _libdrd.drdGetVelocity(*v_out.ptrs, *w_out.ptrs, ID)
 
+    vx = c_double()
+    vy = c_double()
+    vz = c_double()
+
+    wx = c_double()
+    wy = c_double()
+    wz = c_double()
+
+    err = _libdrd.drdGetVelocity(vx, vy, vz, wx, wy, wz, ID)
+
+    v_out[0] = vx.value
+    v_out[1] = vy.value
+    v_out[2] = vz.value
+
+    w_out[0] = wx.value
+    w_out[1] = wy.value
+    w_out[2] = wz.value
+
+    return err
 
 _libdrd.drdEnableFilter.argtypes = [c_bool, c_byte]
 _libdrd.drdEnableFilter.restype = c_int
@@ -946,7 +967,7 @@ _libdrd.drdMoveTo.argtypes = [c_double_ptr, c_bool, c_byte]
 _libdrd.drdMoveTo.restype = c_int
 
 
-def moveTo(pos: SupportsPtr[c_double], block: bool, ID: int = -1):
+def moveTo(pos: FloatVectorLike, block: bool, ID: int = -1):
     """
     Send the robot end-effector to a desired Cartesian 7-DOF configuration.
     The motion uses smooth acceleration/deceleration. The acceleration and
@@ -958,12 +979,13 @@ def moveTo(pos: SupportsPtr[c_double], block: bool, ID: int = -1):
     :data:`forcedimension.dhd.constants.MAX_DOF`
 
 
-    :param SupportsPtr[c_double] pos:
+    :param float pos:
         Buffer of target positions/orientations for each DOF.
         DOFs 0-2 correspond to position about the X, Y, and Z axes (in [m]).
         DOFs 3-6 correspond to the target orientation about the first, second
         and third joints (in [rad]). DOF 7 corresponds to the gripper gap
         (in [m]).
+
 
     :param bool block:
         If ``True``, the call blocks until the destination is reached. If
@@ -972,20 +994,36 @@ def moveTo(pos: SupportsPtr[c_double], block: bool, ID: int = -1):
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises AttributeError:
-        If ``pos.ptr`` is not a valid attribute of ``pos``
+    :raises ValueError:
+        If any member of ``p`` is not convertible to a C double.
 
-    :raises ArgumentError:
-        If ``pos.ptr`` is not a ``Pointer[c_double]`` type.
+    :raises IndexError:
+        If ``len(p) < MAX_DOF``.
 
-    :raises ArgumentError:
+    :raises TypeError:
+        If ``p`` is not subscriptable.
+
+    :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
         0 on success, and -1 otherwise.
     """
 
-    return _libdrd.drdMoveTo(pos.ptr, block, ID)
+    return _libdrd.drdMoveTo(
+        (c_double * 8)(
+            pos[0],
+            pos[1],
+            pos[2],
+            pos[3],
+            pos[4],
+            pos[5],
+            pos[6],
+            pos[7],
+        ),
+        block,
+        ID
+    )
 
 
 _libdrd.drdMoveToEnc.argtypes = [c_int, c_int, c_int, c_bool, c_byte]
@@ -1042,7 +1080,7 @@ _libdrd.drdMoveToAllEnc.argtypes = [c_int_ptr, c_bool, c_byte]
 _libdrd.drdMoveToAllEnc.restype = c_int
 
 
-def moveToAllEnc(enc: SupportsPtr[c_int], block: bool, ID: int = -1):
+def moveToAllEnc(enc: IntVectorLike, block: bool, ID: int = -1):
     """
     Send the robot end-effector to a desired encoder position. The motion
     follows a straight line in the encoder space, with smooth
@@ -1055,30 +1093,48 @@ def moveToAllEnc(enc: SupportsPtr[c_int], block: bool, ID: int = -1):
     :func:`forcedimension.drd.moveToEnc`
     :func:`forcedimension.drd.moveTo`
 
-    :param SupportsPtr[c_int] enc:
+    :param int enc:
         Target encoder positions.
 
-    :param int ID:
-        Device ID (see multiple devices section for details), defaults to -1.
+    :raises ValueError:
+        If any member of ``enc`` is not convertible to a C int.
+
+    :raises IndexError:
+        If ``len(enc) < MAX_DOF``.
+
+    :raises TypeError:
+        If ``enc`` is not subscriptable.
 
     :param bool block:
         If ``True``, the call blocks until the destination is reached.
         If ``False``, the call returns immediately.
 
-    :raises AttributeError:
-        If ``enc.ptr`` is not a valid attribute of ``enc``
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
 
     :raises ValueError:
-        If ``enc.ptr`` is not a ``Pointer[c_int]`` type.
+        If any of elements of enc are not implicitly convertible to a C int.
 
-    :raises ArgumentError:
-        If ``ID`` is not implicitly convertible to C char.
+    :raises ValueError:
+        If ID is not convertible to a C int.
 
     :returns:
         0 on success, and -1 otherwise.
     """
-    return _libdrd.drdMoveToAllEnc(enc.ptr, block, ID)
-
+    return _libdrd.drdMoveToAllEnc(
+        (c_int * MAX_DOF)(
+            enc[0],
+            enc[1],
+            enc[2],
+            enc[3],
+            enc[4],
+            enc[5],
+            enc[6],
+            enc[7]
+        ),
+        block,
+        ID
+    )
 
 _libdrd.drdHold.argtypes = [c_byte]
 _libdrd.drdHold.restype = c_int
@@ -1484,7 +1540,7 @@ _libdrd.drdTrack.argtypes = [c_double_ptr, c_byte]
 _libdrd.drdTrack.restype = c_int
 
 
-def track(pos: SupportsPtr[c_double], ID: int = -1):
+def track(pos: FloatVectorLike, ID: int = -1):
     """
     Send the robot end-effector to a desired Cartesian 7-DOF configuration.
     If motion filters are enabled, the motion follows a smooth
@@ -1495,8 +1551,7 @@ def track(pos: SupportsPtr[c_double], ID: int = -1):
     --------
     :data:`forcedimension.dhd.constants.MAX_DOF`
 
-
-    :param SupportsPtr[c_double] pos:
+    :param float pos:
         Buffer of target positions/orientations for each DOF.
         DOFs 0-2 correspond to position about the X, Y, and Z axes (in [m]).
         DOFs 3-6 correspond to the target orientation about the first, second
@@ -1506,20 +1561,35 @@ def track(pos: SupportsPtr[c_double], ID: int = -1):
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises AttributeError:
-        If ``pos.ptr`` is not a valid attribute of ``pos``
+    :raises ValueError:
+        If any member of ``p`` is not convertible to a C double.
 
-    :raises ArgumentError:
-        If ``pos.ptr`` is not a ``Pointer[c_double]`` type.
+    :raises IndexError:
+        If ``len(p) < MAX_DOF``.
 
-    :raises ArgumentError:
+    :raises TypeError:
+        If ``p`` is not subscriptable.
+
+    :raises ValueError:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
         0 on success, and -1 otherwise.
     """
 
-    return _libdrd.drdTrack(pos.ptr, ID)
+    return _libdrd.drdTrack(
+        (c_double * 8)(
+            pos[0],
+            pos[1],
+            pos[2],
+            pos[3],
+            pos[4],
+            pos[5],
+            pos[6],
+            pos[7],
+        ),
+        ID
+    )
 
 
 _libdrd.drdTrackEnc.argtypes = [c_int, c_int, c_int, c_byte]
@@ -1572,7 +1642,7 @@ _libdrd.drdTrackAllEnc.argtypes = [c_int_ptr, c_byte]
 _libdrd.drdTrackAllEnc.restype = c_int
 
 
-def trackAllEnc(enc: SupportsPtr[c_int], ID: int = -1):
+def trackAllEnc(enc: IntVectorLike, ID: int = -1):
     """
     Send the robot end-effector to a desired encoder position. If motion
     filters are enabled, th emotion follows a smooth acceleration/deceleration
@@ -1585,26 +1655,43 @@ def trackAllEnc(enc: SupportsPtr[c_int], ID: int = -1):
     :func:`forcedimension.drd.trackEnc`
     :func:`forcedimension.drd.track`
 
-    :param SupportsPtr[c_int] enc:
+    :param int enc:
         Target encoder positions.
+
+    :raises ValueError:
+        If any member of ``enc`` is not convertible to a C int.
+
+    :raises IndexError:
+        If ``len(enc) < MAX_DOF``.
+
+    :raises TypeError:
+        If ``enc`` is not subscriptable.
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
 
-    :raises AttributeError:
-        If ``enc.ptr`` is not a valid attribute of ``enc``
+    :raises ValueError:
+        If any of elements of enc are not implicitly convertible to a C int.
 
-    :raises ArgumentError:
-        If ``enc.ptr`` is not a ``Pointer[c_int]`` type.
-
-    :raises ArgumentError:
-        If ``ID`` is not implicitly convertible to C char.
+    :raises ValueError:
+        If ID is not convertible to a C int.
 
     :returns:
         0 on success, and -1 otherwise.
     """
-    return _libdrd.drdTrackAllEnc(enc.ptr, ID)
-
+    return _libdrd.drdTrackAllEnc(
+        (c_int * MAX_DOF)(
+            enc[0],
+            enc[1],
+            enc[2],
+            enc[3],
+            enc[4],
+            enc[5],
+            enc[6],
+            enc[7]
+        ),
+        ID
+    )
 
 _libdrd.drdSetMotRatioMax.argtypes = [c_double, c_byte]
 _libdrd.drdSetMotRatioMax.restype = c_int

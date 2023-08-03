@@ -96,7 +96,7 @@ MutableIntArray = _MutableArray[int, int]
 #: Used specifically to simplify the typing of various returns since
 #: Functions that take in FloatArray are assumed to return the same kind
 #: of float array.
-FloatVectorLike = Union[FloatArray, MutableFloatReturnArray]
+FloatVectorLike = FloatArray
 
 #: Represents the type of a mutable homogenous array of floats.
 #: Used specifically to simplify the typing of various returns since
@@ -108,7 +108,8 @@ MutableFloatVectorLike = Union[MutableFloatArray, MutableFloatReturnArray]
 #: Used specifically to simplify the typing of various returns since
 #: functions that take in FloatArray are assumed to return the same kind
 #: of float array.
-IntVectorLike = Union[IntArray, MutableIntReturnArray]
+IntVectorLike = IntArray
+
 
 #: Represents the type of a mutable homogenous array of ints.
 #: Used specifically to simplify the typing of various returns since
@@ -116,6 +117,7 @@ IntVectorLike = Union[IntArray, MutableIntReturnArray]
 #: of float array.
 
 MutableIntVectorLike = Union[MutableIntArray, MutableIntReturnArray]
+
 
 #: Represents a 2D array of floats
 MutableFloatArray2D = _MutableArray[int, MutableFloatVectorLike]
@@ -126,5 +128,14 @@ MutableFloatArray2D = _MutableArray[int, MutableFloatVectorLike]
 #: of 2D float array.
 MutableFloatMatrixLike = Union[MutableFloatArray2D, MutableFloatReturnArray2D]
 
-#: Represents a tuple of MAX_DOF ints, one for each DOF
 DOFTuple = Tuple[int, int, int, int, int, int, int, int]
+
+class GenericVec(_MutableArray[int, float], Protocol):
+    def __getitem__(self, __k: int) -> float: ...
+    def __setitem__(self, __k: int, __v: float) -> None: ...
+    @property
+    def ptrs(self) -> Tuple[
+        Pointer[c_double], Pointer[c_double], Pointer[c_double]
+    ]:
+        ...
+
