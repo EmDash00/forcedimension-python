@@ -116,7 +116,12 @@ def load(lib_name, search_dirs=(), silent=False):
             release = ctypes.c_int()
             revision = ctypes.c_int()
 
-            lib.dhdGetSDKVersion(major, minor, release, revision)
+            lib.dhdGetSDKVersion(
+                ctypes.byref(major),
+                ctypes.byref(minor),
+                ctypes.byref(release),
+                ctypes.byref(revision)
+            )
 
             version = VersionTuple(
                 major.value,
