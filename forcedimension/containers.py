@@ -4,8 +4,9 @@ from ctypes import c_double, c_int, c_ushort
 from typing import Iterable, List, NamedTuple, Optional, Tuple
 
 from forcedimension.dhd.constants import MAX_DOF
-from forcedimension.typing import (SupportsPtr, SupportsPtrs3, c_double_ptr,
-                                   c_int_ptr, c_ushort_ptr)
+from forcedimension.typing import (
+    IntArray, SupportsPtr, SupportsPtrs3, c_double_ptr, c_int_ptr, c_ushort_ptr
+)
 
 class VersionTuple(NamedTuple):
     """
@@ -291,12 +292,12 @@ DefaultInertiaMatrixType = InertiaMatrix
 
 
 try:
-    from numpy import asarray, ndarray
-
+    import numpy as np
+    import numpy.typing as npt
     from forcedimension.typing import FloatArray
 
     class NumpyVector3(
-        ndarray, SupportsPtrs3[c_double], SupportsPtr[c_double]
+        np.ndarray, SupportsPtrs3[c_double], SupportsPtr[c_double]
     ):
         """
         A view over a numpy ndarry, which provides convenience "x", "y", and "z"
@@ -305,11 +306,14 @@ try:
         This allows you to simply pass in this class to any and all numpy
         methods.
         """
-        def __new__(cls, data: FloatArray = [0., 0., 0.]):
-            if len(data) != 3:
+        def __new__(cls, data: npt.ArrayLike = (0., 0., 0.)):
+            arr = np.asarray(data, dtype=c_double).view(cls)
+
+            if len(arr) != 3:
                 raise ValueError
 
-            return asarray(data, dtype=c_double).view(cls)
+            return arr
+
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -351,7 +355,7 @@ try:
         def z(self, value: float):
             self[2] = value
 
-    class NumpyEnc3(ndarray, SupportsPtr[c_int], SupportsPtrs3[c_int]):
+    class NumpyEnc3(np.ndarray, SupportsPtr[c_int], SupportsPtrs3[c_int]):
         """
         A view over a numpy ndarry, which provides convenience "x", "y", and "z"
         read-write accessor properties. This class subclasses ndarray;
@@ -359,11 +363,13 @@ try:
         This allows you to simply pass in this class to any and all numpy
         methods.
         """
-        def __new__(cls, data: FloatArray = [0., 0., 0.]):
-            if len(data) != 3:
+        def __new__(cls, data: npt.ArrayLike = (0., 0., 0.)):
+            arr = np.asarray(data, dtype=c_int).view(cls)
+
+            if len(arr) != 3:
                 raise ValueError
 
-            return asarray(data, dtype=c_int).view(cls)
+            return arr
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -381,7 +387,7 @@ try:
         def ptrs(self) -> Tuple[c_int_ptr, c_int_ptr, c_int_ptr]:
             return self._ptrs
 
-    class NumpyEnc4(ndarray, SupportsPtr[c_int]):
+    class NumpyEnc4(np.ndarray, SupportsPtr[c_int]):
         """
         A view over a numpy ndarry, which provides convenience "x", "y", and "z"
         read-write accessor properties. This class subclasses ndarray;
@@ -389,11 +395,14 @@ try:
         This allows you to simply pass in this class to any and all numpy
         methods.
         """
-        def __new__(cls, data: FloatArray = [0., 0., 0., 0.]):
-            if len(data) != 4:
+        def __new__(cls, data: npt.ArrayLike = (0., 0., 0., 0.)):
+            arr = np.asarray(data, dtype=c_int).view(cls)
+
+            if len(arr) != 4:
                 raise ValueError
 
-            return asarray(data, dtype=c_int).view(cls)
+            return arr
+
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -403,9 +412,9 @@ try:
         def ptr(self) -> c_int_ptr:
             return self._ptr
 
-    class NumpyDOFIntArray(ndarray, SupportsPtr[c_int]):
-        def __new__(cls, data: Iterable[int] = (0 for _ in range(MAX_DOF))):
-            arr = asarray(data, dtype=c_int).view(cls)
+    class NumpyDOFIntArray(np.ndarray, SupportsPtr[c_int]):
+        def __new__(cls, data: IntArray = tuple(0 for _ in range(MAX_DOF))):
+            arr = np.asarray(data, dtype=c_int).view(cls)
 
             if len(arr) != MAX_DOF:
                 raise ValueError()
@@ -420,9 +429,9 @@ try:
         def ptr(self) -> c_int_ptr:
             return self._ptr
 
-    class NumpyDOFMotorArray(ndarray, SupportsPtr[c_ushort]):
-        def __new__(cls, data: Iterable[int] = (0 for _ in range(MAX_DOF))):
-            arr = asarray(data, dtype=c_ushort).view(cls)
+    class NumpyDOFMotorArray(np.ndarray, SupportsPtr[c_ushort]):
+        def __new__(cls, data: IntArray = tuple(0 for _ in range(MAX_DOF))):
+            arr = np.asarray(data, dtype=c_ushort).view(cls)
 
             if len(arr) != MAX_DOF:
                 raise ValueError()
@@ -437,9 +446,11 @@ try:
         def ptr(self) -> c_ushort_ptr:
             return self._ptr
 
-    class NumpyDOFFloatArray(ndarray, SupportsPtr[c_double]):
-        def __new__(cls, data: Iterable[float] = (0 for _ in range(MAX_DOF))):
-            arr = asarray(data, dtype=c_double).view(cls)
+    class NumpyDOFFloatArray(np.ndarray, SupportsPtr[c_double]):
+        def __new__(
+            cls, data: npt.ArrayLike = tuple(0. for _ in range(MAX_DOF))
+        ):
+            arr = np.asarray(data, dtype=c_double).view(cls)
 
             if len(arr) != MAX_DOF:
                 raise ValueError()
@@ -454,7 +465,7 @@ try:
         def ptr(self) -> c_double_ptr:
             return self._ptr
 
-    class NumpyFrameMatrix(ndarray, SupportsPtr[c_double]):
+    class NumpyFrameMatrix(np.ndarray, SupportsPtr[c_double]):
         """
         A view over a numpy ndarry, which provides convenience "x", "y", and "z"
         read-write accessor properties. This class subclasses ndarray;
@@ -462,13 +473,13 @@ try:
         This allows you to simply pass in this class to any and all numpy
         methods.
         """
-        def __new__(cls, data: Iterable[float] = (0. for _ in range(MAX_DOF))):
-            arr = asarray(data, dtype=c_double).reshape((3, 3)).view(cls)
+        def __new__(cls, data: npt.ArrayLike = tuple(0. for _ in range(9))):
+            arr = np.asarray(data, dtype=c_double)
 
             if len(arr) != 9:
                 raise ValueError()
 
-            return arr
+            return arr.reshape((3, 3)).view(cls)
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -478,7 +489,7 @@ try:
         def ptr(self) -> c_double_ptr:
             return self._ptr
 
-    class NumpyInertiaMatrix(ndarray, SupportsPtr[c_double]):
+    class NumpyInertiaMatrix(np.ndarray, SupportsPtr[c_double]):
         """
         A view over a numpy ndarry, which provides convenience "x", "y", and "z"
         read-write accessor properties. This class subclasses ndarray;
@@ -486,13 +497,13 @@ try:
         This allows you to simply pass in this class to any and all numpy
         methods.
         """
-        def __new__(cls, data: Iterable[float] = (0. for _ in range(36))):
-            arr = asarray(data, dtype=c_int).reshape((6, 6)).view(cls)
+        def __new__(cls, data: npt.ArrayLike = tuple(0. for _ in range(36))):
+            arr = np.asarray(data, dtype=c_double)
 
             if len(arr) != 36:
                 raise ValueError()
 
-            return arr
+            return arr.reshape((6, 6)).view(cls)
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
