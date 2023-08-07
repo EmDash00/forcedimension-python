@@ -1,3 +1,4 @@
+import ctypes as ct
 from ctypes import c_bool, c_byte, c_double, c_int, c_ubyte
 from typing import Tuple
 
@@ -747,7 +748,7 @@ def getPositionAndOrientation(
         px, py, pz,
         oa, ob, og,
         pg,
-        matrix,
+        ct.cast(matrix, c_double_ptr),
         ID
     )
 
@@ -1010,8 +1011,7 @@ def moveTo(pos: FloatVectorLike, block: bool, ID: int = -1):
         0 on success, and -1 otherwise.
     """
 
-    return _libdrd.drdMoveTo(
-        (c_double * 8)(
+    pos_arr = (c_double * 8)(
             pos[0],
             pos[1],
             pos[2],
@@ -1020,7 +1020,10 @@ def moveTo(pos: FloatVectorLike, block: bool, ID: int = -1):
             pos[5],
             pos[6],
             pos[7],
-        ),
+        )
+
+    return _libdrd.drdMoveTo(
+        ct.cast(pos_arr, c_double_ptr),
         block,
         ID
     )
@@ -1121,8 +1124,8 @@ def moveToAllEnc(enc: IntVectorLike, block: bool, ID: int = -1):
     :returns:
         0 on success, and -1 otherwise.
     """
-    return _libdrd.drdMoveToAllEnc(
-        (c_int * MAX_DOF)(
+
+    enc_arr = (c_int * MAX_DOF)(
             enc[0],
             enc[1],
             enc[2],
@@ -1131,7 +1134,10 @@ def moveToAllEnc(enc: IntVectorLike, block: bool, ID: int = -1):
             enc[5],
             enc[6],
             enc[7]
-        ),
+        )
+
+    return _libdrd.drdMoveToAllEnc(
+        ct.cast(enc_arr, c_int_ptr),
         block,
         ID
     )
@@ -1577,8 +1583,7 @@ def track(pos: FloatVectorLike, ID: int = -1):
         0 on success, and -1 otherwise.
     """
 
-    return _libdrd.drdTrack(
-        (c_double * 8)(
+    pos_arr = (c_double * 8)(
             pos[0],
             pos[1],
             pos[2],
@@ -1587,9 +1592,9 @@ def track(pos: FloatVectorLike, ID: int = -1):
             pos[5],
             pos[6],
             pos[7],
-        ),
-        ID
-    )
+        )
+
+    return _libdrd.drdTrack(ct.cast(pos_arr, c_double_ptr), ID)
 
 
 _libdrd.drdTrackEnc.argtypes = [c_int, c_int, c_int, c_byte]
@@ -1679,8 +1684,8 @@ def trackAllEnc(enc: IntVectorLike, ID: int = -1):
     :returns:
         0 on success, and -1 otherwise.
     """
-    return _libdrd.drdTrackAllEnc(
-        (c_int * MAX_DOF)(
+
+    enc_arr = (c_int * MAX_DOF)(
             enc[0],
             enc[1],
             enc[2],
@@ -1689,9 +1694,9 @@ def trackAllEnc(enc: IntVectorLike, ID: int = -1):
             enc[5],
             enc[6],
             enc[7]
-        ),
-        ID
-    )
+        )
+
+    return _libdrd.drdTrackAllEnc(ct.cast(enc_arr, c_int_ptr), ID)
 
 _libdrd.drdSetMotRatioMax.argtypes = [c_double, c_byte]
 _libdrd.drdSetMotRatioMax.restype = c_int

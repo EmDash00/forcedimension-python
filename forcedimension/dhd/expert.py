@@ -1,3 +1,4 @@
+import ctypes as ct
 from ctypes import c_byte, c_char_p, c_double, c_int, c_ubyte, c_uint, c_ushort
 from typing import Tuple
 import warnings
@@ -52,7 +53,7 @@ def disableExpertMode() -> int:
     return _libdhd.dhdDisableExpertMode()
 
 
-_libdhd.dhdPreset.argtypes = [c_int * MAX_DOF, c_ubyte, c_byte]
+_libdhd.dhdPreset.argtypes = [c_int_ptr, c_ubyte, c_byte]
 _libdhd.dhdPreset.restype = c_int
 
 
@@ -93,10 +94,12 @@ def preset(val: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
 
     :returns: 0 on success, -1 otherwise
     """
-    return _libdhd.dhdPreset(
-        (c_int * MAX_DOF)(
+    vals = (c_int * MAX_DOF)(
             val[0], val[1], val[2], val[3], val[4], val[5], val[6], val[7]
-        ),
+        )
+
+    return _libdhd.dhdPreset(
+        ct.cast(vals, c_int_ptr),
         mask,
         ID
     )
@@ -1573,7 +1576,7 @@ def gripperForceToMotor(
     return (cmd.value, err)
 
 
-_libdhd.dhdSetMot.argtypes = [c_ushort * MAX_DOF, c_ubyte, c_byte]
+_libdhd.dhdSetMot.argtypes = [c_ushort_ptr, c_ubyte, c_byte]
 _libdhd.dhdSetMot.restype = c_int
 
 
@@ -1615,9 +1618,7 @@ def setMot(cmds: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
 
     :returns: 0 on success, -1 otherwise
     """
-
-    return _libdhd.dhdSetMot(
-        (c_int * MAX_DOF)(
+    cmd_arr = (c_ushort * MAX_DOF)(
             cmds[0],
             cmds[1],
             cmds[2],
@@ -1626,13 +1627,16 @@ def setMot(cmds: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
             cmds[5],
             cmds[6],
             cmds[7]
-        ),
+        )
+
+    return _libdhd.dhdSetMot(
+        ct.cast(cmd_arr, c_ushort_ptr),
         mask,
         ID
     )
 
 
-_libdhd.dhdPreloadMot.argtypes = [c_ushort * MAX_DOF, c_ubyte, c_byte]
+_libdhd.dhdPreloadMot.argtypes = [c_ushort_ptr, c_ubyte, c_byte]
 _libdhd.dhdPreloadMot.restype = c_int
 
 
@@ -1675,8 +1679,7 @@ def preloadMot(cmds: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
     :returns: 0 on success, -1 otherwise
     """
 
-    return _libdhd.dhdPreloadMot(
-        (c_int * MAX_DOF)(
+    cmd_arr = (c_ushort * MAX_DOF)(
             cmds[0],
             cmds[1],
             cmds[2],
@@ -1685,13 +1688,16 @@ def preloadMot(cmds: IntVectorLike, mask: int = 0xff, ID: int = -1) -> int:
             cmds[5],
             cmds[6],
             cmds[7]
-        ),
+        )
+
+    return _libdhd.dhdPreloadMot(
+        ct.cast(cmd_arr, c_ushort_ptr),
         mask,
         ID
     )
 
 
-_libdhd.dhdGetEnc.argtypes = [c_int * MAX_DOF, c_ubyte, c_byte]
+_libdhd.dhdGetEnc.argtypes = [c_int_ptr, c_ubyte, c_byte]
 _libdhd.dhdGetEnc.restype = c_int
 
 
@@ -1733,7 +1739,7 @@ def getEnc(mask: int, out: MutableIntVectorLike, ID: int = -1) -> int:
     """
     enc = (c_int * MAX_DOF)()
 
-    err = _libdhd.dhdGetEnc(enc, mask, ID)
+    err = _libdhd.dhdGetEnc(ct.cast(enc, c_int_ptr), mask, ID)
 
     for i in range(MAX_DOF):
         out[i] = enc[i]
@@ -1741,7 +1747,7 @@ def getEnc(mask: int, out: MutableIntVectorLike, ID: int = -1) -> int:
     return err
 
 
-_libdhd.dhdGetEncRange.argtypes = [c_int * MAX_DOF, c_int * MAX_DOF, c_byte]
+_libdhd.dhdGetEncRange.argtypes = [c_int_ptr, c_int_ptr, c_byte]
 _libdhd.dhdGetEncRange.restype = c_int
 
 
@@ -1801,7 +1807,9 @@ def getJointAngleRange(ID: int = -1) -> Tuple[
     jmin = (c_double * MAX_DOF)()
     jmax = (c_double * MAX_DOF)()
 
-    err = _libdhd.dhdGetEncRange(jmin, jmax, ID)
+    err = _libdhd.dhdGetEncRange(
+        ct.cast(jmin, c_double_ptr), ct.cast(jmax, c_double_ptr), ID
+    )
 
     return (tuple(jmin), tuple(jmax), err)
 
@@ -1900,7 +1908,7 @@ def getDeltaJointAngles(out: MutableFloatVectorLike, ID: int = -1) -> int:
     return err
 
 
-_libdhd.dhdGetDeltaJacobian.argtypes = [(c_double * 3) * 3, c_byte]
+_libdhd.dhdGetDeltaJacobian.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetDeltaJacobian.restype = c_int
 
 
@@ -1932,7 +1940,7 @@ def getDeltaJacobian(out: MutableFloatMatrixLike, ID: int = -1) -> int:
     """
 
     J = ((c_double * 3) * 3)()
-    err = _libdhd.dhdGetDeltaJacobian(J, ID)
+    err = _libdhd.dhdGetDeltaJacobian(ct.cast(J, c_double_ptr), ID)
 
     for i in range(3):
         for j in range(3):
@@ -1945,7 +1953,7 @@ _libdhd.dhdDeltaJointAnglesToJacobian.argtypes = [
     c_double,
     c_double,
     c_double,
-    (c_double * 3) * 3,
+    c_double_ptr,
     c_byte
 ]
 _libdhd.dhdDeltaJointAnglesToJacobian.restype = c_int
@@ -2001,7 +2009,7 @@ def deltaJointAnglesToJacobian(
         joint_angles[0],
         joint_angles[1],
         joint_angles[2],
-        J,
+        ct.cast(J, c_double_ptr),
         ID
     )
 
@@ -2016,8 +2024,8 @@ _libdhd.dhdDeltaJointTorquesExtrema.argtypes = [
     c_double,
     c_double,
     c_double,
-    c_double * 3,
-    c_double * 3,
+    c_double_ptr,
+    c_double_ptr,
     c_byte
 ]
 _libdhd.dhdDeltaJointTorquesExtrema.restype = c_int
@@ -2090,8 +2098,8 @@ def deltaJointTorquesExtrema(
         joint_angles[0],
         joint_angles[1],
         joint_angles[2],
-        minq,
-        maxq,
+        ct.cast(minq, c_double_ptr),
+        ct.cast(maxq, c_double_ptr),
         ID
     )
 
@@ -2436,7 +2444,7 @@ def getWristJointAngles(out: MutableFloatVectorLike, ID: int = -1) -> int:
     return err
 
 
-_libdhd.dhdGetWristJacobian.argtypes = [(c_double * 3) * 3, c_byte]
+_libdhd.dhdGetWristJacobian.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetWristJacobian.restype = c_int
 
 
@@ -2469,7 +2477,7 @@ def getWristJacobian(out: MutableFloatMatrixLike,ID: int = -1) -> int:
 
     J = ((c_double * 3) * 3)()
 
-    err = _libdhd.dhdGetWristJacobian(J, ID)
+    err = _libdhd.dhdGetWristJacobian(ct.cast(J, c_double_ptr), ID)
 
     for i in range(3):
         for j in range(3):
@@ -2482,7 +2490,7 @@ _libdhd.dhdWristJointAnglesToJacobian.argtypes = [
     c_double,
     c_double,
     c_double,
-    (c_double * 3) * 3,
+    c_double_ptr,
     c_byte
 ]
 _libdhd.dhdWristJointAnglesToJacobian.restype = c_int
@@ -2538,7 +2546,7 @@ def wristJointAnglesToJacobian(
         joint_angles[0],
         joint_angles[1],
         joint_angles[2],
-        J,
+        ct.cast(J, c_double_ptr),
         ID
     )
 
@@ -2553,8 +2561,8 @@ _libdhd.dhdWristJointTorquesExtrema.argtypes = [
     c_double,
     c_double,
     c_double,
-    c_double * 3,
-    c_double * 3,
+    c_double_ptr,
+    c_double_ptr,
     c_byte
 ]
 _libdhd.dhdWristJointTorquesExtrema.restype = c_int
@@ -2622,8 +2630,8 @@ def wristJointTorquesExtrema(
         joint_angles[0],
         joint_angles[1],
         joint_angles[2],
-        minq,
-        maxq,
+        ct.cast(minq, c_double_ptr),
+        ct.cast(maxq, c_double_ptr),
         ID
     )
 
@@ -3038,7 +3046,7 @@ def wristJointAnglesToEncoders(
     return err
 
 
-_libdhd.dhdGetJointAngles.argtypes = [c_double * MAX_DOF, c_byte]
+_libdhd.dhdGetJointAngles.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetJointAngles.restype = c_int
 
 
@@ -3073,9 +3081,9 @@ def getJointAngles(out: MutableFloatVectorLike, ID: int = -1) -> int:
         -1 otherwise.
     """
 
-    joint_angles = (c_int * MAX_DOF)()
+    joint_angles = (c_double * MAX_DOF)()
 
-    err = _libdhd.dhdGetJointAngles(joint_angles, ID)
+    err = _libdhd.dhdGetJointAngles(ct.cast(joint_angles, c_double_ptr), ID)
 
     for i in range(MAX_DOF):
         out[i] = joint_angles[i]
@@ -3083,7 +3091,7 @@ def getJointAngles(out: MutableFloatVectorLike, ID: int = -1) -> int:
     return err
 
 
-_libdhd.dhdGetJointVelocities.argtypes = [c_double * MAX_DOF, c_byte]
+_libdhd.dhdGetJointVelocities.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetJointVelocities.restype = c_int
 
 
@@ -3118,9 +3126,9 @@ def getJointVelocities(out: MutableFloatVectorLike, ID: int = -1) -> int:
         -1 otherwise.
     """
 
-    w = (c_int * MAX_DOF)()
+    w = (c_double * MAX_DOF)()
 
-    err = _libdhd.dhdGetJointVelocities(w, ID)
+    err = _libdhd.dhdGetJointVelocities(ct.cast(w, c_double_ptr), ID)
 
     for i in range(MAX_DOF):
         out[i] = w[i]
@@ -3128,7 +3136,7 @@ def getJointVelocities(out: MutableFloatVectorLike, ID: int = -1) -> int:
     return err
 
 
-_libdhd.dhdGetEncVelocities.argtypes = [c_double * MAX_DOF, c_byte]
+_libdhd.dhdGetEncVelocities.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetEncVelocities.restype = c_int
 
 
@@ -3163,9 +3171,9 @@ def getEncVelocities(out: MutableFloatVectorLike, ID: int = -1) -> int:
        -1 otherwise.
     """
 
-    v = (c_int * MAX_DOF)()
+    v = (c_double * MAX_DOF)()
 
-    err = _libdhd.dhdGetEncVelocities(v, ID)
+    err = _libdhd.dhdGetEncVelocities(ct.cast(v, c_double_ptr), ID)
 
     for i in range(MAX_DOF):
         out[i] = v[i]
@@ -3174,8 +3182,8 @@ def getEncVelocities(out: MutableFloatVectorLike, ID: int = -1) -> int:
 
 
 _libdhd.dhdJointAnglesToInertiaMatrix.argtypes = [
-    c_double * MAX_DOF,
-    (c_double * 6) * 6,
+    c_double_ptr,
+    c_double_ptr,
     c_byte
 ]
 _libdhd.dhdJointAnglesToInertiaMatrix.restype = c_int
@@ -3226,8 +3234,7 @@ def jointAnglesToIntertiaMatrix(
     """
 
     inertia = ((c_double * 6) * 6)()
-    err = _libdhd.dhdJointAnglesToInertiaMatrix(
-        (c_double * MAX_DOF)(
+    joint_angles_arr = (c_double * MAX_DOF)(
             joint_angles[0],
             joint_angles[1],
             joint_angles[2],
@@ -3236,8 +3243,11 @@ def jointAnglesToIntertiaMatrix(
             joint_angles[5],
             joint_angles[6],
             joint_angles[7]
-        ),
-        inertia,
+        )
+
+    err = _libdhd.dhdJointAnglesToInertiaMatrix(
+        ct.cast(joint_angles_arr, c_double_ptr),
+        ct.cast(inertia, c_double_ptr),
         ID
     )
 
@@ -3310,8 +3320,7 @@ def jointAnglesToGravityJointTorques(
     """
 
     q = (c_double * MAX_DOF)()
-    err = _libdhd.dhdJointAnglesToInertiaMatrix(
-        (c_double * MAX_DOF)(
+    joint_angles_arr = (c_double * MAX_DOF)(
             joint_angles[0],
             joint_angles[1],
             joint_angles[2],
@@ -3320,8 +3329,11 @@ def jointAnglesToGravityJointTorques(
             joint_angles[5],
             joint_angles[6],
             joint_angles[7]
-        ),
-        q,
+        )
+
+    err = _libdhd.dhdJointAnglesToInertiaMatrix(
+        ct.cast(joint_angles_arr, c_double_ptr),
+        ct.cast(q, c_double_ptr),
         ID
     )
 

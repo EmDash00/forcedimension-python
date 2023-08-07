@@ -1700,7 +1700,7 @@ _libdhd.dhdGetPositionAndOrientationFrame.argtypes = [
     c_double_ptr,
     c_double_ptr,
     c_double_ptr,
-    (c_double * 3) * 3,
+    c_double_ptr,
     c_byte
 ]
 _libdhd.dhdGetPositionAndOrientationFrame.restype = c_int
@@ -1749,7 +1749,7 @@ def getPositionAndOrientationFrame(
 
     err = _libdhd.dhdGetPositionAndOrientationFrame(
         px, py, pz,
-        matrix,
+        ct.cast(matrix, c_double_ptr),
         ID
     )
 
@@ -1946,7 +1946,8 @@ def getOrientationFrame(out: MutableFloatMatrixLike, ID: int = -1) -> int:
 
     matrix = ((c_double * 3) * 3)()
 
-    err = _libdhd.dhdGetOrientationFrame(matrix, ID)
+    err = _libdhd.dhdGetOrientationFrame(ct.cast(matrix, c_double_ptr), ID)
+
     for i in range(3):
         for j in range(3):
             out[i][j] = matrix[i][j]
