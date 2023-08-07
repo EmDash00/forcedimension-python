@@ -1,14 +1,11 @@
 import ctypes
-from array import ArrayType, array
+from array import array
 from ctypes import c_double, c_int, c_ushort
-from typing import Iterable, List, Tuple, NamedTuple
+from typing import Iterable, List, NamedTuple, Optional, Tuple
 
 from forcedimension.dhd.constants import MAX_DOF
-from forcedimension.typing import (
-    SupportsPtr, SupportsPtrs3,
-    c_double_ptr, c_int_ptr, c_ushort_ptr
-)
-
+from forcedimension.typing import (SupportsPtr, SupportsPtrs3, c_double_ptr,
+                                   c_int_ptr, c_ushort_ptr)
 
 class VersionTuple(NamedTuple):
     """
@@ -19,6 +16,33 @@ class VersionTuple(NamedTuple):
     minor: int
     release: int
     revision: int
+
+    def __str__(self):
+        return f"{self.major}.{self.minor}.{self.release}-{self.revision}"
+
+
+class GripperUpdateOpts(NamedTuple):
+    """
+    Deprecated. Will be removed in v1.0.0
+    """
+    enc: float = 1000
+    thumb_pos: float = 1000
+    finger_pos: float = 1000
+    v: float = 4000
+    w: float = 4000
+
+
+class UpdateOpts(NamedTuple):
+    """
+    Deprecated. Will be removed in v1.0.0
+    """
+    enc: Optional[float] = 1000
+    v: Optional[float] = 4000
+    w: Optional[float] = None
+    buttons: Optional[float] = 100
+    ft: Optional[float] = 4000
+    req: Optional[float] = 4000
+    gripper: Optional[GripperUpdateOpts] = None
 
 
 class Vector3(array, SupportsPtrs3[c_double], SupportsPtr[c_double_ptr]):
@@ -158,6 +182,7 @@ class DOFIntArray(array, SupportsPtr[c_int]):
     def ptr(self) -> c_int_ptr:
         return self._ptr
 
+
 class DOFMotorArray(array, SupportsPtr[c_ushort]):
     """
     A List[float] providing convience "x", "y", "z" read-write accessor
@@ -212,7 +237,7 @@ class DOFFloatArray(array, SupportsPtr[c_double]):
         return self._ptr
 
 
-class FrameMatrix(List[ArrayType[float]], SupportsPtr[c_double]):
+class FrameMatrix(List[array], SupportsPtr[c_double]):
     """
     Represents the type of a coordinate frame matrix.
     """
@@ -234,7 +259,7 @@ class FrameMatrix(List[ArrayType[float]], SupportsPtr[c_double]):
         return self._ptr
 
 
-class InertiaMatrix(List[ArrayType[float]], SupportsPtr[c_double]):
+class InertiaMatrix(List[array], SupportsPtr[c_double]):
     """
     Represents the type of a coordinate frame matrix.
     """
@@ -271,7 +296,7 @@ try:
     from forcedimension.typing import FloatArray
 
     class NumpyVector3(
-        ndarray, SupportsPtrs3[c_double_ptr], SupportsPtr[c_double_ptr]
+        ndarray, SupportsPtrs3[c_double], SupportsPtr[c_double]
     ):
         """
         A view over a numpy ndarry, which provides convenience "x", "y", and "z"
@@ -356,7 +381,6 @@ try:
         def ptrs(self) -> Tuple[c_int_ptr, c_int_ptr, c_int_ptr]:
             return self._ptrs
 
-
     class NumpyEnc4(ndarray, SupportsPtr[c_int]):
         """
         A view over a numpy ndarry, which provides convenience "x", "y", and "z"
@@ -378,7 +402,6 @@ try:
         @property
         def ptr(self) -> c_int_ptr:
             return self._ptr
-
 
     class NumpyDOFIntArray(ndarray, SupportsPtr[c_int]):
         def __new__(cls, data: Iterable[int] = (0 for _ in range(MAX_DOF))):
@@ -431,9 +454,7 @@ try:
         def ptr(self) -> c_double_ptr:
             return self._ptr
 
-
-
-    class NumpyFrameMatrix(ndarray, SupportsPtr[c_double_ptr]):
+    class NumpyFrameMatrix(ndarray, SupportsPtr[c_double]):
         """
         A view over a numpy ndarry, which provides convenience "x", "y", and "z"
         read-write accessor properties. This class subclasses ndarray;
@@ -442,12 +463,12 @@ try:
         methods.
         """
         def __new__(cls, data: Iterable[float] = (0. for _ in range(MAX_DOF))):
-            arr = asarray(data, dtype=c_double).view(cls).reshape((3, 3))
+            arr = asarray(data, dtype=c_double).reshape((3, 3)).view(cls)
 
             if len(arr) != 9:
                 raise ValueError()
 
-            return arr.reshape((3, 3))
+            return arr
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -457,7 +478,7 @@ try:
         def ptr(self) -> c_double_ptr:
             return self._ptr
 
-    class NumpyInertiaMatrix(ndarray, SupportsPtr[c_double_ptr]):
+    class NumpyInertiaMatrix(ndarray, SupportsPtr[c_double]):
         """
         A view over a numpy ndarry, which provides convenience "x", "y", and "z"
         read-write accessor properties. This class subclasses ndarray;
@@ -466,12 +487,12 @@ try:
         methods.
         """
         def __new__(cls, data: Iterable[float] = (0. for _ in range(36))):
-            arr = asarray(data, dtype=c_int).view(cls)
+            arr = asarray(data, dtype=c_int).reshape((6, 6)).view(cls)
 
             if len(arr) != 36:
                 raise ValueError()
 
-            return arr.reshape((6, 6))
+            return arr
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)

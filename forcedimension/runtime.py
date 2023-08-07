@@ -1,33 +1,18 @@
-import ctypes
+import ctypes as ct
 import glob
 import os
 import platform
-import re
 import sys
 import typing
 from functools import lru_cache
 
 from forcedimension.containers import VersionTuple
 
-VERSION_TARGET_FULL = "3.14.0-1681794874"
-VERSION_TARGET = VERSION_TARGET_FULL.partition("-")[0]
-
-
-def version_tuple(version_string: str):
-    search_pattern = r"(\d+)\.(\d+)\.(\d+)-(\d+)"
-
-    if ((res := re.search(search_pattern, version_string)) is not None):
-        if (len(res.groups()) != 4):
-            raise ValueError("Invalid version string.")
-    else:
-        raise ValueError("Invalid version string.")
-
-    return VersionTuple(*(int(v) for v in res.groups()))
+VERSION_TARGET = VersionTuple(3, 16, 0, 0)
 
 
 @lru_cache
 def load(lib_name, search_dirs=(), silent=False):
-
     try:
         if __sphinx_build__:  # type: ignore
             from mock import Mock
@@ -73,7 +58,8 @@ def load(lib_name, search_dirs=(), silent=False):
                     typing.cast(str, os.environ.get("FORCEDIM_SDK")),
                     "lib",
                     "release",
-                    "lin-x86_64-gcc"))
+                    "lin-x86_64-gcc")
+                )
             )
     else:
         if not silent:
@@ -100,27 +86,28 @@ def load(lib_name, search_dirs=(), silent=False):
                 path = os.getenv("PATH")
                 if (path is not None and directory not in path):
                     os.environ["PATH"] = f"{path};{directory}"
-
             try:
-                lib = ctypes.CDLL(lib_path)
+                lib = ct.CDLL(lib_path)
             except OSError:
                 if silent:
                     break
                 else:
-                    raise RuntimeError("Library could not be loaded. Do you"
-                                       "have missing dependencies?\n"
-                                       "Ensure you have libusb-1.")
+                    raise RuntimeError(
+                        "Library could not be loaded. Do you"
+                        "have missing dependencies?\n"
+                        "Ensure you have libusb-1."
+                    )
 
-            major = ctypes.c_int()
-            minor = ctypes.c_int()
-            release = ctypes.c_int()
-            revision = ctypes.c_int()
+            major = ct.c_int()
+            minor = ct.c_int()
+            release = ct.c_int()
+            revision = ct.c_int()
 
             lib.dhdGetSDKVersion(
-                ctypes.byref(major),
-                ctypes.byref(minor),
-                ctypes.byref(release),
-                ctypes.byref(revision)
+                ct.byref(major),
+                ct.byref(minor),
+                ct.byref(release),
+                ct.byref(revision)
             )
 
             version = VersionTuple(
@@ -130,14 +117,11 @@ def load(lib_name, search_dirs=(), silent=False):
                 revision.value
             )
 
-            if (version < version_tuple(VERSION_TARGET_FULL)):
+            if version < VERSION_TARGET:
                 if not silent:
                     sys.stderr.write(
-                        "Invalid version. v{}.{}.{}-{} found "
-                        "but {} is required.\n".format(
-                            *version,
-                            VERSION_TARGET_FULL
-                        )
+                        f"Invalid version. v{version} found "
+                        f"but {VERSION_TARGET} is required.\n"
                     )
 
                 return None
