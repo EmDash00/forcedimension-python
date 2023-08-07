@@ -1,6 +1,7 @@
 from ctypes import (
-    c_bool, c_byte, c_char_p, c_double, c_int, c_uint, c_ushort
+    c_bool, c_byte, c_char_p, c_double, c_int, c_size_t, c_uint, c_uint32, c_ushort
 )
+import ctypes as ct
 from typing import Optional, Tuple, Union
 
 import forcedimension.runtime as _runtime
@@ -11,19 +12,26 @@ from forcedimension.typing import (
 from forcedimension.dhd.adaptors import (
     DHDError,
     DHDErrorCom,
-    DHDErrorConfiguration,
-    DHDErrorDeviceInUse,
-    DHDErrorDeviceNotReady,
     DHDErrorDHCBusy,
-    DHDErrorExpertModeDisabled,
-    DHDErrorFeatureNotAvailable,
-    DHDErrorFeatureNotEnabled,
-    DHDErrorGeometry,
-    DHDErrorNoDeviceFound,
     DHDErrorNoDriverFound,
+    DHDErrorNoDeviceFound,
+    DHDErrorFeatureNotAvailable,
+    DHDErrorTimeout,
+    DHDErrorGeometry,
+    DHDErrorExpertModeDisabled,
+    DHDErrorNotImplemented,
+    DHDErrorMemory,
+    DHDErrorDeviceNotReady,
+    DHDErrorFileNotFound,
+    DHDErrorConfiguration,
+    DHDErrorInvalidIndex,
+    DHDErrorDeprecated,
+    DHDErrorNullArgument,
     DHDErrorRedundantFail,
-    DHDErrorTimeout, DHDFeatureError,
-    DHDIOError,
+    DHDErrorFeatureNotEnabled,
+    DHDErrorDeviceInUse,
+    DHDErrorArgument,
+    DHDErrorNoRegulation,
     Status,
     errno_to_exception
 )
@@ -312,6 +320,31 @@ def close(ID: int = -1) -> int:
     return _libdhd.dhdClose(ID)
 
 
+_libdhd.dhdCheckControllerMemory.argtypes = [c_byte]
+_libdhd.dhdCheckControllerMemory.restype = c_int
+
+
+def checkControllerMemory(ID: int = -1) -> int:
+    """
+    This function evaluates the integrity of the device controller firmware and
+    internal configuration on supported device types.
+
+    :param int ID:
+        Device ID (see multiple devices section for details).
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to C char.
+
+    :returns:
+        0 on success,
+        :data:`forcedimension.dhd.constants.ErrorNum.Configuration` if the
+        firmware or internal configuration health check failed.
+    """
+
+    return _libdhd.dhdCheckControllerMemory(ID)
+
+
+
 _libdhd.dhdStop.argtypes = [c_byte]
 _libdhd.dhdStop.restype = c_int
 
@@ -431,6 +464,30 @@ def getSystemType(ID: int = -1) -> DeviceType:
     return DeviceType(_libdhd.dhdGetSystemType(ID))
 
 
+_libdhd.dhdGetSystemRev.argtypes = [c_byte]
+_libdhd.dhdGetSystemRev.restype = c_int
+
+
+def getSystemRev(ID: int = -1) -> int:
+    """
+    Return the revision associated with this instance of haptic device type. As
+    this SDK can be used to control all of Force Dimension haptic products,
+    this can help programmers ensure that their application is running on the
+    appropriate target haptic device.
+
+    :param int ID:
+        Device ID (see multiple devices section for details).
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to C char.
+
+    :returns:
+        The device type on success, -1 otherwise.
+    """
+    return _libdhd.getSystemRev(ID)
+
+
+
 _libdhd.dhdGetSystemName.argtypes = [c_byte]
 _libdhd.dhdGetSystemName.restype = c_char_p
 
@@ -521,6 +578,55 @@ def getSDKVersion() -> VersionTuple:
         release.value,
         revision.value
     )
+
+
+_libdhd.dhdGetComponentVersionStr.argtypes = [
+    c_uint32, c_char_p, c_size_t, c_byte
+]
+_libdhd.dhdGetComponentVersionStr.restype = c_int
+
+
+def getComponentVersionStr(
+    component: int, N: int = 256, ID: int = -1
+) -> Tuple[str, int]:
+    """
+    This function returns a string of length at most `N` that describes an
+    internal component version (if present).
+
+    :param int component:
+        Component ID provided by Force Dimension (device-specific).
+
+    :param int N:
+        The maximum number of characters to get from the string that describes
+        an internal component.
+
+    :param int ID:
+        Device ID (see multiple devices section for details).
+
+    :raises ValueError:
+        If N is less than 1.
+
+    :raises ArgumentError:
+        If ``component`` is not implicitly convertible to C uint32_t.
+
+    :raises ArgumentError:
+        If ``N`` is not implicitly convertible to C size_t.
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to C char.
+
+    :returns:
+        A string of at most N characters that describes an internal component.
+    """
+
+    if N < 1:
+        raise ValueError("Buffer size must be at least 1.")
+
+    buff = ct.create_string_buffer(N)
+    err = _libdhd.dhdGetComponentVersionStr(component, buff, N, ID)
+
+    return bytes(buff).split(b'\x00')[0].decode('utf-8'), err
+
 
 
 _libdhd.dhdGetStatus.argtypes = [c_int_ptr, c_byte]

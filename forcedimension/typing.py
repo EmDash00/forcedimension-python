@@ -128,7 +128,8 @@ MutableFloatArray2D = _MutableArray[int, MutableFloatVectorLike]
 #: of 2D float array.
 MutableFloatMatrixLike = Union[MutableFloatArray2D, MutableFloatReturnArray2D]
 
-DOFTuple = Tuple[int, int, int, int, int, int, int, int]
+IntDOFTuple = Tuple[int, int, int, int, int, int, int, int]
+FloatDOFTuple = Tuple[float, float, float, float, float, float, float, float]
 
 class GenericVec(_MutableArray[int, float], Protocol):
     def __getitem__(self, __k: int) -> float: ...

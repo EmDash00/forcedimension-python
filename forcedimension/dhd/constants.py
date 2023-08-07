@@ -42,18 +42,30 @@ class DeviceType(IntEnum):
     Supported device type IDs as an enumeration.
     """
     NONE = 0
+    DELTA3 = 63
     OMEGA3 = 33
+    OMEGA6_RIGHT = 34
+    OMEGA6_LEFT = 36
+    OMEGA7_RIGHT = 35
+    OMEGA7_LEFT = 37
+    CONTROLLER = 81
+    CONTROLLER_HR = 82
+    CUSTOM = 91
+    SIGMA3 = 206
+    SIGMA7_RIGHT = 104
+    SIGMA7_LEFT = 105
+    LAMBDA3 = 203
+    LAMBDA7_RIGHT = 108
+    LAMBDA7_LEFT = 109
+    FALCON = 60
     OMEGA33 = 34
     OMEGA33_LEFT = 36
     OMEGA331 = 35
     OMEGA331_LEFT = 37
-    FALCON = 60
-    CONTROLLER = 81
-    CONTROLLER_HR = 82
-    CUSTOM = 91
     SIGMA331 = 104
     SIGMA331_LEFT = 105
-    DELTA3 = 63
+    LAMBDA331 = 108
+    LAMBDA331_LEFT = 109
 
 
 class ErrorNum(IntEnum):
@@ -75,10 +87,14 @@ class ErrorNum(IntEnum):
     DEVICE_NOT_READY = 12
     FILE_NOT_FOUND = 13
     CONFIGURATION = 14
-    NULL_ARGUMENT = 15
-    REDUNDANT_FAIL = 16
-    NOT_ENABLED = 17
-    DEVICE_IN_USE = 18
+    INVALID_INDEX = 15
+    DEPRECATED = 16
+    NULL_ARGUMENT = 17
+    REDUNDANT_FAIL = 18
+    NOT_ENABLED = 19
+    DEVICE_IN_USE = 20
+    INVALID = 21
+    NO_REGULATION = 22
 
 #: Array index for motors/encoders of the WRIST structure.
 #: i.e. DELTA motor/encoder 0 has index 0

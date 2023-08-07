@@ -1,14 +1,17 @@
 import ctypes
 from ctypes import ArgumentError, Structure, c_int, pointer
-from typing import Callable, Optional, Any
+from typing import Any, Callable, Optional
+
 from forcedimension.dhd.constants import ErrorNum
 from forcedimension.typing import Pointer, SupportsPtr, c_int_ptr
+
 
 class Status(Structure):
     """
     Adapts the status array returned by
     :func:`forcedimension.bindings.dhd.getStatus()`
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._ptr = ctypes.cast(pointer(self), c_int_ptr)
@@ -21,6 +24,7 @@ class Status(Structure):
         ('power', c_int),
         ('connected', c_int),
         ('started', c_int),
+        ('reset', c_int),
         ('idle', c_int),
         ('force', c_int),
         ('brake', c_int),
@@ -32,7 +36,8 @@ class Status(Structure):
         ('wrist_init', c_int),
         ('redundancy', c_int),
         ('forceoffcause', c_int),
-        ('unknown_status', c_int),
+        ('locks', c_int),
+        ('axis_checked', c_int),
     )
 
     #: Indicates if the device is powered or not.
@@ -89,7 +94,6 @@ class Status(Structure):
     #: See TimeGuard feature for details.
     timeguard: int
     "Indicates if the TimeGuard option is enabled or not."
-
 
     #: Indicates if the device wrist is initialized or not.
     #: See device types for details.
@@ -327,30 +331,65 @@ class DHDErrorGeometry(DHDError):
         )
 
 
-class DHDMemoryError(DHDError, MemoryError):
+class DHDErrorMemory(DHDError, MemoryError):
     def __init__(self, *args, **kwargs):
         return super().__init__(
             "DHD ran out of memory."
         )
 
 
-class DHDNotImplementedError(DHDError, NotImplementedError):
+class DHDErrorNotImplemented(DHDError, NotImplementedError):
     def __init__(self, *args, **kwargs):
         return super().__init__(
             "The command or feature is currently not implemented."
         )
 
 
-class DHDFileNotFoundError(DHDError, FileNotFoundError):
+class DHDErrorFileNotFound(DHDError, FileNotFoundError):
     def __init__(self, *args, **kwargs):
         return super().__init__()
 
 
-class DHDArgumentError(DHDError, ArgumentError):
+class DHDErrorDeprecated(DHDError):
     def __init__(self):
         super().__init__(
-            "The function producing this error was given a null or invalid "
-            "argument."
+            "This feature, function, or current device is marked as "
+            "deprecated."
+        )
+
+
+class DHDErrorInvalidIndex(DHDError, IndexError):
+    def __init__(self):
+        super().__init__(
+            "An index passed to the function is outside the expected valid "
+            "range. "
+        )
+
+
+class DHDErrorArgument(DHDError, ValueError):
+    def __init__(self, null=False):
+        if not null:
+            super().__init__(
+                "The function producing this error was passed an invalid or "
+                "argument."
+            )
+        else:
+            super().__init__(
+                "The function producing this error was passed an unexpected "
+                "null pointer argument."
+            )
+
+
+class DHDErrorNullArgument(DHDErrorArgument):
+    def __init__(self):
+        super().__init__(null=True)
+
+
+class DHDErrorNoRegulation(DHDError):
+    def __init__(self):
+        super().__init__(
+            "The robotic regulation thread is not running. This only applies "
+            "to functions from the robotics SDK."
         )
 
 
@@ -365,15 +404,19 @@ _error = [
     DHDErrorTimeout,
     DHDErrorGeometry,
     DHDErrorExpertModeDisabled,
-    DHDNotImplementedError,
-    DHDMemoryError,
+    DHDErrorNotImplemented,
+    DHDErrorMemory,
     DHDErrorDeviceNotReady,
-    DHDFileNotFoundError,
+    DHDErrorFileNotFound,
     DHDErrorConfiguration,
-    DHDArgumentError,
+    DHDErrorInvalidIndex,
+    DHDErrorDeprecated,
+    DHDErrorNullArgument,
     DHDErrorRedundantFail,
     DHDErrorFeatureNotEnabled,
-    DHDErrorDeviceInUse
+    DHDErrorDeviceInUse,
+    DHDErrorArgument,
+    DHDErrorNoRegulation
 ]
 
 

@@ -1,10 +1,12 @@
-from ctypes import c_byte, c_double, c_int, c_ubyte, c_uint, c_ushort
+from ctypes import c_byte, c_char_p, c_double, c_int, c_ubyte, c_uint, c_ushort
 from typing import Tuple
+import warnings
 
-from forcedimension.dhd.constants import ComMode, MAX_DOF
+from forcedimension.dhd.constants import ComMode, MAX_DOF, DeviceType
 import forcedimension.runtime as runtime
 from forcedimension.typing import (
-    DOFTuple,
+    IntDOFTuple,
+    FloatDOFTuple,
     FloatVectorLike,
     MutableIntVectorLike,
     MutableFloatVectorLike,
@@ -1751,7 +1753,7 @@ _libdhd.dhdGetEncRange.argtypes = [c_int * MAX_DOF, c_int * MAX_DOF, c_byte]
 _libdhd.dhdGetEncRange.restype = c_int
 
 
-def getEncRange(ID: int = -1) -> Tuple[DOFTuple, DOFTuple, int]:
+def getEncRange(ID: int = -1) -> Tuple[IntDOFTuple, IntDOFTuple, int]:
     """
     Get the expected min and max encoder values for all axes present on the
     current device. Axis indices that do not exist on the device will return
@@ -1778,6 +1780,38 @@ def getEncRange(ID: int = -1) -> Tuple[DOFTuple, DOFTuple, int]:
     err = _libdhd.dhdGetEncRange(encMin, encMax, ID)
 
     return (tuple(encMin), tuple(encMax), err)
+
+
+_libdhd.getJointAngleRange.argtypes = [c_double_ptr, c_double_ptr, c_byte]
+_libdhd.getJointAngleRange.restype = c_int
+
+
+def getJointAngleRange(ID: int = -1) -> Tuple[
+    FloatDOFTuple, FloatDOFTuple, int
+]:
+    """
+    This function retrieves the expected min and max joint angles (in [rad])
+    for all sensed degrees-of-freedom on the current device. Axis indices that
+    do not exist on the device will return a range of 0.0.
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to a C char.
+
+    :returns:
+        A tuple of (jmin, jmax, err). jmin and jmax are tuples of
+        floats representing the min and max joint angles for each
+        degree-of-freedom (in [rad]). err is 0 on success and -1 otherwise.
+    """
+
+    jmin = (c_double * MAX_DOF)()
+    jmax = (c_double * MAX_DOF)()
+
+    err = _libdhd.dhdGetEncRange(jmin, jmax, ID)
+
+    return (tuple(jmin), tuple(jmax), err)
 
 
 _libdhd.dhdSetBrk.argtypes = [c_ubyte, c_byte]
@@ -2102,6 +2136,14 @@ def deltaGravityJointTorques(
     given DELTA joint angle configuration. Please refer to your device user
     manual for more information on your device coordinate system.
 
+    .. deprecated:: 0.2.0
+           The functionality of this function is deprecated as of version
+           ForceDimension Python bindings version 0.2.0
+           (which targets ForceDimension SDK v3.16.0+).
+           Please use :func:`dhdJointAnglesToGravityJointTorques()`
+           instead.
+
+
     :param FloatVectorLike joint_angles:
         Sequence of ``(j0, j1, j2)`` where ``j0``, ``j1``, ``j2`` refer to the
         joint angles for axis 0, 1, and 2, respectively.
@@ -2135,6 +2177,11 @@ def deltaGravityJointTorques(
     :returns:
         0 on success, -1 otherwise.
     """
+
+    warnings.warn(
+        "This function is deprecated, please use "
+        "dhd.jointAnglesToGravityJointTorques() instead."
+    )
 
     q0 = c_double()
     q1 = c_double()
@@ -2620,6 +2667,14 @@ def wristGravityJointTorques(
     given wrist joint angle configuration. Please refer to your device user
     manual for more information on your device coordinate system.
 
+    .. deprecated:: 0.2.0
+           The functionality of this function is deprecated as of version
+           ForceDimension Python bindings version 0.2.0
+           (which targets ForceDimension SDK v3.16.0+).
+           Please use :func:`dhd.jointAnglesToGravityJointTorques()`
+           instead.
+
+
     :param FloatVectorLike joint_angles:
         Sequence of ``(j0, j1, j2)`` where ``j0``, ``j1``, and ``j2`` refer to
         the joint angles for wrist axes 0, 1, and 2, respectively.
@@ -2653,6 +2708,12 @@ def wristGravityJointTorques(
     :returns:
         0 on success, -1 otherwise
     """
+
+    warnings.warn(
+        "This function is deprecated, please use "
+        "dhd.jointAnglesToGravityJointTorques() instead."
+    )
+
 
     q0 = c_double()
     q1 = c_double()
@@ -3194,6 +3255,90 @@ def jointAnglesToIntertiaMatrix(
     return err
 
 
+_libdhd.dhdJointAnglesToGravityJointTorques.argtypes = [
+    c_double_ptr,
+    c_double_ptr,
+    c_ubyte,
+    c_byte
+]
+_libdhd.dhdJointAnglesToGravityJointTorques.restype = c_int
+
+
+def jointAnglesToGravityJointTorques(
+    joint_angles: FloatVectorLike,
+    out: MutableFloatVectorLike,
+    mask: int = 0xff,
+    ID: int = -1,
+) -> int:
+    """
+    This functino computes the joint torques (in [Nm]) required to provide
+    gravity compensation on all actuated degrees-of-freedom of the current
+    device for a given joint angles configuration (in [rad])
+
+    See Also
+    --------
+    :data:`forcedimension.dhd.constants.MAX_DOF`
+
+    :param int ID:
+        Device ID (see multiple devices section for details).
+
+    :param int mask:
+        Bitwise mask of which joint torques should be computed.
+
+    :param MutableFloatMatrixLike out:
+        Output buffer for the joint torques required to provide gravity
+        compensation (in [Nm]).
+
+    :raises ArgumentError:
+        If ``joint_angles`` is not implicitly convertible to a C char
+
+    :raises IndexError:
+        If ``len(joint_angles) < forcedimension.dhd.constants.MAX_DOF``.
+
+    :raises TypeError:
+        If ``joint_angles`` is not subscriptable.
+
+    :raises TypeError:
+        If ``out`` does not support item assignment either
+        because it's immutable or not subscriptable.
+
+    :raises IndexError:
+        If ``len(out)`` is less than
+        :data:`forcedimension.dhd.constants.MAX_DOF`.
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to a C char.
+
+    :raises ArgumentError:
+        If ``mask`` is not implicitly convertible to a C uchar.
+
+    :returns:
+        0 on success, -1 otherwise.
+    """
+
+    q = (c_double * MAX_DOF)()
+    err = _libdhd.dhdJointAnglesToInertiaMatrix(
+        (c_double * MAX_DOF)(
+            joint_angles[0],
+            joint_angles[1],
+            joint_angles[2],
+            joint_angles[3],
+            joint_angles[4],
+            joint_angles[5],
+            joint_angles[6],
+            joint_angles[7]
+        ),
+        q,
+        ID
+    )
+
+    for i in range(MAX_DOF):
+        out[i] = q[i]
+
+    return err
+
+
+
 _libdhd.dhdSetComMode.argtypes = [c_int, c_byte]
 _libdhd.dhdSetComMode.restype = c_int
 
@@ -3282,3 +3427,66 @@ def getWatchdog(ID: int = -1) -> Tuple[int, int]:
     duration = c_int()
 
     return (duration.value, _libdhd.dhdSetWatchdog(duration, ID))
+
+
+
+_libdhd.dhdControllerSetDevice.argtypes = [c_int, c_byte]
+_libdhd.dhdControllerSetDevice.restype = c_int
+
+
+def controllerSetDevice(devtype: DeviceType, ID: int = -1) -> int:
+    """
+    If the connected device is a controller lets the programmer define the
+    Force Dimension mechanical structure attached to it. Upon selecting a
+    device model, the routine will attempt to read that particular
+    device configuration from the controller. If this fails, a default
+    configuration will be selected and stored in the controller.
+
+
+    Info
+    ----
+    This feature only applies to devices of type
+    :data:`forcedimension.constants.DeviceType.CONTROLLER` or
+    :data:`forcedimension.constants.DeviceType.CONTROLLER_HR`
+
+    :param DeviceType devtype:
+        The device type to use.
+
+    :param int ID:
+        Device ID (see multiple devices section for details).
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to a C char.
+
+    :returns:
+        0 on success, -1 otherwise.
+    """
+
+    return _libdhd.dhdControllerSetDevice(devtype, ID)
+
+
+_libdhd.dhdReadConfigFromFile.argtypes = [c_char_p, c_byte]
+_libdhd.dhdReadConfigFromFile.restype = c_int
+
+
+def readConfigFromFile(filename: bytes, ID: int = -1):
+    """
+    This function loads a specific device calibration/configuration data from
+    a file. Particularly useful when using the generic controller connected to
+    a Force Dimension device without using the
+    :func:`forcedimension.dhd.controllerSetDevice()` call.
+
+    :param bytes filename:
+        Configuration file containing device calibration/configuration data.
+
+    :param int ID:
+        Device ID (see multiple devices section for details).
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to a C char.
+
+    :returns:
+        0 on success, -1 otherwise.
+    """
+
+    return _libdhd.dhdReadConfigFromFile(filename, ID)
