@@ -117,18 +117,20 @@ def getOrientationRad(
     plate.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
 
 
     Info
     ----
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33` and
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT` and
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT`
     have angles that are instead computed with respect to their internal
     reference frame, which is rotated π/4 radians around the Y axis.
     Please refer to your device user manual for more information on your
@@ -184,18 +186,20 @@ def getOrientationDeg(
     plate.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
 
 
     Info
     ----
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33` and
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT` and
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT`
     have angles that are instead computed with respect to their internal
     reference frame, which is rotated π/4 radians around the Y axis.
     Please refer to your device user manual for more information on your
@@ -258,8 +262,8 @@ def getPositionAndOrientationRad(
 
     Note:
 
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT`
 
     have angles that are instead computed with respect to their internal
     reference frame, which is rotated π/4 radians around the Y axis.
@@ -267,12 +271,14 @@ def getPositionAndOrientationRad(
     device coordinate system.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
 
 
     :param int ID:
@@ -346,8 +352,8 @@ def getPositionAndOrientationDeg(
 
     Note:
 
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT`
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT`
 
     have angles that are instead computed with respect to their internal
     reference frame, which is rotated π/4 radians around the Y axis.
@@ -355,12 +361,14 @@ def getPositionAndOrientationDeg(
     device coordinate system.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
 
 
     :param int ID:
@@ -559,6 +567,115 @@ def getOrientationFrame(out: SupportsPtr[c_double], ID: int = -1) -> int:
     return _libdhd.dhdGetOrientationFrame(out.ptr, ID)
 
 
+_libdhd.dhdGetGripperAngleDeg.argtypes = [c_double_ptr, c_byte]
+_libdhd.dhdGetGripperAngleDeg.restype = c_int
+
+
+def getGripperAngleDeg(out: c_double, ID: int = -1) -> int:
+    """
+    Get the gripper opening angle (in [deg]).
+
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.direct.getGripperAngleRad()`
+
+
+    :param c_double out:
+        Buffer to store the gripper opening angle (in [deg]).
+
+    :param int ID:
+         Device ID (see multiple devices section for details).
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to C char.
+
+    :returns:
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
+    """
+
+    return _libdhd.dhdGetGripperAngleDeg(out, ID)
+
+
+_libdhd.dhdGetGripperAngleRad.argtypes = [c_double_ptr, c_byte]
+_libdhd.dhdGetGripperAngleRad.restype = c_int
+
+
+def getGripperAngleRad(out: c_double, ID: int = -1) -> int:
+    """
+    Get the gripper opening angle (in [rad]).
+
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.direct.getGripperAngleDeg()`
+
+
+    :param c_double out:
+        Buffer to store the gripper opening angle (in [rad]).
+
+    :param int ID:
+         Device ID (see multiple devices section for details).
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to C char.
+
+    :returns:
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
+    """
+
+    return _libdhd.dhdGetGripperAngleRad(out, ID)
+
+
+_libdhd.dhdGetGripperGap.argtypes = [c_double_ptr, c_byte]
+_libdhd.dhdGetGripperGap.restype = c_int
+
+
+def getGripperGap(out: c_double, ID: int = -1) -> int:
+    """
+    Get the gripper opening distance (in [m]).
+
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
+
+    :param c_double out:
+        buffer to store the gripper opening distance (in [m]).
+
+    :param int ID:
+         Device ID (see multiple devices section for details).
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to C char.
+
+    :returns:
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
+    """
+
+    return _libdhd.dhdGetGripperGap(out, ID)
+
+
 _libdhd.dhdGetGripperThumbPos.argtypes = [
     c_double_ptr,
     c_double_ptr,
@@ -576,10 +693,12 @@ def getGripperThumbPos(
     of the force gripper structure if present.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -626,10 +745,12 @@ def getGripperFingerPos(
     z axes of the force gripper structure if present.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -907,3 +1028,142 @@ def getAngularVelocityDeg(
     """
 
     return _libdhd.dhdGetAngularVelocityDeg(*out.ptrs, ID)
+
+
+_libdhd.dhdGetGripperLinearVelocity.argtypes = [c_double_ptr, c_byte]
+_libdhd.dhdGetGripperLinearVelocity.restype = c_int
+
+
+def getGripperLinearVelocity(out: c_double, ID: int = -1) -> int:
+    """
+    Retrieve the estimated linear velocity of the gripper (in [m/s]).
+
+    Please note that the velocity estimator requires at least 2 position
+    updates during the time interval defined in
+    :func:`forcedimension.dhd.configLinearVelocity()` in order to be able to
+    compute the estimate. Otherwise, e.g. if there are no calls to
+    :func:`forcedimension.dhd.getPosition(), dhd.libdhd.getLinearVelocity()`,
+    or :func:`forcedimension.dhd.getLinearVelocity()` will return an error
+    (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
+
+    See Also
+    --------
+    :data:`forcedimension.dhd.configGripperVelocity()`
+    :data:`forcedimension.dhd.getGripperAngularVelocityRad()`
+    :func:`forcedimension.dhd.getGripperAngularVelocityDeg()`
+
+
+    :param c_double out:
+        Output buffer to store the gripper linear velocity (in [m/s]).
+
+    :param int ID:
+         Device ID (see multiple devices section for details).
+
+    :param SupportsPtr[c_double] out:
+        An output buffer to store the gripper linear velocity (in [m/s]).
+
+    :raises TypeError:
+        If ``out`` does not support item assignment either
+        because its immutable or not subscriptable.
+
+    :raises IndexError:
+        If ``len(out) < 3``.
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to C char.
+
+    :returns:
+        0 on success, -1 otherwise.
+    """
+
+    return _libdhd.dhdGetGripperLinearVelocity(out, ID)
+
+
+_libdhd.dhdGetGripperAngularVelocityRad.argtypes = [c_double_ptr, c_byte]
+_libdhd.dhdGetGripperAngularVelocityRad.restype = c_int
+
+
+def getGripperAngularVelocityRad(out: c_double, ID: int = -1) -> int:
+    """
+    Retrieve the estimated angular velocity of the gripper (in [rad/s]).
+
+    Info
+    ----
+    The velocity estimator requires at least 2 position
+    updates during the time interval defined in
+    :func:`forcedimension.dhd.configGripperVelocity()` in order to be able to
+    compute the estimate. Otherwise, e.g. if there are no calls to
+    :func:`forcedimension.dhd.getPosition()`,
+    :func:`forcedimension.dhd.getGripperAngularVelocityRad()`,
+    or :func:`forcedimension.dhd.getGripperAngularVelocityRad()` will return an
+    error (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.configGripperVelocity()`
+    :func:`forcedimension.dhd.getGripperLinearVelocity()`
+    :func:`forcedimension.dhd.getGripperAngularVelocityDeg()`
+
+
+    :param int ID:
+         Device ID (see multiple devices section for details).
+
+    :param c_double out:
+        An output buffer to store the gripper angular velocity (in [rad/s])
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to C char.
+
+    :returns:
+        0 on success, -1 otherwise.
+    """
+
+    return _libdhd.dhdGetGripperAngularVelocityRad(out, ID)
+
+
+_libdhd.dhdGetGripperAngularVelocityDeg.argtypes = [c_double_ptr, c_byte]
+_libdhd.dhdGetGripperAngularVelocityDeg.restype = c_int
+
+
+def getGripperAngularVelocityDeg(out: c_double, ID: int = -1) -> int:
+    """
+    Retrieve the estimated angular velocity of the gripper (in [rad/s]).
+    Velocity computation can be figured by calling:
+
+    :func:`forcedimension.dhd.configGripperVelocity()`
+
+    By default:
+    :func:`forcedimension.dhd.constants.VELOCITY_WINDOW` and
+    :func:`forcedimension.dhd.constant.VELOCITY_WINDOWING`
+    are used. See velocity estimator for details.
+
+    Please note that the velocity estimator requires at least 2 position
+    updates during the time interval defined in:
+    :func:`forcedimension.dhd.configGripperVelocity()`
+
+    in order to be able to compute the estimate. Otherwise, e.g. if there are
+    no calls to:
+    :func:`forcedimension.dhd.getPosition()`
+    :func:`forcedimension.dhd.getGripperLinearVelocity()`
+    within the time interval window, this function will set an error with:
+    :data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`
+
+    See Also
+    --------
+    :func:`forcedimension.dhd.configGripperVelocity()`
+    :func:`forcedimension.dhd.getGripperLinearVelocity()`
+    :func:`forcedimension.dhd.getGripperAngularVelocityRad()`
+
+
+    :param int ID:
+         Device ID (see multiple devices section for details).
+
+    :param c_double out:
+        An output buffer to store the gripper angular velocity (in [deg/s]).
+
+    :returns:
+        0 on success, and -1 otherwise.
+    """
+
+    return _libdhd.dhdGetGripperAngularelocityDeg(out, ID)
+

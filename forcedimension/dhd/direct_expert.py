@@ -583,6 +583,10 @@ def wristMotorToTorque(
     end-effector about the, X, Y, and Z axes (in [Nm]) for a given set of motor
     commands at a given orientation (defined by encoder values)
 
+    This feature only applies to the following devices:
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+
     :param IntVectorLike cmd:
         Sequence of ``(cmd0, cmd1, cmd2)`` where ``cmd0``, ``cmd1``,
         and ``cmd2`` are the axis 0, 1, and 2 DELTA motor commands,
@@ -668,6 +672,10 @@ def wristTorqueToMotor(
     obtain a given torque on the wrist end-effector about the X, Y, and Z axes
     (in [Nm]) at a given orientation (defined by encoder values)
 
+    This feature only applies to the following devices:
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+
     :param FloatVectorLike t:
         Sequence of ``(t0, t1, t2)`` where ``t0``, ``t1``, and ``t2`` are the
         DELTA axis torque commands (in [Nm]) for axes 0, 1, and 2, respectively.
@@ -737,10 +745,11 @@ _libdhd.dhdGripperMotorToForce.restype = c_int
 def gripperMotorToForce(
     cmd: int,
     enc_wrist_grip: SupportsPtr[c_int],
+    out: c_double,
     ID: int = -1
-) -> Tuple[float, int]:
+) -> int:
     """
-    This routine computes the force applied to the end-effector for a given
+    Computes the force applied to the end-effector (in [N]) for a given
     motor command.
 
     This feature only applies to the following devices
@@ -752,12 +761,12 @@ def gripperMotorToForce(
     :param int output:
         Motor command on gripper axis.
 
-    :param IntVectorLike enc_wrist:
-        Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, ``enc2``
-        are encoder values about wrist joints 0, 1, and 2, respectively.
+    :param SupportsPtr[c_int] enc_wrist_grip:
+        Buffer which contains the encoder values about wrist joints 0, 1, and
+        2 as well as the encoder value of the gripper.
 
-    :param int enc_gripper:
-        Encoder reading for the gripper.
+    :param c_ushort out:
+        Output buffer to store the force applied to the end-effector (in [N]).
 
     :param int ID:
         Device ID (see multiple devices section for details).
@@ -765,32 +774,21 @@ def gripperMotorToForce(
     :raises ArgumentError:
         If ``cmd`` is not implicitly convertible to a C ushort.
 
-    :raises ArgumentError:
-        If any element of ``enc_wrist`` is not implicitly convertible to a C
-        int.
-
-    :raises IndexError:
-        If ``len(enc_wrist) < 3``.
-
-    :raises TypeError:
-        If ``enc_wrist`` is not subscriptable.
+    :raises AttributeError:
+        If ``enc_wrist_grip.ptr`` is not a valid attribute of
+        ``enc_wrist_grip``
 
     :raises ArgumentError:
-        If ``enc_gripper`` is not implicitly convertible to a C int.
+        If ``enc_wrist_grip.ptr`` is not of type Pointer[c_int]
 
     :raises ArgumentError:
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        A tuple in the form ``(force, err)``. ``force`` is the force on the
-        gripper end-effector (in [N]). ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
-    force = c_double()
-
-    err = _libdhd.dhdGripperMotorToForce(cmd, force, enc_wrist_grip.ptr, ID)
-
-    return (force.value, err)
+    return _libdhd.dhdGripperMotorToForce(cmd, out, enc_wrist_grip.ptr, ID)
 
 
 _libdhd.dhdGripperForceToMotor.argtypes = [
@@ -805,6 +803,7 @@ _libdhd.dhdGripperForceToMotor.restype = c_int
 def gripperForceToMotor(
     f: float,
     enc_wrist_grip: SupportsPtr[c_int],
+    out: c_ushort,
     ID: int = -1
 ) -> Tuple[int, int]:
     """
@@ -829,18 +828,12 @@ def gripperForceToMotor(
     :raises ArgumentError:
         If ``f`` is not implicitly convertible to a C double.
 
-    :raises ArgumentError:
-        If any member of ``enc_wrist`` is not implicitly convertible to a C
-        ushort.
-
-    :raises IndexError:
-        If ``len(enc_wrist) < 3``.
-
-    :raises TypeError:
-        If ``enc_wrist`` is not subscriptable.
+    :raises AttributeError:
+        If ``enc_wrist_grip.ptr`` is not a valid attribute of
+        ``enc_wrist_grip``
 
     :raises ArgumentError:
-        If ``enc_gripper`` is not implicitly convertible to a C ushort.
+        If ``enc_wrist_grip.ptr`` is not of type Pointer[c_int]
 
     :raises ArgumentError:
         If ``ID`` is not implicitly convertible to a C char.
@@ -852,11 +845,7 @@ def gripperForceToMotor(
         -1 otherwise.
     """
 
-    cmd = c_ushort()
-
-    err = _libdhd.dhdGripperForceToMotor(f, cmd, enc_wrist_grip.ptr, ID)
-
-    return (cmd.value, err)
+    return _libdhd.dhdGripperForceToMotor(f, out, enc_wrist_grip.ptr, ID)
 
 
 _libdhd.dhdGetEnc.argtypes = [c_int_ptr, c_ubyte, c_byte]
@@ -1920,3 +1909,208 @@ def jointAnglesToIntertiaMatrix(
 
     return _libdhd.dhdJointAnglesToInertiaMatrix(joint_angles.ptr, out.ptr, ID)
 
+
+_libdhd.dhdGetGripperEncoder.argtypes = [c_int_ptr, c_byte]
+_libdhd.dhdGetGripperEncoder.argtypes = [c_int]
+
+
+def getGripperEncoder(out: c_int, ID: int = -1) -> Tuple[int, int]:
+    """
+    Read the encoder value of the force gripper.
+
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+
+    :param c_int out:
+        Output buffer to store the encoder value of the force gripper.
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to a C char.
+
+    :returns:
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
+    """
+
+    return _libdhd.dhdGetGripperEncoder(out, ID)
+
+
+_libdhd.dhdGripperEncoderToAngleRad.argtypes = [
+    c_int,
+    c_double_ptr,
+    c_byte
+]
+_libdhd.dhdGripperEncoderToAngleRad.restype = c_int
+
+
+def gripperEncoderToAngleRad(
+    enc: int,
+    out: c_double,
+    ID: int = -1
+) -> Tuple[float, int]:
+    """
+    Compute the opening of the gripper as an angle (in [rad]) for a given
+    gripper encoder value.
+
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+
+    :param int enc:
+        Gripper encoder value.
+
+    :param c_double out:
+        Output buffer to store the opening angle of the gripper (in [rad]).
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``enc`` is not implicitly convertible to a C char.
+
+    :raises IndexError:
+        If ``len(enc) < 3``
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to a C char.
+
+    :returns:
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        -1 otherwise.
+    """
+
+    return _libdhd.dhdGripperEncoderToAngleRad(enc, out, ID)
+
+
+_libdhd.dhdGripperEncoderToGap.argtypes = [
+    c_int,
+    c_double_ptr,
+    c_byte
+]
+_libdhd.dhdGripperEncoderToGap.restype = c_int
+
+
+def gripperEncoderToGap(enc: int, out: c_double, ID: int = -1) -> int:
+    """
+    Compute the opening of the gripper distance (in [m]) for a given gripper
+    encoder value.
+
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+
+    :param int enc:
+        Gripper encoder value.
+
+    :param c_double out:
+        Output buffer to store the value of the gripper opening distance
+        (in [m]).
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``enc`` is not implicitly convertible to a C char.
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to a C char.
+
+    :returns:
+        A tuple in the form ``(gap, err)``. ``gap`` is the gripper opening in
+        [m] ``err`` is 0 on success, -1 otherwise.
+    """
+
+    return _libdhd.dhdGripperEncoderToGap(enc, out, ID)
+
+
+_libdhd.dhdGripperAngleRadToEncoder.argtypes = [
+    c_double,
+    c_int_ptr,
+    c_byte
+]
+_libdhd.dhdGripperAngleRadToEncoder.restype = c_int
+
+
+def gripperAngleRadToEncoder(angle: float, out: c_int, ID: int = -1) -> int:
+    """
+    Compute the gripper encoder value for a given
+    gripper opening distance (in [rad]).
+
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+
+    :param float angle:
+        Gripper opening as an angle (in [rad]).
+
+    :param c_int out:
+        Output buffer to store the value of the gripper encoder value.
+
+    :param int ID:
+        Device ID (see multiple devices section for details).
+
+    :raises ArgumentError:
+        If ``angle`` is not implicitly convertible to a C char.
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to a C char.
+
+    :returns:
+        0 on success, -1 otherwise.
+
+    """
+
+    return _libdhd.dhdGripperEncoderToAngleRad(angle, out, ID)
+
+
+_libdhd.dhdGripperGapToEncoder.argtypes = [
+    c_double,
+    c_int_ptr,
+    c_byte
+]
+_libdhd.dhdGripperEncoderToGap.restype = c_int
+
+
+def gripperGapToEncoder(gap: float, out: c_int, ID: int = -1) -> int:
+    """
+    Compute the gripper encoder value for a given
+    gripper opening distance (in [m]).
+
+    This feature only applies to the following devices
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+
+    :param float gap:
+        Gripper opening distance (in [m]).
+
+    :param c_int out:
+        Buffer to store the gripper encoder value.
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``gap`` is not implicitly convertible to a C char.
+
+    :raises ArgumentError:
+        If ``ID`` is not implicitly convertible to a C char.
+
+    :returns:
+        0 on success, -1 otherwise.
+    """
+
+    return _libdhd.dhdGripperEncoderToGap(gap, out, ID)

@@ -58,14 +58,6 @@ class DeviceType(IntEnum):
     LAMBDA7_RIGHT = 108
     LAMBDA7_LEFT = 109
     FALCON = 60
-    OMEGA33 = 34
-    OMEGA33_LEFT = 36
-    OMEGA331 = 35
-    OMEGA331_LEFT = 37
-    SIGMA331 = 104
-    SIGMA331_LEFT = 105
-    LAMBDA331 = 108
-    LAMBDA331_LEFT = 109
 
 
 class ErrorNum(IntEnum):

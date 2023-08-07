@@ -284,12 +284,12 @@ def getWristEncoders(out: MutableIntVectorLike, ID: int = -1) -> int:
     Read all encoders values of the wrist structure.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -342,10 +342,10 @@ def getGripperEncoder(ID: int = -1) -> Tuple[int, int]:
     Read the encoder value of the force gripper.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -477,6 +477,10 @@ def setWristMotor(output: IntVectorLike, ID: int = -1) -> int:
     """
     Set desired motor commands to the amplifier channels commanding the wrist
     motors.
+
+    This feature only applies to the following devices:
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
 
     :param IntVectorLike output:
         Sequence of (output0, output1, output2) where ``output0``, ``output1``,
@@ -898,19 +902,19 @@ def wristEncoderToOrientation(
     """
     For devices with a wrist structure, compute the individual angle of each
     joint, starting with the one located nearest to the wrist base plate. For
-    the :data:`forcedimension.dhd.constants.DeviceType.OMEGA33` and the
-    :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT` devices,
+    the :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT` and the
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT` devices,
     angles are computed with respect to their internal reference frame, which
     is rotated 45 degrees or π/4 radians about the Y axis. Please refer to your
     device user manual for more information on your device coordinate system.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
@@ -987,19 +991,23 @@ def wristOrientationToEncoder(
     """
     For devices with a wrist structure, compute the encoder values from the
     individual angle of each joint, starting witht he one located nearest to
-    the wrist plate base. For the dhd.libdhd.DeviceType.OMEGA33 and
-    dhd.libdhd.DeviceType.OMEGA33_LEFT devices, angles must be expressed
-    withrespect to their internal reference frame, which is rotated 45 degrees
-    or π/4 radians about the Y axis. Please refer to your device user manual
-    for more information on your device coordinate system.
+    the wrist plate base. For the
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA6` and
+    :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT` devices, angles
+    must be expressed with respect to their internal reference frame, which is
+    rotated 45 degrees or π/4 radians about the Y axis. Please refer to your
+    device user manual for more information on your device coordinate system.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA33_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA6_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
+
 
     :param FloatVectorLike orientation:
         Sequence of ``(oa, ob, og)`` where ``oa``, ``ob``, and ``og`` refer to
@@ -1081,6 +1089,11 @@ def wristMotorToTorque(
     Compute and return the torque applied to the wrist
     end-effector for a given set of motor commands at a given orientation
     (defined by encoder values)
+
+    This feature only applies to the following devices:
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+
 
     :param IntVectorLike cmd:
         Sequence of ``(cmd0, cmd1, cmd2)`` where ``cmd0``, ``cmd1``,
@@ -1177,6 +1190,10 @@ def wristTorqueToMotor(
     obtain a given torque (in [Nm]) on the wrist end-effector at a given
     orientation (defined by encoder values).
 
+    This feature only applies to the following devices:
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+
     :param FloatVectorLike t:
         Sequence of ``(t0, t1, t2)`` where ``t0``, ``t1``, and ``t2`` are the
         DELTA axis torque commands for axes 0, 1, and 2, respectively
@@ -1264,10 +1281,12 @@ def gripperEncoderToAngleRad(
     given encoder value.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
 
     :param int enc:
         Gripper encoder reading.
@@ -1313,10 +1332,13 @@ def gripperEncoderToGap(enc: int, ID: int = -1) -> Tuple[float, int]:
     given encoder reading.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
+
 
     :param int enc:
         Gripper encoder reading.
@@ -1359,10 +1381,13 @@ def gripperAngleRadToEncoder(angle: float, ID: int = -1) -> Tuple[int, int]:
     gripper opening distance (in [rad]).
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
+
 
     :param float angle:
         Gripper opening as an angle (in [rad]).
@@ -1406,10 +1431,13 @@ def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]:
     gripper opening distance (in [m]).
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
+
 
     :param float gap:
         Gripper opening distance (in [m]).
@@ -1458,10 +1486,13 @@ def gripperMotorToForce(
     motor command.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
+
 
     :param int output:
         Motor command on gripper axis.
@@ -1528,10 +1559,13 @@ def gripperForceToMotor(
     compute and return the refering motor command.
 
     This feature only applies to the following devices
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
-        :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
-        :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.OMEGA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.SIGMA7_LEFT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
+        :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
+
 
     :param int f:
         Force on the gripper end-effector (in [N]).
@@ -2858,7 +2892,7 @@ def setForceAndWristJointTorquesAndGripperForce(
         fg: float,
         ID: int = -1) -> int:
     """
-    Set force (in [N]) and wrist joint torques (in [Nm]) about the x, y and z
+    Set force (in [N]) and wrist joint torques (in [Nm]) about the X, Y, and Z
     axes as well as the and gripper force
 
     :param FloatVectorLike f:
@@ -3451,8 +3485,8 @@ def controllerSetDevice(devtype: DeviceType, ID: int = -1) -> int:
     Info
     ----
     This feature only applies to devices of type
-    :data:`forcedimension.constants.DeviceType.CONTROLLER` or
-    :data:`forcedimension.constants.DeviceType.CONTROLLER_HR`
+        :data:`forcedimension.constants.DeviceType.CONTROLLER` or
+        :data:`forcedimension.constants.DeviceType.CONTROLLER_HR`
 
 
     :param DeviceType devtype:
