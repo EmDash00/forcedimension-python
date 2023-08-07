@@ -1438,7 +1438,7 @@ def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]:
 _libdhd.dhdGripperMotorToForce.argtypes = [
     c_ushort,
     c_double_ptr,
-    c_int * 4,
+    c_int_ptr,
     c_byte
 ]
 _libdhd.dhdGripperMotorToForce.restype = c_int
@@ -1500,12 +1500,7 @@ def gripperMotorToForce(
     force = c_double()
 
     enc = [enc_wrist[0], enc_wrist[1], enc_wrist[2], enc_gripper]
-    err = _libdhd.dhdGripperMotorToForce(
-        cmd,
-        force,
-        enc,
-        ID
-    )
+    err = _libdhd.dhdGripperMotorToForce(cmd, force, enc, ID)
 
     return (force.value, err)
 
@@ -1513,7 +1508,7 @@ def gripperMotorToForce(
 _libdhd.dhdGripperForceToMotor.argtypes = [
     c_double,
     c_ushort_ptr,
-    c_int * 4,
+    c_int_ptr,
     c_byte
 ]
 _libdhd.dhdGripperForceToMotor.restype = c_int
@@ -1573,12 +1568,7 @@ def gripperForceToMotor(
     cmd = c_ushort()
     enc = [enc_wrist[0], enc_wrist[1], enc_wrist[2], enc_gripper]
 
-    err = _libdhd.dhdGripperForceToMotor(
-        f,
-        enc,
-        enc,
-        ID
-    )
+    err = _libdhd.dhdGripperForceToMotor(f, cmd, enc, ID)
 
     return (cmd.value, err)
 
