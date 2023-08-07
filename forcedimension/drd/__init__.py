@@ -534,7 +534,7 @@ def setForceAndTorqueAndGripperForce(
         axes, respectively.
 
     :param float fg:
-        Grasping force of the gripper in [N].
+        Grasping force of the gripper (in [N]).
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -620,7 +620,7 @@ def setForceAndWristJointTorquesAndGripperForce(
         for axes 0, 1, and 2, respectively.
 
     :param float fg:
-        Gripper force in [N].
+        Gripper force (in [N]).
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -684,7 +684,7 @@ def getPositionAndOrientation(
     ID: int = -1,
 ) -> int:
     """
-    Retrieve the position (in [m]) about the x, y, and z axes, the
+    Retrieve the position (in [m]) about the X, Y, and Z axes, the
     angle of each joint (in [rad]), (if applicable) the gripper position
     (in [m]), and orientation frame matrix of the end-effector. Please refer
     to your device user manual for more information on your device coordinate
@@ -951,7 +951,7 @@ def moveToGrip(pg: float, block: bool, ID: int = -1):
         ``False``, the call returns immediately.
 
     :param float pg:
-        Target gripper opening distance in [m].
+        Target gripper opening distance (in [m]).
 
     :raises ArgumentError:
         If ``ID`` is not convertible to a C char.'
@@ -1524,7 +1524,7 @@ def trackGrip(pg: float, ID: int = -1):
         Device ID (see multiple devices section for details), defaults to -1.
 
     :param float pg:
-        Target gripper opening distance in [m].
+        Target gripper opening distance (in [m]).
 
     :raises ArgumentError:
         If ``ID`` is not convertible to a C char.'

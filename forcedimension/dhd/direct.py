@@ -22,16 +22,9 @@ _libdhd.dhdGetPosition.restype = c_int
 
 def getPosition(out: SupportsPtrs3[c_double], ID: int = -1) -> int:
     """
-    Retrieve the position of the end-effector about the x, y, and z axes.
+    Retrieve the position of the end-effector about the X, Y, and Z axes.
     Please refer to your device user manual for more information on your device
     coordinate system.
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getPosition()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
 
     :param SupportsPtrs3[c_double] out:
         An output buffer to store the position of the end-effector (in [m]).
@@ -72,15 +65,8 @@ _libdhd.dhdGetForce.restype = c_int
 def getForce(out: SupportsPtrs3[c_double], ID: int = -1) -> int:
     """
     Retrieve the force vector applied to the end-effector (in [N])
-    about the x, y, and z axes Please refer to your device user manual for more
+    about the X, Y, and Z axes Please refer to your device user manual for more
     information on your device coordinate system.
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getForce()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
 
     :param SupportsPtrs3[c_double] out:
         An output buffer to store the applied forces on the end-effector
@@ -147,13 +133,6 @@ def getOrientationRad(
     reference frame, which is rotated π/4 radians around the Y axis.
     Please refer to your device user manual for more information on your
     device coordinate system.
-
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getOrientationRad()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
 
 
     :param SupportsPtrs3[c_double] out:
@@ -223,13 +202,6 @@ def getOrientationDeg(
     device coordinate system.
 
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getOrientationDeg()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
     :param SupportsPtrs3[c_double] out:
         An output buffer to store the joint angles (in [deg]).
 
@@ -281,7 +253,7 @@ def getPositionAndOrientationRad(
     """
     Retrieve the position (in [m]) and
     for devices with a wrist structure, retrieve individual angle
-    of each joint in [rad], starting with the one located nearest to the wrist
+    of each joint (in [rad]), starting with the one located nearest to the wrist
     base plate.
 
     Note:
@@ -301,12 +273,6 @@ def getPositionAndOrientationRad(
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getPositionAndOrientationDeg()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
 
 
     :param int ID:
@@ -375,7 +341,7 @@ def getPositionAndOrientationDeg(
     """
     Retrieve the position (in [m]) and
     for devices with a wrist structure, retrieve individual angle
-    of each joint in [deg], starting with the one located nearest to the wrist
+    of each joint (in [deg]), starting with the one located nearest to the wrist
     base plate.
 
     Note:
@@ -395,12 +361,6 @@ def getPositionAndOrientationDeg(
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getPositionAndOrientationDeg()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
 
 
     :param int ID:
@@ -466,14 +426,8 @@ def getPositionAndOrientationFrame(
 ) -> int:
     """
     Retrieve the position (in [m]) and orientation matrix of the end-effector
-    about the x, y, and z axes. Please refer to your device user manual for
+    about the X, Y, and Z axes. Please refer to your device user manual for
     more information on your device coordinate system.
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getPositionAndOrientationFrame()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -526,15 +480,8 @@ def getForceAndTorque(
 ) -> int:
     """
     Retrieve the forces (in [N]) and torques (in [Nm]) applied to the device
-    end-effector about the x, y, and z axes. Please refer to your device user
+    end-effector about the X, Y, and Z axes. Please refer to your device user
     manual for more information on your device coordinate system.
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getForceAndTorque()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffers.
-
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -589,13 +536,6 @@ def getOrientationFrame(out: SupportsPtr[c_double], ID: int = -1) -> int:
     Retrieve the rotation matrix of the wrist structure. The identity matrix
     is returned for devices that do not support orientations.
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getOrientationFrame()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
     :param int ID:
          Device ID (see multiple devices section for details).
 
@@ -640,13 +580,6 @@ def getGripperThumbPos(
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331_LEFT`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getGripperThumbPos()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -698,13 +631,6 @@ def getGripperFingerPos(
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331`
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getGripperFingerPos()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
     :param int ID:
          Device ID (see multiple devices section for details).
 
@@ -755,14 +681,7 @@ def getForceAndTorqueAndGripperForce(
     """
     Retrieve the forces (in [N]) and torques (in [Nm]) applied to the device
     end-effector as well as the gripper force (in [N]).
-    Forces and torques are about the x, y, and z axes.
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getPosition()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
+    Forces and torques are about the X, Y, and Z axes.
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -842,13 +761,6 @@ def getLinearVelocity(out: SupportsPtrs3[c_double], ID: int = -1) -> int:
     (:data:`forcedimension.dhd.constants.ErrorNum.TIMEOUT`).
 
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getLinearVelocity()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
     See Also
     --------
     :func:`forcedimension.dhd.configLinearVelocity()`
@@ -912,13 +824,6 @@ def getAngularVelocityRad(
     :func:`forcedimension.dhd.getAngularVelocityDeg()`
 
 
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getAngularVelocityRad()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
-
-
     :param int ID:
          Device ID (see multiple devices section for details).
 
@@ -975,13 +880,6 @@ def getAngularVelocityDeg(
     --------
     :func:`forcedimension.dhd.configAngularVelocity()`
     :func:`forcedimension.dhd.getAngularVelocityDeg()`
-
-
-    Info
-    ----
-    Unlike :func:`forcedimension.dhd.getAngularVelocityDeg()`, this
-    function does not copy the result into an intermediate buffer and instead
-    copies the result directly into the return buffer.
 
 
     :param int ID:

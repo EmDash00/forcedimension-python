@@ -123,7 +123,7 @@ def deltaEncoderToPosition(
 ) -> int:
     """
     This routine computes and returns the position of the end-effector about
-    the x, y, and z axes (in [m]) for a given set of encoder values.
+    the X, Y, and Z axes (in [m]) for a given set of encoder values.
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
@@ -134,7 +134,7 @@ def deltaEncoderToPosition(
         Device ID (see multiple devices section for details).
 
     :param SupportsPtrs3[c_double] out:
-        An output buffer to store the position about the x, y, and z axes
+        An output buffer to store the position about the X, Y, and Z axes
         (in [m]).
 
     :raises ArgumentError:
@@ -254,7 +254,7 @@ def deltaMotorToForce(
 ) -> int:
     """
     This routine computes and returns the force applied to the end-effector
-    about the x, y, and z axes (in [N]) for a given set of motor commands at a
+    about the X, Y, and Z axes (in [N]) for a given set of motor commands at a
     given position (defined by encoder readings)
 
     :param IntVectorLike mot:
@@ -269,7 +269,7 @@ def deltaMotorToForce(
 
     :param SupportsPtrs3[c_double] out:
         An output buffer to store the force applied to the end effector about
-        the x, y, and z axes (in [N])
+        the X, Y, and Z axes (in [N])
 
     :param int ID:
         Device ID (see multiple devices section for details).
@@ -580,7 +580,7 @@ def wristMotorToTorque(
 ) -> int:
     """
     This routine computes and returns the torque applied to the wrist
-    end-effector about the, x, y, and z axes (in [Nm]) for a given set of motor
+    end-effector about the, X, Y, and Z axes (in [Nm]) for a given set of motor
     commands at a given orientation (defined by encoder values)
 
     :param IntVectorLike cmd:
@@ -597,7 +597,7 @@ def wristMotorToTorque(
 
     :param SupportsPtrs3[c_double] out:
         An output buffer to store the torques applied to the wrist about the
-        x, y, and z axes (in [Nm]).
+        X, Y, and Z axes (in [Nm]).
 
     :raises AttributeError:
         If ``out.ptrs`` is not a valid attribute of ``out``
@@ -665,12 +665,12 @@ def wristTorqueToMotor(
 ) -> int:
     """
     This routine computes and returns the wrist motor commands necessary to
-    obtain a given torque on the wrist end-effector about the x, y, and z axes
+    obtain a given torque on the wrist end-effector about the X, Y, and Z axes
     (in [Nm]) at a given orientation (defined by encoder values)
 
     :param FloatVectorLike t:
         Sequence of ``(t0, t1, t2)`` where ``t0``, ``t1``, and ``t2`` are the
-        DELTA axis torque commands for axes 0, 1, and 2, respectively in [Nm].
+        DELTA axis torque commands (in [Nm]) for axes 0, 1, and 2, respectively.
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
@@ -783,7 +783,7 @@ def gripperMotorToForce(
 
     :returns:
         A tuple in the form ``(force, err)``. ``force`` is the force on the
-        gripper end-effector in [N]. ``err`` is 0 on success, -1 otherwise.
+        gripper end-effector (in [N]). ``err`` is 0 on success, -1 otherwise.
     """
 
     force = c_double()
@@ -818,7 +818,7 @@ def gripperForceToMotor(
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int f:
-        Force on the gripper end-effector in [N].
+        Force on the gripper end-effector (in [N]).
 
     :param IntVectorLike enc_wrist:
         An output buffer to store the wrist encoding readings.

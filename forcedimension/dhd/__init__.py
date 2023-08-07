@@ -1053,11 +1053,11 @@ _libdhd.dhdSetStandardGravity.restype = c_int
 
 def setStandardGravity(g: float, ID: int = -1) -> int:
     """
-    Set the standard gravity constant used in gravity compensation. By default,
-    the constant is set to 9.81 m/s^2.
+    Set the standard gravity constant used in gravity compensation in
+    (in [m/s^2]. By default, the constant is set to 9.81 m/s^2.
 
     :param float g:
-        standard gravity constant in [m/s^2].
+        standard gravity constant (in [m/s^2]).
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -1209,7 +1209,7 @@ _libdhd.dhdSetEffectorMass.restype = c_int
 
 def setEffectorMass(mass: float, ID: int = -1) -> int:
     """
-    Define the mass of the end-effector. This function is required to provide
+    Define the mass of the end-effector (in [kg]). This function is required to provide
     accurate gravity compensation when custom-made or modified end-effectors
     are used.
 
@@ -1219,7 +1219,7 @@ def setEffectorMass(mass: float, ID: int = -1) -> int:
 
 
     :param float mass:
-        The actual end-effector mass in [kg].
+        The actual end-effector mass (in [kg]).
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -1248,7 +1248,7 @@ _libdhd.dhdGetPosition.restype = c_int
 
 def getPosition(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
-    Retrieve the position of the end-effector about the x, y, and z axes.
+    Retrieve the position of the end-effector about the X, Y, and Z axes.
     Please refer to your device user manual for more information on your device
     coordinate system.
 
@@ -1296,7 +1296,7 @@ _libdhd.dhdGetForce.restype = c_int
 def getForce(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
     Retrieve the force vector applied to the end-effector (in [N])
-    about the x, y, and z axes Please refer to your device user manual for more
+    about the X, Y, and Z axes Please refer to your device user manual for more
     information on your device coordinate system.
 
     :param MutableFloatVectorLike out:
@@ -1341,11 +1341,11 @@ _libdhd.dhdSetForce.restype = c_int
 
 def setForce(f: FloatVectorLike, ID: int = -1) -> int:
     """
-    Set the desired force (in [N]) about the x, y, and z axes to be applied
+    Set the desired force (in [N]) about the X, Y, and Z axes to be applied
     to the end-effector of the device.
 
     :param VectorLike f:
-        Translation force vector (fx, fy, fz) in [N].
+        Translation force vector (fx, fy, fz) (in [N]).
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -1530,7 +1530,7 @@ def getPositionAndOrientationRad(
     """
     Retrieve the position (in [m]) and
     for devices with a wrist structure, retrieve individual angle
-    of each joint in [rad], starting with the one located nearest to the wrist
+    of each joint (in [rad]), starting with the one located nearest to the wrist
     base plate.
 
     Note:
@@ -1621,9 +1621,9 @@ def getPositionAndOrientationDeg(
     ID: int = -1
 ) -> int:
     """
-    Retrieve the Cartesian position in [m], and for devices with a wrist
-    structure, retrieve individual angle of each joint in [deg], starting with
-    the one located nearest to the wrist base plate.
+    Retrieve the Cartesian position (in [m]), and for devices with a wrist
+    structure, retrieve individual angle of each joint (in [deg]), starting
+    with the one located nearest to the wrist base plate.
 
     Note:
 
@@ -1713,7 +1713,7 @@ def getPositionAndOrientationFrame(
 ) -> int:
     """
     Retrieve the position (in [m]) and orientation matrix of the end-effector
-    about the x, y, and z axes. Please refer to your device user manual for
+    about the X, Y, and Z axes. Please refer to your device user manual for
     more information on your device coordinate system.
 
     :param int ID:
@@ -2116,7 +2116,7 @@ _libdhd.dhdGetGripperFingerPos.restype = c_int
 
 def getGripperFingerPos(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
-    Read the position (in [m]) of forefinger rest location about the x, y, and z
+    Read the position (in [m]) of forefinger rest location about the X, Y, and Z
     axes of the force gripper structure if present.
 
     This feature only applies to the following devices
@@ -2170,9 +2170,9 @@ _libdhd.dhdGetComFreq.restype = c_double
 
 def getComFreq(ID: int = -1) -> float:
     """
-    Return the communication refresh rate between the computer and the device.
-    Refresh rate computation is based on function calls that apply a force on
-    the device (e.g. :func:`forcedimension.dhd.setForce()`).
+    Return the communication refresh rate (in [kHz]) between the computer and
+    the device. Refresh rate computation is based on function calls that apply
+    a force on the device (e.g. :func:`forcedimension.dhd.setForce()`).
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -2181,7 +2181,7 @@ def getComFreq(ID: int = -1) -> float:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        The refresh rate in [kHz], ``0.0`` otherwise.
+        The refresh rate (in [kHz]), ``0.0`` otherwise.
     """
 
     return _libdhd.dhdGetComFreq(ID)
@@ -2213,7 +2213,7 @@ def setForceAndGripperForce(f: FloatVectorLike,
         respectively.
 
     :param float fg:
-        Grasping force of the gripper in [N].
+        Grasping force of the gripper (in [N]).
 
     :raises ArgumentError:
         If any elements of ``f`` is not implicitly convertible to a C double.
@@ -2273,7 +2273,7 @@ def setForceAndTorqueAndGripperForce(f: FloatVectorLike,
         axes, respectively.
 
     :param float fg:
-        Grasping force of the gripper in [N].
+        Grasping force of the gripper (in [N]).
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -2347,7 +2347,7 @@ def getForceAndTorqueAndGripperForce(
 ) -> int:
     """
     Retrieve the forces (in [N]) and torques (in [Nm]) applied to the device
-    end-effector. Forces and torques are about the x, y, and z axes.
+    end-effector. Forces and torques are about the X, Y, and Z axes.
 
     :param int ID:
          Device ID (see multiple devices section for details), defaults to -1.
@@ -2404,7 +2404,7 @@ def configLinearVelocity(
     This only applies to the device base.
 
     :param int ms:
-        Time interval used to compute velocity in [ms].
+        Time interval used to compute velocity (in [ms]).
 
     :param int mode:
         Velocity estimator mode (see [velocity estimator] modes section for
@@ -2440,7 +2440,7 @@ _libdhd.dhdGetLinearVelocity.restype = c_int
 
 def getLinearVelocity(out: MutableFloatVectorLike, ID: int = -1) -> int:
     """
-    Retrieve the estimated instanteous linear velocity in [m/s].
+    Retrieve the estimated instanteous linear velocity (in [m/s]).
 
     By default :data:`forcedimension.dhd.constants.VELOCITY_WINDOW` and
     :data:`forcedimension.dhd.constants.VELOCITY_WINDOWING`
@@ -3190,7 +3190,7 @@ def setMaxForce(limit: float, ID: int = -1) -> int:
 
 
     :param float limit:
-        max magnitude of force that can be applied in [N].
+        max magnitude of force that can be applied (in [N]).
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -3235,7 +3235,7 @@ def setMaxTorque(limit: float, ID: int = -1) -> int:
 
 
     :param float limit:
-        max magnitude of torque that can be applied in [Nm].
+        max magnitude of torque that can be applied (in [Nm]).
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -3280,7 +3280,7 @@ def setMaxGripperForce(limit: float, ID: int = -1) -> int:
 
 
     :param float limit:
-        Max magnitude of force that can be applied in [N].
+        Max magnitude of force that can be applied (in [N]).
 
     :param int ID:
          Device ID (see multiple devices section for details).

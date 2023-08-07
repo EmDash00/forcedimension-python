@@ -32,7 +32,7 @@ def getPositionAndOrientation(
     ID: int = -1,
 ) -> int:
     """
-    Retrieve the position (in [m]) about the x, y, and z axes, the
+    Retrieve the position (in [m]) about the X, Y, and Z axes, the
     angle of each joint (in [rad]), (if applicable) the gripper position
     (in [m]), and orientation frame matrix of the end-effector. Please refer
     to your device user manual for more information on your device coordinate

@@ -137,10 +137,10 @@ _libdhd.dhdSetVelocityThreshold.restype = c_int
 
 def setVelocityThreshold(thresh: int, ID: int = -1) -> int:
     """
-    Adjust the velocity threshold of the device. Velocity threshold is a safety
-    feature that prevents the device from accelerating to high velocities
-    without control. If the velocity of one of the device axis passes the
-    threshold, the device enters BRAKE mode.
+    Adjust the velocity threshold of the device (in [m/s]). The velocity
+    threshold  is a safety feature that prevents the device from accelerating
+    to high  velocities without control. If the velocity of one of the device
+    axis passes the threshold, the device enters BRAKE mode.
 
     Warning
     -------
@@ -544,8 +544,8 @@ def deltaEncoderToPosition(
     ID: int = -1
 ) -> int:
     """
-    This routine computes and returns the position of the end-effector for a
-    given set of encoder values.
+    This routine computes and returns the position of the end-effector
+    (in [m]) about the X, Y, and Z axes for a given set of encoder values.
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
@@ -812,7 +812,7 @@ def deltaForceToMotor(
     :param FloatVectorLike f:
         Sequence of ``(fx, fy, fz)`` where ``fx``, ``fy``, and ``fz`` are the
         force on the DELTA end-effector on the X, Y, and Z axes, respectively
-        in [N].
+        (in [N]).
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
@@ -1170,12 +1170,13 @@ def wristTorqueToMotor(
 ) -> int:
     """
     This routine computes and returns the wrist motor commands necessary to
-    obtain a given torque on the wrist end-effector at a given orientation
-    (defined by encoder values)
+    obtain a given torque (in [Nm]) on the wrist end-effector at a given
+    orientation (defined by encoder values).
 
     :param FloatVectorLike t:
         Sequence of ``(t0, t1, t2)`` where ``t0``, ``t1``, and ``t2`` are the
-        DELTA axis torque commands for axes 0, 1, and 2, respectively in [Nm].
+        DELTA axis torque commands for axes 0, 1, and 2, respectively
+        (in [Nm]).
 
     :param IntVectorLike enc:
         Sequence of ``(enc0, enc1, enc2)`` where ``enc0``, ``enc1``, and
@@ -1492,7 +1493,7 @@ def gripperMotorToForce(
 
     :returns:
         A tuple in the form ``(force, err)``. ``force`` is the force on the
-        gripper end-effector in [N]. ``err`` is 0 on success, -1 otherwise.
+        gripper end-effector (in [N]). ``err`` is 0 on success, -1 otherwise.
     """
 
     force = c_double()
@@ -1524,8 +1525,8 @@ def gripperForceToMotor(
     ID: int = -1
 ) -> Tuple[int, int]:
     """
-    Given a desired force to be displayed by the force gripper, this routine
-    computes and returns the refering motor command.
+    Given a desired force (in [N]) to be displayed by the force gripper,
+    this routine computes and returns the refering motor command.
 
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
@@ -1534,7 +1535,7 @@ def gripperForceToMotor(
         :data:`forcedimension.dhd.constants.DeviceType.SIGMA331_LEFT`
 
     :param int f:
-        Force on the gripper end-effector in [N].
+        Force on the gripper end-effector (in [N]).
 
     :param IntVectorLike enc_wrist:
         An output buffer to store the wrist encoding readings.
@@ -2222,7 +2223,8 @@ def setDeltaJointTorques(
 
     :param FloatVectorLike t:
         Sequence of ``(t0, t1, t2)`` where ``t0``, ``t1``, and ``t2`` are the
-        DELTA axis torque commands for axes 0, 1, and 2, respectively in [Nm].
+        DELTA axis torque commands for axes 0, 1, and 2, respectively
+        (in [Nm]).
 
     :raises ArgumentError:
         If any element of ``t`` is not implicitly convertible to a C char
@@ -2754,7 +2756,7 @@ def setWristJointTorques(
 
     :param FloatVectorLike t:
         Sequence of (t0, t1, t2) where t0, t1, t2 are the wrist axis torque
-        commands for axes 0, 1, and 2, respectively in [Nm].
+        commands for axes 0, 1, and 2, respectively (in [Nm]).
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -2795,7 +2797,7 @@ def setForceAndWristJointTorques(
 ) -> int:
     """
     Set force (in [N]) and wrist joint torques (in [Nm]) about the
-    x, y, and z axes.
+    X, Y, and Z axes.
 
     :param FloatVectorLike f:
         Sequence of ``(fx, fy, fz)`` where ``fx``, ``fy``, and ``fz`` are the
@@ -2871,7 +2873,7 @@ def setForceAndWristJointTorquesAndGripperForce(
         for axes 0, 1, and 2, respectively.
 
     :param float fg:
-        Gripper force in [N].
+        Gripper force (in [N]).
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
