@@ -351,7 +351,8 @@ def getGripperEncoder(ID: int = -1) -> Tuple[int, int]:
         If ``ID`` is not implicitly convertible to a C char.
 
     :returns:
-        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        Tuple of (enc, err). enc is the encoder value of the force gripper.
+        err is  0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
         -1 otherwise.
     """
 
@@ -544,7 +545,7 @@ def deltaEncoderToPosition(
     ID: int = -1
 ) -> int:
     """
-    This routine computes and returns the position of the end-effector
+    Compute and return the position of the end-effector
     (in [m]) about the X, Y, and Z axes for a given set of encoder values.
 
     :param IntVectorLike enc:
@@ -705,7 +706,7 @@ def deltaMotorToForce(
     out: MutableFloatVectorLike,
 ) -> int:
     """
-    This routine computes and returns the force applied to the end-effector for
+    Compute and return the force applied to the end-effector for
     a given set of motor commands at a given position (defined by encoder
     readings)
 
@@ -805,7 +806,7 @@ def deltaForceToMotor(
     out: MutableIntVectorLike
 ) -> int:
     """
-    This routine computes and returns the motor commands necessary to obtain a
+    Compute and return the motor commands necessary to obtain a
     given force on the end-effector at a given position (defined by encoder
     readings).
 
@@ -1074,7 +1075,7 @@ def wristMotorToTorque(
     out: MutableFloatVectorLike
 ) -> int:
     """
-    This routine computes and returns the torque applied to the wrist
+    Compute and return the torque applied to the wrist
     end-effector for a given set of motor commands at a given orientation
     (defined by encoder values)
 
@@ -1169,7 +1170,7 @@ def wristTorqueToMotor(
     out: MutableIntVectorLike
 ) -> int:
     """
-    This routine computes and returns the wrist motor commands necessary to
+    Compute and return the wrist motor commands necessary to
     obtain a given torque (in [Nm]) on the wrist end-effector at a given
     orientation (defined by encoder values).
 
@@ -1256,8 +1257,8 @@ def gripperEncoderToAngleRad(
     ID: int = -1
 ) -> Tuple[float, int]:
     """
-    This routine computes and returns the opening of the gripper as an angle in
-    [rad] for a given encoder reading.
+    Compute and return the gripper angle (in [rad]) for a
+    given encoder value.
 
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
@@ -1305,8 +1306,8 @@ _libdhd.dhdGripperEncoderToGap.restype = c_int
 
 def gripperEncoderToGap(enc: int, ID: int = -1) -> Tuple[float, int]:
     """
-    This routine computes and returns the opening of the gripper as a distance
-    (in [m]) for a given encoder reading.
+    Compute and return the gripper opening (in [m]) for a
+    given encoder reading.
 
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
@@ -1351,7 +1352,7 @@ _libdhd.dhdGripperAngleRadToEncoder.restype = c_int
 
 def gripperAngleRadToEncoder(angle: float, ID: int = -1) -> Tuple[int, int]:
     """
-    This routine computes and returns the gripper encoder value for a given
+    Computes and return the gripper encoder value for a given
     gripper opening distance (in [rad]).
 
     This feature only applies to the following devices
@@ -1398,7 +1399,7 @@ _libdhd.dhdGripperEncoderToGap.restype = c_int
 
 def gripperGapToEncoder(gap: float, ID: int = -1) -> Tuple[int, int]:
     """
-    This routine computes and returns the gripper encoder value for a given
+    Compute and return the gripper encoder value for a given
     gripper opening distance (in [m]).
 
     This feature only applies to the following devices
@@ -1450,7 +1451,7 @@ def gripperMotorToForce(
     ID: int = -1
 ) -> Tuple[float, int]:
     """
-    This routine computes the force applied to the end-effector for a given
+    Compute and return the force applied to the end-effector for a given
     motor command.
 
     This feature only applies to the following devices
@@ -1526,7 +1527,7 @@ def gripperForceToMotor(
 ) -> Tuple[int, int]:
     """
     Given a desired force (in [N]) to be displayed by the force gripper,
-    this routine computes and returns the refering motor command.
+    compute and return the refering motor command.
 
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
@@ -2261,7 +2262,7 @@ def deltaEncodersToJointAngles(
     ID: int = -1
 ) -> int:
     """
-    This routine computes and returns the DELTA joint angles for a given set of
+    Compute and return the DELTA joint angles for a given set of
     encoder values.
 
     :param IntVectorLike enc:
@@ -2336,7 +2337,7 @@ def deltaJointAnglesToEncoders(
     ID: int = -1,
 ) -> int:
     """
-    This routine computes and returns the DELTA encoder values for a given
+    Compute and return the DELTA encoder values for a given
     set of joint angles.
 
     :param FloatVectorLike enc:
@@ -2927,7 +2928,7 @@ def wristEncodersToJointAngles(
     ID: int = -1
 ) -> int:
     """
-    This routine computes and returns the wrist joint angles (in [rad])
+    Compute and return the wrist joint angles (in [rad])
     for a given set of encoder values.
 
     :param IntVectorLike enc:
@@ -2989,7 +2990,7 @@ def wristJointAnglesToEncoders(
     ID: int = -1
 ) -> int:
     """
-    This routine computes and returns the wrist encoder values for a given
+    Compute and return the wrist encoder values for a given
     set of wrist joint angles (in [rad]).
 
     :param FloatVectorLike enc:
@@ -3450,6 +3451,7 @@ def controllerSetDevice(devtype: DeviceType, ID: int = -1) -> int:
     This feature only applies to devices of type
     :data:`forcedimension.constants.DeviceType.CONTROLLER` or
     :data:`forcedimension.constants.DeviceType.CONTROLLER_HR`
+
 
     :param DeviceType devtype:
         The device type to use.

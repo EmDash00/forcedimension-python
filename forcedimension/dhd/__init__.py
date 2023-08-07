@@ -1959,7 +1959,7 @@ _libdhd.dhdGetGripperAngleDeg.restype = c_int
 
 def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]:
     """
-    Get the gripper opening angle in degrees.
+    Get the gripper opening angle (in [deg]).
 
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
@@ -1994,7 +1994,7 @@ _libdhd.dhdGetGripperAngleRad.restype = c_int
 
 def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]:
     """
-    Get the gripper opening angle in degrees.
+    Get the gripper opening angle (in [rad]).
 
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
@@ -2030,7 +2030,7 @@ _libdhd.dhdGetGripperGap.restype = c_int
 
 def getGripperGap(ID: int = -1) -> Tuple[float, int]:
     """
-    Get the gripper opening distance in meters.
+    Get the gripper opening distance (in [m]).
 
     This feature only applies to the following devices
         :data:`forcedimension.dhd.constants.DeviceType.OMEGA331`
@@ -2705,7 +2705,7 @@ _libdhd.dhdGetGripperLinearVelocity.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetGripperLinearVelocity.restype = c_int
 
 
-def getGripperLinearVelocity(out: c_double, ID: int = -1) -> int:
+def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]:
     """
     Retrieve the estimated linear velocity of the gripper (in [m/s]).
 
@@ -2723,38 +2723,28 @@ def getGripperLinearVelocity(out: c_double, ID: int = -1) -> int:
     :data:`forcedimension.dhd.getGripperAngularVelocityRad()`
     :func:`forcedimension.dhd.getGripperAngularVelocityDeg()`
 
-
-    :param c_double out:
-        Output buffer to store the gripper linear velocity (in [m/s]).
-
     :param int ID:
          Device ID (see multiple devices section for details).
-
-    :param SupportsPtr[c_double] out:
-        An output buffer to store the gripper linear velocity (in [m/s]).
-
-    :raises TypeError:
-        If ``out`` does not support item assignment either
-        because its immutable or not subscriptable.
-
-    :raises IndexError:
-        If ``len(out) < 3``.
 
     :raises ArgumentError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        0 on success, -1 otherwise.
+        Tuple of (vg, err). vg is the gripper linear velocity (in [m/s]). err
+        is 0 on success, -1 otherwise.
     """
 
-    return _libdhd.dhdGetGripperLinearVelocity(out, ID)
+    v = c_double()
+    err = _libdhd.dhdGetGripperLinearVelocity(v, ID)
+
+    return (v.value, err)
 
 
 _libdhd.dhdGetGripperAngularVelocityRad.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetGripperAngularVelocityRad.restype = c_int
 
 
-def getGripperAngularVelocityRad(out: c_double, ID: int = -1) -> int:
+def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]:
     """
     Retrieve the estimated angular velocity of the gripper (in [rad/s]).
 
@@ -2779,24 +2769,24 @@ def getGripperAngularVelocityRad(out: c_double, ID: int = -1) -> int:
     :param int ID:
          Device ID (see multiple devices section for details).
 
-    :param c_double out:
-        An output buffer to store the gripper angular velocity (in [rad/s])
-
     :raises ArgumentError:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        0 on success, -1 otherwise.
+        Tuple of (wg, err). wg is the gripper angular velocity (in [rad/s]).
+        err is 0 on success, -1 otherwise.
     """
 
-    return _libdhd.dhdGetGripperAngularVelocityRad(out, ID)
+    wg = c_double()
+    err = _libdhd.dhdGetGripperAngularVelocityRad(wg, ID)
+    return (wg.value, err)
 
 
 _libdhd.dhdGetGripperAngularVelocityDeg.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetGripperAngularVelocityDeg.restype = c_int
 
 
-def getGripperAngularVelocityDeg(out: c_double, ID: int = -1) -> int:
+def getGripperAngularVelocityDeg(ID: int = -1) -> Tuple[float, int]:
     """
     Retrieve the estimated angular velocity of the gripper (in [rad/s]).
     Velocity computation can be figured by calling:
@@ -2829,14 +2819,15 @@ def getGripperAngularVelocityDeg(out: c_double, ID: int = -1) -> int:
     :param int ID:
          Device ID (see multiple devices section for details).
 
-    :param c_double out:
-        An output buffer to store the gripper angular velocity (in [deg/s]).
-
     :returns:
-        0 on success, and -1 otherwise.
+        Tuple of (wg, err). wg is the gripper angular velocity (in [deg/s]).
+        err is 0 on success, -1 otherwise.
     """
 
-    return _libdhd.dhdGetGripperAngularelocityDeg(out, ID)
+    wg = c_double()
+    err = _libdhd.dhdGetGripperAngularelocityDeg(wg, ID)
+
+    return (wg.value, err)
 
 
 _libdhd.dhdEmulateButton.argtypes = [c_bool, c_byte]
