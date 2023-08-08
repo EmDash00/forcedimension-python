@@ -1,8 +1,9 @@
+from array import array
 import ctypes
 from ctypes import Structure, c_int, pointer
 from typing import Any, Callable, Optional
 
-from forcedimension.dhd.constants import ErrorNum
+from forcedimension.dhd.constants import ErrorNum, MAX_STATUS
 from forcedimension.typing import Pointer, c_int_ptr
 
 
@@ -19,6 +20,28 @@ class Status(Structure):
     @property
     def ptr(self) -> Pointer[c_int]:
         return self._ptr
+
+    def __len__(self) -> int:
+        return MAX_STATUS
+
+    def __getitem__(self, i) -> int:
+        return getattr(self, self._fields_[i][0])
+
+    def __iter__(self):
+        for field_name, _ in self._fields_:
+            yield getattr(self, field_name)
+
+    def __str__(self) -> str:
+        return (
+            f"Status(power={self.power}, connected={self.connected}, "
+            f"started={self.started}, reset={self.reset}, idle={self.idle}, "
+            f"force={self.force}, brake={self.brake}, torque={self.torque}, "
+            f"wrist_detected={self.wrist_detected}, error={self.error}, "
+            f"gravity={self.gravity}, timeguard={self.timeguard}, "
+            f"redundancy={self.redundancy}, "
+            f"forceoffcause={self.forceoffcause}, locks={self.locks}, "
+            f"axis_checked={self.axis_checked})"
+        )
 
     _fields_ = (
         ('power', c_int),
