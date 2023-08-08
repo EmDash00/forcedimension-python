@@ -1,9 +1,9 @@
 import ctypes
-from ctypes import ArgumentError, Structure, c_int, pointer
+from ctypes import Structure, c_int, pointer
 from typing import Any, Callable, Optional
 
 from forcedimension.dhd.constants import ErrorNum
-from forcedimension.typing import Pointer, SupportsPtr, c_int_ptr
+from forcedimension.typing import Pointer, c_int_ptr
 
 
 class Status(Structure):
