@@ -3144,9 +3144,7 @@ _libdhd.dhdSetVibration.argtypes = [c_double, c_double, c_int, c_byte]
 _libdhd.dhdSetVibration.restype = c_int
 
 
-def setVibration(
-    f: float, A: float, device_type: DeviceType, ID: int = -1
-) -> int:
+def setVibration(f: float, A: float, profile: int = 0, ID: int = -1) -> int:
     """
     Apply a vibration to the end-effector. The vibration is added to the force
     requested by :func:`forcedimension.dhd.setForce()`.
@@ -3162,8 +3160,8 @@ def setVibration(
     :param float A:
         Vibration amplitude (in [m]).
 
-    :param DeviceType device_type:
-        The type of device.
+    :param int type:
+        Vibration profile (unused, reserved for future use)
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -3175,7 +3173,7 @@ def setVibration(
         If ``A`` is not implicitly convertible to C double.
 
     :raises ArgumentError:
-        If ``device_type`` is not implicitly convertible to C int.
+        If ``profile`` is not implicitly convertible to C int.
 
     :raises ArgumentError:
         If ``ID`` is not implicitly convertible to C char.
@@ -3184,7 +3182,7 @@ def setVibration(
         0 on success, -1 otherwise.
     """
 
-    return _libdhd.dhdSetVibration(f, A, device_type, ID)
+    return _libdhd.dhdSetVibration(f, A, profile, ID)
 
 
 _libdhd.dhdSetMaxForce.argtypes = [c_double, c_byte]
