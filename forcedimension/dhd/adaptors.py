@@ -420,7 +420,7 @@ _error = [
 ]
 
 
-def errno_to_exception(errno: ErrorNum):
+def errno_to_exception(errno: int):
     """
     Convert a DHD error number to an exception.
     """
