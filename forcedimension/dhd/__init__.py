@@ -11,6 +11,7 @@ from forcedimension.typing import (
 )
 from forcedimension.dhd.adaptors import (
     DHDError,
+    DHDIOError,
     DHDErrorCom,
     DHDErrorDHCBusy,
     DHDErrorNoDriverFound,
@@ -645,9 +646,7 @@ def getStatus(out: Status, ID: int = -1) -> int:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form ``(status, err)``. ``status`` is a ``StatusTuple``
-        containing status information. ``err`` is 0 on success, -1
-        otherwise.
+        0 on success, -1 otherwise.
     """
 
     return _libdhd.dhdGetStatus(out.ptr, ID)
@@ -657,9 +656,13 @@ _libdhd.dhdGetDeviceAngleRad.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetDeviceAngleRad.restype = c_int
 
 
-def getDeviceAngleRad(ID: int = -1) -> Tuple[float, int]:
+def getDeviceAngleRad(out: c_double, ID: int = -1) -> int:
     """
     Get the device base plate angle around the Y axis in radians.
+
+    :param c_double out:
+        Output buffer to store the base plate angle around the Y axis
+        (in [rad]).
 
     :param int ID:
         Device ID (see multiple devices section for details).
@@ -668,25 +671,23 @@ def getDeviceAngleRad(ID: int = -1) -> Tuple[float, int]:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form ``(angle_rad, err)``. ``angle_rad`` is the device
-        baseplate angle (in [rad]) around the Y axis. ``err`` is 0 on success,
-        and -1 otherwise.
+        0 on success, and -1 otherwise.
     """
 
-    angle_rad = c_double()
-    return (
-        angle_rad.value,
-        _libdhd.dhdGetDeviceAngleRad(angle_rad, ID)
-    )
+    return _libdhd.dhdGetDeviceAngleRad(out, ID)
 
 
 _libdhd.dhdGetDeviceAngleDeg.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetDeviceAngleDeg.restype = c_int
 
 
-def getDeviceAngleDeg(ID: int = -1) -> Tuple[float, int]:
+def getDeviceAngleDeg(out: c_double, ID: int = -1) -> int:
     """
     Get the device base plate angle around the Y axis in degrees.
+
+    :param c_double out:
+        Output buffer to store the base plate angle around the Y axis
+        (in [deg]).
 
     :param int ID:
         Device ID (see multiple devices section for details).
@@ -695,16 +696,10 @@ def getDeviceAngleDeg(ID: int = -1) -> Tuple[float, int]:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form ``(angle_deg, err)``. ``angle_deg`` is the device
-        baseplate angle (in [deg]) around the Y axis. ``err`` is 0 on success,
-        and -1 otherwise.
+        0 on success, and -1 otherwise.
     """
 
-    angle_deg = c_double()
-    return (
-        angle_deg.value,
-        _libdhd.dhdGetDeviceAngleDeg(angle_deg, ID)
-    )
+    return _libdhd.dhdGetDeviceAngleDeg(out, ID)
 
 
 _libdhd.dhdGetEffectorMass.argtypes = [c_double_ptr, c_byte]
@@ -1980,7 +1975,7 @@ _libdhd.dhdGetGripperAngleDeg.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetGripperAngleDeg.restype = c_int
 
 
-def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]:
+def getGripperAngleDeg(out: c_double, ID: int = -1) -> int:
     """
     Get the gripper opening angle (in [deg]).
 
@@ -1996,6 +1991,8 @@ def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]:
     --------
     :func:`forcedimension.dhd.getGripperAngleRad()`
 
+    :param c_double out:
+        Output buffer to store the gripper opening angle (in [deg]).
 
     :param int ID:
          Device ID (see multiple devices section for details).
@@ -2008,16 +2005,14 @@ def getGripperAngleDeg(ID: int = -1) -> Tuple[float, int]:
         -1 otherwise.
     """
 
-    angle = c_double()
-    err = _libdhd.dhdGetGripperAngleDeg(angle, ID)
-    return (angle.value, err)
+    return _libdhd.dhdGetGripperAngleDeg(out, ID)
 
 
 _libdhd.dhdGetGripperAngleRad.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetGripperAngleRad.restype = c_int
 
 
-def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]:
+def getGripperAngleRad(out: c_double, ID: int = -1) -> int:
     """
     Get the gripper opening angle (in [rad]).
 
@@ -2034,6 +2029,9 @@ def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]:
     :data:`forcdimension.dhd.getGripperAngleDeg()`
 
 
+    :param c_double out:
+        Output buffer to store the gripper opening angle (in [rad]).
+
     :param int ID:
          Device ID (see multiple devices section for details).
 
@@ -2041,21 +2039,18 @@ def getGripperAngleRad(ID: int = -1) -> Tuple[float, int]:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form ``(angle, err)``. ``angle`` is the griper angle
-        (in [rad]).
-        ``err`` is 0 or :data:`forcedimension.dhd.constants.TIMEGUARD`
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD`
         on success, -1 otherwise.
     """
 
-    angle = c_double()
-    return (angle.value, _libdhd.dhdGetGripperAngleRad(angle, ID))
+    return _libdhd.dhdGetGripperAngleRad(out, ID)
 
 
 _libdhd.dhdGetGripperGap.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetGripperGap.restype = c_int
 
 
-def getGripperGap(ID: int = -1) -> Tuple[float, int]:
+def getGripperGap(out: c_double, ID: int = -1) -> int:
     """
     Get the gripper opening distance (in [m]).
 
@@ -2067,6 +2062,10 @@ def getGripperGap(ID: int = -1) -> Tuple[float, int]:
         :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_RIGHT`
         :data:`forcedimension.dhd.constants.DeviceType.LAMBDA7_LEFT`
 
+
+    :param c_double out:
+        Output buffer to store the gripper opening distance (in [m]).
+
     :param int ID:
          Device ID (see multiple devices section for details).
 
@@ -2074,16 +2073,12 @@ def getGripperGap(ID: int = -1) -> Tuple[float, int]:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form ``(gap, err)``. ``gap`` is the gripper opening
-        distance (in [m]). ``err`` is 0 or
-        :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
+        0 or :data:`forcedimension.dhd.constants.TIMEGUARD` on success,
         -1 otherwise.
 
     """
 
-    gap = c_double()
-    err = _libdhd.dhdGetGripperGap(gap, ID)
-    return (gap.value, err)
+    return _libdhd.dhdGetGripperGap(out, ID)
 
 
 _libdhd.dhdGetGripperThumbPos.argtypes = [
@@ -2372,6 +2367,7 @@ _libdhd.dhdGetForceAndTorqueAndGripperForce.restype = c_int
 def getForceAndTorqueAndGripperForce(
     f_out: MutableFloatVectorLike,
     t_out: MutableFloatVectorLike,
+    fg_out: c_double,
     ID: int = -1
 ) -> int:
     """
@@ -2389,6 +2385,9 @@ def getForceAndTorqueAndGripperForce(
         An output buffer to store the applied torques on the end-effector
         (in [Nm]).
 
+    :param c_double fg_out:
+        An output buffer to store the force applied to the gripper (in [N]).
+
     :raises ValueError:
         If ``ID`` is not implicitly convertible to C char.
 
@@ -2404,12 +2403,10 @@ def getForceAndTorqueAndGripperForce(
     ty = c_double()
     tz = c_double()
 
-    fg = c_double()
-
     err = _libdhd.dhdGetForceAndTorqueAndGripperForce(
         fx, fy, fz,
         tx, ty, tz,
-        fg,
+        fg_out,
         ID
     )
 
@@ -2734,7 +2731,7 @@ _libdhd.dhdGetGripperLinearVelocity.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetGripperLinearVelocity.restype = c_int
 
 
-def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]:
+def getGripperLinearVelocity(out: c_double, ID: int = -1) -> int:
     """
     Retrieve the estimated linear velocity of the gripper (in [m/s]).
 
@@ -2752,6 +2749,10 @@ def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]:
     :data:`forcedimension.dhd.getGripperAngularVelocityRad()`
     :func:`forcedimension.dhd.getGripperAngularVelocityDeg()`
 
+    :param c_double out:
+        Output buffer to store the estimated linear velocity of the gripper
+        (in [m/s]).
+
     :param int ID:
          Device ID (see multiple devices section for details).
 
@@ -2759,21 +2760,17 @@ def getGripperLinearVelocity(ID: int = -1) -> Tuple[float, int]:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        Tuple of (vg, err). vg is the gripper linear velocity (in [m/s]). err
-        is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
-    v = c_double()
-    err = _libdhd.dhdGetGripperLinearVelocity(v, ID)
-
-    return (v.value, err)
+    return _libdhd.dhdGetGripperLinearVelocity(out, ID)
 
 
 _libdhd.dhdGetGripperAngularVelocityRad.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetGripperAngularVelocityRad.restype = c_int
 
 
-def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]:
+def getGripperAngularVelocityRad(out: c_double, ID: int = -1) -> int:
     """
     Retrieve the estimated angular velocity of the gripper (in [rad/s]).
 
@@ -2795,6 +2792,10 @@ def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]:
     :func:`forcedimension.dhd.getGripperAngularVelocityDeg()`
 
 
+    :param c_double out:
+        Output buffer to store the estimated angular velocity of the gripper
+        (in [rad/s]).
+
     :param int ID:
          Device ID (see multiple devices section for details).
 
@@ -2802,20 +2803,17 @@ def getGripperAngularVelocityRad(ID: int = -1) -> Tuple[float, int]:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        Tuple of (wg, err). wg is the gripper angular velocity (in [rad/s]).
-        err is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
-    wg = c_double()
-    err = _libdhd.dhdGetGripperAngularVelocityRad(wg, ID)
-    return (wg.value, err)
+    return _libdhd.dhdGetGripperAngularVelocityRad(out, ID)
 
 
 _libdhd.dhdGetGripperAngularVelocityDeg.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetGripperAngularVelocityDeg.restype = c_int
 
 
-def getGripperAngularVelocityDeg(ID: int = -1) -> Tuple[float, int]:
+def getGripperAngularVelocityDeg(out: c_double, ID: int = -1) -> int:
     """
     Retrieve the estimated angular velocity of the gripper (in [rad/s]).
     Velocity computation can be figured by calling:
@@ -2845,18 +2843,19 @@ def getGripperAngularVelocityDeg(ID: int = -1) -> Tuple[float, int]:
     :func:`forcedimension.dhd.getGripperAngularVelocityRad()`
 
 
+    :param c_double out:
+        Output buffer to store the estimated angular velocity of the gripper
+        (in [deg/s]).
+
     :param int ID:
          Device ID (see multiple devices section for details).
 
     :returns:
-        Tuple of (wg, err). wg is the gripper angular velocity (in [deg/s]).
-        err is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
-    wg = c_double()
-    err = _libdhd.dhdGetGripperAngularelocityDeg(wg, ID)
+    return _libdhd.dhdGetGripperAngularelocityDeg(out, ID)
 
-    return (wg.value, err)
 
 
 _libdhd.dhdEmulateButton.argtypes = [c_bool, c_byte]
@@ -2898,7 +2897,7 @@ _libdhd.dhdGetBaseAngleXRad.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetBaseAngleXRad.restype = c_int
 
 
-def getBaseAngleXRad(ID: int = -1) -> Tuple[float, int]:
+def getBaseAngleXRad(out: c_double, ID: int = -1) -> int:
     """
     Get the device base plate angle around the X axis (in [rad]).
 
@@ -2907,6 +2906,10 @@ def getBaseAngleXRad(ID: int = -1) -> Tuple[float, int]:
     :func:`forcedimension.dhd.getBaseAngleXDeg()`
 
 
+    :param c_double out:
+        Output buffer to store the base plate angle around the X axis
+        (in [rad]).
+
     :param int ID:
          Device ID (see multiple devices section for details).
 
@@ -2914,20 +2917,17 @@ def getBaseAngleXRad(ID: int = -1) -> Tuple[float, int]:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form ``(x_angle, err)``. ``x_angle`` is the device angle
-        (in [rad]). ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
-    angle = c_double()
-    err = _libdhd.dhdGetBaseAngleXRad(angle, ID)
-    return (angle.value, err)
+    return _libdhd.dhdGetBaseAngleXRad(out, ID)
 
 
 _libdhd.dhdGetBaseAngleXDeg.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetBaseAngleXDeg.restype = c_int
 
 
-def getBaseAngleXDeg(ID: int = -1) -> Tuple[float, int]:
+def getBaseAngleXDeg(out: c_double, ID: int = -1) -> int:
     """
     Get the device base plate angle around the X axis (in [deg]).
 
@@ -2936,6 +2936,10 @@ def getBaseAngleXDeg(ID: int = -1) -> Tuple[float, int]:
     :func:`forcedimension.dhd.getBaseAngleXRad()`
 
 
+    :param c_double out:
+        Output buffer to store the base plate angle around the Y axis
+        (in [deg]).
+
     :param int ID:
          Device ID (see multiple devices section for details).
 
@@ -2943,13 +2947,10 @@ def getBaseAngleXDeg(ID: int = -1) -> Tuple[float, int]:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form ``(err, x_angle)``. ``x_angle`` is the device angle
-        (in [deg]) about the x axis. err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
-    angle = c_double()
-    err = _libdhd.dhdGetBaseAngleXDeg(angle, ID)
-    return (angle.value, err)
+    return _libdhd.dhdGetBaseAngleXDeg(out, ID)
 
 
 _libdhd.dhdSetBaseAngleXRad.argtypes = [c_double, c_byte]
@@ -3018,7 +3019,7 @@ _libdhd.dhdGetBaseAngleXRad.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetBaseAngleXRad.restype = c_int
 
 
-def getBaseAngleZRad(ID: int = -1) -> Tuple[float, int]:
+def getBaseAngleZRad(out: c_double, ID: int = -1) -> int:
     """
     Get the device base plate angle around the Z axis (in [rad]).
 
@@ -3027,6 +3028,10 @@ def getBaseAngleZRad(ID: int = -1) -> Tuple[float, int]:
     :func:`forcedimension.dhd.getBaseAngleZDeg()`
 
 
+    :param c_double out:
+        Output buffer to store the base plate angle around the Z axis
+        (in [rad]).
+
     :param int ID:
          Device ID (see multiple devices section for details).
 
@@ -3034,20 +3039,17 @@ def getBaseAngleZRad(ID: int = -1) -> Tuple[float, int]:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form ``(z_angle, err)``. ``z_angle`` is the device angle
-        (in [rad]) about the Z axis. ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
-    angle = c_double()
-    err = _libdhd.dhdGetBaseAngleZRad(angle, ID)
-    return (angle.value, err)
+    return _libdhd.dhdGetBaseAngleZRad(out, ID)
 
 
 _libdhd.dhdGetBaseAngleZDeg.argtypes = [c_double_ptr, c_byte]
 _libdhd.dhdGetBaseAngleZDeg.restype = c_int
 
 
-def getBaseAngleZDeg(ID: int = -1) -> Tuple[int, float]:
+def getBaseAngleZDeg(out: c_double, ID: int = -1) -> float:
     """
     Get the device base plate angle around the Z axis (in [deg]).
 
@@ -3056,6 +3058,10 @@ def getBaseAngleZDeg(ID: int = -1) -> Tuple[int, float]:
     :func:`forcedimension.dhd.getBaseAngleZRad()`
 
 
+    :param c_double out:
+        Output buffer to store the base plate angle around the X axis
+        (in [deg]).
+
     :param int ID:
          Device ID (see multiple devices section for details).
 
@@ -3063,14 +3069,10 @@ def getBaseAngleZDeg(ID: int = -1) -> Tuple[int, float]:
         If ``ID`` is not implicitly convertible to C char.
 
     :returns:
-        A tuple in the form ``(err, z_angle)``. ``z_angle`` is the device
-        angle (in [deg]) about the Z axis.
-        ``err`` is 0 on success, -1 otherwise.
+        0 on success, -1 otherwise.
     """
 
-    angle = c_double()
-    err = _libdhd.dhdGetBaseAngleZDeg(angle, ID)
-    return (err, angle.value)
+    return _libdhd.dhdGetBaseAngleZDeg(out, ID)
 
 
 _libdhd.dhdSetBaseAngleZRad.argtypes = [c_double, c_byte]
