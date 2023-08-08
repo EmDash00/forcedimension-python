@@ -289,7 +289,10 @@ class DHDErrorCom(DHDIOError):
         **kwargs
     ):
         return super().__init__(
-            err="A communication error between the host and the HapticDevice",
+            err=(
+                "A communication error occured between the host and the "
+                "HapticDevice"
+            ),
             ID=ID,
             **kwargs
         )
