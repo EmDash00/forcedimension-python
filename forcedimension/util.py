@@ -1,12 +1,10 @@
 from copy import deepcopy
+from ctypes import Structure
 from threading import Event, Thread
 from time import perf_counter_ns, sleep
-from typing import Any, Generic, NoReturn,  TypeVar, Union
+from typing import Any, Generic, NoReturn, TypeVar, Union
+
 from forcedimension.typing import _MutableArray
-
-
-from forcedimension import HapticDevice
-
 
 T = TypeVar('T')
 
@@ -167,7 +165,7 @@ class ImmutableWrapper(Generic[T]):
 
         return instance
 
-    def __init__(self, data: _MutableArray):
+    def __init__(self, data: Union[_MutableArray, Structure]):
         object.__setattr__(self, '_data', data)
 
     def __getattribute__(self, name: str):
@@ -207,108 +205,3 @@ class ImmutableWrapper(Generic[T]):
 
     def __str__(self) -> str:
         return (object.__getattribute__(self, '_data')).__str__()
-
-
-class HapticPoller(Thread):
-    def __init__(
-        self,  h: HapticDevice, interval: float, *args,
-        high_prec: bool = False, **kwargs
-    ):
-        super().__init__(*args, **kwargs)
-
-        self._h = h
-
-        self._interval = int(interval * 1E9)
-
-        self._stop_event = Event()
-        self._pause_event = Event()
-        self._pause_sync = Event()
-
-        self._target_args = kwargs.get('args', ())
-        self._target_kwargs = kwargs.get('kwargs', {})
-        self._target = kwargs.get('target', None)
-
-        self._high_prec = high_prec
-
-    def stop(self):
-        self._stop_event.set()
-        self.join()
-
-    def pause(self):
-        self._pause_event.set()
-        self._pause_sync.wait()
-
-    def unpause(self):
-        self._pause_event.clear()
-        self._pause_sync.clear()
-
-    def _execute_target(self):
-        if self._target:
-            self._target(*self._target_args, **self._target_kwargs)
-
-    def _run_zero_interval(self):
-        while not self._stop_event.is_set():
-            if not self._pause_event.is_set():
-                self._execute_target()
-            else:
-                self._pause_sync.set()
-                sleep(0.001)
-
-    def _run_low_prec(self):
-        while not self._stop_event.wait(self._interval):
-
-            if not self._pause_event.is_set():
-                self._pause_sync.set()
-                sleep(0.001)
-                continue
-
-            self._execute_target()
-
-    def _run_high_prec(self):
-        t0 = perf_counter_ns()
-
-        wait_period = self._interval
-        if self._interval > 1_000_000:
-            sleep_period = (self._interval - 1_000_000) / 1E9
-        else:
-            sleep_period = 0
-
-        if not self._stop_event.is_set():
-            self._execute_target()
-
-        t_sleep = perf_counter_ns()
-        while not self._stop_event.wait(sleep_period):
-            while (perf_counter_ns() - t_sleep) < wait_period:
-                pass
-
-            t0 = perf_counter_ns()
-            if not self._pause_event.is_set():
-                self._execute_target()
-            else:
-                self._pause_sync.set()
-                sleep_period = 0.001
-                wait_period = 0.001
-                continue
-
-            wait_period = max(self._interval - (perf_counter_ns() - t0), 0)
-
-            if wait_period > 1_000_000:
-                sleep_period = (wait_period - 1_000_000) / 1E9
-            else:
-                sleep_period = 0
-
-            t_sleep = perf_counter_ns()
-
-    def run(self):
-        try:
-            if self._interval == 0:
-                self._run_zero_interval()
-                return
-
-            if self._high_prec:
-                self._run_high_prec()
-            else:
-                self._run_low_prec()
-
-        finally:
-            del self._target
