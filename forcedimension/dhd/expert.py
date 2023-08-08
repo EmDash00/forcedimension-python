@@ -1794,8 +1794,8 @@ def getEncRange(ID: int = -1) -> Tuple[IntDOFTuple, IntDOFTuple, int]:
     return (tuple(encMin), tuple(encMax), err)
 
 
-_libdhd.getJointAngleRange.argtypes = [c_double_ptr, c_double_ptr, c_byte]
-_libdhd.getJointAngleRange.restype = c_int
+_libdhd.dhdGetJointAngleRange.argtypes = [c_double_ptr, c_double_ptr, c_byte]
+_libdhd.dhdGetJointAngleRange.restype = c_int
 
 
 def getJointAngleRange(ID: int = -1) -> Tuple[
