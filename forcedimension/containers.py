@@ -238,7 +238,7 @@ class DOFFloatArray(array, SupportsPtr[c_double]):
         return self._ptr
 
 
-class FrameMatrix(List[array], SupportsPtr[c_double]):
+class Mat3x3(List[array], SupportsPtr[c_double]):
     """
     Represents the type of a coordinate frame matrix.
     """
@@ -260,7 +260,7 @@ class FrameMatrix(List[array], SupportsPtr[c_double]):
         return self._ptr
 
 
-class InertiaMatrix(List[array], SupportsPtr[c_double]):
+class Mat6x6(List[array], SupportsPtr[c_double]):
     """
     Represents the type of a coordinate frame matrix.
     """
@@ -287,8 +287,8 @@ DefaultEnc3Type = Enc3
 DefaultEnc4Type = Enc4
 DefaultDOFIntType = DOFIntArray
 DefaultDOFFloatType = DOFFloatArray
-DefaultFrameMatrixType = FrameMatrix
-DefaultInertiaMatrixType = InertiaMatrix
+DefaultMat3x3 = Mat3x3
+DefaultMat6x6 = Mat6x6
 
 
 try:
@@ -465,7 +465,7 @@ try:
         def ptr(self) -> c_double_ptr:
             return self._ptr
 
-    class NumpyFrameMatrix(np.ndarray, SupportsPtr[c_double]):
+    class NumpyMat3x3(np.ndarray, SupportsPtr[c_double]):
         """
         A view over a numpy ndarry, which provides convenience "x", "y", and "z"
         read-write accessor properties. This class subclasses ndarray;
@@ -489,7 +489,7 @@ try:
         def ptr(self) -> c_double_ptr:
             return self._ptr
 
-    class NumpyInertiaMatrix(np.ndarray, SupportsPtr[c_double]):
+    class NumpyMat6x6(np.ndarray, SupportsPtr[c_double]):
         """
         A view over a numpy ndarry, which provides convenience "x", "y", and "z"
         read-write accessor properties. This class subclasses ndarray;
@@ -518,7 +518,7 @@ try:
     DefaultEnc4Type = NumpyEnc4
     DefaultDOFIntType = NumpyDOFIntArray
     DefaultDOFFloatType = NumpyDOFFloatArray
-    DefaultFrameMatrixType = NumpyFrameMatrix
-    DefaultInertiaMatrixType = NumpyInertiaMatrix
+    DefaultMat3x3 = NumpyMat3x3
+    DefaultMat6x6 = NumpyMat6x6
 except ImportError:
     pass
