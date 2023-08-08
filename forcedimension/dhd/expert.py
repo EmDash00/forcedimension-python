@@ -3281,7 +3281,6 @@ _libdhd.dhdJointAnglesToGravityJointTorques.argtypes = [
 _libdhd.dhdJointAnglesToGravityJointTorques.restype = c_int
 
 
-# TODO: fix
 def jointAnglesToGravityJointTorques(
     joint_angles: FloatVectorLike,
     out: MutableFloatVectorLike,
@@ -3349,6 +3348,7 @@ def jointAnglesToGravityJointTorques(
     err = _libdhd.dhdJointAnglesToInertiaMatrix(
         ct.cast(joint_angles_arr, c_double_ptr),
         ct.cast(q, c_double_ptr),
+        mask,
         ID
     )
 
