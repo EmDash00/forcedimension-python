@@ -8,9 +8,9 @@
 __version__ = '0.2.0'
 
 import ctypes as ct
+import time
 from math import nan
 from threading import Condition, Lock, Thread
-from time import monotonic, sleep
 from typing import Callable, Generic, List, Optional, Type, TypeVar
 from typing import cast as _cast
 
@@ -88,7 +88,7 @@ class HapticDevice(Generic[T]):
         self._f = VecType()
         self._t = VecType()
         self._J = DefaultMat3x3Type()
-        self._status = dhd.Status()
+        self._status = Status()
 
         self._req = False
         self._f_req = VecType()
@@ -145,7 +145,6 @@ class HapticDevice(Generic[T]):
                     ID=self._id,
                     op=dhd.getSystemType
                 )
-
 
             self._devtype = devtype_opened
         elif devtype is not None:
@@ -976,18 +975,18 @@ class _Poller(Thread):
                         self._pause_cond.wait()
 
                 while not self._paused and not self._stopped:
-                    t = monotonic()
+                    t = time.monotonic()
 
                     self._f()
 
                     if self._min_period is not None:
-                        sleep(self._min_period * 0.9)
-                        while (monotonic() - t) < self._min_period:
+                        time.sleep(self._min_period * 0.9)
+                        while (time.monotonic() - t) < self._min_period:
                             pass
 
                 while self._paused and not self._stopped:
                     if self._min_period is not None:
-                        sleep(self._min_period)
+                        time.sleep(self._min_period)
 
         except dhd.DHDIOError as ex:
             self.ex = ex
@@ -1143,7 +1142,7 @@ class HapticDaemon(Thread):
                 if self._force_poller.ex is not None:
                     raise self._force_poller.ex
 
-                sleep(0.01)
+                time.sleep(0.01)
 
         except dhd.DHDIOError as ex:
             self._paused = True
