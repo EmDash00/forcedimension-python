@@ -440,6 +440,16 @@ class HapticDevice(Generic[T]):
             self._joint_angles.wrist, self._wrist_jacobian, self._id
         )
 
+    def calculate_inertia_matrix(self):
+        """
+        Calculates the 6x6 inertia matrix given the current joint angles
+        configuration in the internal buffer.
+        """
+
+        dhd.expert.direct.jointAnglesToIntertiaMatrix(
+            self._joint_angles, self._inertia_matrix, self._id
+        )
+
     def update_delta_enc_and_calculate(self):
         """
         Updates the DELTA encoders and given those values, calculates the
