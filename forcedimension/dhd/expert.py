@@ -2152,8 +2152,8 @@ def deltaGravityJointTorques(
 
     .. deprecated:: 0.2.0
            The functionality of this function is deprecated as of version
-           ForceDimension Python bindings version 0.2.0
-           (which targets ForceDimension SDK v3.16.0+).
+           Force Dimension Python bindings version 0.2.0
+           (which targets Force Dimension SDK v3.16.0+).
            Please use :func:`dhdJointAnglesToGravityJointTorques()`
            instead.
 
@@ -2684,8 +2684,8 @@ def wristGravityJointTorques(
 
     .. deprecated:: 0.2.0
            The functionality of this function is deprecated as of version
-           ForceDimension Python bindings version 0.2.0
-           (which targets ForceDimension SDK v3.16.0+).
+           Force Dimension Python bindings version 0.2.0
+           (which targets Force Dimension SDK v3.16.0+).
            Please use :func:`dhd.jointAnglesToGravityJointTorques()`
            instead.
 

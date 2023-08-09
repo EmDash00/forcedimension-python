@@ -1,7 +1,7 @@
 """
 .. module::forcedimension
    :platform: Windows, Unix
-   :synopsis: ForceDimensionSDK high level wrappers.
+   :synopsis: Force Dimension SDK high level wrappers.
 
 .. moduleauthor:: Ember "Emmy" Chow <emberchow.business@gmail.com>
 """
@@ -32,7 +32,7 @@ dhd.expert.enableExpertMode()
 
 class HapticDevice(Generic[T]):
     """
-    A HapticDevice is a high-level wrapper for any compatible ForceDimension
+    A HapticDevice is a high-level wrapper for any compatible Force Dimension
     device. It abstracts away low level implementation details bound in the
     dhd and provides a peformant portable Pythonic interface for doing
     high-level control.
@@ -46,7 +46,7 @@ class HapticDevice(Generic[T]):
             VecType: Type[T] = DefaultVecType
     ):
         """
-        Create a handle to a ForceDimension haptic device.
+        Create a handle to a Force Dimension haptic device.
 
         :param Optional[int] ID: optional ID to open. If no ID is provided, the
         first available device available is opened.

@@ -310,7 +310,7 @@ class DHDErrorDHCBusy(DHDIOError):
 class DHDErrorNoDeviceFound(DHDIOError):
     def __init__(self, **kwargs):
         return super().__init__(
-            err="No compatible ForceDimension devices found",
+            err="No compatible Force Dimension devices found",
             **kwargs
         )
 

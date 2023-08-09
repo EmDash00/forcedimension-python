@@ -554,9 +554,9 @@ _libdhd.dhdGetSDKVersion.restype = None
 
 def getSDKVersion() -> VersionTuple:
     """
-    Get the version of the ForceDimensionSDK in the form (major, minor,
-    release, revision). Versions of the ForceDimensionSDK
-    are reported as major.minor.release-revision by ForceDimension.
+    Get the version of the Force Dimension SDK in the form (major, minor,
+    release, revision). Versions of the Force Dimension SDK
+    are reported as major.minor.release-revision by Force Dimension.
 
     See Also
     --------
