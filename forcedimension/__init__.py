@@ -42,6 +42,7 @@ class HapticDevice(Generic[T]):
             self,
             ID: Optional[int] = None,
             devtype: Optional[dhd.DeviceType] = None,
+            serial_number: Optional[int] = None,
             VecType: Type[T] = DefaultVecType
     ):
         """
@@ -66,6 +67,11 @@ class HapticDevice(Generic[T]):
         recommended to use the object with a "with" statement so that the
         device is always properly closed.
         """
+
+        if (none_count := [ID, devtype, serial_number].count(None)) < 2:
+            raise ValueError(
+                "At most 1 of ID, devtype, or serial_number may be specified."
+            )
 
         if ID is not None:
             if ID < 0:
@@ -111,44 +117,23 @@ class HapticDevice(Generic[T]):
         if (dhd.getDeviceCount() <= 0):
             raise dhd.DHDErrorNoDeviceFound()
 
-        if ID is None:
-            if devtype is None:
-                # Neither ID nor devtype specified. Open the first device we find.
+        if (ID is None) and (devtype is None) and (serial_number is None):
+            # Open the first device we find.
 
-                if (id := drd.open()) == -1:
-                    raise dhd.errno_to_exception(dhd.errorGetLast())()
+            if (id := drd.open()) == -1:
+                raise dhd.errno_to_exception(dhd.errorGetLast())()
 
-                self._id = id
+            self._id = id
 
-                if (devtype_opened := dhd.getSystemType()) == -1:
-                    raise dhd.errno_to_exception(dhd.errorGetLast())(
-                        ID=self._id,
-                        op=dhd.getSystemType
-                    )()
+            if (devtype_opened := dhd.getSystemType()) == -1:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    ID=self._id,
+                    op=dhd.getSystemType
+                )()
 
-                self._devtype = devtype_opened
-
-            else:
-                # ID is not specified but devtype is specified. Open the first
-                # device of the given devtype
-
-                if (id := dhd.openType(devtype)) == -1:
-                    raise dhd.errno_to_exception(dhd.errorGetLast())()
-
-                self._id = id
-
-                if dhd.close(self._id) == -1:
-                    raise dhd.errno_to_exception(dhd.errorGetLast())(
-                        ID=self._id,
-                        op=dhd.close
-                    )
-
-                if drd.openID(self._id) == -1:
-                    raise dhd.errno_to_exception(dhd.errorGetLast())()
-
-                self._devtype = devtype
-        else:
-            # ID is specified. Open the specified ID.
+            self._devtype = devtype_opened
+        elif ID is not None:
+            # Open device of given ID.
 
             if (id := drd.openID(ID)) == -1:
                 raise dhd.errno_to_exception(dhd.errorGetLast())()
@@ -161,12 +146,44 @@ class HapticDevice(Generic[T]):
                     op=dhd.getSystemType
                 )
 
-            # If ID and devtype are specified, they must match.
-            if devtype is not None:
-                if (devtype != devtype_opened):
-                    raise Exception(
-                        f"Device is not of type {self.devtype}"
-                    )
+
+            self._devtype = devtype_opened
+        elif devtype is not None:
+            # Open first device of given devtype.
+
+            if (id := dhd.openType(devtype)) == -1:
+                raise dhd.errno_to_exception(dhd.errorGetLast())()
+
+            self._id = id
+
+            if dhd.close(self._id) == -1:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    ID=self._id,
+                    op=dhd.close
+                )
+
+            if drd.openID(self._id) == -1:
+                raise dhd.errno_to_exception(dhd.errorGetLast())()
+
+            self._devtype = devtype
+        elif serial_number is not None:
+            if (id := dhd.openSerial(serial_number)) == -1:
+                raise dhd.errno_to_exception(dhd.errorGetLast())()
+
+            if dhd.close(self._id) == -1:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    ID=self._id,
+                    op=dhd.close
+                )
+
+            if drd.openID(self._id) == -1:
+                raise dhd.errno_to_exception(dhd.errorGetLast())()
+
+            if (devtype_opened := dhd.getSystemType()) == -1:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    ID=self._id,
+                    op=dhd.getSystemType
+                )
 
             self._devtype = devtype_opened
 
