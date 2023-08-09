@@ -345,7 +345,7 @@ class HapticDevice(Generic[T]):
 
         err = dhd.expert.getDeltaEncoders(self._enc, self._id)
 
-        if err and err != dhd.TIMEGUARD:
+        if err == -1:
             raise dhd.errno_to_exception(
                 dhd.errorGetLast())(
                     ID=self._id,
@@ -361,7 +361,7 @@ class HapticDevice(Generic[T]):
 
         err = dhd.direct.getPosition(self._pos, self._id)
 
-        if err and err != dhd.TIMEGUARD:
+        if err == -1:
             raise dhd.errno_to_exception(
                 dhd.errorGetLast())(
                     ID=self._id,
@@ -376,7 +376,7 @@ class HapticDevice(Generic[T]):
         """
         err = dhd.direct.getLinearVelocity(self._v, self._id)
 
-        if err and err != dhd.TIMEGUARD:
+        if err == -1:
             if dhd.errorGetLast() != ErrorNum.TIMEOUT:
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     ID=self._id,
@@ -416,7 +416,7 @@ class HapticDevice(Generic[T]):
 
         err = dhd.getForce(self._f, self._id)
 
-        if err and err != dhd.TIMEGUARD:
+        if err == -1:
             raise dhd.errno_to_exception(ErrorNum(
                 dhd.errorGetLast()))(
                     ID=self._id,
@@ -477,20 +477,12 @@ class HapticDevice(Generic[T]):
         :func:`HapticDevice.req`
         """
         self._req = False
-        err = dhd.setForceAndTorque(
-            self._f_req,
-            self._t_req,
-            self._id
-        )
 
-        if err:
-            if err == dhd.MOTOR_SATURATED:
-                pass
-            else:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
-                    ID=self._id,
-                    feature=dhd.setForceAndTorqueAndGripperForce
-                )
+        if dhd.setForceAndTorque(self._f_req, self._t_req, self._id) == -1:
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                ID=self._id,
+                feature=dhd.setForceAndTorqueAndGripperForce
+            )
 
     def req(self, f: IntVectorLike, t: IntVectorLike = (0, 0, 0)):
         """
@@ -582,6 +574,7 @@ class HapticDevice(Generic[T]):
             `True` to enable electromagnetic braking, `False` to disable.
         """
         err = dhd.setBrakes(enabled)
+
         if err:
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
@@ -856,7 +849,7 @@ class Gripper(Generic[T]):
     def update_enc(self):
         err = dhd.expert.getGripperEncoder(self._enc, self._id)
 
-        if err and err != dhd.TIMEGUARD:
+        if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_enc_and_calculate(self):
@@ -867,36 +860,37 @@ class Gripper(Generic[T]):
     def update_linear_velocity(self):
         err = dhd.getGripperLinearVelocity(self._v, self._id)
 
-        if err and err != dhd.TIMEGUARD:
+        if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_angular_velocity(self):
         err = dhd.getGripperAngularVelocityRad(self._w, self._id)
 
-        if err and err != dhd.TIMEGUARD:
+        if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_angle(self):
         err = dhd.getGripperAngleRad(self._angle, self._id)
 
-        if err and err != dhd.TIMEGUARD:
+        if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_gap(self):
         err = dhd.getGripperGap(self._gap, self._id)
 
-        if err and err != dhd.TIMEGUARD:
+        if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_thumb_pos(self):
         err = dhd.direct.getGripperThumbPos(self._thumb_pos, self._id)
 
-        if err and err != dhd.TIMEGUARD:
+        if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_finger_pos(self):
         err = dhd.direct.getGripperFingerPos(self._finger_pos, self._id)
-        if err and err != dhd.TIMEGUARD:
+
+        if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def check_threadex(self):
