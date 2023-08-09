@@ -196,6 +196,7 @@ class HapticDevice(Generic[T]):
 
         :returns: The ID of the HapticDevices
         """
+
         self.check_threadex()
         return self._id
 
@@ -213,6 +214,7 @@ class HapticDevice(Generic[T]):
             A mutable sequence of [x, y, z] where x, y, and z are the
             end-effector's position given in [m].
         """
+
         self.check_threadex()
         return _cast(T, self._pos_view)
 
@@ -223,6 +225,7 @@ class HapticDevice(Generic[T]):
 
         :returns: the set mass of the end-effector in [kg]
         """
+
         return self._mass
 
     def set_mass(self, m: float):
@@ -239,6 +242,7 @@ class HapticDevice(Generic[T]):
             A mutable sequence of [vx, vy, vz] where vx, vy, and vz are
             the end-effector's linear velocity given in [m/s].
         """
+
         self.check_threadex()
         return _cast(T, self._v_view)
 
@@ -252,6 +256,7 @@ class HapticDevice(Generic[T]):
             A mutable sequence of [wx, wy, wz] where wx, wy, and wz are
             the end-effector's linear velocity given in [rad/s].
         """
+
         self.check_threadex()
         return _cast(T, self._w_view)
 
@@ -265,6 +270,7 @@ class HapticDevice(Generic[T]):
             A mutable sequence of [tx, ty, tz] where tx, ty, and tz are
             the torque experienced by the end-effector in [Nm]
         """
+
         self.check_threadex()
         return _cast(T, self._t_view)
 
@@ -297,6 +303,7 @@ class HapticDevice(Generic[T]):
 
         :returns: StatusTuple containing all status information.
         """
+
         if dhd.getStatus(self._status, ID=self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
@@ -315,6 +322,7 @@ class HapticDevice(Generic[T]):
         Calculates and stores the joint angles of the device given the current
         end-effector encoder readings.
         """
+
         dhd.expert.direct.deltaEncodersToJointAngles(
             self._enc, self._joint_angles, self._id
         )
@@ -324,6 +332,7 @@ class HapticDevice(Generic[T]):
         Calculates and stores the Jacobian matrix of the device given the
         current end-effector position.
         """
+
         self.calculate_joint_angles()
 
         dhd.expert.direct.deltaJointAnglesToJacobian(
@@ -374,6 +383,7 @@ class HapticDevice(Generic[T]):
         linear velocity of the end-effector and updates the last-known linear
         velocity with the response.
         """
+
         err = dhd.direct.getLinearVelocity(self._v, self._id)
 
         if err == -1:
@@ -429,6 +439,7 @@ class HapticDevice(Generic[T]):
         the current force and torque applied to the end-effector and
         updates the last-known force and torque with the response.
         """
+
         err = dhd.direct.getForceAndTorque(self._f, self._t, self._id)
 
         if err:
@@ -447,6 +458,7 @@ class HapticDevice(Generic[T]):
         The reason this is in HapticDevice is largely due to an implement
         detail in dhd and as a way to optimize requests to the device.
         """
+
         err = dhd.direct.getForceAndTorqueAndGripperForce(
             self._f, self._t, self._gripper._fg, self._id
         )
@@ -466,6 +478,7 @@ class HapticDevice(Generic[T]):
         --------
         :func:`HapticDevice.get_button`
         """
+
         self._buttons = dhd.getButtonMask(ID=self._id)
 
     def submit(self):
@@ -476,6 +489,7 @@ class HapticDevice(Generic[T]):
         --------
         :func:`HapticDevice.req`
         """
+
         self._req = False
 
         if dhd.setForceAndTorque(self._f_req, self._t_req, self._id) == -1:
@@ -502,7 +516,9 @@ class HapticDevice(Generic[T]):
         --------
         :func:`HapticDevice.submit`
         """
+
         self._req = True
+
         self._f_req[0] = f[0]
         self._f_req[1] = f[1]
         self._f_req[2] = f[2]
@@ -534,6 +550,7 @@ class HapticDevice(Generic[T]):
         off and gravity compensation disabled. No forces will be allowed to be
         put on the device.
         """
+
         self.enable_force(enabled=False)
         self.enable_brakes(enabled=False)
         self.enable_gravity_compensation(enabled=False)
@@ -543,6 +560,7 @@ class HapticDevice(Generic[T]):
         Disable force and put the device in BRAKE mode. You may feel a viscous
         force that keeps that device from moving too quickly in this mode.
         """
+
         dhd.stop(self._id)
 
     def submit_vibration(self):
@@ -564,6 +582,7 @@ class HapticDevice(Generic[T]):
 
         :param bool enabled: `True` to enable, `False` to disable
         """
+
         dhd.enableForce(enabled, ID=self._id)
 
     def enable_brakes(self, enabled: bool = True):
@@ -573,9 +592,8 @@ class HapticDevice(Generic[T]):
         :param enabled bool:
             `True` to enable electromagnetic braking, `False` to disable.
         """
-        err = dhd.setBrakes(enabled)
 
-        if err:
+        if dhd.setBrakes(enabled):
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 feature=dhd.setVibration
@@ -605,15 +623,15 @@ class HapticDevice(Generic[T]):
             The desired limit (in N) to the force magnitude that can be
             applied. If the limit is None, the force limit is disabled.
         """
-        if limit is None:
-            err = dhd.setMaxForce(ID=self._id, limit=-1.0)
-        else:
+
+        if limit is not None:
             if limit < 0:
-                raise ValueError
+                raise ValueError("limit must be greater than 0 or None.")
 
-            err = dhd.setMaxForce(ID=self._id, limit=limit)
+        if limit is None:
+            limit = -1.0
 
-        if err:
+        if dhd.setMaxForce(limit, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())
 
     def get_max_torque(self) -> Optional[float]:
@@ -640,15 +658,15 @@ class HapticDevice(Generic[T]):
             The desired limit (in N) to the force magnitude that can be
             applied. If the limit is None, the force limit is disabled.
         """
-        if limit is None:
-            err = dhd.setMaxTorque(ID=self._id, limit=-1.0)
-        else:
+
+        if limit is not None:
             if limit < 0:
-                raise ValueError
+                raise ValueError("limit must be greater than 0 or None.")
 
-            err = dhd.setMaxTorque(ID=self._id, limit=limit)
+        if limit is None:
+            limit = -1.0
 
-        if err:
+        if dhd.setMaxTorque(limit, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def enable_gravity_compensation(self, enabled: bool = True):
@@ -658,6 +676,7 @@ class HapticDevice(Generic[T]):
 
         :param bool enabled: True to enable, False to disable
         """
+
         dhd.setGravityCompensation(enabled, ID=self._id)
 
         self._req = True
@@ -685,6 +704,7 @@ class HapticDevice(Generic[T]):
 
         :returns: True if the button is being pressed, False otherwise
         """
+
         return bool(self._buttons & _cast(int, 1 << button_id))
 
     def close(self):
@@ -784,18 +804,15 @@ class Gripper(Generic[T]):
             The desired limit (in N) to the force magnitude that can be
             applied. If the limit is None, the force limit is disabled.
         """
-        if limit is None:
-            err = dhd.setMaxGripperForce(-1.0, self._id)
-        else:
+
+        if limit is not None:
             if limit < 0:
-                raise ValueError
+                raise ValueError("limit must be greater than 0 or None.")
 
-            err = dhd.setMaxGripperForce(
-                ID=self._id,
-                limit=limit
-            )
+        if limit is None:
+            limit = -1.0
 
-        if err:
+        if dhd.setMaxGripperForce(limit, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     @property
@@ -994,13 +1011,6 @@ class HapticDaemon(Thread):
 
     def _set_pollers(self, update_list):
         if update_list is not None:
-            """
-            not implemented yet.
-
-            if update_list.enc:
-                funcs.append(self._dev.update_enc_and_calculate)
-            """
-
             funcs = (
                 self._dev.update_enc_and_calculate,
                 self._dev.update_velocity,
