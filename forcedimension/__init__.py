@@ -391,7 +391,7 @@ class HapticDevice(Generic[T]):
     def calculate_pos(self):
         """
         Calculates and stores the position of the device given the current
-        end-effector position.
+        end-effector positionin the internal buffer.
         """
 
         dhd.expert.direct.deltaEncoderToPosition(
@@ -401,7 +401,7 @@ class HapticDevice(Generic[T]):
     def calculate_delta_joint_angles(self):
         """
         Calculates and stores the joint angles of the DELTA structure given
-        the current end-effector encoder readings.
+        the current end-effector encoder readings in the internal buffer.
         """
 
         dhd.expert.direct.deltaEncodersToJointAngles(
@@ -411,7 +411,7 @@ class HapticDevice(Generic[T]):
     def calculate_delta_jacobian(self):
         """
         Calculates and stores the Jacobian matrix of the DELTA structure given
-        current joint angle configuration.
+        current joint angle configuration in the internal buffer.
         """
 
         self.calculate_delta_joint_angles()
@@ -423,7 +423,7 @@ class HapticDevice(Generic[T]):
     def calculate_wrist_joint_angles(self):
         """
         Calculates and stores the joint angles of the WRIST structure given
-        the current end-effector encoder readings.
+        the current end-effector encoder readings in the internal buffer.
         """
 
         dhd.expert.direct.wristEncodersToJointAngles(
@@ -433,7 +433,7 @@ class HapticDevice(Generic[T]):
     def calculate_wrist_jacobian(self):
         """
         Calculates and stores the Jacobian matrix of the WRIST structure given
-        current joint angle configuration.
+        current joint angle configuration in the internal buffer.
         """
 
         dhd.expert.direct.wristJointAnglesToJacobian(
@@ -442,8 +442,9 @@ class HapticDevice(Generic[T]):
 
     def calculate_inertia_matrix(self):
         """
-        Calculates the 6x6 inertia matrix given the current joint angles
-        configuration in the internal buffer.
+        Calculates the 6x6 inertia matrix (with respect to the X, Y, and Z
+        axes) given the current joint angles configuration in the internal
+        buffer.
         """
 
         dhd.expert.direct.jointAnglesToIntertiaMatrix(
