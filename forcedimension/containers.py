@@ -56,6 +56,9 @@ class Vector3(array, SupportsPtrs3[c_double], SupportsPtr[c_double_ptr]):
     def __new__(
         cls, initializer: Iterable[float] = (0., 0., 0.)
     ):
+        if isinstance(initializer, array):
+            return initializer
+
         arr = super(Vector3, cls).__new__(
             cls, 'd', initializer  # type: ignore
         )
@@ -110,6 +113,9 @@ class Enc3(array, SupportsPtrs3[c_int], SupportsPtr[c_int]):
     def __new__(
         cls, initializer: Iterable[float] = (0., 0., 0.)
     ):
+        if isinstance(initializer, array):
+            return initializer
+
         arr = super(Enc3, cls).__new__(
             cls, 'd', initializer  # type: ignore
         )
@@ -140,6 +146,9 @@ class Enc4(array, SupportsPtr[c_int]):
     def __new__(
         cls, initializer: Iterable[float] = (0., 0., 0., 0.)
     ):
+        if isinstance(initializer, array):
+            return initializer
+
         arr = super(Enc4, cls).__new__(
             cls, 'd', initializer  # type: ignore
         )
@@ -157,7 +166,7 @@ class Enc4(array, SupportsPtr[c_int]):
         return self._ptr
 
 
-class DOFIntArray(array, SupportsPtr[c_int]):
+class DOFEncs(array, SupportsPtr[c_int]):
     """
     A List[float] providing convience "x", "y", "z" read-write accessor
     properties. This class subclasses List[float]; therefore, for all intents
@@ -167,7 +176,7 @@ class DOFIntArray(array, SupportsPtr[c_int]):
     def __new__(
         cls, initializer: Iterable[int] = (0 for _ in range(MAX_DOF))
     ):
-        arr = super(DOFIntArray, cls).__new__(
+        arr = super(DOFEncs, cls).__new__(
             cls, 'i', initializer  # type: ignore
         )
 
@@ -178,10 +187,32 @@ class DOFIntArray(array, SupportsPtr[c_int]):
 
     def __init__(self):
         self._ptr = ctypes.cast(self.buffer_info()[0], c_int_ptr)
+        self._delta = Enc3(self[:3])
+        self._wrist = Enc3(self[3:6])
+        self._wrist_grip = Enc4(self[3:7])
+        self._gripper = ctypes.cast(
+            self.buffer_info()[0] + self.itemsize * (MAX_DOF - 1), c_int_ptr
+        ).contents
 
     @property
     def ptr(self) -> c_int_ptr:
         return self._ptr
+
+    @property
+    def delta(self) -> Enc3:
+        return self._delta
+
+    @property
+    def wrist(self) -> Enc3:
+        return self._wrist
+
+    @property
+    def wrist_grip(self) -> Enc4:
+        return self._wrist_grip
+
+    @property
+    def gripper(self) -> c_int:
+        return self._gripper
 
 
 class DOFMotorArray(array, SupportsPtr[c_ushort]):
@@ -211,7 +242,7 @@ class DOFMotorArray(array, SupportsPtr[c_ushort]):
         return self._ptr
 
 
-class DOFFloatArray(array, SupportsPtr[c_double]):
+class DOFJointAngles(array, SupportsPtr[c_double]):
     """
     A List[float] providing convience "x", "y", "z" read-write accessor
     properties. This class subclasses List[float]; therefore, for all intents
@@ -221,7 +252,7 @@ class DOFFloatArray(array, SupportsPtr[c_double]):
     def __new__(
         cls, initializer: Iterable[float] = (0 for _ in range(MAX_DOF))
     ):
-        arr = super(DOFFloatArray, cls).__new__(
+        arr = super(DOFJointAngles, cls).__new__(
             cls, 'd', initializer  # type: ignore
         )
 
@@ -233,9 +264,27 @@ class DOFFloatArray(array, SupportsPtr[c_double]):
     def __init__(self):
         self._ptr = ctypes.cast(self.buffer_info()[0], c_double_ptr)
 
+        self._delta = Vector3(self[:3])
+        self._wrist = Vector3(self[3:6])
+        self._gripper = self._gripper = ctypes.cast(
+            self.buffer_info()[0] + 7 * self.itemsize, c_double_ptr
+        ).contents
+
     @property
     def ptr(self) -> c_double_ptr:
         return self._ptr
+
+    @property
+    def delta(self) -> Vector3:
+        return self._delta
+
+    @property
+    def wrist(self) -> Vector3:
+        return self._wrist
+
+    @property
+    def gripper(self) -> c_double:
+        return self._gripper
 
 
 class Mat3x3(List[array], SupportsPtr[c_double]):
@@ -285,8 +334,8 @@ class Mat6x6(List[array], SupportsPtr[c_double]):
 DefaultVecType = Vector3
 DefaultEnc3Type = Enc3
 DefaultEnc4Type = Enc4
-DefaultDOFIntType = DOFIntArray
-DefaultDOFFloatType = DOFFloatArray
+DefaultDOFEncsType = DOFEncs
+DefaultDOFJointAnglesType = DOFJointAngles
 DefaultMat3x3Type = Mat3x3
 DefaultMat6x6Type = Mat6x6
 
@@ -307,7 +356,7 @@ try:
         methods.
         """
         def __new__(cls, data: npt.ArrayLike = (0., 0., 0.)):
-            arr = np.asarray(data, dtype=c_double).view(cls)
+            arr = np.ascontiguousarray(data, dtype=c_double).view(cls)
 
             if len(arr) != 3:
                 raise ValueError
@@ -364,7 +413,7 @@ try:
         methods.
         """
         def __new__(cls, data: npt.ArrayLike = (0., 0., 0.)):
-            arr = np.asarray(data, dtype=c_int).view(cls)
+            arr = np.ascontiguousarray(data, dtype=c_int).view(cls)
 
             if len(arr) != 3:
                 raise ValueError
@@ -396,7 +445,7 @@ try:
         methods.
         """
         def __new__(cls, data: npt.ArrayLike = (0., 0., 0., 0.)):
-            arr = np.asarray(data, dtype=c_int).view(cls)
+            arr = np.ascontiguousarray(data, dtype=c_int).view(cls)
 
             if len(arr) != 4:
                 raise ValueError
@@ -412,9 +461,9 @@ try:
         def ptr(self) -> c_int_ptr:
             return self._ptr
 
-    class NumpyDOFIntArray(np.ndarray, SupportsPtr[c_int]):
+    class NumpyDOFEncs(np.ndarray, SupportsPtr[c_int]):
         def __new__(cls, data: IntArray = tuple(0 for _ in range(MAX_DOF))):
-            arr = np.asarray(data, dtype=c_int).view(cls)
+            arr = np.ascontiguousarray(data, dtype=c_int).view(cls)
 
             if len(arr) != MAX_DOF:
                 raise ValueError()
@@ -423,15 +472,39 @@ try:
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
+
             self._ptr = ctypes.cast(self.ctypes.data, c_int_ptr)
+            self._delta = NumpyEnc3(self[:3])
+            self._wrist = NumpyEnc3(self[3:6])
+            self._wrist_grip = NumpyEnc4(self[3:7])
+
+            self._gripper = ctypes.cast(
+                self.ctypes.data + 7 * self.itemsize, c_int_ptr
+            ).contents
 
         @property
         def ptr(self) -> c_int_ptr:
             return self._ptr
 
+        @property
+        def delta(self) -> NumpyEnc3:
+            return self._delta
+
+        @property
+        def wrist(self) -> NumpyEnc3:
+            return self._wrist
+
+        @property
+        def wrist_grip(self) -> NumpyEnc4:
+            return self._wrist_grip
+
+        @property
+        def gripper(self) -> c_int:
+            return self._gripper
+
     class NumpyDOFMotorArray(np.ndarray, SupportsPtr[c_ushort]):
         def __new__(cls, data: IntArray = tuple(0 for _ in range(MAX_DOF))):
-            arr = np.asarray(data, dtype=c_ushort).view(cls)
+            arr = np.ascontiguousarray(data, dtype=c_ushort).view(cls)
 
             if len(arr) != MAX_DOF:
                 raise ValueError()
@@ -446,11 +519,11 @@ try:
         def ptr(self) -> c_ushort_ptr:
             return self._ptr
 
-    class NumpyDOFFloatArray(np.ndarray, SupportsPtr[c_double]):
+    class NumpyDOFJointAngles(np.ndarray, SupportsPtr[c_double]):
         def __new__(
             cls, data: npt.ArrayLike = tuple(0. for _ in range(MAX_DOF))
         ):
-            arr = np.asarray(data, dtype=c_double).view(cls)
+            arr = np.ascontiguousarray(data, dtype=c_double).view(cls)
 
             if len(arr) != MAX_DOF:
                 raise ValueError()
@@ -461,9 +534,27 @@ try:
             super().__init__(*args, **kwargs)
             self._ptr = ctypes.cast(self.ctypes.data, c_double_ptr)
 
+            self._delta = NumpyVector3(self[:3])
+            self._wrist = NumpyVector3(self[3:6])
+            self._gripper = ctypes.cast(
+                self.ctypes.data + 7 * self.itemsize, c_double_ptr
+            ).contents
+
         @property
         def ptr(self) -> c_double_ptr:
             return self._ptr
+
+        @property
+        def delta(self) -> NumpyVector3:
+            return self._delta
+
+        @property
+        def wrist(self) -> NumpyVector3:
+            return self._wrist
+
+        @property
+        def gripper(self) -> c_double:
+            return self._gripper
 
     class NumpyMat3x3(np.ndarray, SupportsPtr[c_double]):
         """
@@ -474,7 +565,7 @@ try:
         methods.
         """
         def __new__(cls, data: npt.ArrayLike = tuple(0. for _ in range(9))):
-            arr = np.asarray(data, dtype=c_double)
+            arr = np.ascontiguousarray(data, dtype=c_double)
 
             if len(arr) != 9:
                 raise ValueError()
@@ -498,7 +589,7 @@ try:
         methods.
         """
         def __new__(cls, data: npt.ArrayLike = tuple(0. for _ in range(36))):
-            arr = np.asarray(data, dtype=c_double)
+            arr = np.ascontiguousarray(data, dtype=c_double)
 
             if len(arr) != 36:
                 raise ValueError()
@@ -516,8 +607,8 @@ try:
     DefaultVecType = NumpyVector3
     DefaultEnc3Type = NumpyEnc3
     DefaultEnc4Type = NumpyEnc4
-    DefaultDOFIntType = NumpyDOFIntArray
-    DefaultDOFFloatType = NumpyDOFFloatArray
+    DefaultDOFEncsType = NumpyDOFEncs
+    DefaultDOFJointAnglesType = NumpyDOFJointAngles
     DefaultMat3x3Type = NumpyMat3x3
     DefaultMat6x6Type = NumpyMat6x6
 except ImportError:

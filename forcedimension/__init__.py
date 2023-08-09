@@ -10,7 +10,7 @@ from typing import cast as _cast
 import forcedimension.dhd as dhd
 import forcedimension.drd as drd
 from forcedimension.containers import (
-    DefaultEnc3Type, DefaultMat3x3Type, DefaultMat6x6Type, DefaultVecType,
+    DefaultDOFEncsType, DefaultDOFJointAnglesType, DefaultEnc3Type, DefaultMat3x3Type, DefaultMat6x6Type, DefaultVecType,
     GripperUpdateOpts, UpdateOpts
 )
 from forcedimension.dhd import ErrorNum, Status
@@ -85,11 +85,8 @@ class HapticDevice(Generic[T]):
 
         self._open = True
 
-        self._delta_enc = DefaultEnc3Type()
-        self._wrist_enc = DefaultEnc3Type()
-
-        self._delta_joint_angles = VecType()
-        self._wrist_joint_angles = VecType()
+        self._encs = DefaultDOFEncsType()
+        self._joint_angles = DefaultDOFJointAnglesType()
 
         self._pos = VecType()
         self._w = VecType()
@@ -112,11 +109,11 @@ class HapticDevice(Generic[T]):
         self._buttons = 0
 
         self._delta_joint_angles_view = ImmutableWrapper(
-            self._delta_joint_angles
+            self._joint_angles.delta
         )
 
         self._wrist_joint_angles_view = ImmutableWrapper(
-            self._wrist_joint_angles
+            self._joint_angles.wrist
         )
 
         self._pos_view = ImmutableWrapper(self._pos)
@@ -398,7 +395,7 @@ class HapticDevice(Generic[T]):
         """
 
         dhd.expert.direct.deltaEncoderToPosition(
-            self._delta_enc, self._pos, self._id
+            self._encs.delta, self._pos, self._id
         )
 
     def calculate_delta_joint_angles(self):
@@ -408,7 +405,7 @@ class HapticDevice(Generic[T]):
         """
 
         dhd.expert.direct.deltaEncodersToJointAngles(
-            self._delta_enc, self._delta_joint_angles, self._id
+            self._encs.wrist, self._joint_angles.delta, self._id
         )
 
     def calculate_delta_jacobian(self):
@@ -420,7 +417,7 @@ class HapticDevice(Generic[T]):
         self.calculate_delta_joint_angles()
 
         dhd.expert.direct.deltaJointAnglesToJacobian(
-            self._delta_joint_angles, self._delta_jacobian, self._id
+            self._joint_angles.delta, self._delta_jacobian, self._id
         )
 
     def calculate_wrist_joint_angles(self):
@@ -430,7 +427,7 @@ class HapticDevice(Generic[T]):
         """
 
         dhd.expert.direct.wristEncodersToJointAngles(
-            self._wrist_enc, self._wrist_joint_angles, self._id
+            self._encs.wrist, self._joint_angles.wrist, self._id
         )
 
     def calculate_wrist_jacobian(self):
@@ -440,7 +437,7 @@ class HapticDevice(Generic[T]):
         """
 
         dhd.expert.direct.wristJointAnglesToJacobian(
-            self._wrist_joint_angles, self._wrist_jacobian, self._id
+            self._joint_angles.wrist, self._wrist_jacobian, self._id
         )
 
     def update_delta_enc_and_calculate(self):
@@ -476,7 +473,7 @@ class HapticDevice(Generic[T]):
             If an error has occured with the device.
         """
 
-        err = dhd.expert.direct.getDeltaEncoders(self._delta_enc, self._id)
+        err = dhd.expert.direct.getDeltaEncoders(self._encs.delta, self._id)
 
         if err == -1:
             raise dhd.errno_to_exception(
@@ -496,7 +493,7 @@ class HapticDevice(Generic[T]):
             If an error has occured with the device.
         """
 
-        err = dhd.expert.direct.getWristEncoders(self._wrist_enc, self._id)
+        err = dhd.expert.direct.getWristEncoders(self._encs.wrist, self._id)
 
         if err == -1:
             raise dhd.errno_to_exception(
