@@ -26,9 +26,7 @@ dhd.expert.enableExpertMode()
 class HapticDevice(Generic[T]):
     """
     A HapticDevice is a high-level wrapper for any compatible Force Dimension
-    device. It abstracts away low level implementation details bound in the
-    dhd and provides a peformant portable Pythonic interface for doing
-    high-level control.
+    device.
     """
 
     def __init__(
@@ -39,26 +37,41 @@ class HapticDevice(Generic[T]):
             VecType: Type[T] = DefaultVecType
     ):
         """
-        Create a handle to a Force Dimension haptic device.
+        Create a handle to a Force Dimension haptic device. You may specify
+        an ID, device type, or serial number to more precisely control which
+        device is opened. If none are specified, the first device found is
+        opened. It is recommended to use context management
+        (i.e. using a `with` statement) to ensure the device is properly
+        closed. Once opened, properties of the device are stored as fields
+        in the class.
 
-        :param Optional[int] ID: optional ID to open. If no ID is provided, the
-        first available device available is opened.
+        :param Optional[int] ID:
+            If specified, will open the device of the given ID.
 
-        :param Optional[DeviceType]: optional requirement for the type of
-        device opened. If specified with ID, a RuntimeError will happen if the
-        device at the given ID is not the required type.
+        :param Optional[DeviceType] devtype:
+            If specified, will open the first device of the give type.
 
-        :param vecgen: A method to generate vectors for use in the haptic
-        device. For maximum portability, the default is just a
-        :class:`forcedimension.dhd.EuclidianVector`.
-        If your system supports numpy, the default is
-        :class:`forcedimension.dhd.EuclidianVector`.
+        :param Optional[int] serial_number:
+            If specified, will open the device of the given serial number.
+            This feature is only available on newer devices.
 
-        You can also provide it with any class so long as len(vecgen()) >= 3
+        :param Type[T] VecType:
+            The default type for vector buffers used by this class. You may
+            make your own custom types, but it's recommended to use
+            `forcedimension.containers.DefaultVecType`.
 
-        While you can construct a HapticDevice object this way, it is usually
-        recommended to use the object with a "with" statement so that the
-        device is always properly closed.
+        :raises ValueError:
+            If more than one of `ID`, `devtype`, or `serial_number` are
+            specified.
+
+        :raises ValueError:
+            If ID is specified and is less than 0.
+
+        :raises DHDErrorNoDeviceFound:
+            If no devices were found.
+
+        :raises DHDIOError:
+            If communications were interrupted while opening the device.
         """
 
         if (none_count := [ID, devtype, serial_number].count(None)) < 2:
@@ -200,7 +213,7 @@ class HapticDevice(Generic[T]):
     @property
     def ID(self) -> int:
         """
-        Provides a read-only accessor to the ID of the HapticDevice.
+        Provides a read-only reference to the ID of the HapticDevice.
         Thread-safe.
 
         :returns: The ID of the HapticDevices
@@ -216,8 +229,8 @@ class HapticDevice(Generic[T]):
     @property
     def pos(self) -> T:
         """
-        Provides a copy of the last-known position of the HapticDevice's end
-        effector. Thread-safe.
+        Provides a read-only reference to the last-known position of the
+        HapticDevice's end-effector. Thread-safe.
 
         :returns:
             A mutable sequence of [x, y, z] where x, y, and z are the
@@ -231,6 +244,7 @@ class HapticDevice(Generic[T]):
     def mass(self) -> float:
         """
         Get the mass of the end-effector used for gravity compensation in [kg].
+        Thread-safe.
 
         :returns: the set mass of the end-effector in [kg]
         """
@@ -238,14 +252,18 @@ class HapticDevice(Generic[T]):
         return self._mass
 
     def set_mass(self, m: float):
+        """
+        Sets the mass of the end-effector used for gravity compensation
+        (in [kg]). Thread-safe.
+        """
         if dhd.setEffectorMass(m, ID=self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     @property
     def v(self) -> T:
         """
-        Provides a copy of the last-known linear velocity of the HapticDevice's
-        end-effector. Thread-safe.
+        Provides a read-only reference to the last-known linear velocity of the
+        HapticDevice's end-effector. Thread-safe.
 
         :returns:
             A mutable sequence of [vx, vy, vz] where vx, vy, and vz are
@@ -258,7 +276,7 @@ class HapticDevice(Generic[T]):
     @property
     def w(self) -> T:
         """
-        Provides a copy of the last-known angular velocity of the
+        Provides a read-only reference to the last-known angular velocity of the
         HapticDevice's end-effector. Thread-safe.
 
         :returns:
@@ -272,8 +290,8 @@ class HapticDevice(Generic[T]):
     @property
     def t(self) -> T:
         """
-        Provides a copy of the last-known applied torque of the HapticDevice's
-        end-effector. Thread-safe.
+        Provides a read-only reference to the last-known applied torque of the
+        HapticDevice's end-effector. Thread-safe.
 
         :returns:
             A mutable sequence of [tx, ty, tz] where tx, ty, and tz are
@@ -286,8 +304,8 @@ class HapticDevice(Generic[T]):
     @property
     def f(self) -> T:
         """
-        Provides a copy of the last-known applied force of the HapticDevice's
-        end-effector. Thread-safe.
+        Provides a read-only reference to the last-known applied force of the
+        HapticDevice's end-effector. Thread-safe.
 
         :returns:
             A mutable sequence of [fx, fy, fz] where fx, fy, and fz are
@@ -303,6 +321,13 @@ class HapticDevice(Generic[T]):
 
     @property
     def status(self) -> Status:
+        """
+        Provides a read-only reference to the last-known status of the device.
+        Thread-safe.
+
+        :returns:
+            A Status object representing the last-known status of the device.
+        """
         return _cast(Status, self._status_view)
 
     def update_status(self):
@@ -310,7 +335,8 @@ class HapticDevice(Generic[T]):
         Perform a blocking read to the HapticDevice, requesting all pertinent
         status information.
 
-        :returns: StatusTuple containing all status information.
+        :returns:
+            Status object containing all status information.
         """
 
         if dhd.getStatus(self._status, ID=self._id):
