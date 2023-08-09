@@ -440,9 +440,7 @@ class HapticDevice(Generic[T]):
         updates the last-known force and torque with the response.
         """
 
-        err = dhd.direct.getForceAndTorque(self._f, self._t, self._id)
-
-        if err:
+        if dhd.direct.getForceAndTorque(self._f, self._t, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 feature=dhd.getForceAndTorque
@@ -568,9 +566,7 @@ class HapticDevice(Generic[T]):
             self._vibration_req[0], self._vibration_req[1], 0, self._id
         )
 
-        if err:
-            if err == dhd.MOTOR_SATURATED:
-                pass
+        if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 feature=dhd.setVibration
