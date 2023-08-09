@@ -559,22 +559,22 @@ class HapticDevice(Generic[T]):
         self._t_req[1] = t[1]
         self._t_req[2] = t[2]
 
-    def req_vibration(self, f: float, A: float):
+    def req_vibration(self, freq: float, amplitude: float):
         """
         Load the requested vibration into the vibration buffer. This won't
         send the request to the device. This is used by the HapticDaemon. This
         vibration will be added on top of the force requested to the device.
 
-        :param float f: frequency of the vibration in [Hz]
-        :param float A: amplitude of the vibration
+        :param float freq: frequency of the vibration (in [Hz])
+        :param float amplitude: amplitude of the vibration
 
         See Also
         --------
         :func:`HapticDevice.submit_vibration`
         """
 
-        self._vibration_req[0] = f
-        self._vibration_req[1] = A
+        self._vibration_req[0] = freq
+        self._vibration_req[1] = amplitude
 
     def neutral(self):
         """
