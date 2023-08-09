@@ -10,7 +10,7 @@ from typing import cast as _cast
 import forcedimension.dhd as dhd
 import forcedimension.drd as drd
 from forcedimension.containers import (
-    DefaultEnc3Type, DefaultMat3x3Type, DefaultVecType,
+    DefaultEnc3Type, DefaultMat3x3Type, DefaultMat6x6Type, DefaultVecType,
     GripperUpdateOpts, UpdateOpts
 )
 from forcedimension.dhd import ErrorNum, Status
@@ -85,8 +85,11 @@ class HapticDevice(Generic[T]):
 
         self._open = True
 
-        self._enc = DefaultEnc3Type()
-        self._joint_angles = VecType()
+        self._delta_enc = DefaultEnc3Type()
+        self._wrist_enc = DefaultEnc3Type()
+
+        self._delta_joint_angles = VecType()
+        self._wrist_joint_angles = VecType()
 
         self._pos = VecType()
         self._w = VecType()
@@ -94,7 +97,12 @@ class HapticDevice(Generic[T]):
         self._f = VecType()
         self._t = VecType()
 
-        self._J = DefaultMat3x3Type()
+        self._delta_jacobian = DefaultMat3x3Type()
+        self._wrist_jacobian = DefaultMat3x3Type()
+        self._frame = DefaultMat3x3Type()
+
+        self._inertia_matrix = DefaultMat6x6Type()
+
         self._status = Status()
 
         self._req = False
@@ -103,13 +111,27 @@ class HapticDevice(Generic[T]):
         self._vibration_req: List[float] = [0.] * 2
         self._buttons = 0
 
-        self._pos_view = ImmutableWrapper(data=self._pos)
-        self._w_view = ImmutableWrapper(data=self._w)
-        self._v_view = ImmutableWrapper(data=self._v)
-        self._f_view = ImmutableWrapper(data=self._f)
-        self._t_view = ImmutableWrapper(data=self._t)
-        self._J_view = ImmutableWrapper(data=self._J)
-        self._status_view = ImmutableWrapper(data=self._status)
+        self._delta_joint_angles_view = ImmutableWrapper(
+            self._delta_joint_angles
+        )
+
+        self._wrist_joint_angles_view = ImmutableWrapper(
+            self._wrist_joint_angles
+        )
+
+        self._pos_view = ImmutableWrapper(self._pos)
+        self._w_view = ImmutableWrapper(self._w)
+        self._v_view = ImmutableWrapper(self._v)
+        self._f_view = ImmutableWrapper(self._f)
+        self._t_view = ImmutableWrapper(self._t)
+
+        self._delta_jacobian_view = ImmutableWrapper(self._delta_jacobian)
+        self._wrist_jacobian_view = ImmutableWrapper(self._wrist_jacobian)
+        self._frame_view = ImmutableWrapper(self._frame)
+
+        self._inertia_matrix_view = ImmutableWrapper(self._inertia_matrix)
+
+        self._status_view = ImmutableWrapper(self._status)
 
         self._devtype = dhd.DeviceType.NONE
         self._mass = nan
@@ -204,7 +226,7 @@ class HapticDevice(Generic[T]):
         if err:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
-        self.update_enc_and_calculate()
+        self.update_delta_enc_and_calculate()
         self.update_force_and_torque_and_gripper_force()
 
     def check_exception(self):
@@ -224,21 +246,6 @@ class HapticDevice(Generic[T]):
     @property
     def devtype(self) -> dhd.DeviceType:
         return self._devtype
-
-    @property
-    def pos(self) -> T:
-        """
-        Provides a read-only reference to the last-known position of the
-        HapticDevice's end-effector (in [m]) about the X, Y, and Z axes.
-        Thread-safe.
-
-        :raises DHDError:
-            If an error has occured with the device, invalidating the
-            device state.
-        """
-
-        self.check_exception()
-        return _cast(T, self._pos_view)
 
     @property
     def mass(self) -> float:
@@ -265,6 +272,47 @@ class HapticDevice(Generic[T]):
         """
         if dhd.setEffectorMass(m, ID=self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
+
+    @property
+    def left_handed(self) -> Optional[bool]:
+        return self._left_handed
+
+    @property
+    def status(self) -> Status:
+        """
+        Provides a read-only reference to the last-known status of the device.
+        Thread-safe.
+
+        :returns:
+            A Status object representing the last-known status of the device.
+        """
+        return _cast(Status, self._status_view)
+
+
+    @property
+    def delta_joint_angles(self) -> T:
+        self.check_exception()
+        return _cast(T, self._delta_joint_angles_view)
+
+    @property
+    def wrist_joint_angles(self) -> T:
+        self.check_exception()
+        return _cast(T, self._wrist_joint_angles_view)
+
+    @property
+    def pos(self) -> T:
+        """
+        Provides a read-only reference to the last-known position of the
+        HapticDevice's end-effector (in [m]) about the X, Y, and Z axes.
+        Thread-safe.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
+        self.check_exception()
+        return _cast(T, self._pos_view)
 
     @property
     def v(self) -> T:
@@ -323,19 +371,25 @@ class HapticDevice(Generic[T]):
         return _cast(T, self._f_view)
 
     @property
-    def left_handed(self) -> Optional[bool]:
-        return self._left_handed
+    def delta_jacobian(self) -> DefaultMat3x3Type:
+        self.check_exception()
+        return _cast(DefaultMat3x3Type, self._delta_jacobian_view)
 
     @property
-    def status(self) -> Status:
-        """
-        Provides a read-only reference to the last-known status of the device.
-        Thread-safe.
+    def wrist_jacobian(self) -> DefaultMat3x3Type:
+        self.check_exception()
+        return _cast(DefaultMat3x3Type, self._wrist_jacobian_view)
 
-        :returns:
-            A Status object representing the last-known status of the device.
-        """
-        return _cast(Status, self._status_view)
+    @property
+    def frame(self) -> DefaultMat3x3Type:
+        self.check_exception()
+        return _cast(DefaultMat3x3Type, self._frame_view)
+
+    @property
+    def inertia_matrix(self) -> DefaultMat6x6Type:
+        self.check_exception()
+        return _cast(DefaultMat6x6Type, self._inertia_matrix_view)
+
 
     def calculate_pos(self):
         """
@@ -344,47 +398,85 @@ class HapticDevice(Generic[T]):
         """
 
         dhd.expert.direct.deltaEncoderToPosition(
-            self._enc, self._pos, self._id
+            self._delta_enc, self._pos, self._id
         )
 
-    def calculate_joint_angles(self):
+    def calculate_delta_joint_angles(self):
         """
-        Calculates and stores the joint angles of the device given the current
-        end-effector encoder readings.
+        Calculates and stores the joint angles of the DELTA structure given
+        the current end-effector encoder readings.
         """
 
         dhd.expert.direct.deltaEncodersToJointAngles(
-            self._enc, self._joint_angles, self._id
+            self._delta_enc, self._delta_joint_angles, self._id
         )
 
-    def calculate_jacobian(self):
+    def calculate_delta_jacobian(self):
         """
-        Calculates and stores the Jacobian matrix of the device given the
-        current end-effector position.
+        Calculates and stores the Jacobian matrix of the DELTA structure given
+        current joint angle configuration.
         """
 
-        self.calculate_joint_angles()
+        self.calculate_delta_joint_angles()
 
         dhd.expert.direct.deltaJointAnglesToJacobian(
-            self._joint_angles, self._J, self._id
+            self._delta_joint_angles, self._delta_jacobian, self._id
         )
 
-    def update_enc_and_calculate(self):
-        self.update_enc()
-        self.calculate_pos()
-        self.calculate_jacobian()
+    def calculate_wrist_joint_angles(self):
+        """
+        Calculates and stores the joint angles of the WRIST structure given
+        the current end-effector encoder readings.
+        """
 
-    def update_enc(self):
+        dhd.expert.direct.wristEncodersToJointAngles(
+            self._wrist_enc, self._wrist_joint_angles, self._id
+        )
+
+    def calculate_wrist_jacobian(self):
+        """
+        Calculates and stores the Jacobian matrix of the WRIST structure given
+        current joint angle configuration.
+        """
+
+        dhd.expert.direct.wristJointAnglesToJacobian(
+            self._wrist_joint_angles, self._wrist_jacobian, self._id
+        )
+
+    def update_delta_enc_and_calculate(self):
+        """
+        Updates the DELTA encoders and given those values, calculates the
+        position of the end-effector, DELTA joint angles, and the DELTA
+        jacobian.
+        """
+
+        self.update_delta_enc()
+        self.calculate_pos()
+        self.calculate_delta_joint_angles()
+        self.calculate_delta_jacobian()
+
+    def update_wrist_enc_and_calculate(self):
+        """
+        Updates the WRIST encoders and given those values, calculates the wrist
+        joint angles and the WRIST jacobian.
+        """
+
+        self.update_wrist_enc()
+        self.calculate_wrist_joint_angles()
+        self.calculate_wrist_jacobian()
+
+    def update_delta_enc(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
-        encoder readers of the (DELTA structure that controls the) end-effector
-        and updates the last-known position  with the response.
+        encoder readers of the DELTA structure that controls the end-effector
+        and updates the last-known position with the response. The requested
+        values are then loaded into an internal buffer.
 
         :raises DHDError:
             If an error has occured with the device.
         """
 
-        err = dhd.expert.getDeltaEncoders(self._enc, self._id)
+        err = dhd.expert.direct.getDeltaEncoders(self._delta_enc, self._id)
 
         if err == -1:
             raise dhd.errno_to_exception(
@@ -393,11 +485,32 @@ class HapticDevice(Generic[T]):
                     feature=dhd.expert.getDeltaEncoders
             )
 
+    def update_wrist_enc(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting the current
+        encoder readers of the DELTA structure that controls the end-effector
+        and updates the last-known position with the response. The requested
+        values are then loaded into an internal buffer.
+
+        :raises DHDError:
+            If an error has occured with the device.
+        """
+
+        err = dhd.expert.direct.getWristEncoders(self._wrist_enc, self._id)
+
+        if err == -1:
+            raise dhd.errno_to_exception(
+                dhd.errorGetLast())(
+                    ID=self._id,
+                    feature=dhd.expert.getWristEncoders
+            )
+
     def update_position(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
         position of the end-effector and updates the last-known position with
-        the response.
+        the response. The requested values are then loaded into an internal
+        buffer.
 
         :raises DHDError:
             If an error has occured with the device.
@@ -416,7 +529,8 @@ class HapticDevice(Generic[T]):
         """
         Performs a blocking read to the HapticDevice, requesting the current
         linear velocity of the end-effector and updates the last-known linear
-        velocity with the response.
+        velocity with the response. The requested values are then loaded into
+        an internal buffer.
 
         :raises DHDError:
             If an error has occured with the device.
@@ -439,7 +553,8 @@ class HapticDevice(Generic[T]):
         """
         Performs a blocking read to the HapticDevice, requesting the current
         angular velocity of the end-effector and updates the last-known
-        angular velocity with the response.
+        angular velocity with the response. The requested values are then
+        loaded into an internal buffer.
 
         :raises DHDError:
             If an error has occured with the device.
@@ -462,7 +577,8 @@ class HapticDevice(Generic[T]):
         """
         Performs a blocking read to the HapticDevice, requesting the current
         force the end end-effector is experiencing and updates the last-known
-        force with the response.
+        force with the response. The requested values are then loaded into an
+        internal buffer.
 
         :raises DHDError:
             If an error has occured with the device.
@@ -480,7 +596,9 @@ class HapticDevice(Generic[T]):
         """
         Performs a blocking read to the HapticDevice, requesting in parallel
         the current force and torque applied to the end-effector and
-        updates the last-known force and torque with the response.
+        updates the last-known force and torque with the response. The
+        requested values are then loaded into internal buffers.
+
 
         :raises DHDError:
             If an error has occured with the device.
@@ -496,11 +614,10 @@ class HapticDevice(Generic[T]):
         """
         Performs a blocking read to the HapticDevice, requesting in parallel
         the force and torque applied to the end-effector as well as the force
-        applied to the gripper. Then, the last known force, torque, and gripper
-        force are updated.
-
-        The reason this is in HapticDevice is largely due to an implement
-        detail in dhd and as a way to optimize requests to the device.
+        applied to the gripper. The requested values are then
+        loaded into internal buffers. This is equivalent to
+        :func:`forcedimension.HapticDevice.update_force_and_torque()` if the
+        device does not have a gripper.
 
         :raises DHDError:
             If an error has occured with the device.
@@ -508,6 +625,38 @@ class HapticDevice(Generic[T]):
 
         err = dhd.direct.getForceAndTorqueAndGripperForce(
             self._f, self._t, self._gripper._fg, self._id
+        )
+
+        if err:
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                ID=self._id,
+                feature=dhd.getForceAndTorqueAndGripperForce
+            )
+
+    def update_orientation(self):
+        """
+        Performs a blocking read to the HapticDevice,
+        its orientation frame matrix and updates an internal buffer with those
+        values.
+        """
+
+        if dhd.direct.getOrientationFrame(self._frame, self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                ID=self._id,
+                feature=dhd.getForceAndTorqueAndGripperForce
+            )
+
+
+    def update_position_and_orientation(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting in parallel
+        the position of the end effector (in [m]) about the X, Y, and Z axes
+        as well as its orientation frame matrix. The requested values are then
+        loaded into internal buffers.
+        """
+
+        err = dhd.direct.getPositionAndOrientationFrame(
+            self._pos, self._frame, self._id
         )
 
         if err:
@@ -1242,7 +1391,7 @@ class HapticDaemon(Thread):
     def _set_pollers(self, update_list):
         if update_list is not None:
             funcs = (
-                self._dev.update_enc_and_calculate,
+                self._dev.update_delta_enc_and_calculate,
                 self._dev.update_velocity,
                 self._dev.update_angular_velocity,
                 self._dev.update_buttons
