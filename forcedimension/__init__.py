@@ -74,7 +74,7 @@ class HapticDevice(Generic[T]):
             If communications were interrupted while opening the device.
         """
 
-        if (none_count := [ID, devtype, serial_number].count(None)) < 2:
+        if [ID, devtype, serial_number].count(None) < 2:
             raise ValueError(
                 "At most 1 of ID, devtype, or serial_number may be specified."
             )
