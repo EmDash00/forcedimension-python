@@ -491,8 +491,7 @@ class HapticDevice(Generic[T]):
         err = dhd.getForce(self._f, self._id)
 
         if err == -1:
-            raise dhd.errno_to_exception(ErrorNum(
-                dhd.errorGetLast()))(
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
                     ID=self._id,
                     feature=dhd.getForce
             )
