@@ -232,6 +232,10 @@ class HapticDevice(Generic[T]):
         Provides a read-only reference to the last-known position of the
         HapticDevice's end-effector. Thread-safe.
 
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+
         :returns:
             A mutable sequence of [x, y, z] where x, y, and z are the
             end-effector's position given in [m].
@@ -246,6 +250,10 @@ class HapticDevice(Generic[T]):
         Get the mass of the end-effector used for gravity compensation in [kg].
         Thread-safe.
 
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+
         :returns: the set mass of the end-effector in [kg]
         """
 
@@ -255,6 +263,9 @@ class HapticDevice(Generic[T]):
         """
         Sets the mass of the end-effector used for gravity compensation
         (in [kg]). Thread-safe.
+
+        :raises DHDError:
+            If the operation failed.
         """
         if dhd.setEffectorMass(m, ID=self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
@@ -264,6 +275,10 @@ class HapticDevice(Generic[T]):
         """
         Provides a read-only reference to the last-known linear velocity of the
         HapticDevice's end-effector. Thread-safe.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
 
         :returns:
             A mutable sequence of [vx, vy, vz] where vx, vy, and vz are
@@ -279,6 +294,10 @@ class HapticDevice(Generic[T]):
         Provides a read-only reference to the last-known angular velocity of the
         HapticDevice's end-effector. Thread-safe.
 
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+
         :returns:
             A mutable sequence of [wx, wy, wz] where wx, wy, and wz are
             the end-effector's linear velocity given in [rad/s].
@@ -293,6 +312,10 @@ class HapticDevice(Generic[T]):
         Provides a read-only reference to the last-known applied torque of the
         HapticDevice's end-effector. Thread-safe.
 
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+
         :returns:
             A mutable sequence of [tx, ty, tz] where tx, ty, and tz are
             the torque experienced by the end-effector in [Nm]
@@ -306,6 +329,10 @@ class HapticDevice(Generic[T]):
         """
         Provides a read-only reference to the last-known applied force of the
         HapticDevice's end-effector. Thread-safe.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
 
         :returns:
             A mutable sequence of [fx, fy, fz] where fx, fy, and fz are
@@ -372,6 +399,9 @@ class HapticDevice(Generic[T]):
         Performs a blocking read to the HapticDevice, requesting the current
         encoder readers of the (DELTA structure that controls the) end-effector
         and updates the last-known position  with the response.
+
+        :raises DHDError:
+            If an error has occured with the device.
         """
 
         err = dhd.expert.getDeltaEncoders(self._enc, self._id)
@@ -388,6 +418,9 @@ class HapticDevice(Generic[T]):
         Performs a blocking read to the HapticDevice, requesting the current
         position of the end-effector and updates the last-known position with
         the response.
+
+        :raises DHDError:
+            If an error has occured with the device.
         """
 
         err = dhd.direct.getPosition(self._pos, self._id)
@@ -404,6 +437,9 @@ class HapticDevice(Generic[T]):
         Performs a blocking read to the HapticDevice, requesting the current
         linear velocity of the end-effector and updates the last-known linear
         velocity with the response.
+
+        :raises DHDError:
+            If an error has occured with the device.
         """
 
         err = dhd.direct.getLinearVelocity(self._v, self._id)
@@ -424,6 +460,9 @@ class HapticDevice(Generic[T]):
         Performs a blocking read to the HapticDevice, requesting the current
         angular velocity of the end-effector and updates the last-known
         angular velocity with the response.
+
+        :raises DHDError:
+            If an error has occured with the device.
         """
 
         err = dhd.direct.getAngularVelocityRad(self._w, self._id)
@@ -444,6 +483,9 @@ class HapticDevice(Generic[T]):
         Performs a blocking read to the HapticDevice, requesting the current
         force the end end-effector is experiencing and updates the last-known
         force with the response.
+
+        :raises DHDError:
+            If an error has occured with the device.
         """
 
         err = dhd.getForce(self._f, self._id)
@@ -460,6 +502,9 @@ class HapticDevice(Generic[T]):
         Performs a blocking read to the HapticDevice, requesting in parallel
         the current force and torque applied to the end-effector and
         updates the last-known force and torque with the response.
+
+        :raises DHDError:
+            If an error has occured with the device.
         """
 
         if dhd.direct.getForceAndTorque(self._f, self._t, self._id):
@@ -477,6 +522,9 @@ class HapticDevice(Generic[T]):
 
         The reason this is in HapticDevice is largely due to an implement
         detail in dhd and as a way to optimize requests to the device.
+
+        :raises DHDError:
+            If an error has occured with the device.
         """
 
         err = dhd.direct.getForceAndTorqueAndGripperForce(
@@ -505,6 +553,9 @@ class HapticDevice(Generic[T]):
         """
         Perform a blocking read to the HapticDevice, requesting all pertinent
         status information.
+
+        :raises DHDError:
+            If an error has occured with the device.
 
         :returns:
             Status object containing all status information.
@@ -653,6 +704,9 @@ class HapticDevice(Generic[T]):
         :param Optional[float] limit:
             The desired limit (in N) to the force magnitude that can be
             applied. If the limit is None, the force limit is disabled.
+
+        :raises DHDError:
+            If an error has occured with the device.
         """
 
         if limit is not None:
@@ -670,6 +724,9 @@ class HapticDevice(Generic[T]):
         Retrieve the current limit (in Nm) to the torque magnitude that can be
         applied by the haptic device.
 
+        :raises DHDError:
+            If an error has occured with the device.
+
         :returns:
             The current limit (in Nm) to the force magnitude that can be
             applied by the haptic device to the end-effector. If there is no
@@ -684,6 +741,9 @@ class HapticDevice(Generic[T]):
         """
         Define or disable a limit (in N) to the force magnitude that can be
         applied by the haptic device.
+
+        :raises DHDError:
+            If an error has occured with the device.
 
         :param Optional[float] limit:
             The desired limit (in N) to the force magnitude that can be
@@ -739,6 +799,11 @@ class HapticDevice(Generic[T]):
         return bool(self._buttons & _cast(int, 1 << button_id))
 
     def close(self):
+        """
+        Shuts down any polling being done on the device and then closes the
+        handle to the device.
+        """
+
         self.open = False
         if self._haptic_daemon is not None:
             self._haptic_daemon.stop()
