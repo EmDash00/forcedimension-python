@@ -93,6 +93,7 @@ class HapticDevice(Generic[T]):
         self._v = VecType()
         self._f = VecType()
         self._t = VecType()
+
         self._J = DefaultMat3x3Type()
         self._status = Status()
 
@@ -215,8 +216,6 @@ class HapticDevice(Generic[T]):
         """
         Provides a read-only copy of the ID of the HapticDevice.
         Thread-safe.
-
-        :returns: The ID of the HapticDevices
         """
 
         self.check_exception()
@@ -230,15 +229,12 @@ class HapticDevice(Generic[T]):
     def pos(self) -> T:
         """
         Provides a read-only reference to the last-known position of the
-        HapticDevice's end-effector. Thread-safe.
+        HapticDevice's end-effector (in [m]) about the X, Y, and Z axes.
+        Thread-safe.
 
         :raises DHDError:
             If an error has occured with the device, invalidating the
             device state.
-
-        :returns:
-            A mutable sequence of [x, y, z] where x, y, and z are the
-            end-effector's position given in [m].
         """
 
         self.check_exception()
@@ -247,14 +243,14 @@ class HapticDevice(Generic[T]):
     @property
     def mass(self) -> float:
         """
-        Get the mass of the end-effector used for gravity compensation in [kg].
-        Thread-safe.
+        Get the mass of the end-effector used for gravity compensation
+        (in [kg]). Thread-safe.
 
         :raises DHDError:
             If an error has occured with the device, invalidating the
             device state.
 
-        :returns: the set mass of the end-effector in [kg]
+        :returns: the set mass of the end-effector (in [kg])
         """
 
         return self._mass
@@ -279,10 +275,6 @@ class HapticDevice(Generic[T]):
         :raises DHDError:
             If an error has occured with the device, invalidating the
             device state.
-
-        :returns:
-            A mutable sequence of [vx, vy, vz] where vx, vy, and vz are
-            the end-effector's linear velocity given in [m/s].
         """
 
         self.check_exception()
@@ -297,10 +289,6 @@ class HapticDevice(Generic[T]):
         :raises DHDError:
             If an error has occured with the device, invalidating the
             device state.
-
-        :returns:
-            A mutable sequence of [wx, wy, wz] where wx, wy, and wz are
-            the end-effector's linear velocity given in [rad/s].
         """
 
         self.check_exception()
@@ -315,10 +303,6 @@ class HapticDevice(Generic[T]):
         :raises DHDError:
             If an error has occured with the device, invalidating the
             device state.
-
-        :returns:
-            A mutable sequence of [tx, ty, tz] where tx, ty, and tz are
-            the torque experienced by the end-effector in [Nm]
         """
 
         self.check_exception()
@@ -333,10 +317,6 @@ class HapticDevice(Generic[T]):
         :raises DHDError:
             If an error has occured with the device, invalidating the
             device state.
-
-        :returns:
-            A mutable sequence of [fx, fy, fz] where fx, fy, and fz are
-            the torque experienced by the end-effector in [N]
         """
 
         self.check_exception()
@@ -557,7 +537,8 @@ class HapticDevice(Generic[T]):
             If an error has occured with the device.
 
         :returns:
-            Status object containing all status information.
+            :class:`forcedimension.dhd.adaptors.Status` object containing all
+            status information.
         """
 
         if dhd.getStatus(self._status, ID=self._id):
@@ -588,12 +569,12 @@ class HapticDevice(Generic[T]):
         HapticDaemon.
 
         :param IntVectorLike f:
-            The force in [N] to apply to the end effector about
-            the x, y, and z axes.
+            The force (in [N]) to apply to the end effector about
+            the X, Y, and Z axes.
 
         :param IntVectorLike t:
-            The torque in [Nm] to apply to the end effector about the
-            x, y,and z axes.
+            The torque (in [Nm]) to apply to the end effector about the
+            X, Y, and Z axes.
 
         See Also
         --------
@@ -616,8 +597,11 @@ class HapticDevice(Generic[T]):
         send the request to the device. This is used by the HapticDaemon. This
         vibration will be added on top of the force requested to the device.
 
-        :param float freq: frequency of the vibration (in [Hz])
-        :param float amplitude: amplitude of the vibration
+        :param float freq:
+            Frequency of the vibration (in [Hz]).
+
+        :param float amplitude:
+            Amplitude of the vibration.
 
         See Also
         --------
@@ -682,13 +666,13 @@ class HapticDevice(Generic[T]):
 
     def get_max_force(self) -> Optional[float]:
         """
-        Retrieve the current limit (in N) to the force magnitude that can be
+        Retrieve the current limit (in [N]) to the force magnitude that can be
         applied by the haptic device.
 
         :returns:
-            The current limit (in N) to the force magnitude that can be
+            The current limit (in [N]) to the force magnitude that can be
             applied by the haptic device to the end-effector. If there is no
-            limit, None is returned instead.
+            limit, `None` is returned instead.
         """
 
         limit = dhd.getMaxForce(ID=self._id)
@@ -697,11 +681,11 @@ class HapticDevice(Generic[T]):
 
     def set_max_force(self, limit: Optional[float]):
         """
-        Define or disable a limit (in N) to the force magnitude that can be
+        Define or disable a limit (in [N]) to the force magnitude that can be
         applied by the haptic device.
 
         :param Optional[float] limit:
-            The desired limit (in N) to the force magnitude that can be
+            The desired limit (in [N]) to the force magnitude that can be
             applied. If the limit is None, the force limit is disabled.
 
         :raises DHDError:
@@ -720,14 +704,14 @@ class HapticDevice(Generic[T]):
 
     def get_max_torque(self) -> Optional[float]:
         """
-        Retrieve the current limit (in Nm) to the torque magnitude that can be
+        Retrieve the current limit (in [Nm]) to the torque magnitude that can be
         applied by the haptic device.
 
         :raises DHDError:
             If an error has occured with the device.
 
         :returns:
-            The current limit (in Nm) to the force magnitude that can be
+            The current limit (in [Nm]) to the force magnitude that can be
             applied by the haptic device to the end-effector. If there is no
             limit, None is returned instead.
         """
@@ -738,14 +722,14 @@ class HapticDevice(Generic[T]):
 
     def set_max_torque(self, limit: Optional[float]):
         """
-        Define or disable a limit (in N) to the force magnitude that can be
+        Define or disable a limit (in [N]) to the force magnitude that can be
         applied by the haptic device.
 
         :raises DHDError:
             If an error has occured with the device.
 
         :param Optional[float] limit:
-            The desired limit (in N) to the force magnitude that can be
+            The desired limit (in [N]) to the force magnitude that can be
             applied. If the limit is None, the force limit is disabled.
         """
 
@@ -764,7 +748,12 @@ class HapticDevice(Generic[T]):
         Enable built-in gravity compensation for the end-effector that will be
         added on top of the force request.
 
-        :param bool enabled: True to enable, False to disable
+        :param bool enabled:
+            `True` to enable, `False` to disable.
+
+        See Also
+        --------
+        :func:`forcedimension.HapticDevice.set_mass`
         """
 
         dhd.setGravityCompensation(enabled, ID=self._id)
@@ -790,9 +779,11 @@ class HapticDevice(Generic[T]):
         :class:`forcedimension.dhd.constants.NovintButtonID`
 
 
-        :param int button_id: The button to check
+        :param int button_id:
+            The button to check
 
-        :returns: True if the button is being pressed, False otherwise
+        :returns:
+            `True` if the button is being pressed, `False` otherwise.
         """
 
         return bool(self._buttons & _cast(int, 1 << button_id))
@@ -877,13 +868,8 @@ class Gripper(Generic[T]):
 
     def get_max_force(self) -> Optional[float]:
         """
-        Retrieve the current limit (in N) to the force magnitude that can be
-        applied by the haptic device.
-
-        :returns:
-            The current limit (in N) to the force magnitude that can be
-            applied by the haptic device to the end-effector. If there is no
-            limit, None is returned instead.
+        Retrieve the current limit (in [N]) to the force magnitude that can be
+        applied by the haptic device. The limit is `None` if there is no limit.
         """
 
         limit = dhd.getMaxGripperForce(self._id)
@@ -892,12 +878,12 @@ class Gripper(Generic[T]):
 
     def set_max_force(self, limit: Optional[float]):
         """
-        Define or disable a limit (in N) to the force magnitude that can be
+        Define or disable a limit (in [N]) to the force magnitude that can be
         applied by the haptic device.
 
         :param Optional[float] limit:
-            The desired limit (in N) to the force magnitude that can be
-            applied. If the limit is None, the force limit is disabled.
+            The desired limit (in [N]) to the force magnitude that can be
+            applied. If the limit is `None`, the force limit is disabled.
         """
 
         if limit is not None:
