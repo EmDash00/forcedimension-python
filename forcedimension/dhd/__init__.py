@@ -421,7 +421,12 @@ _libdhd.dhdEnableGripperForce.restype = c_int
 
 def enableGripperForce(enable: bool, ID: int = -1) -> int:
     """
-    Enable the force mode in the device controller.
+    This function enables the gripper force mode in the device controller.
+    This function is only relevant to devices that have a gripper with a
+    default  closed or opened state. It does not apply to the sigma.x and
+    omega.x range  of devices, whose gripper does not have a default state.
+    For those devices, the gripper force is enabled/disabled by
+    :func:`forcedimension.dhd.enableForce()`.
 
     :param bool enable:
         ``True`` to enable force, ``False`` to disable it.
@@ -430,7 +435,7 @@ def enableGripperForce(enable: bool, ID: int = -1) -> int:
         Device ID (see multiple devices section for details).
 
     :raises ArgumentError:
-        If ``val`` is not implicitly convertible to C bool.
+        If ``enable`` is not implicitly convertible to C bool.
 
     :raises ArgumentError:
         If ``ID`` is not implicitly convertible to C char.
