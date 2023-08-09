@@ -911,38 +911,38 @@ class Gripper(Generic[T]):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     @property
-    def thumb_pos(self):
-        self.check_threadex()
-        return self._thumb_pos_view
+    def thumb_pos(self) -> T:
+        self.check_exception()
+        return _cast(T, self._thumb_pos_view)
 
     @property
-    def finger_pos(self):
-        self.check_threadex()
-        return self._finger_pos_view
+    def finger_pos(self) -> T:
+        self.check_exception()
+        return _cast(T, self._finger_pos_view)
 
     @property
     def gap(self) -> float:
-        self.check_threadex()
+        self.check_exception()
         return self._gap.value
 
     @property
     def angle(self) -> float:
-        self.check_threadex()
+        self.check_exception()
         return self._angle.value
 
     @property
     def v(self) -> float:
-        self.check_threadex()
+        self.check_exception()
         return self._v.value
 
     @property
     def w(self) -> float:
-        self.check_threadex()
+        self.check_exception()
         return self._w.value
 
     @property
     def fg(self) -> float:
-        self.check_threadex()
+        self.check_exception()
         return self._fg.value
 
     def calculate_gap(self):
@@ -1005,7 +1005,7 @@ class Gripper(Generic[T]):
         if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
-    def check_threadex(self):
+    def check_exception(self):
         self._parent.check_exception()
 
 
