@@ -115,7 +115,7 @@ class HapticDevice(Generic[T]):
 
         self.gripper = None
 
-        self._thread_exception: Optional[dhd.DHDIOError] = None
+        self._exception: Optional[dhd.DHDIOError] = None
 
         self._haptic_daemon: Optional[HapticDaemon] = None
         self._id = 0
@@ -206,9 +206,9 @@ class HapticDevice(Generic[T]):
         self.update_enc_and_calculate()
         self.update_force_and_torque_and_gripper_force()
 
-    def check_threadex(self):
-        if self._thread_exception is not None:
-            raise self._thread_exception
+    def check_exception(self):
+        if self._exception is not None:
+            raise self._exception
 
     @property
     def ID(self) -> int:
@@ -219,7 +219,7 @@ class HapticDevice(Generic[T]):
         :returns: The ID of the HapticDevices
         """
 
-        self.check_threadex()
+        self.check_exception()
         return self._id
 
     @property
@@ -237,7 +237,7 @@ class HapticDevice(Generic[T]):
             end-effector's position given in [m].
         """
 
-        self.check_threadex()
+        self.check_exception()
         return _cast(T, self._pos_view)
 
     @property
@@ -270,7 +270,7 @@ class HapticDevice(Generic[T]):
             the end-effector's linear velocity given in [m/s].
         """
 
-        self.check_threadex()
+        self.check_exception()
         return _cast(T, self._v_view)
 
     @property
@@ -284,7 +284,7 @@ class HapticDevice(Generic[T]):
             the end-effector's linear velocity given in [rad/s].
         """
 
-        self.check_threadex()
+        self.check_exception()
         return _cast(T, self._w_view)
 
     @property
@@ -298,7 +298,7 @@ class HapticDevice(Generic[T]):
             the torque experienced by the end-effector in [Nm]
         """
 
-        self.check_threadex()
+        self.check_exception()
         return _cast(T, self._t_view)
 
     @property
@@ -312,7 +312,7 @@ class HapticDevice(Generic[T]):
             the torque experienced by the end-effector in [N]
         """
 
-        self.check_threadex()
+        self.check_exception()
         return _cast(T, self._f_view)
 
     @property
@@ -942,7 +942,7 @@ class Gripper(Generic[T]):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def check_threadex(self):
-        self._parent.check_threadex()
+        self._parent.check_exception()
 
 
 class _Poller(Thread):
@@ -1168,4 +1168,4 @@ class HapticDaemon(Thread):
 
             for poller in self._pollers:
                 poller.stop()
-            self._dev._thread_exception = ex
+            self._dev._exception = ex
