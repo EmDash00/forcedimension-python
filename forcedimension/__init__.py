@@ -533,7 +533,8 @@ class HapticDevice(Generic[T]):
         :func:`HapticDevice.submit_vibration`
         """
 
-        self._vibration_req[0:2] = [f, A]
+        self._vibration_req[0] = f
+        self._vibration_req[1] = A
 
     def neutral(self):
         """
