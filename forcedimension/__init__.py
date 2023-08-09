@@ -1,10 +1,3 @@
-"""
-.. module::forcedimension
-   :platform: Windows, Unix
-   :synopsis: Force Dimension SDK high level wrappers.
-
-.. moduleauthor:: Ember "Emmy" Chow <emberchow.business@gmail.com>
-"""
 __version__ = '0.2.0'
 
 import ctypes as ct
