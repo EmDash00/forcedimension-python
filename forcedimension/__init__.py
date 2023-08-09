@@ -330,18 +330,6 @@ class HapticDevice(Generic[T]):
         """
         return _cast(Status, self._status_view)
 
-    def update_status(self):
-        """
-        Perform a blocking read to the HapticDevice, requesting all pertinent
-        status information.
-
-        :returns:
-            Status object containing all status information.
-        """
-
-        if dhd.getStatus(self._status, ID=self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())()
-
     def calculate_pos(self):
         """
         Calculates and stores the position of the device given the current
@@ -512,6 +500,19 @@ class HapticDevice(Generic[T]):
         """
 
         self._buttons = dhd.getButtonMask(ID=self._id)
+
+    def update_status(self):
+        """
+        Perform a blocking read to the HapticDevice, requesting all pertinent
+        status information.
+
+        :returns:
+            Status object containing all status information.
+        """
+
+        if dhd.getStatus(self._status, ID=self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())()
+
 
     def submit(self):
         """
