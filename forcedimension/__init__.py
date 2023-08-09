@@ -376,7 +376,6 @@ class HapticDevice(Generic[T]):
 
     def update_enc_and_calculate(self):
         self.update_enc()
-        self.calculate_joint_angles()
         self.calculate_pos()
         self.calculate_jacobian()
 
