@@ -18,7 +18,8 @@ from typing import cast as _cast
 import forcedimension.dhd as dhd
 import forcedimension.drd as drd
 from forcedimension.containers import (
-    DefaultEnc3Type, DefaultMat3x3, DefaultVecType, GripperUpdateOpts, UpdateOpts
+    DefaultEnc3Type, DefaultMat3x3Type, DefaultVecType,
+    GripperUpdateOpts, UpdateOpts
 )
 from forcedimension.dhd import ErrorNum, Status
 from forcedimension.typing import GenericVec, IntVectorLike
@@ -87,7 +88,7 @@ class HapticDevice(Generic[T]):
         self._v = VecType()
         self._f = VecType()
         self._t = VecType()
-        self._J = DefaultMat3x3()
+        self._J = DefaultMat3x3Type()
         self._status = dhd.Status()
 
         self._req = False

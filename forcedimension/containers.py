@@ -287,8 +287,8 @@ DefaultEnc3Type = Enc3
 DefaultEnc4Type = Enc4
 DefaultDOFIntType = DOFIntArray
 DefaultDOFFloatType = DOFFloatArray
-DefaultMat3x3 = Mat3x3
-DefaultMat6x6 = Mat6x6
+DefaultMat3x3Type = Mat3x3
+DefaultMat6x6Type = Mat6x6
 
 
 try:
@@ -518,7 +518,7 @@ try:
     DefaultEnc4Type = NumpyEnc4
     DefaultDOFIntType = NumpyDOFIntArray
     DefaultDOFFloatType = NumpyDOFFloatArray
-    DefaultMat3x3 = NumpyMat3x3
-    DefaultMat6x6 = NumpyMat6x6
+    DefaultMat3x3Type = NumpyMat3x3
+    DefaultMat6x6Type = NumpyMat6x6
 except ImportError:
     pass
