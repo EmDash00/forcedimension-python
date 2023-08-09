@@ -67,9 +67,8 @@ class HapticDevice(Generic[T]):
         device is always properly closed.
         """
 
-
         if ID is not None:
-            if (ID < 0):
+            if ID < 0:
                 raise ValueError("ID must be greater than 0.")
 
         self._open = True
@@ -195,7 +194,6 @@ class HapticDevice(Generic[T]):
         Provides a read-only accessor to the ID of the HapticDevice.
         Thread-safe.
 
-        :rtype: Optional[int]
         :returns: The ID of the HapticDevices
         """
         self.check_threadex()
@@ -211,8 +209,6 @@ class HapticDevice(Generic[T]):
         Provides a copy of the last-known position of the HapticDevice's end
         effector. Thread-safe.
 
-        :rtype: Optional[MutableSequence[float]]
-
         :returns:
             A mutable sequence of [x, y, z] where x, y, and z are the
             end-effector's position given in [m].
@@ -224,8 +220,6 @@ class HapticDevice(Generic[T]):
     def mass(self) -> float:
         """
         Get the mass of the end-effector used for gravity compensation in [kg].
-
-        :rtype: Optional[float]
 
         :returns: the set mass of the end-effector in [kg]
         """
@@ -241,8 +235,6 @@ class HapticDevice(Generic[T]):
         Provides a copy of the last-known linear velocity of the HapticDevice's
         end-effector. Thread-safe.
 
-        :rtype: Optional[MutableSequence[float]]
-
         :returns:
             A mutable sequence of [vx, vy, vz] where vx, vy, and vz are
             the end-effector's linear velocity given in [m/s].
@@ -255,8 +247,6 @@ class HapticDevice(Generic[T]):
         """
         Provides a copy of the last-known angular velocity of the
         HapticDevice's end-effector. Thread-safe.
-
-        :rtype: Optional[MutableSequence[float]]
 
         :returns:
             A mutable sequence of [wx, wy, wz] where wx, wy, and wz are
@@ -271,8 +261,6 @@ class HapticDevice(Generic[T]):
         Provides a copy of the last-known applied torque of the HapticDevice's
         end-effector. Thread-safe.
 
-        :rtype: Optional[MutableSequence[float]]
-
         :returns:
             A mutable sequence of [tx, ty, tz] where tx, ty, and tz are
             the torque experienced by the end-effector in [Nm]
@@ -285,8 +273,6 @@ class HapticDevice(Generic[T]):
         """
         Provides a copy of the last-known applied force of the HapticDevice's
         end-effector. Thread-safe.
-
-        :rtype: Optional[MutableSequence[float]]
 
         :returns:
             A mutable sequence of [fx, fy, fz] where fx, fy, and fz are
@@ -309,13 +295,12 @@ class HapticDevice(Generic[T]):
         Perform a blocking read to the HapticDevice, requesting all pertinent
         status information.
 
-        :rtype: StatusTuple
         :returns: StatusTuple containing all status information.
         """
         if dhd.getStatus(self._status, ID=self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
-    def calculate_pos(self) -> None:
+    def calculate_pos(self):
         """
         Calculates and stores the position of the device given the current
         end-effector position.
@@ -325,7 +310,7 @@ class HapticDevice(Generic[T]):
             self._enc, self._pos, self._id
         )
 
-    def calculate_joint_angles(self) -> None:
+    def calculate_joint_angles(self):
         """
         Calculates and stores the joint angles of the device given the current
         end-effector encoder readings.
@@ -334,7 +319,7 @@ class HapticDevice(Generic[T]):
             self._enc, self._joint_angles, self._id
         )
 
-    def calculate_jacobian(self) -> None:
+    def calculate_jacobian(self):
         """
         Calculates and stores the Jacobian matrix of the device given the
         current end-effector position.
@@ -345,37 +330,17 @@ class HapticDevice(Generic[T]):
             self._joint_angles, self._J, self._id
         )
 
-    # TODO: Actually implement this
-    """
-    def calculate_velocity(self) -> None:
-        Uses the internal velocity estimator to provide an estimated velocity
-        using position data.
-
-        :raises: ValueError if there is no internal velocity estimator set.
-        if (self._velocity_estimator is not None):
-            self._velocity_estimator.feed(self._pos_view)
-            self._velocity_estimator.update(self._v)
-        else:
-            raise ValueError("There is no velocity estimator configured.")
-
-    def calculate_angular_velocity(self):
-        self.calculate_jacobian()
-
-    """
-
-    def update_enc_and_calculate(self) -> None:
+    def update_enc_and_calculate(self):
         self.update_enc()
         self.calculate_joint_angles()
         self.calculate_pos()
         self.calculate_jacobian()
 
-    def update_enc(self) -> None:
+    def update_enc(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
         encoder readers of the (DELTA structure that controls the) end-effector
         and updates the last-known position  with the response.
-
-        :rtype: None
         """
 
         err = dhd.expert.getDeltaEncoders(self._enc, self._id)
@@ -387,13 +352,11 @@ class HapticDevice(Generic[T]):
                     feature=dhd.expert.getDeltaEncoders
             )
 
-    def update_position(self) -> None:
+    def update_position(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
         position of the end-effector and updates the last-known position with
         the response.
-
-        :rtype: None
         """
 
         err = dhd.direct.getPosition(self._pos, self._id)
@@ -405,13 +368,11 @@ class HapticDevice(Generic[T]):
                     feature=dhd.getPosition
             )
 
-    def update_velocity(self) -> None:
+    def update_velocity(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
         linear velocity of the end-effector and updates the last-known linear
         velocity with the response.
-
-        :rtype: None
         """
         err = dhd.direct.getLinearVelocity(self._v, self._id)
 
@@ -431,9 +392,8 @@ class HapticDevice(Generic[T]):
         Performs a blocking read to the HapticDevice, requesting the current
         angular velocity of the end-effector and updates the last-known
         angular velocity with the response.
-
-        :rtype: None
         """
+
         err = dhd.direct.getAngularVelocityRad(self._w, self._id)
 
         if err:
@@ -452,8 +412,6 @@ class HapticDevice(Generic[T]):
         Performs a blocking read to the HapticDevice, requesting the current
         force the end end-effector is experiencing and updates the last-known
         force with the response.
-
-        :rtype: None
         """
 
         err = dhd.getForce(self._f, self._id)
@@ -470,8 +428,6 @@ class HapticDevice(Generic[T]):
         Performs a blocking read to the HapticDevice, requesting in parallel
         the current force and torque applied to the end-effector and
         updates the last-known force and torque with the response.
-
-        :rtype: None
         """
         err = dhd.direct.getForceAndTorque(self._f, self._t, self._id)
 
@@ -519,7 +475,6 @@ class HapticDevice(Generic[T]):
         See Also
         --------
         :func:`HapticDevice.req`
-
         """
         self._req = False
         err = dhd.setForceAndTorque(
@@ -537,11 +492,7 @@ class HapticDevice(Generic[T]):
                     feature=dhd.setForceAndTorqueAndGripperForce
                 )
 
-    def req(
-        self,
-        f: IntVectorLike,
-        t: IntVectorLike = (0, 0, 0)
-    ) -> None:
+    def req(self, f: IntVectorLike, t: IntVectorLike = (0, 0, 0)):
         """
         Load the request force and request torque buffer for this device.
         This won't send the request to the device. This is used by the
@@ -645,15 +596,13 @@ class HapticDevice(Generic[T]):
             The current limit (in N) to the force magnitude that can be
             applied by the haptic device to the end-effector. If there is no
             limit, None is returned instead.
-
-        :rtype: Optional[float]
         """
 
         limit = dhd.getMaxForce(ID=self._id)
 
         return limit if limit > 0 else None
 
-    def set_max_force(self, limit: Optional[float]) -> None:
+    def set_max_force(self, limit: Optional[float]):
         """
         Define or disable a limit (in N) to the force magnitude that can be
         applied by the haptic device.
@@ -682,15 +631,13 @@ class HapticDevice(Generic[T]):
             The current limit (in Nm) to the force magnitude that can be
             applied by the haptic device to the end-effector. If there is no
             limit, None is returned instead.
-
-        :rtype: Optional[float]
         """
 
         limit = dhd.getMaxTorque(ID=self._id)
 
         return limit if limit > 0 else None
 
-    def set_max_torque(self, limit: Optional[float]) -> None:
+    def set_max_torque(self, limit: Optional[float]):
         """
         Define or disable a limit (in N) to the force magnitude that can be
         applied by the haptic device.
@@ -742,7 +689,6 @@ class HapticDevice(Generic[T]):
 
         :param int button_id: The button to check
 
-        :rtype: bool
         :returns: True if the button is being pressed, False otherwise
         """
         return bool(self._buttons & _cast(int, 1 << button_id))
@@ -829,15 +775,13 @@ class Gripper(Generic[T]):
             The current limit (in N) to the force magnitude that can be
             applied by the haptic device to the end-effector. If there is no
             limit, None is returned instead.
-
-        :rtype: Optional[float]
         """
 
         limit = dhd.getMaxGripperForce(self._id)
 
         return limit if limit > 0 else None
 
-    def set_max_force(self, limit: Optional[float]) -> None:
+    def set_max_force(self, limit: Optional[float]):
         """
         Define or disable a limit (in N) to the force magnitude that can be
         applied by the haptic device.
