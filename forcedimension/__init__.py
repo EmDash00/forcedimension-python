@@ -9,7 +9,6 @@ __version__ = '0.2.0'
 
 import ctypes as ct
 from math import nan
-import itertools
 from threading import Condition, Lock, Thread
 from time import monotonic, sleep
 from typing import Callable, Generic, List, Optional, Type, TypeVar
