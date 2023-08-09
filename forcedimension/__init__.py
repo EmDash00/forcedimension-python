@@ -193,7 +193,7 @@ class HapticDevice(Generic[T]):
             self._devtype = devtype_opened
 
         self._left_handed = dhd.isLeftHanded(self._id)
-        self._gripper = Gripper(self, self._id)
+        self._gripper = Gripper(self, self._id, VecType)
 
         if dhd.hasGripper(self._id):
             self.gripper = self._gripper
@@ -492,8 +492,8 @@ class HapticDevice(Generic[T]):
 
         if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())(
-                    ID=self._id,
-                    feature=dhd.getForce
+                ID=self._id,
+                feature=dhd.getForce
             )
 
     def update_force_and_torque(self):
