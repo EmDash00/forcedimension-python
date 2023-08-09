@@ -213,7 +213,7 @@ class HapticDevice(Generic[T]):
     @property
     def ID(self) -> int:
         """
-        Provides a read-only reference to the ID of the HapticDevice.
+        Provides a read-only copy of the ID of the HapticDevice.
         Thread-safe.
 
         :returns: The ID of the HapticDevices
