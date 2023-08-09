@@ -912,40 +912,110 @@ class Gripper(Generic[T]):
 
     @property
     def thumb_pos(self) -> T:
+        """
+        Provides a read-only reference to the last-known position of the
+        thumb rest position (in [m]) of the gripper about the X, Y, and Z
+        axes.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.check_exception()
         return _cast(T, self._thumb_pos_view)
 
     @property
     def finger_pos(self) -> T:
+        """
+        Provides a read-only reference to the last-known position of the
+        forefinger rest position of the gripper (in [m]) about the X, Y, and Z
+        axes.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.check_exception()
         return _cast(T, self._finger_pos_view)
 
     @property
     def gap(self) -> float:
+        """
+        Provides a read-only copy of the last-known gripper opening distance
+        (in [m]).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.check_exception()
         return self._gap.value
 
     @property
     def angle(self) -> float:
+        """
+        Provides a read-only copy of the last-known gripper opening angle
+        (in [rad]).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.check_exception()
         return self._angle.value
 
     @property
     def v(self) -> float:
+        """
+        Provides a read-only copy of the last-known linear velocity of the
+        gripper (in [m/s]).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.check_exception()
         return self._v.value
 
     @property
     def w(self) -> float:
+        """
+        Provides a read-only copy of the last-known angular velocity of the
+        gripper (in [rad/s]).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.check_exception()
         return self._w.value
 
     @property
     def fg(self) -> float:
+        """
+        Provides a read-only copy of the last-known force applied by the
+        gripper (in [N]).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.check_exception()
         return self._fg.value
 
     def calculate_gap(self):
+        """
+        Calculate the value of the gripper opening (in [m]) from the current
+        value of the gripper encoder and store it in an internal buffer.
+        """
+
         err = dhd.expert.gripperEncoderToGap(
             self._enc.value, self._gap, self._id
         )
@@ -954,52 +1024,131 @@ class Gripper(Generic[T]):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def calculate_angle(self):
+        """
+        Calculate the value of the gripper opening angle (in [rad]) from the
+        current value of the gripper encoder and store it in an internal
+        buffer.
+        """
+
         dhd.expert.gripperEncoderToAngleRad(
             self._enc.value, self._angle, self._id
         )
 
     def update_enc(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting the value
+        of the gripper encoder.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         err = dhd.expert.getGripperEncoder(self._enc, self._id)
 
         if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_enc_and_calculate(self):
+        """
+        Update the value of the gripper encoders and calculate the value of the
+        gripper opening (in [m]) and gripper opening angle (in [rad]).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.update_enc()
         self.calculate_angle()
         self.calculate_gap()
 
     def update_linear_velocity(self):
+        """
+        Computes the estimated instanteous linear velocity of the gripper
+        (in [m/s]).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         err = dhd.getGripperLinearVelocity(self._v, self._id)
 
         if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_angular_velocity(self):
+        """
+        Computes the estimated instanteous linear velocity of the gripper
+        (in [rad/s]).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         err = dhd.getGripperAngularVelocityRad(self._w, self._id)
 
         if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_angle(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting the value
+        of the gripper opening angle (in [rad]).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         err = dhd.getGripperAngleRad(self._angle, self._id)
 
         if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_gap(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting the value
+        of the gripper opening (in [m]).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         err = dhd.getGripperGap(self._gap, self._id)
 
         if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_thumb_pos(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting the value
+        of the gripper thumb rest position (in [m]) about the X, Y, and Z axes.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         err = dhd.direct.getGripperThumbPos(self._thumb_pos, self._id)
 
         if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     def update_finger_pos(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting the value
+        of the gripper forefinger rest position (in [m]) about the X, Y, and
+        Z axes.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         err = dhd.direct.getGripperFingerPos(self._finger_pos, self._id)
 
         if err == -1:
