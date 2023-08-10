@@ -930,7 +930,12 @@ class HapticDevice(Generic[T]):
         will re-enable forces.
         """
 
-        dhd.stop(self._id)
+        if dhd.stop(self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                ID=self._id,
+                op=dhd.stop
+            )
+
 
     def submit_vibration(self):
         err = dhd.setVibration(
