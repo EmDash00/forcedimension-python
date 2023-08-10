@@ -16,7 +16,7 @@ from forcedimension.containers import (
     GripperUpdateOpts, UpdateOpts
 )
 from forcedimension.dhd import ErrorNum, Status
-from forcedimension.typing import GenericVec, IntVectorLike
+from forcedimension.typing import GenericVec, IntVectorLike, MutableFloatVectorLike
 from forcedimension.util import ImmutableWrapper, spin
 
 T = TypeVar('T', bound=GenericVec)
@@ -531,6 +531,7 @@ class HapticDevice(Generic[T]):
 
         self._encs = DefaultDOFEncsType()
         self._joint_angles = DefaultDOFJointAnglesType()
+        self._base_angles = VecType()
 
         self._pos = VecType()
         self._w = VecType()
@@ -550,6 +551,8 @@ class HapticDevice(Generic[T]):
         self._t_req = VecType()
         self._vibration_req: List[float] = [0.] * 2
         self._buttons = 0
+
+        self._base_angles_view = ImmutableWrapper(self._joint_angles)
 
         self._delta_joint_angles_view = ImmutableWrapper(
             self._joint_angles.delta
@@ -585,6 +588,24 @@ class HapticDevice(Generic[T]):
         self._has_active_gripper = dhd.hasActiveGripper(self._id)
         self._has_wrist = dhd.hasWrist(self._id)
         self._has_active_wrist = dhd.hasActiveWrist(self._id)
+
+        if dhd.getBaseAngleXRad(self._base_angles.ptrs[0].contents, self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                op=dhd.getBaseAngleXRad,
+                ID=self._id
+            )
+
+        if dhd.getDeviceAngleRad(self._base_angles.ptrs[1].contents, self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                op=dhd.getDeviceAngleRad,
+                ID=self._id
+            )
+
+        if dhd.getBaseAngleZRad(self._base_angles.ptrs[2].contents, self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                op=dhd.getBaseAngleZRad,
+                ID=self._id
+            )
 
         if (com_mode := dhd.getComMode(self._id)) == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())(
@@ -698,6 +719,62 @@ class HapticDevice(Generic[T]):
             A Status object representing the last-known status of the device.
         """
         return _cast(Status, self._status_view)
+
+    @property
+    def base_angles(self) -> T:
+        """
+        Provides a read-only reference of the device base plate angle
+        (in [rad]) about the X, Y, and Z axes.
+        """
+
+        return _cast(T, self._base_angles_view)
+
+    def set_base_angles(
+        self,
+        x: Optional[float] = None,
+        y: Optional[float] = None,
+        z: Optional[float] = None
+    ):
+        """
+        Sets the device base plate angles (in [rad]) about the X, Y, and Z
+        axes. If an angle is not specified, it is not set.
+
+        :param Optional[float] x:
+            Angle (in [rad]) to set the device plate angle about the X axis to.
+
+        :param Optional[float] y:
+            Angle (in [rad]) to set the device plate angle about the Y axis to.
+
+        :param Optional[float] z:
+            Angle (in [rad]) to set the device plate angle about the Z axis to.
+        """
+        if x is not None:
+            self._base_angles[0] = x
+
+            if dhd.setBaseAngleXRad(x):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=dhd.setBaseAngleXRad,
+                    ID=self._id
+                )
+
+        if y is not None:
+            self._base_angles[1] = y
+
+            if dhd.setDeviceAngleRad(y):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=dhd.setDeviceAngleRad,
+                    ID=self._id
+                )
+
+        if z is not None:
+            self._base_angles[2] = z
+
+            if dhd.setBaseAngleZRad(z):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=dhd.setBaseAngleZRad,
+                    ID=self._id
+                )
+
 
     def set_output_bits(self, mask: int):
         """

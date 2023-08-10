@@ -3020,8 +3020,8 @@ def setBaseAngleXDeg(angle: float, ID: int = -1) -> int:
     return _libdhd.dhdSetBaseAngleXDeg(angle, ID)
 
 
-_libdhd.dhdGetBaseAngleXRad.argtypes = [c_double_ptr, c_byte]
-_libdhd.dhdGetBaseAngleXRad.restype = c_int
+_libdhd.dhdGetBaseAngleZRad.argtypes = [c_double_ptr, c_byte]
+_libdhd.dhdGetBaseAngleZRad.restype = c_int
 
 
 def getBaseAngleZRad(out: c_double, ID: int = -1) -> int:
