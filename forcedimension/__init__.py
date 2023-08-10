@@ -908,6 +908,17 @@ class HapticDevice(Generic[T]):
         self._vibration_req[0] = freq
         self._vibration_req[1] = amplitude
 
+    def submit_vibration(self):
+        err = dhd.setVibration(
+            self._vibration_req[0], self._vibration_req[1], 0, self._id
+        )
+
+        if err == -1:
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                ID=self._id,
+                feature=dhd.setVibration
+            )
+
     def neutral(self):
         """
         Disable electromagnetic braking and put the device in IDLE mode,
@@ -916,8 +927,8 @@ class HapticDevice(Generic[T]):
         :func:`forcedimension.HapticDevice.submit` with `respect_neutral=False`
         will re-enable forces.
         """
-        self._is_neutral = True
 
+        self._is_neutral = True
         self.enable_brakes(enabled=False)
 
     def stop(self):
@@ -936,17 +947,23 @@ class HapticDevice(Generic[T]):
                 op=dhd.stop
             )
 
+    def wait_for_reset(self, timeout: Optional[int] = None):
+        """
+        Puts the device in RESET mode and waits
+        for the user to calibrate the device. To calibrate the device, the user
+        must put the device  end-effector at its rest position.
 
-    def submit_vibration(self):
-        err = dhd.setVibration(
-            self._vibration_req[0], self._vibration_req[1], 0, self._id
-        )
+        :param Optional[int] timeout:
+            Maximum amount of time to wait for the calibration (in [ms]). If it
+            is not specified, will wait indefinetely.
 
-        if err == -1:
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
-                ID=self._id,
-                feature=dhd.setVibration
-            )
+        :raises DHDErrorTimeout:
+            If the timeout was reached.
+
+        """
+        if dhd.waitForReset(timeout, self._id):
+            raise dhd.DHDErrorTimeout(op=dhd.waitForReset, ID=self._id)
+
 
     def get_max_force(self) -> Optional[float]:
         """
