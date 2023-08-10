@@ -212,6 +212,8 @@ class HapticDevice(Generic[T]):
 
             self._devtype = devtype_opened
 
+        self._is_neutral = False
+        self._is_stopped = False
         self._left_handed = dhd.isLeftHanded(self._id)
         self._has_base = dhd.hasBase(self._id)
         self._has_active_gripper = dhd.hasActiveGripper(self._id)
@@ -307,6 +309,14 @@ class HapticDevice(Generic[T]):
         return self._com_mode
 
     @property
+    def is_neutral(self) -> bool:
+        return self._is_neutral
+
+    @property
+    def is_stopped(self) -> bool:
+        return self._is_stopped
+
+    @property
     def status(self) -> Status:
         """
         Provides a read-only reference to the last-known status of the device.
@@ -368,7 +378,7 @@ class HapticDevice(Generic[T]):
         if dhd.setBrakes(enabled):
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
-                feature=dhd.setVibration
+                feature=dhd.setBrakes
             )
 
     def enable_gravity_compensation(self, enabled: bool = True):
@@ -815,7 +825,7 @@ class HapticDevice(Generic[T]):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
 
-    def submit(self):
+    def submit(self, respect_neutral_stop=False):
         """
         Push the requested forces and torques to the device in a blocking send.
 
@@ -823,10 +833,24 @@ class HapticDevice(Generic[T]):
         --------
         :func:`HapticDevice.req`
         """
+        if respect_neutral_stop and (self._is_neutral or self._is_stopped):
+            return
+
+        if (not respect_neutral_stop) and self._is_neutral:
+            self._is_neutral = False
+            self.enable_brakes()
+
+        if (not respect_neutral_stop) and self._is_stopped:
+            self._is_neutral = False
+            self.enable_force()
 
         self._req = False
 
-        if dhd.setForceAndTorque(self._f_req, self._t_req, self._id) == -1:
+        err = dhd.setForceAndTorqueAndGripperForce(
+            self._f_req, self._t_req, self._gripper._fg_req, self._id
+        )
+
+        if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 feature=dhd.setForceAndTorqueAndGripperForce
@@ -850,6 +874,9 @@ class HapticDevice(Generic[T]):
         --------
         :func:`HapticDevice.submit`
         """
+        if (self._is_neutral):
+            self._is_neutral = False
+            self.enable_brakes()
 
         self._req = True
 
@@ -883,19 +910,24 @@ class HapticDevice(Generic[T]):
 
     def neutral(self):
         """
-        Disable forces and put the device in IDLE mode. Brakes will be turned
-        off and gravity compensation disabled. No forces will be allowed to be
-        put on the device.
+        Disable electromagnetic braking and put the device in IDLE mode,
+        consequently disabling forces. A call to
+        :func:`forcedimension.HapticDevice.req` or
+        :func:`forcedimension.HapticDevice.submit` with `respect_neutral=False`
+        will re-enable forces.
         """
+        self._is_neutral = True
 
-        self.enable_force(enabled=False)
         self.enable_brakes(enabled=False)
-        self.enable_gravity_compensation(enabled=False)
 
     def stop(self):
         """
         Disable force and put the device in BRAKE mode. You may feel a viscous
-        force that keeps that device from moving too quickly in this mode.
+        force that keeps that device from moving too quickly in this mode if
+        the electromagnetic brakes are enabled. A call to
+        :func:`forcedimension.HapticDevice.req` or
+        :func:`forcedimension.HapticDevice.submit` with `respect_neutral=False`
+        will re-enable forces.
         """
 
         dhd.stop(self._id)
@@ -1074,14 +1106,6 @@ class Gripper(Generic[T]):
 
     def request(self, fg: float):
         self._fg_req = fg
-
-    def submit(self):
-        self._req = False
-        dhd.setForceAndTorqueAndGripperForce(
-            self._parent._f_req,
-            self._parent._t_req,
-            self.fg
-        )
 
     def req(self, fg: float):
         self._parent._req = True
@@ -1452,11 +1476,7 @@ class HapticDaemon(Thread):
         self._pollers = []
 
         self._set_pollers(update_list)
-
-        if (self._dev.gripper is not None):
-            self._req_func: Callable[[], None] = self._dev.gripper.submit
-        else:
-            self._req_func = self._dev.submit
+        self._req_func = self._dev.submit
 
         super().__init__(daemon=True)
 
@@ -1491,6 +1511,7 @@ class HapticDaemon(Thread):
                     self._pollers.append(
                         _Poller(f, 1/update_list.ft)
                     )
+
         if update_list.gripper is not None and self._dev.gripper is not None:
             funcs = (
                 self._dev.gripper.update_enc_and_calculate,
@@ -1506,17 +1527,10 @@ class HapticDaemon(Thread):
                 if freq is not None
             )
 
-            self._force_poller = (
-                _Poller(
-                    self._dev.gripper.submit,
-                    1/update_list.req,
-                    self._forceon
-                )
-            )
-        else:
-            self._force_poller = (
-                _Poller(self._dev.submit, 1/update_list.req, self._forceon)
-            )
+
+        self._force_poller = (
+            _Poller(lambda: self._dev.submit(True), 1/update_list.req, self._forceon)
+        )
 
         self._paused = False
         self._stopped = False
