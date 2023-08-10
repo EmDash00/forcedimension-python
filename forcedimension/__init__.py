@@ -10,7 +10,8 @@ from typing import cast as _cast
 import forcedimension.dhd as dhd
 import forcedimension.drd as drd
 from forcedimension.containers import (
-    DefaultDOFEncsType, DefaultDOFJointAnglesType, DefaultEnc3Type, DefaultMat3x3Type, DefaultMat6x6Type, DefaultVecType,
+    DefaultDOFEncsType, DefaultDOFJointAnglesType, DefaultEnc3Type,
+    DefaultMat3x3Type, DefaultMat6x6Type, DefaultVecType,
     GripperUpdateOpts, UpdateOpts
 )
 from forcedimension.dhd import ErrorNum, Status
@@ -133,6 +134,7 @@ class HapticDevice(Generic[T]):
         self._devtype = dhd.DeviceType.NONE
         self._mass = nan
 
+        self._gripper = Gripper(self, self._id, VecType)
         self.gripper = None
 
         self._exception: Optional[dhd.DHDIOError] = None
@@ -220,22 +222,28 @@ class HapticDevice(Generic[T]):
         self._has_wrist = dhd.hasWrist(self._id)
 
         self._has_active_wrist = dhd.hasActiveWrist(self._id)
+
         if (com_mode := dhd.getComMode(self._id)) == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id, op=dhd.getComMode
             )
 
-        self._com_mode = com_mode
+        if (max_force := dhd.getMaxForce(self._id)) < 0:
+            max_force = None
 
-        self._gripper = Gripper(self, self._id, VecType)
+        if (max_torque := dhd.getMaxTorque(self._id)) < 0:
+            max_torque = None
+
+        self._mass, err = dhd.getEffectorMass(self._id)
+        if err:
+            raise dhd.errno_to_exception(dhd.errorGetLast())()
 
         if dhd.hasGripper(self._id):
             self.gripper = self._gripper
 
-        self._mass, err = dhd.getEffectorMass(self._id)
-
-        if err:
-            raise dhd.errno_to_exception(dhd.errorGetLast())()
+        self._com_mode = com_mode
+        self._max_force = max_force
+        self._max_torque = max_torque
 
         self.update_delta_enc_and_calculate()
         self.update_force_and_torque_and_gripper_force()
@@ -965,20 +973,14 @@ class HapticDevice(Generic[T]):
             raise dhd.DHDErrorTimeout(op=dhd.waitForReset, ID=self._id)
 
 
-    def get_max_force(self) -> Optional[float]:
+    @property
+    def max_force(self) -> Optional[float]:
         """
         Retrieve the current limit (in [N]) to the force magnitude that can be
-        applied by the haptic device.
-
-        :returns:
-            The current limit (in [N]) to the force magnitude that can be
-            applied by the haptic device to the end-effector. If there is no
-            limit, `None` is returned instead.
+        applied by the haptic device. The limit is `None` if there is no limit.
         """
 
-        limit = dhd.getMaxForce(ID=self._id)
-
-        return limit if limit > 0 else None
+        return self._max_force
 
     def set_max_force(self, limit: Optional[float]):
         """
@@ -997,29 +999,23 @@ class HapticDevice(Generic[T]):
             if limit < 0:
                 raise ValueError("limit must be greater than 0 or None.")
 
+        self._max_force = limit
+
         if limit is None:
             limit = -1.0
 
         if dhd.setMaxForce(limit, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())
 
-    def get_max_torque(self) -> Optional[float]:
+    @property
+    def max_torque(self) -> Optional[float]:
         """
         Retrieve the current limit (in [Nm]) to the torque magnitude that can be
-        applied by the haptic device.
-
-        :raises DHDError:
-            If an error has occured with the device.
-
-        :returns:
-            The current limit (in [Nm]) to the force magnitude that can be
-            applied by the haptic device to the end-effector. If there is no
-            limit, None is returned instead.
+        applied by the haptic device. The limit is `None` if there is no limit.
         """
 
-        limit = dhd.getMaxTorque(ID=self._id)
+        return self._max_torque
 
-        return limit if limit > 0 else None
 
     def set_max_torque(self, limit: Optional[float]):
         """
@@ -1037,6 +1033,8 @@ class HapticDevice(Generic[T]):
         if limit is not None:
             if limit < 0:
                 raise ValueError("limit must be greater than 0 or None.")
+
+        self._max_torque = limit
 
         if limit is None:
             limit = -1.0
