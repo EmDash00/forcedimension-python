@@ -1618,9 +1618,6 @@ class HapticDaemon(Thread):
         update_list: UpdateOpts = UpdateOpts(),
         forceon=False
     ):
-
-        super().__init__()
-
         if not isinstance(dev, HapticDevice):
             raise TypeError("Daemon needs an instance of HapticDevice")
 
