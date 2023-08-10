@@ -1,12 +1,44 @@
+import ctypes as ct
+import sys
 from copy import deepcopy
 from ctypes import Structure
-from threading import Event, Thread
-from time import perf_counter_ns, sleep
 from typing import Any, Generic, NoReturn, TypeVar, Union
 
 from forcedimension.typing import _MutableArray
 
+from .dhd import _libdhd
+
 T = TypeVar('T')
+
+
+# Technically impossible if we were able to import dhd, but put this here
+# to make the typechecker happy.
+if _libdhd is None:
+    raise ImportError("There were problems loading libdhd.")
+
+
+if sys.platform == 'win32':
+    from ctypes import WINFUNCTYPE as _NATIVE_FUNCTYPE
+else:
+    from ctypes import CFUNCTYPE as _NATIVE_FUNCTYPE
+
+
+_libdhd.dhdGetTime.argtypes = []
+_libdhd.dhdGetTime.restype = ct.c_double
+
+
+@_NATIVE_FUNCTYPE(None, ct.c_double)
+def spin(time: float):
+    """
+    Busy wait while minimally holding the Python GIL. Allows multiple Python
+    threads to busy wait simultaneously. For best results use time > 10 us.
+
+    :param float time:
+        Time (in [s]) to busy wait.
+    """
+    t0 = _libdhd.dhdGetTime()
+    while _libdhd.dhdGetTime() - t0 < time:
+        pass
 
 
 class ImmutableWrapper(Generic[T]):

@@ -3,7 +3,7 @@ __version__ = '0.2.0'
 import ctypes as ct
 import time
 from math import nan
-from threading import Condition, Lock, Thread
+from threading import Condition, Lock, Thread, Event
 from typing import Callable, Generic, List, Optional, Type, TypeVar
 from typing import cast as _cast
 
@@ -16,7 +16,7 @@ from forcedimension.containers import (
 )
 from forcedimension.dhd import ErrorNum, Status
 from forcedimension.typing import GenericVec, IntVectorLike
-from forcedimension.util import ImmutableWrapper
+from forcedimension.util import ImmutableWrapper, spin
 
 T = TypeVar('T', bound=GenericVec)
 
@@ -216,6 +216,7 @@ class HapticDevice(Generic[T]):
 
         self._is_neutral = False
         self._is_stopped = False
+        self._button_emulation_enabled = False
         self._left_handed = dhd.isLeftHanded(self._id)
         self._has_base = dhd.hasBase(self._id)
         self._has_active_gripper = dhd.hasActiveGripper(self._id)
@@ -325,6 +326,10 @@ class HapticDevice(Generic[T]):
         return self._is_stopped
 
     @property
+    def buton_emulation_enabled(self) -> bool:
+        return self._button_emulation_enabled
+
+    @property
     def status(self) -> Status:
         """
         Provides a read-only reference to the last-known status of the device.
@@ -363,6 +368,26 @@ class HapticDevice(Generic[T]):
 
         if dhd.setStandardGravity(g, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())
+
+    def enable_button_emulation(self, enabled: bool = True):
+        """
+        Enables the button behavior emulation in devices that feature a
+        gripper.
+
+        :param bool enabled:
+            `True` to enable button emulation, `False` to disable.
+
+        Info
+        ----
+        Omega.7 devices with firmware version 2.x need to be enabled for the
+        button emulation to report the emulated button status.
+        """
+
+        self._button_emulation_enabled = enabled
+
+        if dhd.emulateButton(enabled, self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())
+
 
     def enable_force(self, enabled: bool = True):
         """
@@ -1466,6 +1491,110 @@ class _Poller(Thread):
             self._paused = True
 
 
+class HapticPoller(Thread):
+    def __init__(
+        self,  h: HapticDevice, interval: float, *args,
+        high_prec: bool = False, **kwargs
+    ):
+        super().__init__(*args, **kwargs)
+
+        self._h = h
+
+        self._interval = int(interval * 1E9)
+
+        self._stop_event = Event()
+        self._pause_event = Event()
+        self._pause_sync = Event()
+
+        self._target_args = kwargs.get('args', ())
+        self._target_kwargs = kwargs.get('kwargs', {})
+        self._target = kwargs.get('target', None)
+
+        self._high_prec = high_prec
+
+    def stop(self):
+        self._stop_event.set()
+        self.join()
+
+    def pause(self):
+        self._pause_event.set()
+        self._pause_sync.wait()
+
+    def unpause(self):
+        self._pause_event.clear()
+        self._pause_sync.clear()
+
+    def _execute_target(self):
+        if self._target:
+            self._target(*self._target_args, **self._target_kwargs)
+
+    def _run_zero_interval(self):
+        while not self._stop_event.is_set():
+            if not self._pause_event.is_set():
+                self._execute_target()
+            else:
+                self._pause_sync.set()
+                time.sleep(0.001)
+
+    def _run_low_prec(self):
+        while not self._stop_event.wait(self._interval):
+
+            if not self._pause_event.is_set():
+                self._pause_sync.set()
+                time.sleep(0.001)
+                continue
+
+            self._execute_target()
+
+    def _run_high_prec(self):
+        t0 = time.perf_counter()
+
+        wait_period = self._interval
+        if self._interval > 0.001:
+            sleep_period = self._interval - 0.001
+        else:
+            sleep_period = 0
+
+        if not self._stop_event.is_set():
+            self._execute_target()
+
+        t_sleep = time.perf_counter()
+        while not self._stop_event.wait(sleep_period):
+            spin(wait_period - (time.perf_counter() - t_sleep))
+
+            t0 = time.perf_counter()
+            if not self._pause_event.is_set():
+                self._execute_target()
+            else:
+                self._pause_sync.set()
+                sleep_period = 0.001
+                wait_period = 0.001
+                continue
+
+            wait_period = max(self._interval - (time.perf_counter() - t0), 0)
+
+            if wait_period > 0.001:
+                sleep_period = wait_period - 0.001
+            else:
+                sleep_period = 0
+
+            t_sleep = time.perf_counter()
+
+    def run(self):
+        try:
+            if self._interval == 0:
+                self._run_zero_interval()
+                return
+
+            if self._high_prec:
+                self._run_high_prec()
+            else:
+                self._run_low_prec()
+
+        finally:
+            del self._target
+
+
 class HapticDaemon(Thread):
     def __init__(
         self,
@@ -1613,3 +1742,5 @@ class HapticDaemon(Thread):
             for poller in self._pollers:
                 poller.stop()
             self._dev._exception = ex
+
+
