@@ -166,8 +166,6 @@ class HapticDevice(Generic[T]):
 
             self._devtype = devtype_opened
 
-        self._open = True
-
         self._encs = DefaultDOFEncsType()
         self._joint_angles = DefaultDOFJointAnglesType()
 
