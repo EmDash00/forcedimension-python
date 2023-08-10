@@ -2194,7 +2194,8 @@ def deltaGravityJointTorques(
 
     warnings.warn(
         "This function is deprecated, please use "
-        "dhd.jointAnglesToGravityJointTorques() instead."
+        "dhd.jointAnglesToGravityJointTorques() instead.",
+        DeprecationWarning, stacklevel=2
     )
 
     q0 = c_double()
@@ -2726,9 +2727,9 @@ def wristGravityJointTorques(
 
     warnings.warn(
         "This function is deprecated, please use "
-        "dhd.jointAnglesToGravityJointTorques() instead."
+        "dhd.jointAnglesToGravityJointTorques() instead.",
+        DeprecationWarning, stacklevel=2,
     )
-
 
     q0 = c_double()
     q1 = c_double()
