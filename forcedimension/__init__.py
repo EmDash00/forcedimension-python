@@ -23,7 +23,6 @@ T = TypeVar('T', bound=GenericVec)
 
 dhd.expert.enableExpertMode()
 
-
 class HapticDevice(Generic[T]):
     """
     A HapticDevice is a high-level wrapper for any compatible Force Dimension
@@ -32,10 +31,13 @@ class HapticDevice(Generic[T]):
 
     def __init__(
             self,
+            VecType: Type[T] = DefaultVecType,
+            *,
             ID: Optional[int] = None,
             devtype: Optional[dhd.DeviceType] = None,
             serial_number: Optional[int] = None,
-            VecType: Type[T] = DefaultVecType
+            ensure_memory: bool = False,
+            **kwargs
     ):
         """
         Create a handle to a Force Dimension haptic device. You may specify
@@ -45,6 +47,11 @@ class HapticDevice(Generic[T]):
         (i.e. using a `with` statement) to ensure the device is properly
         closed. Once opened, properties of the device are stored as fields
         in the class.
+
+        :param Type[T] VecType:
+            The default type for vector buffers used by this class. You may
+            make your own custom types, but it's recommended to use
+            `forcedimension.containers.DefaultVecType`.
 
         :param Optional[int] ID:
             If specified, will open the device of the given ID.
@@ -56,10 +63,14 @@ class HapticDevice(Generic[T]):
             If specified, will open the device of the given serial number.
             This feature is only available on newer devices.
 
-        :param Type[T] VecType:
-            The default type for vector buffers used by this class. You may
-            make your own custom types, but it's recommended to use
-            `forcedimension.containers.DefaultVecType`.
+        :param int wait_for_reset:
+            If specified, will call :func:`HapticDevice.wait_for_reset()` with
+            the value given. If None is given, will wait indefinetely. This
+            ensures the device is calibrated before use.
+
+        :param bool ensure_memory:
+            If `True`, the device will fail to instantiate if a firmware or
+            internal configuration health check fails.
 
         :raises ValueError:
             If more than one of `ID`, `devtype`, or `serial_number` are
@@ -165,6 +176,13 @@ class HapticDevice(Generic[T]):
                 )
 
             self._devtype = devtype_opened
+
+        if ensure_memory:
+            if not self.check_controller_memory():
+                raise dhd.DHDErrorConfiguration(ID=self._id)
+
+        if 'wait_for_reset' in kwargs:
+            self.wait_for_reset(kwargs['wait_for_reset'])
 
         self._encs = DefaultDOFEncsType()
         self._joint_angles = DefaultDOFJointAnglesType()
