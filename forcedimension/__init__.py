@@ -707,7 +707,7 @@ class HapticDevice(Generic[T]):
         return self._is_stopped
 
     @property
-    def buton_emulation_enabled(self) -> bool:
+    def button_emulation_enabled(self) -> bool:
         return self._button_emulation_enabled
 
     @property
