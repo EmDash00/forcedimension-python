@@ -84,52 +84,6 @@ class HapticDevice(Generic[T]):
             if ID < 0:
                 raise ValueError("ID must be greater than 0.")
 
-        self._open = True
-
-        self._encs = DefaultDOFEncsType()
-        self._joint_angles = DefaultDOFJointAnglesType()
-
-        self._pos = VecType()
-        self._w = VecType()
-        self._v = VecType()
-        self._f = VecType()
-        self._t = VecType()
-
-        self._delta_jacobian = DefaultMat3x3Type()
-        self._wrist_jacobian = DefaultMat3x3Type()
-        self._frame = DefaultMat3x3Type()
-
-        self._inertia_matrix = DefaultMat6x6Type()
-
-        self._status = Status()
-
-        self._f_req = VecType()
-        self._t_req = VecType()
-        self._vibration_req: List[float] = [0.] * 2
-        self._buttons = 0
-
-        self._delta_joint_angles_view = ImmutableWrapper(
-            self._joint_angles.delta
-        )
-
-        self._wrist_joint_angles_view = ImmutableWrapper(
-            self._joint_angles.wrist
-        )
-
-        self._pos_view = ImmutableWrapper(self._pos)
-        self._w_view = ImmutableWrapper(self._w)
-        self._v_view = ImmutableWrapper(self._v)
-        self._f_view = ImmutableWrapper(self._f)
-        self._t_view = ImmutableWrapper(self._t)
-
-        self._delta_jacobian_view = ImmutableWrapper(self._delta_jacobian)
-        self._wrist_jacobian_view = ImmutableWrapper(self._wrist_jacobian)
-        self._frame_view = ImmutableWrapper(self._frame)
-
-        self._inertia_matrix_view = ImmutableWrapper(self._inertia_matrix)
-
-        self._status_view = ImmutableWrapper(self._status)
-
         self._devtype = dhd.DeviceType.NONE
         self._mass = nan
 
@@ -212,7 +166,55 @@ class HapticDevice(Generic[T]):
 
             self._devtype = devtype_opened
 
+        self._open = True
+
+        self._encs = DefaultDOFEncsType()
+        self._joint_angles = DefaultDOFJointAnglesType()
+
+        self._pos = VecType()
+        self._w = VecType()
+        self._v = VecType()
+        self._f = VecType()
+        self._t = VecType()
+
+        self._delta_jacobian = DefaultMat3x3Type()
+        self._wrist_jacobian = DefaultMat3x3Type()
+        self._frame = DefaultMat3x3Type()
+
+        self._inertia_matrix = DefaultMat6x6Type()
+
+        self._status = Status()
+
+        self._f_req = VecType()
+        self._t_req = VecType()
+        self._vibration_req: List[float] = [0.] * 2
+        self._buttons = 0
+
+        self._delta_joint_angles_view = ImmutableWrapper(
+            self._joint_angles.delta
+        )
+
+        self._wrist_joint_angles_view = ImmutableWrapper(
+            self._joint_angles.wrist
+        )
+
+        self._pos_view = ImmutableWrapper(self._pos)
+        self._w_view = ImmutableWrapper(self._w)
+        self._v_view = ImmutableWrapper(self._v)
+        self._f_view = ImmutableWrapper(self._f)
+        self._t_view = ImmutableWrapper(self._t)
+
+        self._delta_jacobian_view = ImmutableWrapper(self._delta_jacobian)
+        self._wrist_jacobian_view = ImmutableWrapper(self._wrist_jacobian)
+        self._frame_view = ImmutableWrapper(self._frame)
+
+        self._inertia_matrix_view = ImmutableWrapper(self._inertia_matrix)
+
+        self._status_view = ImmutableWrapper(self._status)
+
         self._gripper = Gripper(self, self._id, VecType)
+        if dhd.hasGripper(self._id):
+            self.gripper = self._gripper
 
         self._is_neutral = False
         self._is_stopped = False
@@ -221,7 +223,6 @@ class HapticDevice(Generic[T]):
         self._has_base = dhd.hasBase(self._id)
         self._has_active_gripper = dhd.hasActiveGripper(self._id)
         self._has_wrist = dhd.hasWrist(self._id)
-
         self._has_active_wrist = dhd.hasActiveWrist(self._id)
 
         if (com_mode := dhd.getComMode(self._id)) == -1:
@@ -238,9 +239,6 @@ class HapticDevice(Generic[T]):
         self._mass, err = dhd.getEffectorMass(self._id)
         if err:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
-
-        if dhd.hasGripper(self._id):
-            self.gripper = self._gripper
 
         self._com_mode = com_mode
         self._max_force = max_force
@@ -991,6 +989,16 @@ class HapticDevice(Generic[T]):
         if dhd.waitForReset(timeout, self._id):
             raise dhd.DHDErrorTimeout(op=dhd.waitForReset, ID=self._id)
 
+    def check_controller_memory(self) -> bool:
+        """
+        Evalutes the integrity of the device controller firmware and internal
+        configuration on supported device types.
+
+        :returns:
+            `True` if the check succeeded, and `False` if the firmware of
+            internal heatlh configuration health check failed.
+        """
+        return not bool(dhd.checkControllerMemory(self._id))
 
     @property
     def max_force(self) -> Optional[float]:
