@@ -552,7 +552,7 @@ class HapticDevice(Generic[T]):
         self._vibration_req: List[float] = [0.] * 2
         self._buttons = 0
 
-        self._base_angles_view = ImmutableWrapper(self._joint_angles)
+        self._base_angles_view = ImmutableWrapper(self._base_angles)
 
         self._delta_joint_angles_view = ImmutableWrapper(
             self._joint_angles.delta
@@ -588,6 +588,7 @@ class HapticDevice(Generic[T]):
         self._has_active_gripper = dhd.hasActiveGripper(self._id)
         self._has_wrist = dhd.hasWrist(self._id)
         self._has_active_wrist = dhd.hasActiveWrist(self._id)
+
 
         if dhd.getBaseAngleXRad(self._base_angles.ptrs[0].contents, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())(
