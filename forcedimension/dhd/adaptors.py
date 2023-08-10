@@ -337,8 +337,7 @@ class DHDErrorNoDriverFound(DHDIOError):
 class DHDErrorConfiguration(DHDIOError):
     def __init__(self, *, ID: Optional[int] = None, **kwargs):
         super().__init__(
-            err="IO error trying to read/write calibration data from "
-                "device memory",
+            err="The firmware or internal configuration health check failed",
             ID=ID,
             **kwargs
         )
