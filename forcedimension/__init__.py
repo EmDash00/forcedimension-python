@@ -213,6 +213,18 @@ class HapticDevice(Generic[T]):
             self._devtype = devtype_opened
 
         self._left_handed = dhd.isLeftHanded(self._id)
+        self._has_base = dhd.hasBase(self._id)
+        self._has_active_gripper = dhd.hasActiveGripper(self._id)
+        self._has_wrist = dhd.hasWrist(self._id)
+
+        self._has_active_wrist = dhd.hasActiveWrist(self._id)
+        if (com_mode := dhd.getComMode(self._id)) == -1:
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                ID=self._id, op=dhd.getComMode
+            )
+
+        self._com_mode = com_mode
+
         self._gripper = Gripper(self, self._id, VecType)
 
         if dhd.hasGripper(self._id):
@@ -275,6 +287,26 @@ class HapticDevice(Generic[T]):
         return self._left_handed
 
     @property
+    def has_base(self) -> bool:
+        return self._has_base
+
+    @property
+    def has_wrist(self) -> bool:
+        return self._has_wrist
+
+    @property
+    def has_active_wrist(self) -> bool:
+        return self._has_active_wrist
+
+    @property
+    def has_active_gripper(self) -> bool:
+        return self._has_active_gripper
+
+    @property
+    def com_mode(self) -> dhd.ComMode:
+        return self._com_mode
+
+    @property
     def status(self) -> Status:
         """
         Provides a read-only reference to the last-known status of the device.
@@ -284,6 +316,87 @@ class HapticDevice(Generic[T]):
             A Status object representing the last-known status of the device.
         """
         return _cast(Status, self._status_view)
+
+    def set_output_bits(self, mask: int):
+        """
+        Sets the user programmable output bbits on devices that support it.
+
+        :param int mask:
+            Bitwise mask that toggles the progammable output bits.
+
+        :raises ArgumentError:
+            If `mask` is not implicitly convertible to a C uint.
+        """
+
+        if dhd.setOutput(mask, self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())
+
+    def set_standard_gravity(self, g: float = 9.81):
+        """
+        Sets the standard gravity constant (in [m/s^2]) used in gravity compensation.
+        By default, the constant is set to 9.81 m/s^2
+
+        :param float g:
+            Standard gravity constant to set (in [m/s^2])
+
+        :raises ArgumentError:
+            If `g` is not implicitly convertible to C double.
+        """
+
+        if dhd.setStandardGravity(g, self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())
+
+    def enable_force(self, enabled: bool = True):
+        """
+        Enable/disable force on the end-effector.
+
+        :param bool enabled: `True` to enable, `False` to disable
+        """
+
+        dhd.enableForce(enabled, ID=self._id)
+
+    def enable_brakes(self, enabled: bool = True):
+        """
+        Enable electromagnetic braking on the device. If the brakes are
+        disabled, the device is forced into IDLE mode. No forces will be
+        applied in that mode.
+
+        :param enabled bool:
+            `True` to enable electromagnetic braking, `False` to disable.
+        """
+
+        if dhd.setBrakes(enabled):
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                ID=self._id,
+                feature=dhd.setVibration
+            )
+
+    def enable_gravity_compensation(self, enabled: bool = True):
+        """
+        Enable built-in gravity compensation for the end-effector that will be
+        added on top of the force request.
+
+        :param bool enabled:
+            `True` to enable, `False` to disable.
+
+        See Also
+        --------
+        :func:`forcedimension.HapticDevice.set_mass`
+        """
+
+        dhd.setGravityCompensation(enabled, ID=self._id)
+
+        self._req = True
+
+        self._f_req[0] = 0.
+        self._f_req[1] = 0.
+        self._f_req[2] = 0.
+
+        self._t_req[0] = 0.
+        self._t_req[1] = 0.
+        self._t_req[2] = 0.
+
+        dhd.stop(self._id)
 
 
     @property
@@ -798,29 +911,6 @@ class HapticDevice(Generic[T]):
                 feature=dhd.setVibration
             )
 
-    def enable_force(self, enabled: bool = True):
-        """
-        Enable/disable force on the end-effector.
-
-        :param bool enabled: `True` to enable, `False` to disable
-        """
-
-        dhd.enableForce(enabled, ID=self._id)
-
-    def enable_brakes(self, enabled: bool = True):
-        """
-        Enable electromagnetic braking on the device.
-
-        :param enabled bool:
-            `True` to enable electromagnetic braking, `False` to disable.
-        """
-
-        if dhd.setBrakes(enabled):
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
-                ID=self._id,
-                feature=dhd.setVibration
-            )
-
     def get_max_force(self) -> Optional[float]:
         """
         Retrieve the current limit (in [N]) to the force magnitude that can be
@@ -900,32 +990,6 @@ class HapticDevice(Generic[T]):
         if dhd.setMaxTorque(limit, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
-    def enable_gravity_compensation(self, enabled: bool = True):
-        """
-        Enable built-in gravity compensation for the end-effector that will be
-        added on top of the force request.
-
-        :param bool enabled:
-            `True` to enable, `False` to disable.
-
-        See Also
-        --------
-        :func:`forcedimension.HapticDevice.set_mass`
-        """
-
-        dhd.setGravityCompensation(enabled, ID=self._id)
-
-        self._req = True
-
-        self._f_req[0] = 0.
-        self._f_req[1] = 0.
-        self._f_req[2] = 0.
-
-        self._t_req[0] = 0.
-        self._t_req[1] = 0.
-        self._t_req[2] = 0.
-
-        dhd.stop(self._id)
 
     def get_button(self, button_id: int = 0) -> bool:
         """
