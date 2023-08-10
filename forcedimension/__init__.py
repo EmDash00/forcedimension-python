@@ -646,6 +646,10 @@ class HapticDevice(Generic[T]):
         return self._gripper
 
     @property
+    def regulator(self) -> Regulator:
+        return self._regulator
+
+    @property
     def ID(self) -> int:
         """
         Provides a read-only copy of the ID of the HapticDevice.
