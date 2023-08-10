@@ -367,6 +367,13 @@ class HapticDevice(Generic[T]):
             self._parent: HapticDevice = parent
             self._haptic_daemon: Optional[HapticDaemon] = None
 
+        def poll(self):
+            if self._haptic_daemon is not None:
+                raise RuntimeError(
+                    "Mixed use of HapticDaemon and HapticDevice.Regulator is "
+                    "not supported."
+                )
+
         def stop(self):
             if self._haptic_daemon is not None:
                 self._haptic_daemon.stop()
@@ -443,7 +450,7 @@ class HapticDevice(Generic[T]):
         self._devtype = dhd.DeviceType.NONE
         self._mass = nan
 
-        self.gripper = None
+        self._gripper = None
 
         self._exception: Optional[dhd.DHDIOError] = None
         self._id = 0
@@ -576,9 +583,9 @@ class HapticDevice(Generic[T]):
 
         self._status_view = ImmutableWrapper(self._status)
 
-        self._gripper = HapticDevice.Gripper(self)
+        self._mock_gripper = HapticDevice.Gripper(self)
         if dhd.hasGripper(self._id):
-            self.gripper = self._gripper
+            self._gripper = self._mock_gripper
 
         self._is_neutral = False
         self._is_stopped = False
@@ -633,6 +640,10 @@ class HapticDevice(Generic[T]):
     def check_exception(self):
         if self._exception is not None:
             raise self._exception
+
+    @property
+    def gripper(self) -> Optional[Gripper]:
+        return self._gripper
 
     @property
     def ID(self) -> int:
@@ -1273,7 +1284,7 @@ class HapticDevice(Generic[T]):
         """
 
         err = dhd.direct.getForceAndTorqueAndGripperForce(
-            self._f, self._t, self._gripper._fg, self._id
+            self._f, self._t, self._mock_gripper._fg, self._id
         )
 
         if err:
@@ -1363,7 +1374,7 @@ class HapticDevice(Generic[T]):
             self.enable_force()
 
         err = dhd.setForceAndTorqueAndGripperForce(
-            self._f_req, self._t_req, self._gripper._fg_req, self._id
+            self._f_req, self._t_req, self._mock_gripper._fg_req, self._id
         )
 
         if err == -1:
@@ -1809,7 +1820,7 @@ class HapticDaemon(Thread):
             if update_list.ft is not None:
                 if (
                     update_list.gripper is not None and
-                    self._dev.gripper is not None
+                    self._dev._gripper is not None
                 ):
                     self._pollers.append(
                         _Poller(
@@ -1823,13 +1834,13 @@ class HapticDaemon(Thread):
                         _Poller(f, 1/update_list.ft)
                     )
 
-        if update_list.gripper is not None and self._dev.gripper is not None:
+        if update_list.gripper is not None and self._dev._gripper is not None:
             funcs = (
-                self._dev.gripper.update_enc_and_calculate,
-                self._dev.gripper.update_finger_pos,
-                self._dev.gripper.update_thumb_pos,
-                self._dev.gripper.update_linear_velocity,
-                self._dev.gripper.update_angular_velocity
+                self._dev._gripper.update_enc_and_calculate,
+                self._dev._gripper.update_finger_pos,
+                self._dev._gripper.update_thumb_pos,
+                self._dev._gripper.update_linear_velocity,
+                self._dev._gripper.update_angular_velocity
             )
 
             self._pollers.extend(
