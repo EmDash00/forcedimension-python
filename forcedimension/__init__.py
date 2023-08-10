@@ -1430,7 +1430,6 @@ class HapticDevice(Generic[T]):
         handle to the device.
         """
 
-        self.open = False
         self._regulator.stop()
         drd.close(self._id)
 
