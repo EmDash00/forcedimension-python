@@ -6,6 +6,7 @@ from math import nan
 from threading import Condition, Lock, Thread, Event
 from typing import Callable, Generic, List, Optional, Type, TypeVar
 from typing import cast as _cast
+import warnings
 
 import forcedimension.dhd as dhd
 import forcedimension.drd as drd
@@ -60,6 +61,29 @@ class HapticDevice(Generic[T]):
 
         def req(self, fg: float):
             self._fg_req = fg
+
+        def config_velocity(
+            self, window_size: int = dhd.DEFAULT_VELOCITY_WINDOW,
+            mode: dhd.VelocityEstimatorMode = dhd.VelocityEstimatorMode.WINDOWING
+        ):
+            """
+            Configures the internal shared linear and angular velocity
+            estimator used by the Force Dimension SDK for the force gripper.
+            Calling this without parameters resets the linear velocity
+            estimator to its default settings.
+
+            :param window_size int:
+                Time interval to use for computing linear velocity (in [ms]).
+
+            :param VelocityEstimatorMode mode:
+                Velocity estimator mode. Currently only
+                :data:`forcedimension.dhd.VelocityEstimatorMode.WINDOWING` is
+            """
+
+            if dhd.configGripperVelocity(window_size, mode, self._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=dhd.configGripperVelocity, ID=self._id
+                )
 
         def get_max_force(self) -> Optional[float]:
             """
@@ -383,7 +407,8 @@ class HapticDevice(Generic[T]):
             This feature is only available on newer devices.
 
         :param int wait_for_reset:
-            If specified, will call :func:`HapticDevice.wait_for_reset()` with
+            If specified, will call
+            :func:`forcedimension.HapticDevice.wait_for_reset()` with
             the value given. If None is given, will wait indefinetely. This
             ensures the device is calibrated before use.
 
@@ -772,6 +797,56 @@ class HapticDevice(Generic[T]):
         self._t_req[2] = 0.
 
         dhd.stop(self._id)
+
+    def config_linear_velocity(
+        self,
+        window_size: int = dhd.DEFAULT_VELOCITY_WINDOW,
+        mode: dhd.VelocityEstimatorMode = dhd.VelocityEstimatorMode.WINDOWING
+    ):
+        """
+        Configures the internal linear velocity estimator used by
+        the Force Dimension SDK for the end-effector. Calling this without
+        parameters resets the linear velocity estimator to its default
+        settings.
+
+        :param window_size int:
+            Time interval to use for computing linear velocity (in [ms]).
+
+        :param VelocityEstimatorMode mode:
+            Velocity estimator mode. Currently only
+            :data:`forcedimension.dhd.VelocityEstimatorMode.WINDOWING` is
+            supported by the Force Dimension SDK.
+        """
+
+        if dhd.configLinearVelocity(window_size, mode, self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                op=dhd.configLinearVelocity, ID=self._id
+            )
+
+
+    def config_angular_velocity(
+        self, window_size: int, mode: dhd.VelocityEstimatorMode
+    ):
+        """
+        Configures the internal angular velocity estimator used by
+        the Force Dimension SDK for the end-effector. Calling this without
+        parameters resets the angular velocity estimator to its default
+        settings.
+
+        :param window_size int:
+            Time interval to use for computing linear velocity (in [ms]).
+
+        :param VelocityEstimatorMode mode:
+            Velocity estimator mode. Currently only
+            :data:`forcedimension.dhd.VelocityEstimatorMode.WINDOWING` is
+            supported by the Force Dimension SDK.
+        """
+
+        if dhd.configAngularVelocity(window_size, mode, self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                op=dhd.configAngularVelocity, ID=self._id
+            )
+
 
 
     @property
@@ -1618,6 +1693,12 @@ class HapticDaemon(Thread):
         update_list: UpdateOpts = UpdateOpts(),
         forceon=False
     ):
+        warnings.warn(
+            "HapticDaemon is deprecated as of Force Dimension Bindings "
+            "v0.2.0. Use HapticDevice.Regulator.poll() instead.",
+            DeprecationWarning, stacklevel=2
+        )
+
         if not isinstance(dev, HapticDevice):
             raise TypeError("Daemon needs an instance of HapticDevice")
 
