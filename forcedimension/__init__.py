@@ -103,7 +103,6 @@ class HapticDevice(Generic[T]):
 
         self._status = Status()
 
-        self._req = False
         self._f_req = VecType()
         self._t_req = VecType()
         self._vibration_req: List[float] = [0.] * 2
@@ -134,7 +133,6 @@ class HapticDevice(Generic[T]):
         self._devtype = dhd.DeviceType.NONE
         self._mass = nan
 
-        self._gripper = Gripper(self, self._id, VecType)
         self.gripper = None
 
         self._exception: Optional[dhd.DHDIOError] = None
@@ -213,6 +211,8 @@ class HapticDevice(Generic[T]):
                 )
 
             self._devtype = devtype_opened
+
+        self._gripper = Gripper(self, self._id, VecType)
 
         self._is_neutral = False
         self._is_stopped = False
@@ -403,8 +403,6 @@ class HapticDevice(Generic[T]):
         """
 
         dhd.setGravityCompensation(enabled, ID=self._id)
-
-        self._req = True
 
         self._f_req[0] = 0.
         self._f_req[1] = 0.
@@ -852,8 +850,6 @@ class HapticDevice(Generic[T]):
             self._is_neutral = False
             self.enable_force()
 
-        self._req = False
-
         err = dhd.setForceAndTorqueAndGripperForce(
             self._f_req, self._t_req, self._gripper._fg_req, self._id
         )
@@ -885,8 +881,6 @@ class HapticDevice(Generic[T]):
         if (self._is_neutral):
             self._is_neutral = False
             self.enable_brakes()
-
-        self._req = True
 
         self._f_req[0] = f[0]
         self._f_req[1] = f[1]
@@ -1124,11 +1118,7 @@ class Gripper(Generic[T]):
 
         self._fg_req: float = 0.0
 
-    def request(self, fg: float):
-        self._fg_req = fg
-
     def req(self, fg: float):
-        self._parent._req = True
         self._fg_req = fg
 
     def get_max_force(self) -> Optional[float]:
