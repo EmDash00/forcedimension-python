@@ -1,8 +1,10 @@
 import ctypes as ct
+import functools
+import inspect
 import sys
 from copy import deepcopy
 from ctypes import Structure
-from typing import Any, Generic, NoReturn, TypeVar, Union
+from typing import Any, Callable, Generic, NoReturn, Optional, TypeVar, Union
 
 from forcedimension.typing import _MutableArray
 
@@ -39,6 +41,18 @@ def spin(time: float):
     t0 = _libdhd.dhdGetTime()
     while _libdhd.dhdGetTime() - t0 < time:
         pass
+
+
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(
+                *args, **kwargs
+            )
+
+        return cls._instances[cls]
 
 
 class ImmutableWrapper(Generic[T]):
@@ -237,3 +251,40 @@ class ImmutableWrapper(Generic[T]):
 
     def __str__(self) -> str:
         return (object.__getattribute__(self, '_data')).__str__()
+
+
+def full_method_name(method: Callable[..., Any]):
+    if (parent_class := _get_impl_class(method)) is None:
+        raise ValueError("Could not find parent class name.")
+
+    return f"{parent_class.__name__}.{method.__name__}"
+
+
+def _get_impl_class(method) -> Optional[type]:
+    if isinstance(method, functools.partial):
+        return _get_impl_class(method.func)
+
+    if inspect.ismethod(method) or (
+        inspect.isbuiltin(method) and
+        getattr(method, '__self__', None) is not None and
+        getattr(method.__self__, '__class__', None)
+    ):
+        for cls in inspect.getmro(method.__self__.__class__):
+            if method.__name__ in cls.__dict__:
+                return cls
+
+        # fallback to __qualname__ parsing
+        method = getattr(method, '__func__', method)
+
+    if inspect.isfunction(method):
+        cls = getattr(
+            inspect.getmodule(method),
+            method.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0],
+            None
+        )
+
+        if isinstance(cls, type):
+            return cls
+
+    # handle special descriptor objects
+    return getattr(method, '__objclass__', None)
