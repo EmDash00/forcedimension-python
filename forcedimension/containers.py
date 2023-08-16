@@ -100,7 +100,7 @@ class TrajectoryGenParam(pydantic.BaseModel):
 
 
 class VelocityConfig(pydantic.BaseModel):
-    window: int = DEFAULT_VELOCITY_WINDOW
+    window_size: int = DEFAULT_VELOCITY_WINDOW
     mode: VelocityEstimatorMode = VelocityEstimatorMode.WINDOWING
 
     @pydantic.field_validator('window')
@@ -121,6 +121,7 @@ class HapticDeviceInfo(pydantic.BaseModel):
     has_active_wrist: bool
     has_gripper: bool
     has_active_gripper: bool
+    has_serial_number: bool
     is_left_handed: bool
 
     @pydantic.field_validator('serial_number')
@@ -189,7 +190,7 @@ class HapticDeviceConfig(pydantic.BaseModel):
 
     is_simulator_enabled: bool = False
     is_force_enabled: bool = True
-    is_brake_enabled: bool = False
+    is_brake_enabled: bool = True
     is_button_emulation_enabled: bool = True
     is_gravity_compensation_enabled: bool = True
     com_mode: Literal['async', 'sync', 'virtual', 'network'] = 'async'
@@ -204,11 +205,11 @@ class HapticDeviceConfig(pydantic.BaseModel):
     max_torque: Optional[float] = None
     standard_gravity: float = 9.81
 
-    gripper: Optional[GripperConfig] = dataclasses.field(
+    gripper: GripperConfig = dataclasses.field(
         default_factory=GripperConfig
     )
 
-    regulator: Optional[RegulatorConfig] = dataclasses.field(
+    regulator: RegulatorConfig = dataclasses.field(
         default_factory=RegulatorConfig
     )
 
