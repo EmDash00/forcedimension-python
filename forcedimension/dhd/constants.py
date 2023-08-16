@@ -13,10 +13,15 @@ MAX_STATUS: Final[int] = 16  #: Maximum number of elements in a status tuple
 #: communication with the device.
 TIMEGUARD: Final[int] = 1
 
+#: Convinence constant used to set device to default timeguard value
+#: Not the actual default timeguard value.
+DEFAULT_TIMEGUARD_US: Final[int] = -1
+
 #: Return value used when at least one of the motors cannot deliver the
 #: requested torque. Motor groups are scaled in order to preserve force and
 #: torque direction over magnitude.
 MOTOR_SATURATED: Final[int] = 2
+
 
 class VelocityEstimatorMode(IntEnum):
     """
