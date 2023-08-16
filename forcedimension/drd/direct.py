@@ -28,6 +28,7 @@ _libdrd.drdGetPositionAndOrientation.restype = c_int
 def getPositionAndOrientation(
     p_out: SupportsPtrs3[c_double],
     o_out: SupportsPtrs3[c_double],
+    pg_out: c_double,
     matrix_out: SupportsPtr[c_double],
     ID: int = -1,
 ) -> int:
@@ -45,11 +46,14 @@ def getPositionAndOrientation(
     copies the result directly into the return buffers.
 
 
-    :param VectorLike p_out:
+    :param SupportsPtrs3[c_double] p_out:
         Output buffer to store the end-effector position (in [m]).
 
-    :param VectorLike o_out:
+    :param SupportsPtrs3[c_double] o_out:
         Output buffer to store the angle of each joint (in [rad]).
+
+    :param c_double pg_out:
+        Output buffer to store the gripper opening gap (in [m]).
 
     :param MutableFloatMatrixLike matrix_out:
         Output buffer to store the orientation matrix.
@@ -92,7 +96,7 @@ def getPositionAndOrientation(
     """
 
     return _libdrd.drdGetPositionAndOrientation(
-        *p_out.ptrs, *o_out.ptrs, matrix_out.ptr, ID
+        *p_out.ptrs, *o_out.ptrs, pg_out, matrix_out.ptr, ID
     )
 
 
