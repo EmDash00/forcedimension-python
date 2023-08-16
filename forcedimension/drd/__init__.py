@@ -346,6 +346,32 @@ def checkInit(ID: int = -1) -> int:
     return _libdrd.drdCheckInit(ID)
 
 
+_libdrd.drdPrecisionInit.argtypes = [c_byte]
+_libdrd.drdPrecisionInit.restype = c_int
+
+
+def precisionInit(ID: int = -1) -> int:
+    """
+    This function performs automatic initialization of supported devices by
+    robotically moving each axis to a known position and reseting its encoder
+    counter to its correct values. This initialization is carried out for each
+    device axis in turn, and validates the initialization by asserting the
+    position of a validation reference for each axis.
+
+    The execution of this implementation takes longer than
+    :func:`forcedimension.drd.autoInit()`, but
+    includes the same validation as
+    :func:`forcedimension.drd.checkInit()`. As a result, calling
+    :func:`forcedimension.drd.checkInit()` is not necessary if this function
+    succeeds.
+
+    :returns:
+        0 on success, -1 otherwise
+    """
+
+    return _libdrd.drdPrecisionInit(ID)
+
+
 _libdrd.drdGetVelocity.argtypes = [
     c_double_ptr,
     c_double_ptr,
@@ -362,7 +388,7 @@ _libdrd.drdGetCtrlFreq.argtypes = [c_byte]
 _libdrd.drdGetCtrlFreq.restype = c_int
 
 
-def getCtrlFreq(ID: int = -1) -> int:
+def getCtrlFreq(ID: int = -1) -> float:
     """
     This function returns the average refresh rate of the control loop
     (in [kHz]) since the function was last called.
@@ -374,7 +400,7 @@ def getCtrlFreq(ID: int = -1) -> int:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
-        0 on success, and -1 otherwise.
+        The control frequency on success, and -1.0 otherwise.
     """
 
     return _libdrd.drdGetCtrlFreq(ID)
@@ -1760,11 +1786,16 @@ def setEncMoveParam(
     vmax: float, amax: float, jerk: float, ID: int = -1
 ) -> int:
     """
-    Set encoder positioning trajectory generation parameters.
+    Sets the encoder positioning trajectory generation parameters.
 
-    :param float amax: max acceleration [m/s^2]
-    :param float vmax: max velocity [m/s]
-    :param float jerk: jerk [m/s^3]
+    :param float vmax:
+        max velocity (in [m/s])
+
+    :param float amax:
+        max acceleration (in [m/s^2])
+
+    :param float jerk:
+        jerk (in [m/s^3])
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -1796,16 +1827,16 @@ def setEncTrackParam(
     vmax: float, amax: float, jerk: float, ID: int = -1
 ) -> int:
     """
-    Set encoder tracking trajectory generation parameters.
-
-    :param float amax:
-        Max acceleration [m/s^2].
+    Sets the encoder tracking trajectory generation parameters.
 
     :param float vmax:
-        Max velocity [m/s].
+        max velocity (in [m/s])
+
+    :param float amax:
+        max acceleration (in [m/s^2])
 
     :param float jerk:
-        Jerk [m/s^3].
+        jerk (in [m/s^3])
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -1826,7 +1857,7 @@ def setEncTrackParam(
         0 on success, and -1 otherwise.
     """
 
-    return _libdrd.drdSetEncMoveParam(amax, vmax, jerk, ID)
+    return _libdrd.drdSetEncTrackParam(amax, vmax, jerk, ID)
 
 
 _libdrd.drdSetPosMoveParam.argtypes = [c_double, c_double, c_double, c_byte]
@@ -1837,16 +1868,16 @@ def setPosMoveParam(
     vmax: float, amax: float, jerk: float, ID: int = -1
 ) -> int:
     """
-    Set cartesian positioning trajectory generation parameters.
-
-    :param float amax:
-        Max acceleration [m/s^2]
+    Sets the cartesian positioning trajectory generation parameters.
 
     :param float vmax:
-        Max velocity [m/s]
+        max velocity (in [m/s])
+
+    :param float amax:
+        max acceleration (in [m/s^2])
 
     :param float jerk:
-        Jerk [m/s^3]
+        jerk (in [m/s^3])
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -1878,16 +1909,16 @@ def setPosTrackParam(
     vmax: float, amax: float, jerk: float, ID: int = -1
 ) -> int:
     """
-    Set cartesian tracking trajectory generation parameters.
-
-    :param float amax:
-        Max acceleration [m/s^2].
+    Sets the cartesian tracking trajectory generation parameters.
 
     :param float vmax:
-        Max velocity [m/s].
+        max velocity (in [m/s])
+
+    :param float amax:
+        max acceleration (in [m/s^2])
 
     :param float jerk:
-        Jerk [m/s^3].
+        jerk (in [m/s^3])
 
     :param int ID:
         Device ID (see multiple devices section for details), defaults to -1.
@@ -1908,7 +1939,171 @@ def setPosTrackParam(
         0 on success, and -1 otherwise.
     """
 
-    return _libdrd.drdSetPosMoveParam(amax, vmax, jerk, ID)
+    return _libdrd.drdSetPosTrackParam(amax, vmax, jerk, ID)
+
+
+_libdrd.drdSetRotMoveParam.argtypes = [c_double, c_double, c_double, c_byte]
+_libdrd.drdSetRotMoveParam.restype = c_int
+
+
+def setRotMoveParam(
+    vmax: float, amax: float, jerk: float, ID: int = -1
+) -> int:
+    """
+    Sets the cartesian rotation trajectory generation parameters.
+
+    :param float vmax:
+        max velocity (in [m/s])
+
+    :param float amax:
+        max acceleration (in [m/s^2])
+
+    :param float jerk:
+        jerk (in [m/s^3])
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``ID`` is not convertible to a C char.'
+
+    :raises ArgumentError:
+        If ``vmax`` is not convertible to a C int.
+
+    :raises ArgumentError:
+        If ``amax`` is not convertible to a C int.
+
+    :raises ArgumentError:
+        If ``jerk`` is not convertible to a C int.
+
+    :returns:
+        0 on success, and -1 otherwise.
+    """
+
+    return _libdrd.drdSetRotMoveParam(amax, vmax, jerk, ID)
+
+
+_libdrd.drdSetRotTrackParam.argtypes = [c_double, c_double, c_double, c_byte]
+_libdrd.drdSetRotTrackParam.restype = c_int
+
+
+def setRotTrackParam(
+    vmax: float, amax: float, jerk: float, ID: int = -1
+) -> int:
+    """
+    Sets the cartesian rotation tracking trajectory generation parameters.
+
+    :param float vmax:
+        max velocity (in [m/s])
+
+    :param float amax:
+        max acceleration (in [m/s^2])
+
+    :param float jerk:
+        jerk (in [m/s^3])
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``ID`` is not convertible to a C char.'
+
+    :raises ArgumentError:
+        If ``vmax`` is not convertible to a C int.
+
+    :raises ArgumentError:
+        If ``amax`` is not convertible to a C int.
+
+    :raises ArgumentError:
+        If ``jerk`` is not convertible to a C int.
+
+    :returns:
+        0 on success, and -1 otherwise.
+    """
+
+    return _libdrd.drdSetRotTrackParam(amax, vmax, jerk, ID)
+
+
+_libdrd.drdSetGripMoveParam.argtypes = [c_double, c_double, c_double, c_byte]
+_libdrd.drdSetGripMoveParam.restype = c_int
+
+
+def setGripMoveParam(
+    vmax: float, amax: float, jerk: float, ID: int = -1
+) -> int:
+    """
+    Sets the gripper trajectory generation parameters.
+
+    :param float vmax:
+        max velocity (in [m/s])
+
+    :param float amax:
+        max acceleration (in [m/s^2])
+
+    :param float jerk:
+        jerk (in [m/s^3])
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``ID`` is not convertible to a C char.'
+
+    :raises ArgumentError:
+        If ``vmax`` is not convertible to a C int.
+
+    :raises ArgumentError:
+        If ``amax`` is not convertible to a C int.
+
+    :raises ArgumentError:
+        If ``jerk`` is not convertible to a C int.
+
+    :returns:
+        0 on success, and -1 otherwise.
+    """
+
+    return _libdrd.drdSetGripMoveParam(amax, vmax, jerk, ID)
+
+
+_libdrd.drdSetGripTrackParam.argtypes = [c_double, c_double, c_double, c_byte]
+_libdrd.drdSetGripTrackParam.restype = c_int
+
+
+def setGripTrackParam(
+    vmax: float, amax: float, jerk: float, ID: int = -1
+) -> int:
+    """
+    Sets the gripper trajectory generation parameters.
+
+    :param float vmax:
+        max velocity (in [m/s])
+
+    :param float amax:
+        max acceleration (in [m/s^2])
+
+    :param float jerk:
+        jerk (in [m/s^3])
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``ID`` is not convertible to a C char.'
+
+    :raises ArgumentError:
+        If ``vmax`` is not convertible to a C int.
+
+    :raises ArgumentError:
+        If ``amax`` is not convertible to a C int.
+
+    :raises ArgumentError:
+        If ``jerk`` is not convertible to a C int.
+
+    :returns:
+        0 on success, and -1 otherwise.
+    """
+
+    return _libdrd.drdSetGripTrackParam(amax, vmax, jerk, ID)
 
 
 _libdrd.drdGetEncMoveParam.argtypes = [
@@ -1917,7 +2112,7 @@ _libdrd.drdGetEncMoveParam.argtypes = [
 _libdrd.drdGetEncMoveParam.restype = c_int
 
 
-def getEncMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
+def getEncMoveParam(ID: int = -1) -> Tuple[Tuple[float, float, float], int]:
     """
     Retrieve encoder positioning trajectory generation parameters.
 
@@ -1928,12 +2123,9 @@ def getEncMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
-        tuple of (v_max, a_max, jerk_max, err) where v_max (in [m/s]), a_max
-        (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity acceeleration
-        and jerk during calls to
-        :func:`forcedimension.drd.moveToEnc()`
-        :func:`forcedimension.drd.moveToAllEnc()`.
-        err is 0 on success and -1 otherwise.
+        tuple of `((v_max, a_max, jerk_max), err)` where v_max (in [m/s]),
+        a_max (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity
+        acceeleration. err is 0 on success and -1 otherwise.
     """
     a_max = c_double()
     v_max = c_double()
@@ -1941,7 +2133,7 @@ def getEncMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
 
     err = _libdrd.drdGetEncMoveParam(a_max, v_max, jerk_max, ID)
 
-    return (v_max.value, a_max.value, jerk_max.value, err)
+    return (v_max.value, a_max.value, jerk_max.value), err
 
 
 _libdrd.drdGetEncTrackParam.argtypes = [
@@ -1950,7 +2142,7 @@ _libdrd.drdGetEncTrackParam.argtypes = [
 _libdrd.drdGetEncTrackParam.restype = c_int
 
 
-def getEncTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
+def getEncTrackParam(ID: int = -1) -> Tuple[Tuple[float, float, float], int]:
     """
     Retrieve encoder tracking trajectory generation parameters.
 
@@ -1961,22 +2153,18 @@ def getEncTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
-        tuple of (v_max, a_max, jerk_max, err) where v_max (in [m/s]), a_max
-        (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity acceeleration
-        and jerk during calls to
-        :func:`forcedimension.drd.trackEnc()`
-        :func:`forcedimension.drd.trackAllEnc()`.
-        err is 0 on success and -1 otherwise.
+        tuple of `((v_max, a_max, jerk_max), err)` where v_max (in [m/s]),
+        a_max (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity
+        acceeleration. err is 0 on success and -1 otherwise.
     """
 
     amax = c_double()
     vmax = c_double()
     jerk = c_double()
 
-    err = _libdrd.drdGetEncTrackParam(
-        amax, vmax, jerk, ID)
+    err = _libdrd.drdGetEncTrackParam(amax, vmax, jerk, ID)
 
-    return (vmax.value, amax.value, jerk.value, err)
+    return (vmax.value, amax.value, jerk.value), err
 
 
 _libdrd.drdGetPosMoveParam.argtypes = [
@@ -1985,7 +2173,7 @@ _libdrd.drdGetPosMoveParam.argtypes = [
 _libdrd.drdGetPosMoveParam.restype = c_int
 
 
-def getPosMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
+def getPosMoveParam(ID: int = -1) -> Tuple[Tuple[float, float, float], int]:
     """
     Retrieve cartesian positioning trajectory generation parameters.
 
@@ -1996,14 +2184,9 @@ def getPosMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
-        tuple of (v_max, a_max, jerk_max, err) where v_max (in [m/s]), a_max
-        (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity acceeleration
-        and jerk during calls to
-        :func:`forcedimension.drd.moveTo()`,
-        :func:`forcedimension.drd.moveToPos()`
-        :func:`forcedimension.drd.moveToGrip()`
-        err is 0 on success and -1 otherwise.
-
+        tuple of `((v_max, a_max, jerk_max), err)` where v_max (in [m/s]),
+        a_max (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity
+        acceeleration. err is 0 on success and -1 otherwise.
     """
     amax = c_double()
     vmax = c_double()
@@ -2011,7 +2194,7 @@ def getPosMoveParam(ID: int = -1) -> Tuple[float, float, float, int]:
 
     err = _libdrd.drdGetPosMoveParam(amax, vmax, jerk, ID)
 
-    return (vmax.value, amax.value, jerk.value, err)
+    return (vmax.value, amax.value, jerk.value), err
 
 
 _libdrd.drdGetPosTrackParam.argtypes = [
@@ -2020,7 +2203,7 @@ _libdrd.drdGetPosTrackParam.argtypes = [
 _libdrd.drdGetPosTrackParam.restype = c_int
 
 
-def getPosTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
+def getPosTrackParam(ID: int = -1) -> Tuple[Tuple[float, float, float], int]:
     """
     Retrieve cartesian tracking trajectory generation parameters.
 
@@ -2031,13 +2214,9 @@ def getPosTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
         If ``ID`` is not convertible to a C char.'
 
     :returns:
-        tuple of (v_max, a_max, jerk_max, err) where v_max (in [m/s]), a_max
-        (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity acceeleration
-        and jerk during calls to
-        :func:`forcedimension.drd.track()`,
-        :func:`forcedimension.drd.trackPos()`
-        :func:`forcedimension.drd.trackGrip()`
-        err is 0 on success and -1 otherwise.
+        tuple of `((v_max, a_max, jerk_max), err)` where v_max (in [m/s]),
+        a_max (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity
+        acceeleration. err is 0 on success and -1 otherwise.
     """
     amax = c_double()
     vmax = c_double()
@@ -2045,7 +2224,127 @@ def getPosTrackParam(ID: int = -1) -> Tuple[float, float, float, int]:
 
     err = _libdrd.drdGetPosTrackParam(amax, vmax, jerk, ID)
 
-    return (vmax.value, amax.value, jerk.value, err)
+    return (vmax.value, amax.value, jerk.value), err
+
+
+_libdrd.drdGetRotMoveParam.argtypes = [
+    c_double_ptr, c_double_ptr, c_double_ptr, c_byte
+]
+_libdrd.drdGetRotMoveParam.restype = c_int
+
+
+def getRotMoveParam(ID: int = -1) -> Tuple[Tuple[float, float, float], int]:
+    """
+    Retrieve cartesian positioning trajectory generation parameters.
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``ID`` is not convertible to a C char.'
+
+    :returns:
+        tuple of `((v_max, a_max, jerk_max), err)` where v_max (in [m/s]),
+        a_max (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity
+        acceeleration. err is 0 on success and -1 otherwise.
+    """
+    amax = c_double()
+    vmax = c_double()
+    jerk = c_double()
+
+    err = _libdrd.drdGetRotMoveParam(amax, vmax, jerk, ID)
+
+    return (vmax.value, amax.value, jerk.value), err
+
+
+_libdrd.drdGetRotTrackParam.argtypes = [
+    c_double_ptr, c_double_ptr, c_double_ptr, c_byte
+]
+_libdrd.drdGetRotTrackParam.restype = c_int
+
+
+def getRotTrackParam(ID: int = -1) -> Tuple[Tuple[float, float, float], int]:
+    """
+    Retrieve cartesian tracking trajectory generation parameters.
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``ID`` is not convertible to a C char.'
+
+    :returns:
+        tuple of `((v_max, a_max, jerk_max), err)` where v_max (in [m/s]),
+        a_max (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity
+        acceeleration. err is 0 on success and -1 otherwise.
+    """
+    amax = c_double()
+    vmax = c_double()
+    jerk = c_double()
+
+    err = _libdrd.drdGetRotTrackParam(amax, vmax, jerk, ID)
+
+    return (vmax.value, amax.value, jerk.value), err
+
+
+_libdrd.drdGetGripMoveParam.argtypes = [
+    c_double_ptr, c_double_ptr, c_double_ptr, c_byte
+]
+_libdrd.drdGetGripMoveParam.restype = c_int
+
+
+def getGripMoveParam(ID: int = -1) -> Tuple[Tuple[float, float, float], int]:
+    """
+    Retrieve cartesian positioning trajectory generation parameters.
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``ID`` is not convertible to a C char.'
+
+    :returns:
+        tuple of `((v_max, a_max, jerk_max), err)` where v_max (in [m/s]),
+        a_max (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity
+        acceeleration. err is 0 on success and -1 otherwise.
+    """
+    amax = c_double()
+    vmax = c_double()
+    jerk = c_double()
+
+    err = _libdrd.drdGetGripMoveParam(amax, vmax, jerk, ID)
+
+    return (vmax.value, amax.value, jerk.value), err
+
+
+_libdrd.drdGetGripTrackParam.argtypes = [
+    c_double_ptr, c_double_ptr, c_double_ptr, c_byte
+]
+_libdrd.drdGetGripTrackParam.restype = c_int
+
+
+def getGripTrackParam(ID: int = -1) -> Tuple[Tuple[float, float, float], int]:
+    """
+    Retrieve cartesian tracking trajectory generation parameters.
+
+    :param int ID:
+        Device ID (see multiple devices section for details), defaults to -1.
+
+    :raises ArgumentError:
+        If ``ID`` is not convertible to a C char.'
+
+    :returns:
+        tuple of `((v_max, a_max, jerk_max), err)` where v_max (in [m/s]),
+        a_max (in [m/s^2]), and jerk (in [m/s^3]) are the max velocity
+        acceeleration. err is 0 on success and -1 otherwise.
+    """
+    amax = c_double()
+    vmax = c_double()
+    jerk = c_double()
+
+    err = _libdrd.drdGetGripTrackParam(amax, vmax, jerk, ID)
+
+    return (vmax.value, amax.value, jerk.value), err
 
 
 _libdrd.drdWaitForTick.argtypes = [c_byte]
