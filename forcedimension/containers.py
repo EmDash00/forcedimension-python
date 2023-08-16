@@ -99,7 +99,7 @@ class TrajectoryGenParam(pydantic.BaseModel):
             raise ValueError("jerk must be greater than 0")
 
 
-class VelocityConfig(pydantic.BaseModel):
+class VelocityEstimatorConfig(pydantic.BaseModel):
     window_size: int = DEFAULT_VELOCITY_WINDOW
     mode: VelocityEstimatorMode = VelocityEstimatorMode.WINDOWING
 
@@ -137,8 +137,8 @@ class HapticDeviceInfo(pydantic.BaseModel):
 class HapticDeviceConfig(pydantic.BaseModel):
     class GripperConfig(pydantic.BaseModel):
         max_force: Optional[float] = None
-        velocity_estimator: VelocityConfig = dataclasses.field(
-            default_factory=VelocityConfig
+        velocity_estimator: VelocityEstimatorConfig = dataclasses.field(
+            default_factory=VelocityEstimatorConfig
         )
 
         @pydantic.field_validator('max_force')
@@ -195,11 +195,11 @@ class HapticDeviceConfig(pydantic.BaseModel):
     is_gravity_compensation_enabled: bool = True
     com_mode: Literal['async', 'sync', 'virtual', 'network'] = 'async'
     timeguard: int = DEFAULT_TIMEGUARD_US
-    linear_velocity_estimator: VelocityConfig = dataclasses.field(
-        default_factory=VelocityConfig
+    linear_velocity_estimator: VelocityEstimatorConfig = dataclasses.field(
+        default_factory=VelocityEstimatorConfig
     )
-    angular_velocity_estimator: VelocityConfig = dataclasses.field(
-        default_factory=VelocityConfig
+    angular_velocity_estimator: VelocityEstimatorConfig = dataclasses.field(
+        default_factory=VelocityEstimatorConfig
     )
     max_force: Optional[float] = None
     max_torque: Optional[float] = None
