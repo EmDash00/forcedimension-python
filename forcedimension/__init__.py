@@ -367,7 +367,271 @@ class HapticDevice(Generic[T]):
             self._parent: HapticDevice = parent
             self._haptic_daemon: Optional[HapticDaemon] = None
 
-        def poll(self):
+            enc_move_param, err = drd.getEncMoveParam()
+            if err:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.getEncMoveParam, ID=self._parent._id
+                )
+
+            enc_track_param, err = drd.getEncTrackParam()
+            if err:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.getEncTrackParam, ID=self._parent._id
+                )
+
+            pos_move_param, err = drd.getPosMoveParam()
+            if err:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.getPosMoveParam, ID=self._parent._id
+                )
+
+            pos_track_param, err = drd.getPosTrackParam()
+            if err:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.getPosTrackParam, ID=self._parent._id
+                )
+
+            rot_move_param, err = drd.getRotMoveParam()
+            if err:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.getRotMoveParam, ID=self._parent._id
+                )
+
+            rot_track_param, err = drd.getRotTrackParam()
+            if err:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.getRotTrackParam, ID=self._parent._id
+                )
+
+            grip_move_param, err = drd.getGripMoveParam()
+            if err:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.getGripMoveParam, ID=self._parent._id
+                )
+
+            grip_track_param, err = drd.getGripTrackParam()
+            if err:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.getGripTrackParam, ID=self._parent._id
+                )
+
+            self._control_freq = nan
+            self._is_drd_running = False
+            self._is_drd_supported = drd.isSupported(self._parent._id)
+            self._is_initialized = drd.isInitialized(self._parent._id)
+
+            self._is_pos_regulated = False
+            self._is_rot_regulated = False
+            self._is_grip_regulated = False
+
+            self._motor_ratio_max = drd.getMotRatioMax(self._parent._id)
+
+            self._enc_move_param = TrajectoryGenParam(
+                vmax=enc_move_param[0],
+                amax=enc_move_param[1],
+                jerk=enc_move_param[2],
+            )
+            self._enc_track_param = TrajectoryGenParam(
+                vmax=enc_track_param[0],
+                amax=enc_track_param[1],
+                jerk=enc_track_param[2],
+            )
+
+            self._pos_move_param = TrajectoryGenParam(
+                vmax=pos_move_param[0],
+                amax=pos_move_param[1],
+                jerk=pos_move_param[2],
+            )
+            self._pos_track_param = TrajectoryGenParam(
+                vmax=pos_track_param[0],
+                amax=pos_track_param[1],
+                jerk=pos_track_param[2],
+            )
+
+            self._rot_move_param = TrajectoryGenParam(
+                vmax=rot_move_param[0],
+                amax=rot_move_param[1],
+                jerk=rot_move_param[2],
+            )
+            self._rot_track_param = TrajectoryGenParam(
+                vmax=rot_track_param[0],
+                amax=rot_track_param[1],
+                jerk=rot_track_param[2],
+            )
+
+            self._grip_move_param = TrajectoryGenParam(
+                vmax=grip_move_param[0],
+                amax=grip_move_param[1],
+                jerk=grip_move_param[2],
+            )
+            self._grip_track_param = TrajectoryGenParam(
+                vmax=grip_track_param[0],
+                amax=grip_track_param[1],
+                jerk=grip_track_param[2],
+            )
+
+        @property
+        def is_drd_supported(self) -> bool:
+            return self._is_drd_supported
+
+        @property
+        def is_initialized(self) -> bool:
+            return self._is_initialized
+
+        @property
+        def is_drd_running(self) -> bool:
+            return self._is_drd_running
+
+        @property
+        def control_freq(self) -> float:
+            return self._control_freq
+
+        @property
+        def is_moving(self) -> bool:
+            return drd.isMoving(self._parent._id)
+
+        @property
+        def motor_ratio_max(self) -> float:
+            return self._motor_ratio_max
+
+        @property
+        def enc_move_param(self) -> TrajectoryGenParam:
+            return self._enc_move_param
+
+        @property
+        def enc_track_param(self) -> TrajectoryGenParam:
+            return self._enc_track_param
+
+        @property
+        def pos_move_param(self) -> TrajectoryGenParam:
+            return self._pos_move_param
+
+        @property
+        def pos_track_param(self) -> TrajectoryGenParam:
+            return self._pos_track_param
+
+        @property
+        def rot_move_param(self) -> TrajectoryGenParam:
+            return self._rot_move_param
+
+        @property
+        def rot_track_param(self) -> TrajectoryGenParam:
+            return self._rot_track_param
+
+        @property
+        def grip_move_param(self) -> TrajectoryGenParam:
+            return self._grip_move_param
+
+        @property
+        def grip_track_param(self) -> TrajectoryGenParam:
+            return self._grip_track_param
+
+        def is_filtering(self) -> bool:
+            return drd.isFiltering(self._parent._id)
+
+        def update_control_freq(self):
+            if (control_freq := drd.getCtrlFreq(self._parent._id)) < 0:
+                dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.getCtrlFreq,
+                    ID=self._parent._id
+                )
+
+            self._control_freq = control_freq
+
+        def initialize(self, redo=False):
+            if redo:
+                self._initialized = False
+
+                if drd.autoInit(self._parent._id):
+                    raise dhd.errno_to_exception(dhd.errorGetLast())(
+                        op=drd.autoInit,
+                        ID=self._parent._id
+                    )
+
+                self._initialized = True
+
+            if self._initialized:
+                return
+
+            if drd.checkInit(self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.checkInit,
+                    ID=self._parent._id
+                )
+
+            self._initialized = True
+
+        def precision_initialize(self):
+            if drd.precisionInit(self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.precisionInit(),
+                    ID=self._parent._id
+                )
+
+            self._initialized = True
+
+        def regulate(self, enabled: bool = True):
+            self.regulate_pos(enabled)
+            self.regulate_rot(enabled)
+            self.regulate_grip(enabled)
+
+        def regulate_pos(self, enabled: bool = True):
+            self._is_pos_regulated = enabled
+
+            if drd.regulatePos(enabled, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.regulatePos,
+                    ID=self._parent._id
+                )
+
+        def regulate_rot(self, enabled: bool = True):
+            self._is_rot_regulated = enabled
+
+            if drd.regulateRot(enabled, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.regulateRot,
+                    ID=self._parent._id
+                )
+
+        def regulate_grip(self, enabled: bool = True):
+            self._is_grip_regulated = enabled
+
+            if drd.regulateGrip(enabled, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.regulateGrip,
+                    ID=self._parent._id
+                )
+
+        def enable_filter(self, enabled: bool = True):
+            self._is_filter_enabled = enabled
+
+            if drd.enableFilter(enabled, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.enableFilter,
+                    ID=self._parent._id
+                )
+
+        def start_drd(self):
+            if not self._is_drd_running:
+                if drd.start(self._parent._id):
+                    raise dhd.errno_to_exception(dhd.errorGetLast())(
+                        op=drd.start,
+                        ID=self._parent._id
+                    )
+
+                self._is_drd_running = True
+
+        def stop_drd(self):
+            if self._is_drd_running:
+                if drd.stop(self._parent._id):
+                    raise dhd.errno_to_exception(dhd.errorGetLast())(
+                        op=drd.start,
+                        ID=self._parent._id
+                    )
+
+                self._is_drd_running = False
+
+
             if self._haptic_daemon is not None:
                 raise RuntimeError(
                     "Mixed use of HapticDaemon and HapticDevice.Regulator is "
@@ -378,6 +642,220 @@ class HapticDevice(Generic[T]):
             if self._haptic_daemon is not None:
                 self._haptic_daemon.stop()
                 return
+
+
+        def update(self):
+            self.update_position_and_orientation()
+            self.update_velocity()
+
+        def update_position_and_orientation(self):
+            if not self._is_drd_running:
+                raise RuntimeError("DRD is not running.")
+
+            err = drd.direct.getPositionAndOrientation(
+                self._parent._pos,
+                self._parent._orientation_angles,
+                self._parent._mock_gripper._gap,
+                self._parent._frame,
+                self._parent._id
+            )
+
+            if err:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.getPositionAndOrientation,
+                    ID=self._parent._id
+                )
+
+        def update_velocity(self):
+            if not self._is_drd_running:
+                raise RuntimeError("DRD is not running.")
+
+            err = drd.direct.getVelocity(
+                self._parent._v, self._parent._w, self._parent._id
+            )
+
+            if err:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.getVelocity,
+                    ID=self._parent._id
+                )
+
+        def set_mot_ratio_max(self, scale: float):
+            """
+            Sets the maximum joint torque applied to all regulated joints
+            expressed as a fraction of the maximum torque available for each
+            joint.
+
+            In practice, this limits the maximum regulation torque (in joint
+            space), making it potentially safer to operate in environments
+            where humans or delicate obstacles are present.
+            """
+
+            if drd.setMotRatioMax(scale, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.setMotRatioMax, ID=self._parent._id
+                )
+
+        def set_enc_move_param(
+            self,
+            vmax: Optional[float] = None,
+            amax: Optional[float] = None,
+            jerk: Optional[float] = None
+        ):
+            if vmax is None:
+                vmax = self.enc_move_param.vmax
+
+            if amax is None:
+                amax = self.enc_move_param.amax
+
+            if jerk is None:
+                jerk = self.enc_move_param.jerk
+
+            if drd.setEncMoveParam(vmax, amax, jerk, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.setEncMoveParam, ID=self._parent._id
+                )
+
+
+        def set_enc_track_param(
+            self,
+            vmax: Optional[float] = None,
+            amax: Optional[float] = None,
+            jerk: Optional[float] = None
+        ):
+            if vmax is None:
+                vmax = self.enc_track_param.vmax
+
+            if amax is None:
+                amax = self.enc_track_param.amax
+
+            if jerk is None:
+                jerk = self.enc_track_param.jerk
+
+            if drd.setEncMoveParam(vmax, amax, jerk, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.setEncTrackParam, ID=self._parent._id
+                )
+
+        def set_pos_move_param(
+            self,
+            vmax: Optional[float] = None,
+            amax: Optional[float] = None,
+            jerk: Optional[float] = None
+        ):
+            if vmax is None:
+                vmax = self.pos_move_param.vmax
+
+            if amax is None:
+                amax = self.pos_move_param.amax
+
+            if jerk is None:
+                jerk = self.pos_move_param.jerk
+
+            if drd.setPosMoveParam(vmax, amax, jerk, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.setPosMoveParam, ID=self._parent._id
+                )
+
+        def set_pos_track_param(
+            self,
+            vmax: Optional[float] = None,
+            amax: Optional[float] = None,
+            jerk: Optional[float] = None
+        ):
+            if vmax is None:
+                vmax = self.pos_track_param.vmax
+
+            if amax is None:
+                amax = self.pos_track_param.amax
+
+            if jerk is None:
+                jerk = self.pos_track_param.jerk
+
+            if drd.setPosTrackParam(vmax, amax, jerk, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.setPosTrackParam, ID=self._parent._id
+                )
+
+        def set_rot_track_param(
+            self,
+            vmax: Optional[float] = None,
+            amax: Optional[float] = None,
+            jerk: Optional[float] = None
+        ):
+            if vmax is None:
+                vmax = self.rot_track_param.vmax
+
+            if amax is None:
+                amax = self.rot_track_param.amax
+
+            if jerk is None:
+                jerk = self.rot_track_param.jerk
+
+            if drd.setRotTrackParam(vmax, amax, jerk, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.setRotTrackParam, ID=self._parent._id
+                )
+
+        def set_rot_move_param(
+            self,
+            vmax: Optional[float] = None,
+            amax: Optional[float] = None,
+            jerk: Optional[float] = None
+        ):
+            if vmax is None:
+                vmax = self.rot_move_param.vmax
+
+            if amax is None:
+                amax = self.rot_move_param.amax
+
+            if jerk is None:
+                jerk = self.rot_move_param.jerk
+
+            if drd.setRotMoveParam(vmax, amax, jerk, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.setRotMoveParam, ID=self._parent._id
+                )
+
+        def set_grip_track_param(
+            self,
+            vmax: Optional[float] = None,
+            amax: Optional[float] = None,
+            jerk: Optional[float] = None
+        ):
+            if vmax is None:
+                vmax = self.grip_track_param.vmax
+
+            if amax is None:
+                amax = self.grip_track_param.amax
+
+            if jerk is None:
+                jerk = self.grip_track_param.jerk
+
+            if drd.setGripTrackParam(vmax, amax, jerk, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.setGripTrackParam, ID=self._parent._id
+                )
+
+        def set_grip_move_param(
+            self,
+            vmax: Optional[float] = None,
+            amax: Optional[float] = None,
+            jerk: Optional[float] = None
+        ):
+            if vmax is None:
+                vmax = self.grip_move_param.vmax
+
+            if amax is None:
+                amax = self.grip_move_param.amax
+
+            if jerk is None:
+                jerk = self.grip_move_param.jerk
+
+            if drd.setGripMoveParam(vmax, amax, jerk, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.setGripMoveParam, ID=self._parent._id
+                )
 
     def __init__(
             self,
@@ -454,6 +932,7 @@ class HapticDevice(Generic[T]):
 
         self._exception: Optional[dhd.DHDIOError] = None
         self._id = 0
+        self._serial_number = -1
 
         if (dhd.getDeviceCount() <= 0):
             raise dhd.DHDErrorNoDeviceFound()
@@ -541,6 +1020,8 @@ class HapticDevice(Generic[T]):
         self._base_angles = VecType()
 
         self._pos = VecType()
+        self._orientation_angles = VecType()
+
         self._w = VecType()
         self._v = VecType()
         self._f = VecType()
@@ -587,15 +1068,30 @@ class HapticDevice(Generic[T]):
         if dhd.hasGripper(self._id):
             self._gripper = self._mock_gripper
 
+        self._timeguard = dhd.DEFAULT_TIMEGUARD_US
+
         self._is_neutral = False
         self._is_stopped = False
         self._button_emulation_enabled = False
         self._left_handed = dhd.isLeftHanded(self._id)
         self._has_base = dhd.hasBase(self._id)
+        self._has_gripper = True if self._gripper is not None else False
         self._has_active_gripper = dhd.hasActiveGripper(self._id)
         self._has_wrist = dhd.hasWrist(self._id)
         self._has_active_wrist = dhd.hasActiveWrist(self._id)
+        self._has_serial_number = False
 
+        serial_number, err = dhd.getSerialNumber(self._id)
+
+        if err:
+            if (errno := dhd.errorGetLast()) != ErrorNum.NOT_AVAILABLE:
+                raise dhd.errno_to_exception(errno)(
+                    op=dhd.getSerialNumber,
+                    ID=self._id
+                )
+            else:
+                self._has_serial_number = True
+                serial_number = -1
 
         if dhd.getBaseAngleXRad(self._base_angles.ptrs[0].contents, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())(
@@ -626,6 +1122,9 @@ class HapticDevice(Generic[T]):
         if (max_torque := dhd.getMaxTorque(self._id)) < 0:
             max_torque = None
 
+        self._serial_number = serial_number
+
+        self._standard_gravity = 9.81
         self._mass, err = dhd.getEffectorMass(self._id)
         if err:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
@@ -664,6 +1163,10 @@ class HapticDevice(Generic[T]):
         return self._devtype
 
     @property
+    def timeguard(self) -> int:
+        return self._timeguard
+
+    @property
     def mass(self) -> float:
         """
         Get the mass of the end-effector used for gravity compensation
@@ -690,6 +1193,10 @@ class HapticDevice(Generic[T]):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     @property
+    def standard_gravity(self) -> float:
+        return self._standard_gravity
+
+    @property
     def left_handed(self) -> Optional[bool]:
         return self._left_handed
 
@@ -706,8 +1213,16 @@ class HapticDevice(Generic[T]):
         return self._has_active_wrist
 
     @property
+    def has_gripper(self) -> bool:
+        return self._has_gripper
+
+    @property
     def has_active_gripper(self) -> bool:
         return self._has_active_gripper
+
+    @property
+    def has_serial_number(self) -> bool:
+        return self._has_serial_number
 
     @property
     def com_mode(self) -> dhd.ComMode:
@@ -791,7 +1306,6 @@ class HapticDevice(Generic[T]):
                     ID=self._id
                 )
 
-
     def set_output_bits(self, mask: int):
         """
         Sets the user programmable output bbits on devices that support it.
@@ -820,6 +1334,8 @@ class HapticDevice(Generic[T]):
 
         if dhd.setStandardGravity(g, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())
+
+        self._standard_gravity = g
 
     def enable_button_emulation(self, enabled: bool = True):
         """

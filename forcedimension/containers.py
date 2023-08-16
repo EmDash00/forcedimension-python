@@ -8,7 +8,7 @@ from typing import Iterable, List, Literal, NamedTuple, Optional, Tuple
 import pydantic
 
 from forcedimension.dhd.constants import (
-    DEFAULT_TIMEGUARD_US, DEFAULT_VELOCITY_WINDOW, MAX_DOF,
+    DEFAULT_TIMEGUARD_US, DEFAULT_VELOCITY_WINDOW, MAX_DOF, DeviceType,
     VelocityEstimatorMode
 )
 from forcedimension.typing import (
@@ -52,6 +52,11 @@ class UpdateOpts(NamedTuple):
     ft: Optional[float] = 4000
     req: Optional[float] = 4000
     gripper: Optional[GripperUpdateOpts] = None
+
+
+class _HapticPollerOptions(NamedTuple):
+    interval: float
+    high_precision: bool
 
 
 class TrajectoryGenParam(pydantic.BaseModel):
@@ -109,6 +114,7 @@ class VelocityConfig(pydantic.BaseModel):
 
 
 class HapticDeviceInfo(pydantic.BaseModel):
+    devtype: DeviceType
     serial_number: Optional[int] = None
     has_base: bool
     has_wrist: bool
