@@ -1,9 +1,8 @@
-from array import array
 import ctypes
 from ctypes import Structure, c_int, pointer
 from typing import Any, Callable, Optional
 
-from forcedimension.dhd.constants import ErrorNum, MAX_STATUS
+from forcedimension.dhd.constants import MAX_STATUS, ComMode, ErrorNum
 from forcedimension.typing import Pointer, c_int_ptr
 
 
@@ -443,6 +442,28 @@ _error = [
     DHDErrorArgument,
     DHDErrorNoRegulation
 ]
+
+_com_mode_strs = [
+    'sync',
+    'async',
+    'virtual',
+    'network'
+]
+
+_com_modes = {
+    'sync': ComMode.SYNC,
+    'async': ComMode.ASYNC,
+    'virtual': ComMode.VIRTUAL,
+    'network': ComMode.NETWORK,
+}
+
+
+def com_mode_str(com_mode: int):
+    return _com_mode_strs[com_mode]
+
+
+def com_mode_from_str(com_mode_str: str):
+    return _com_modes[com_mode_str]
 
 
 def errno_to_exception(errno: int):

@@ -34,6 +34,8 @@ from forcedimension.dhd.adaptors import (
     DHDErrorArgument,
     DHDErrorNoRegulation,
     Status,
+    com_mode_str,
+    com_mode_from_str,
     errno_to_exception
 )
 from forcedimension.dhd.constants import (
@@ -41,6 +43,7 @@ from forcedimension.dhd.constants import (
     MAX_DOF,
     MAX_STATUS,
     MOTOR_SATURATED,
+    DEFAULT_TIMEGUARD_US,
     TIMEGUARD,
     DEFAULT_VELOCITY_WINDOW,
     VelocityEstimatorMode,
