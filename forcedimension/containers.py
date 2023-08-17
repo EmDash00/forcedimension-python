@@ -3,9 +3,10 @@ import dataclasses
 from array import array
 from ctypes import c_double, c_int, c_ushort
 from math import nan
-from typing import Iterable, List, Literal, NamedTuple, Optional, Tuple
+from typing import Annotated, Any, Iterable, List, Literal, NamedTuple, Optional, Tuple
 
 import pydantic
+import pydantic_core
 
 from forcedimension.dhd.constants import (
     DEFAULT_TIMEGUARD_US, DEFAULT_VELOCITY_WINDOW, MAX_DOF, DeviceType,
@@ -113,150 +114,6 @@ class VelocityEstimatorConfig(pydantic.BaseModel):
             raise ValueError("window must be greater than 0")
 
 
-class HapticDeviceInfo(pydantic.BaseModel):
-    devtype: DeviceType
-    serial_number: Optional[int] = None
-    has_base: bool
-    has_wrist: bool
-    has_active_wrist: bool
-    has_gripper: bool
-    has_active_gripper: bool
-    has_serial_number: bool
-    is_left_handed: bool
-
-    @pydantic.field_validator('serial_number')
-    @classmethod
-    def validate_serial_number(cls, val: Optional[int]):
-        if val is None:
-            return
-
-        if val < 0:
-            raise ValueError("serial_number must be greater than 0")
-
-
-class HapticDeviceConfig(pydantic.BaseModel):
-    class GripperConfig(pydantic.BaseModel):
-        max_force: Optional[float] = None
-        velocity_estimator: VelocityEstimatorConfig = dataclasses.field(
-            default_factory=VelocityEstimatorConfig
-        )
-
-        @pydantic.field_validator('max_force')
-        @classmethod
-        def validate_max_force(cls, val: Optional[float]):
-            if val is None:
-                return
-
-            if val < 0:
-                raise ValueError(
-                    "max_force must be None or at least 0 [N]"
-                )
-
-    class RegulatorConfig(pydantic.BaseModel):
-        is_pos_regulated: bool = False
-        is_rot_regulated: bool = False
-        is_grip_regulated: bool = False
-        motor_ratio_max: float = 1.0
-        enc_move_param: TrajectoryGenParam = dataclasses.field(
-            default_factory=TrajectoryGenParam
-        )
-        enc_track_param: TrajectoryGenParam = dataclasses.field(
-            default_factory=TrajectoryGenParam
-        )
-        pos_move_param: TrajectoryGenParam = dataclasses.field(
-            default_factory=TrajectoryGenParam
-        )
-        pos_track_param: TrajectoryGenParam = dataclasses.field(
-            default_factory=TrajectoryGenParam
-        )
-        rot_move_param: TrajectoryGenParam = dataclasses.field(
-            default_factory=TrajectoryGenParam
-        )
-        rot_track_param: TrajectoryGenParam = dataclasses.field(
-            default_factory=TrajectoryGenParam
-        )
-        grip_move_param: TrajectoryGenParam = dataclasses.field(
-            default_factory=TrajectoryGenParam
-        )
-        grip_track_param: TrajectoryGenParam = dataclasses.field(
-            default_factory=TrajectoryGenParam
-        )
-
-        @pydantic.field_validator('motor_ratio_max')
-        @classmethod
-        def validate_motor_ratio_max(cls, val: float):
-            if val < 0.0 or val > 1.0:
-                raise ValueError("motor_ratio_max must be between 0.0 and 1.0")
-
-    is_simulator_enabled: bool = False
-    is_force_enabled: bool = True
-    is_brake_enabled: bool = True
-    is_button_emulation_enabled: bool = True
-    is_gravity_compensation_enabled: bool = True
-    com_mode: Literal['async', 'sync', 'virtual', 'network'] = 'async'
-    timeguard: int = DEFAULT_TIMEGUARD_US
-    linear_velocity_estimator: VelocityEstimatorConfig = dataclasses.field(
-        default_factory=VelocityEstimatorConfig
-    )
-    angular_velocity_estimator: VelocityEstimatorConfig = dataclasses.field(
-        default_factory=VelocityEstimatorConfig
-    )
-    max_force: Optional[float] = None
-    max_torque: Optional[float] = None
-    standard_gravity: float = 9.81
-
-    gripper: GripperConfig = dataclasses.field(
-        default_factory=GripperConfig
-    )
-
-    regulator: RegulatorConfig = dataclasses.field(
-        default_factory=RegulatorConfig
-    )
-
-    @pydantic.field_validator('timeguard')
-    @classmethod
-    def validate_timeguard(cls, val: Optional[float]):
-        if val is None:
-            return
-
-        if val < 0 and val != -1:
-            raise ValueError(
-                "timeguard must be None, at least 0 us, or -1 "
-                "(which sets it to its default value)."
-            )
-
-    @pydantic.field_validator('max_force')
-    @classmethod
-    def validate_max_force(cls, val: Optional[float]):
-        if val is None:
-            return
-
-        if val < 0:
-            raise ValueError(
-                "max_force must be None or at least 0 [N]"
-            )
-
-    @pydantic.field_validator('max_torque')
-    @classmethod
-    def validate_max_torque(cls, val: Optional[float]):
-        if val is None:
-            return
-
-        if val < 0:
-            raise ValueError(
-                "max_torque must be None or at least 0 [Nm]"
-            )
-
-    @pydantic.field_validator('standard_gravity')
-    @classmethod
-    def validate_standard_gravity(cls, val: float):
-
-        if val < 0:
-            raise ValueError(
-                "standard_gravity must be at least 0 [m/s^2]"
-            )
-
-
 class Vector3(array, SupportsPtrs3[c_double], SupportsPtr[c_double_ptr]):
     """
     Represents a vector with attributes x, y, and z corresponding to the 0th,
@@ -285,6 +142,15 @@ class Vector3(array, SupportsPtrs3[c_double], SupportsPtr[c_double_ptr]):
             ctypes.cast(ptr + self.itemsize, c_double_ptr),
             ctypes.cast(ptr + 2 * self.itemsize, c_double_ptr),
         )
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+    ) -> pydantic_core.CoreSchema:
+        return core_schema.no_info_after_validator_function(  # type: ignore
+            cls, handler(cls.__init__)
+        )
+
 
     @property
     def ptr(self) -> c_double_ptr:
@@ -348,6 +214,14 @@ class Enc3(array, SupportsPtrs3[c_int], SupportsPtr[c_int]):
             ctypes.cast(ptr + 2 * self.itemsize, c_int_ptr),
         )
 
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+    ) -> pydantic_core.CoreSchema:
+        return core_schema.no_info_after_validator_function(  # type: ignore
+            cls, handler(cls.__init__)
+        )
+
     @property
     def ptr(self) -> c_int_ptr:
         return self._ptrs[0]
@@ -381,6 +255,14 @@ class Enc4(array, SupportsPtr[c_int]):
     def __init__(self, *args, **kwargs):
         self._ptr = ctypes.cast(self.buffer_info()[0], c_int_ptr)
 
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+    ) -> pydantic_core.CoreSchema:
+        return core_schema.no_info_after_validator_function(  # type: ignore
+            cls, handler(cls.__init__)
+        )
+
     @property
     def ptr(self) -> c_int_ptr:
         return self._ptr
@@ -412,6 +294,14 @@ class DOFEncs(array, SupportsPtr[c_int]):
         self._gripper = ctypes.cast(
             self.buffer_info()[0] + self.itemsize * (MAX_DOF - 1), c_int_ptr
         ).contents
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+    ) -> pydantic_core.CoreSchema:
+        return core_schema.no_info_after_validator_function(  # type: ignore
+            cls, handler(cls.__init__)
+        )
 
     @property
     def ptr(self) -> c_int_ptr:
@@ -454,6 +344,14 @@ class DOFMotorArray(array, SupportsPtr[c_ushort]):
     def __init__(self):
         self._ptr = ctypes.cast(self.buffer_info()[0], c_ushort_ptr)
 
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+    ) -> pydantic_core.CoreSchema:
+        return core_schema.no_info_after_validator_function(  # type: ignore
+            cls, handler(cls.__init__)
+        )
+
     @property
     def ptr(self) -> c_ushort_ptr:
         return self._ptr
@@ -484,6 +382,14 @@ class DOFJointAngles(array, SupportsPtr[c_double]):
         self._gripper = self._gripper = ctypes.cast(
             self.buffer_info()[0] + 7 * self.itemsize, c_double_ptr
         ).contents
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+    ) -> pydantic_core.CoreSchema:
+        return core_schema.no_info_after_validator_function(  # type: ignore
+            cls, handler(cls.__init__)
+        )
 
     @property
     def ptr(self) -> c_double_ptr:
@@ -520,6 +426,15 @@ class Mat3x3(List[array], SupportsPtr[c_double]):
             self._arr[i:i + 3] for i in range(3)
         )
 
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+    ) -> pydantic_core.CoreSchema:
+        return core_schema.no_info_after_validator_function(  # type: ignore
+            cls, handler(cls.__init__)
+        )
+
+
     @property
     def ptr(self) -> c_double_ptr:
         return self._ptr
@@ -540,6 +455,14 @@ class Mat6x6(List[array], SupportsPtr[c_double]):
         self._ptr = ctypes.cast(self._arr.buffer_info()[0], c_double_ptr)
         super().__init__(
             self._arr[i:i + 6] for i in range(6)
+        )
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+    ) -> pydantic_core.CoreSchema:
+        return core_schema.no_info_after_validator_function(  # type: ignore
+            cls, handler(cls.__init__)
         )
 
     @property
@@ -585,6 +508,14 @@ try:
                 ctypes.cast(self.ctypes.data, c_double_ptr),
                 ctypes.cast(self.ctypes.data + self.itemsize, c_double_ptr),
                 ctypes.cast(self.ctypes.data + 2 * self.itemsize, c_double_ptr)
+            )
+
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+        ) -> pydantic_core.CoreSchema:
+            return core_schema.no_info_after_validator_function(  # type: ignore
+                cls, handler(cls.__init__)
             )
 
         @property
@@ -642,6 +573,14 @@ try:
                 ctypes.cast(self.ctypes.data + 2 * self.itemsize, c_int_ptr)
             )
 
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+        ) -> pydantic_core.CoreSchema:
+            return core_schema.no_info_after_validator_function(  # type: ignore
+                cls, handler(cls.__init__)
+            )
+
         @property
         def ptr(self) -> c_int_ptr:
             return self._ptrs[0]
@@ -667,6 +606,14 @@ try:
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self._ptr = ctypes.cast(self.ctypes.data, c_int_ptr)
+
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+        ) -> pydantic_core.CoreSchema:
+            return core_schema.no_info_after_validator_function(  # type: ignore
+                cls, handler(cls.__init__)
+            )
 
         @property
         def ptr(self) -> c_int_ptr:
@@ -697,6 +644,14 @@ try:
             self._gripper = ctypes.cast(
                 self.ctypes.data + 7 * self.itemsize, c_int_ptr
             ).contents
+
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+        ) -> pydantic_core.CoreSchema:
+            return core_schema.no_info_after_validator_function(  # type: ignore
+                cls, handler(cls.__init__)
+            )
 
         @property
         def ptr(self) -> c_int_ptr:
@@ -736,6 +691,14 @@ try:
             super().__init__(*args, **kwargs)
             self._ptr = ctypes.cast(self.ctypes.data, c_ushort_ptr)
 
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+        ) -> pydantic_core.CoreSchema:
+            return core_schema.no_info_after_validator_function(  # type: ignore
+                cls, handler(cls.__init__)
+            )
+
         @property
         def ptr(self) -> c_ushort_ptr:
             return self._ptr
@@ -765,6 +728,14 @@ try:
             self._gripper = ctypes.cast(
                 self.ctypes.data + 7 * self.itemsize, c_double_ptr
             ).contents
+
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+        ) -> pydantic_core.CoreSchema:
+            return core_schema.no_info_after_validator_function(  # type: ignore
+                cls, handler(cls.__init__)
+            )
 
         @property
         def ptr(self) -> c_double_ptr:
@@ -800,6 +771,14 @@ try:
             super().__init__(*args, **kwargs)
             self._ptr = ctypes.cast(self.ctypes.data, c_double_ptr)
 
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+        ) -> pydantic_core.CoreSchema:
+            return core_schema.no_info_after_validator_function(  # type: ignore
+                cls, handler(cls.__init__)
+            )
+
         @property
         def ptr(self) -> c_double_ptr:
             return self._ptr
@@ -820,6 +799,14 @@ try:
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
             self._ptr = ctypes.cast(self.ctypes.data, c_double_ptr)
+
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+        ) -> pydantic_core.CoreSchema:
+            return core_schema.no_info_after_validator_function(  # type: ignore
+                cls, handler(cls.__init__)
+            )
 
         @property
         def ptr(self) -> c_double_ptr:
