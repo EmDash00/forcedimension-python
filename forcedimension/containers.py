@@ -259,11 +259,10 @@ class HapticDeviceConfig(pydantic.BaseModel):
 
 class Vector3(array, SupportsPtrs3[c_double], SupportsPtr[c_double_ptr]):
     """
-    A List[float] providing convience "x", "y", "z" read-write accessor
-    properties. This class subclasses List[float]; therefore, for all intents
-    and purposes, you can treat it as a list. This allows for it to be
-    compatible with Python's standard library functions.
+    Represents a vector with attributes x, y, and z corresponding to the 0th,
+    1st, and 2nd indicies, respectively, as a Python `array.array`.
     """
+
     def __new__(
         cls, initializer: Iterable[float] = (0., 0., 0.)
     ):
@@ -321,6 +320,11 @@ class Vector3(array, SupportsPtrs3[c_double], SupportsPtr[c_double_ptr]):
 
 
 class Enc3(array, SupportsPtrs3[c_int], SupportsPtr[c_int]):
+    """
+    Represents the type of a 3-axis encoder array (e.g. delta or wrist encoder
+    arrays) as a Python `array.array`.
+    """
+
     def __new__(
         cls, initializer: Iterable[float] = (0., 0., 0.)
     ):
@@ -354,6 +358,11 @@ class Enc3(array, SupportsPtrs3[c_int], SupportsPtr[c_int]):
 
 
 class Enc4(array, SupportsPtr[c_int]):
+    """
+    Represents an array of wrist encoders and a gripper encoder as a Python
+    `array.array`
+    """
+
     def __new__(
         cls, initializer: Iterable[float] = (0., 0., 0., 0.)
     ):
@@ -379,11 +388,10 @@ class Enc4(array, SupportsPtr[c_int]):
 
 class DOFEncs(array, SupportsPtr[c_int]):
     """
-    A List[float] providing convience "x", "y", "z" read-write accessor
-    properties. This class subclasses List[float]; therefore, for all intents
-    and purposes, you can treat it as a list. This allows for it to be
-    compatible with Python's standard library functions.
+    Represents an array of encoders for each degree-of-freedom as a Python
+    `array.array`
     """
+
     def __new__(
         cls, initializer: Iterable[int] = (0 for _ in range(MAX_DOF))
     ):
@@ -428,11 +436,9 @@ class DOFEncs(array, SupportsPtr[c_int]):
 
 class DOFMotorArray(array, SupportsPtr[c_ushort]):
     """
-    A List[float] providing convience "x", "y", "z" read-write accessor
-    properties. This class subclasses List[float]; therefore, for all intents
-    and purposes, you can treat it as a list. This allows for it to be
-    compatible with Python's standard library functions.
+    Represents an array of motor commands as a Python `array.array`.
     """
+
     def __new__(
         cls, initializer: Iterable[int] = (0 for _ in range(MAX_DOF))
     ):
@@ -455,11 +461,9 @@ class DOFMotorArray(array, SupportsPtr[c_ushort]):
 
 class DOFJointAngles(array, SupportsPtr[c_double]):
     """
-    A List[float] providing convience "x", "y", "z" read-write accessor
-    properties. This class subclasses List[float]; therefore, for all intents
-    and purposes, you can treat it as a list. This allows for it to be
-    compatible with Python's standard library functions.
+    Represents an array of joint angles as a Python `array.array`.
     """
+
     def __new__(
         cls, initializer: Iterable[float] = (0 for _ in range(MAX_DOF))
     ):
@@ -500,7 +504,8 @@ class DOFJointAngles(array, SupportsPtr[c_double]):
 
 class Mat3x3(List[array], SupportsPtr[c_double]):
     """
-    Represents the type of a coordinate frame matrix.
+    Represents the type of a coordinate frame matrix as a list of Python
+    `array.array`.
     """
 
     def __init__(
@@ -522,7 +527,7 @@ class Mat3x3(List[array], SupportsPtr[c_double]):
 
 class Mat6x6(List[array], SupportsPtr[c_double]):
     """
-    Represents the type of a coordinate frame matrix.
+    Represents the type of an inertia matrix as a list of Python `array.array`.
     """
 
     def __init__(
@@ -561,12 +566,11 @@ try:
         np.ndarray, SupportsPtrs3[c_double], SupportsPtr[c_double]
     ):
         """
-        A view over a numpy ndarry, which provides convenience "x", "y", and "z"
-        read-write accessor properties. This class subclasses ndarray;
-        therefore, for all intents and purposes you can treat it as an ndarray.
-        This allows you to simply pass in this class to any and all numpy
-        methods.
+        Represents a vector in Cartesian coordinates as a view over a
+        `numpy.ndarray`. The "x" , "y", and "z" properties
+        corresponding to the 0th, 1st, and 2nd elements, respectively.
         """
+
         def __new__(cls, data: npt.ArrayLike = (0., 0., 0.)):
             arr = np.ascontiguousarray(data, dtype=c_double).view(cls)
 
@@ -617,12 +621,11 @@ try:
 
     class NumpyEnc3(np.ndarray, SupportsPtr[c_int], SupportsPtrs3[c_int]):
         """
-        A view over a numpy ndarry, which provides convenience "x", "y", and "z"
-        read-write accessor properties. This class subclasses ndarray;
-        therefore, for all intents and purposes you can treat it as an ndarray.
-        This allows you to simply pass in this class to any and all numpy
-        methods.
+        Represents a 3 axis array of encoders
+        (e.g. the delta encoders or wrist encoders) as a view over a
+        `numpy.ndarray`.
         """
+
         def __new__(cls, data: npt.ArrayLike = (0., 0., 0.)):
             arr = np.ascontiguousarray(data, dtype=c_int).view(cls)
 
@@ -649,12 +652,10 @@ try:
 
     class NumpyEnc4(np.ndarray, SupportsPtr[c_int]):
         """
-        A view over a numpy ndarry, which provides convenience "x", "y", and "z"
-        read-write accessor properties. This class subclasses ndarray;
-        therefore, for all intents and purposes you can treat it as an ndarray.
-        This allows you to simply pass in this class to any and all numpy
-        methods.
+        Represents an array containing 3 wrist encoders and a gripper encoder
+        (in that order) as a view over a `numpy.ndarray`.
         """
+
         def __new__(cls, data: npt.ArrayLike = (0., 0., 0., 0.)):
             arr = np.ascontiguousarray(data, dtype=c_int).view(cls)
 
@@ -672,6 +673,11 @@ try:
             return self._ptr
 
     class NumpyDOFEncs(np.ndarray, SupportsPtr[c_int]):
+        """
+        Represents an array of encoder values for each degree-of-freedom as a
+        view over a `numpy.ndarray`.
+        """
+
         def __new__(cls, data: IntArray = tuple(0 for _ in range(MAX_DOF))):
             arr = np.ascontiguousarray(data, dtype=c_int).view(cls)
 
@@ -713,6 +719,11 @@ try:
             return self._gripper
 
     class NumpyDOFMotorArray(np.ndarray, SupportsPtr[c_ushort]):
+        """
+        Represents an array of motor commands for each degree-of-freedom as
+        a view over a `numpy.ndarray`.
+        """
+
         def __new__(cls, data: IntArray = tuple(0 for _ in range(MAX_DOF))):
             arr = np.ascontiguousarray(data, dtype=c_ushort).view(cls)
 
@@ -730,6 +741,11 @@ try:
             return self._ptr
 
     class NumpyDOFJointAngles(np.ndarray, SupportsPtr[c_double]):
+        """
+        A class representing an array of joint angles for all
+        degree-of-freedoms as a view over a `numpy.ndarray`.
+        """
+
         def __new__(
             cls, data: npt.ArrayLike = tuple(0. for _ in range(MAX_DOF))
         ):
@@ -768,12 +784,10 @@ try:
 
     class NumpyMat3x3(np.ndarray, SupportsPtr[c_double]):
         """
-        A view over a numpy ndarry, which provides convenience "x", "y", and "z"
-        read-write accessor properties. This class subclasses ndarray;
-        therefore, for all intents and purposes you can treat it as an ndarray.
-        This allows you to simply pass in this class to any and all numpy
-        methods.
+        Represents a 3x3 orientation frame matrix as a view over a
+        `numpy.ndarray`.
         """
+
         def __new__(cls, data: npt.ArrayLike = tuple(0. for _ in range(9))):
             arr = np.ascontiguousarray(data, dtype=c_double)
 
@@ -792,12 +806,9 @@ try:
 
     class NumpyMat6x6(np.ndarray, SupportsPtr[c_double]):
         """
-        A view over a numpy ndarry, which provides convenience "x", "y", and "z"
-        read-write accessor properties. This class subclasses ndarray;
-        therefore, for all intents and purposes you can treat it as an ndarray.
-        This allows you to simply pass in this class to any and all numpy
-        methods.
+        Represents a 6x6 inertia matrix as a view over a `numpy.ndarray`.
         """
+
         def __new__(cls, data: npt.ArrayLike = tuple(0. for _ in range(36))):
             arr = np.ascontiguousarray(data, dtype=c_double)
 
