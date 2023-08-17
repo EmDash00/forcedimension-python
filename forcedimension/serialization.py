@@ -137,7 +137,6 @@ class HapticDeviceConfig(pydantic.BaseModel):
             if val < 0.0 or val > 1.0:
                 raise ValueError("motor_ratio_max must be between 0.0 and 1.0")
 
-    is_simulator_enabled: bool = False
     is_force_enabled: bool = True
     is_brake_enabled: bool = True
     is_button_emulation_enabled: bool = True
