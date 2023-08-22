@@ -1,8 +1,9 @@
 import ctypes
 from ctypes import Structure, c_int, pointer
-from typing import Any, Callable, Optional
+from enum import IntEnum
+from typing import Any, Callable, Literal, Optional
 
-from forcedimension.dhd.constants import MAX_STATUS, ComMode, ErrorNum
+from forcedimension.dhd.constants import MAX_STATUS, ComMode, DeviceType, ErrorNum, VelocityEstimatorMode
 from forcedimension.typing import Pointer, c_int_ptr
 
 
@@ -141,6 +142,12 @@ class Status(Structure):
     """
 
     unknown_status: int  # TODO: figure out what this is
+
+
+class Handedness(IntEnum):
+    NONE = 0
+    LEFT = 1
+    RIGHT = 2
 
 
 class DHDError(Exception):
@@ -457,14 +464,66 @@ _com_modes = {
     'network': ComMode.NETWORK,
 }
 
+_devtype_strs = {
+    DeviceType.NONE: 'none',
+    DeviceType.DELTA3: 'delta.3',
+    DeviceType.OMEGA3: 'omega.3',
+    DeviceType.OMEGA6_RIGHT: 'omega.6 right',
+    DeviceType.OMEGA6_LEFT: 'omega.6 left',
+    DeviceType.OMEGA7_RIGHT: 'omega.7 right',
+    DeviceType.OMEGA7_LEFT: 'omega.7 left',
+    DeviceType.CONTROLLER: 'controller',
+    DeviceType.CONTROLLER_HR: 'controller HR',
+    DeviceType.CUSTOM: 'custom',
+    DeviceType.SIGMA3: 'sigma.3',
+    DeviceType.SIGMA7_RIGHT: 'sigma.7 right',
+    DeviceType.SIGMA7_LEFT: 'sigma.7 left',
+    DeviceType.LAMBDA3: 'lambda.3',
+    DeviceType.LAMBDA7_RIGHT: 'lambda.7 right',
+    DeviceType.LAMBDA7_LEFT: 'lambda.7 left',
+    DeviceType.FALCON: 'Novint Falcon',
+}
 
-def com_mode_str(com_mode: int):
-    return _com_mode_strs[com_mode]
+_handedness = {
+    DeviceType.OMEGA6_RIGHT: Handedness.RIGHT,
+    DeviceType.OMEGA6_LEFT: Handedness.LEFT,
+    DeviceType.OMEGA7_RIGHT: Handedness.RIGHT,
+    DeviceType.OMEGA7_LEFT: Handedness.LEFT,
+    DeviceType.SIGMA7_RIGHT: Handedness.RIGHT,
+    DeviceType.SIGMA7_LEFT: Handedness.LEFT,
+    DeviceType.LAMBDA7_RIGHT: Handedness.RIGHT,
+    DeviceType.LAMBDA7_LEFT: Handedness.LEFT,
+}
+
+_handedness_str = ['None', 'Left', 'Right']
+
+_estimator_mode_str = {
+    VelocityEstimatorMode.WINDOWING: "Windowing"
+}
 
 
-def com_mode_from_str(com_mode_str: str):
+def com_mode_str(com_mode: int) -> Literal[
+    'sync', 'async', 'virtual', 'network'
+]:
+    return _com_mode_strs[com_mode]  # type: ignore
+
+def com_mode_from_str(com_mode_str: str) -> ComMode:
     return _com_modes[com_mode_str]
 
+def devtype_str(devtype: DeviceType) -> str:
+    return _devtype_strs[devtype]
+
+def handedness(devtype: DeviceType) -> Handedness:
+    if devtype in _handedness:
+        return _handedness[devtype]
+
+    return Handedness.NONE
+
+def handedness_str(handedness: Handedness) -> str:
+    return _handedness_str[handedness]
+
+def velocity_estimator_mode_str(mode: VelocityEstimatorMode):
+    return _estimator_mode_str[mode]
 
 def errno_to_exception(errno: int):
     """

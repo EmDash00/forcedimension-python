@@ -36,6 +36,10 @@ from forcedimension.dhd.adaptors import (
     Status,
     com_mode_str,
     com_mode_from_str,
+    handedness,
+    handedness_str,
+    devtype_str,
+    velocity_estimator_mode_str,
     errno_to_exception
 )
 from forcedimension.dhd.constants import (
