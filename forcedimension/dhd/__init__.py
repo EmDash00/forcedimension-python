@@ -3365,8 +3365,8 @@ def getMaxForce(ID: int = -1) -> float:
     return _libdhd.dhdGetMaxForce(ID)
 
 
-_libdhd.dhdGetMaxForce.argtypes = [c_byte]
-_libdhd.dhdGetMaxForce.restype = c_double
+_libdhd.dhdGetMaxTorque.argtypes = [c_byte]
+_libdhd.dhdGetMaxTorque.restype = c_double
 
 
 def getMaxTorque(ID: int = -1) -> float:
