@@ -1,34 +1,44 @@
 __version__ = '0.2.0'
 
 import ctypes as ct
+from enum import Enum
+import math
 import time
+import json
 from math import nan
+import textwrap
 from threading import Condition, Lock, Thread, Event
 from typing import Callable, Generic, List, Optional, Type, TypeVar
 from typing import cast as _cast
 import warnings
+from copy import copy
+import yaml
 
 import forcedimension.dhd as dhd
+from forcedimension.dhd.adaptors import Handedness
 import forcedimension.drd as drd
+import forcedimension.util as __util
 from forcedimension.containers import (
     DefaultDOFEncsType, DefaultDOFJointAnglesType, DefaultEnc3Type,
     DefaultMat3x3Type, DefaultMat6x6Type, DefaultVecType,
-    GripperUpdateOpts, UpdateOpts
+    GripperUpdateOpts, UpdateOpts, _HapticPollerOptions
+)
+from forcedimension.serialization import (
+    HapticDeviceSpecs, HapticDeviceConfig, TrajectoryGenParams
 )
 from forcedimension.dhd import ErrorNum, Status
-from forcedimension.typing import GenericVec, IntVectorLike, MutableFloatVectorLike
-from forcedimension.util import ImmutableWrapper, spin
-
-T = TypeVar('T', bound=GenericVec)
+from forcedimension.typing import FloatVectorLike, GenericVecType, IntVectorLike, MutableFloatVectorLike
+from forcedimension.util import ImmutableWrapper
 
 
 dhd.expert.enableExpertMode()
 
-class HapticDevice(Generic[T]):
+class HapticDevice(Generic[GenericVecType]):
     """
     A HapticDevice is a high-level wrapper for any compatible Force Dimension
     device.
     """
+
 
     class Gripper:
         """
@@ -40,8 +50,16 @@ class HapticDevice(Generic[T]):
         get kinematic information about the Gripper.
         """
 
-        def __init__(self, parent):
+        def __init__(
+            self,
+            parent,
+            config_file_data: Optional[Dict[str, Any]],
+            config_data: Optional[Dict[str, Any]],
+            restore: bool
+        ):
             self._parent: HapticDevice = parent
+            self._config = self._parent._config.gripper
+            self._init_config(config_file_data, config_data, restore)
 
             self._id = parent.ID
             self._enc = ct.c_int()
@@ -59,11 +77,75 @@ class HapticDevice(Generic[T]):
 
             self._fg_req: float = 0.0
 
+            self._init_config(config_file_data, config_data, restore)
+
+        def _init_velocity_estimator(self, restore: bool):
+            if restore:
+                self.config_velocity()
+
+        def _init_max_gripper_force(self, restore: bool):
+            if restore:
+                self.set_max_force(None)
+                return
+
+            limit = dhd.getMaxGripperForce(self._id)
+
+            if limit < 0:
+                limit = None
+
+            self._config.max_force = limit
+
+        def _init_config(
+            self,
+            config_file_data: Optional[Dict[str, Any]],
+            config_data: Optional[Dict[str, Any]],
+            restore: bool
+        ):
+
+            unset_configs = {
+               'velocity_estimator'
+            }
+
+            if config_file_data is not None and config_data is not None:
+                preserved_keys = set(
+                    set(config_file_data.keys()) ^ set(config_data.keys())
+                )
+                overwritten_keys = set(
+                    set(config_file_data.keys()) & set(config_data.keys())
+                )
+
+                unset_configs -= preserved_keys
+                unset_configs -= overwritten_keys
+
+                for key in preserved_keys:
+                    HapticDevice.Gripper._config_setters[key](
+                        self, config_file_data[key]
+                    )
+
+                for key in overwritten_keys:
+                    HapticDevice.Gripper._config_setters[key](
+                        self, config_data[key]
+                    )
+            elif config_file_data is not None and config_data is None:
+                for key, value in config_file_data:
+                    HapticDevice.Gripper._config_setters[key](value)
+            elif config_file_data is None and config_data is not None:
+                for key, value in config_data:
+                    HapticDevice.Gripper._config_setters[key](value)
+
+            # Default initialize all unset configs.
+
+            for config in unset_configs:
+                HapticDevice.Gripper._config_initializers[config](
+                    self, restore
+                )
+
         def req(self, fg: float):
             self._fg_req = fg
 
         def config_velocity(
-            self, window_size: int = dhd.DEFAULT_VELOCITY_WINDOW,
+            self,
+            window_size: int = dhd.DEFAULT_VELOCITY_WINDOW,
             mode: dhd.VelocityEstimatorMode = dhd.VelocityEstimatorMode.WINDOWING
         ):
             """
@@ -85,15 +167,8 @@ class HapticDevice(Generic[T]):
                     op=dhd.configGripperVelocity, ID=self._id
                 )
 
-        def get_max_force(self) -> Optional[float]:
-            """
-            Retrieve the current limit (in [N]) to the force magnitude that can be
-            applied by the haptic device. The limit is `None` if there is no limit.
-            """
-
-            limit = dhd.getMaxGripperForce(self._id)
-
-            return limit if limit > 0 else None
+            self._config.velocity_estimator.window_size = window_size
+            self._config.velocity_estimator.mode = mode
 
         def set_max_force(self, limit: Optional[float]):
             """
@@ -115,8 +190,10 @@ class HapticDevice(Generic[T]):
             if dhd.setMaxGripperForce(limit, self._id):
                 raise dhd.errno_to_exception(dhd.errorGetLast())()
 
+            self._config.max_force = limit
+
         @property
-        def thumb_pos(self) -> T:
+        def thumb_pos(self) -> GenericVecType:
             """
             Provides a read-only reference to the last-known position of the
             thumb rest position (in [m]) of the gripper about the X, Y, and Z
@@ -128,10 +205,10 @@ class HapticDevice(Generic[T]):
             """
 
             self.check_exception()
-            return _cast(T, self._thumb_pos_view)
+            return _cast(GenericVecType, self._thumb_pos_view)
 
         @property
-        def finger_pos(self) -> T:
+        def finger_pos(self) -> GenericVecType:
             """
             Provides a read-only reference to the last-known position of the
             forefinger rest position of the gripper (in [m]) about the X, Y, and Z
@@ -143,7 +220,7 @@ class HapticDevice(Generic[T]):
             """
 
             self.check_exception()
-            return _cast(T, self._finger_pos_view)
+            return _cast(GenericVecType, self._finger_pos_view)
 
         @property
         def gap(self) -> float:
@@ -254,10 +331,12 @@ class HapticDevice(Generic[T]):
             if err == -1:
                 raise dhd.errno_to_exception(dhd.errorGetLast())()
 
+            return self
+
         def update_enc_and_calculate(self):
             """
-            Update the value of the gripper encoders and calculate the value of the
-            gripper opening (in [m]) and gripper opening angle (in [rad]).
+            Update the value of the gripper encoders and calculate the value of
+            the gripper opening (in [m]) and gripper opening angle (in [rad]).
 
             :raises DHDError:
                 If an error has occured with the device, invalidating the
@@ -346,8 +425,8 @@ class HapticDevice(Generic[T]):
         def update_finger_pos(self):
             """
             Performs a blocking read to the HapticDevice, requesting the value
-            of the gripper forefinger rest position (in [m]) about the X, Y, and
-            Z axes.
+            of the gripper forefinger rest position (in [m]) about the X, Y,
+            and Z axes.
 
             :raises DHDError:
                 If an error has occured with the device, invalidating the
@@ -362,117 +441,262 @@ class HapticDevice(Generic[T]):
         def check_exception(self):
             self._parent.check_exception()
 
+        _config_setters = {
+            'velocity_estimator':
+                lambda self, value: self.config_velocity(**value),
+            'max_force': set_max_force
+        }
+        _config_initializers = {
+            'velocity_estimator': _init_velocity_estimator
+        }
+
     class Regulator:
-        def __init__(self, parent):
+
+        def __init__(
+            self,
+            parent,
+            config_file_data: Optional[Dict[str, Any]],
+            config_data: Optional[Dict[str, Any]],
+            restore: bool
+        ):
             self._parent: HapticDevice = parent
             self._haptic_daemon: Optional[HapticDaemon] = None
+            self._stop_event = Event()
+            self.pollers = {}
+
+            self._info = self._parent._specs
+            self._config = self._parent._config.regulator
+
+            self._control_freq = nan
+            self._is_drd_running = False
+            self._info.is_drd_supported = drd.isSupported(self._parent._id)
+            self._is_initialized = drd.isInitialized(self._parent._id)
+
+            self._init_config(config_file_data, config_data, restore)
+
+        def _init_motor_ratio_max(self, restore: bool):
+            if restore:
+                self.set_mot_ratio_max(1.0)
+                return
+
+            self._config.max_motor_ratio = drd.getMotRatioMax(self._parent._id)
+
+        def _init_enc_move_param(self, restore: bool):
+            if restore:
+                self.set_enc_move_param(
+                    drd.DEFAULT_ENC_MOVE_PARAMS.vmax,
+                    drd.DEFAULT_ENC_MOVE_PARAMS.amax,
+                    drd.DEFAULT_ENC_MOVE_PARAMS.jerk,
+                )
+                return
 
             enc_move_param, err = drd.getEncMoveParam()
+
             if err:
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.getEncMoveParam, ID=self._parent._id
                 )
 
+            self._config.enc_move_param.vmax = enc_move_param[0]
+            self._config.enc_move_param.amax = enc_move_param[1]
+            self._config.enc_move_param.jerk = enc_move_param[2]
+
+        def _init_enc_track_param(self, restore: bool):
+            if restore:
+                self.set_enc_track_param(
+                    drd.DEFAULT_ENC_TRACK_PARAMS.vmax,
+                    drd.DEFAULT_ENC_TRACK_PARAMS.amax,
+                    drd.DEFAULT_ENC_TRACK_PARAMS.jerk,
+                )
+                return
+
             enc_track_param, err = drd.getEncTrackParam()
+
             if err:
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.getEncTrackParam, ID=self._parent._id
                 )
 
+            self._config.enc_track_param.vmax = enc_track_param[0]
+            self._config.enc_track_param.amax = enc_track_param[1]
+            self._config.enc_track_param.jerk = enc_track_param[2]
+
+        def _init_pos_move_param(self, restore: bool):
+            if restore:
+                self.set_pos_move_param(
+                    drd.DEFAULT_POS_MOVE_PARAMS.vmax,
+                    drd.DEFAULT_POS_MOVE_PARAMS.amax,
+                    drd.DEFAULT_POS_MOVE_PARAMS.jerk,
+                )
+                return
+
             pos_move_param, err = drd.getPosMoveParam()
+
             if err:
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.getPosMoveParam, ID=self._parent._id
                 )
 
+            self._config.pos_move_param.vmax = pos_move_param[0]
+            self._config.pos_move_param.amax = pos_move_param[1]
+            self._config.pos_move_param.jerk = pos_move_param[2]
+
+        def _init_pos_track_param(self, restore: bool):
+            if restore:
+                self.set_pos_track_param(
+                    drd.DEFAULT_POS_TRACK_PARAMS.vmax,
+                    drd.DEFAULT_POS_TRACK_PARAMS.amax,
+                    drd.DEFAULT_POS_TRACK_PARAMS.jerk,
+                )
+                return
+
             pos_track_param, err = drd.getPosTrackParam()
+
             if err:
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.getPosTrackParam, ID=self._parent._id
                 )
 
+            self._config.pos_track_param.vmax = pos_track_param[0]
+            self._config.pos_track_param.amax = pos_track_param[1]
+            self._config.pos_track_param.jerk = pos_track_param[2]
+
+        def _init_rot_move_param(self, restore: bool):
+            if restore:
+                self.set_rot_move_param(
+                    drd.DEFAULT_ROT_MOVE_PARAMS.vmax,
+                    drd.DEFAULT_ROT_MOVE_PARAMS.amax,
+                    drd.DEFAULT_ROT_MOVE_PARAMS.jerk,
+                )
+                return
+
             rot_move_param, err = drd.getRotMoveParam()
+
             if err:
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.getRotMoveParam, ID=self._parent._id
                 )
 
+            self._config.rot_move_param.vmax = rot_move_param[0]
+            self._config.rot_move_param.amax = rot_move_param[1]
+            self._config.rot_move_param.jerk = rot_move_param[2]
+
+        def _init_rot_track_param(self, restore: bool):
+            if restore:
+                self.set_rot_track_param(
+                    drd.DEFAULT_ROT_TRACK_PARAMS.vmax,
+                    drd.DEFAULT_ROT_TRACK_PARAMS.amax,
+                    drd.DEFAULT_ROT_TRACK_PARAMS.jerk,
+                )
+                return
+
             rot_track_param, err = drd.getRotTrackParam()
+
             if err:
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.getRotTrackParam, ID=self._parent._id
                 )
 
+            self._config.rot_track_param.vmax = rot_track_param[0]
+            self._config.rot_track_param.amax = rot_track_param[1]
+            self._config.rot_track_param.jerk = rot_track_param[2]
+
+
+        def _init_grip_move_param(self, restore: bool):
+            if restore:
+                self.set_grip_move_param(
+                    drd.DEFAULT_GRIP_MOVE_PARAMS.vmax,
+                    drd.DEFAULT_GRIP_MOVE_PARAMS.amax,
+                    drd.DEFAULT_GRIP_MOVE_PARAMS.jerk,
+                )
+                return
+
             grip_move_param, err = drd.getGripMoveParam()
+
             if err:
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.getGripMoveParam, ID=self._parent._id
                 )
 
+            self._config.grip_move_param.vmax = grip_move_param[0]
+            self._config.grip_move_param.amax = grip_move_param[1]
+            self._config.grip_move_param.jerk = grip_move_param[2]
+
+        def _init_grip_track_param(self, restore: bool):
+            if restore:
+                self.set_grip_track_param(
+                    drd.DEFAULT_GRIP_TRACK_PARAMS.vmax,
+                    drd.DEFAULT_GRIP_TRACK_PARAMS.amax,
+                    drd.DEFAULT_GRIP_TRACK_PARAMS.jerk,
+                )
+                return
+
             grip_track_param, err = drd.getGripTrackParam()
+
             if err:
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.getGripTrackParam, ID=self._parent._id
                 )
 
-            self._control_freq = nan
-            self._is_drd_running = False
-            self._is_drd_supported = drd.isSupported(self._parent._id)
-            self._is_initialized = drd.isInitialized(self._parent._id)
+            self._config.grip_track_param.vmax = grip_track_param[0]
+            self._config.grip_track_param.amax = grip_track_param[1]
+            self._config.grip_track_param.jerk = grip_track_param[2]
 
-            self._is_pos_regulated = False
-            self._is_rot_regulated = False
-            self._is_grip_regulated = False
+        def _init_config(
+            self,
+            config_file_data: Optional[Dict[str, Any]],
+            config_data: Optional[Dict[str, Any]],
+            restore: bool
+        ):
+            unset_configs = {
+               'motor_ratio_max',
+               'enc_move_param',
+               'enc_track_param',
+               'pos_move_param',
+               'pos_track_param',
+               'rot_move_param',
+               'rot_track_param',
+               'grip_move_param',
+               'grip_track_param',
+            }
 
-            self._motor_ratio_max = drd.getMotRatioMax(self._parent._id)
+            if config_file_data is not None and config_data is not None:
+                preserved_keys = set(
+                    set(config_file_data.keys()) ^ set(config_data.keys())
+                )
+                overwritten_keys = set(
+                    set(config_file_data.keys()) & set(config_data.keys())
+                )
 
-            self._enc_move_param = TrajectoryGenParam(
-                vmax=enc_move_param[0],
-                amax=enc_move_param[1],
-                jerk=enc_move_param[2],
-            )
-            self._enc_track_param = TrajectoryGenParam(
-                vmax=enc_track_param[0],
-                amax=enc_track_param[1],
-                jerk=enc_track_param[2],
-            )
+                unset_configs -= preserved_keys
+                unset_configs -= overwritten_keys
 
-            self._pos_move_param = TrajectoryGenParam(
-                vmax=pos_move_param[0],
-                amax=pos_move_param[1],
-                jerk=pos_move_param[2],
-            )
-            self._pos_track_param = TrajectoryGenParam(
-                vmax=pos_track_param[0],
-                amax=pos_track_param[1],
-                jerk=pos_track_param[2],
-            )
+                for key in preserved_keys:
+                    HapticDevice.Regulator._config_setters[key](
+                        self, config_file_data[key]
+                    )
 
-            self._rot_move_param = TrajectoryGenParam(
-                vmax=rot_move_param[0],
-                amax=rot_move_param[1],
-                jerk=rot_move_param[2],
-            )
-            self._rot_track_param = TrajectoryGenParam(
-                vmax=rot_track_param[0],
-                amax=rot_track_param[1],
-                jerk=rot_track_param[2],
-            )
+                for key in overwritten_keys:
+                    HapticDevice.Regulator._config_setters[key](
+                        self, config_data[key]
+                    )
+            elif config_file_data is not None and config_data is None:
+                for key, value in config_file_data:
+                    HapticDevice.Regulator._config_setters[key](value)
+            elif config_file_data is None and config_data is not None:
+                for key, value in config_data:
+                    HapticDevice.Regulator._config_setters[key](value)
 
-            self._grip_move_param = TrajectoryGenParam(
-                vmax=grip_move_param[0],
-                amax=grip_move_param[1],
-                jerk=grip_move_param[2],
-            )
-            self._grip_track_param = TrajectoryGenParam(
-                vmax=grip_track_param[0],
-                amax=grip_track_param[1],
-                jerk=grip_track_param[2],
-            )
+            # Default initialize all unset configs.
+
+            for config in unset_configs:
+                HapticDevice.Regulator._config_initializers[config](
+                    self, restore
+                )
 
         @property
         def is_drd_supported(self) -> bool:
-            return self._is_drd_supported
+            return self._info.is_drd_supported
 
         @property
         def is_initialized(self) -> bool:
@@ -492,39 +716,39 @@ class HapticDevice(Generic[T]):
 
         @property
         def motor_ratio_max(self) -> float:
-            return self._motor_ratio_max
+            return self._config.max_motor_ratio
 
         @property
-        def enc_move_param(self) -> TrajectoryGenParam:
-            return self._enc_move_param
+        def enc_move_param(self) -> TrajectoryGenParams:
+            return self._config.enc_move_param
 
         @property
-        def enc_track_param(self) -> TrajectoryGenParam:
-            return self._enc_track_param
+        def enc_track_param(self) -> TrajectoryGenParams:
+            return self._config.enc_track_param
 
         @property
-        def pos_move_param(self) -> TrajectoryGenParam:
-            return self._pos_move_param
+        def pos_move_param(self) -> TrajectoryGenParams:
+            return self._config.pos_move_param
 
         @property
-        def pos_track_param(self) -> TrajectoryGenParam:
-            return self._pos_track_param
+        def pos_track_param(self) -> TrajectoryGenParams:
+            return self._config.pos_track_param
 
         @property
-        def rot_move_param(self) -> TrajectoryGenParam:
-            return self._rot_move_param
+        def rot_move_param(self) -> TrajectoryGenParams:
+            return self._config.rot_move_param
 
         @property
-        def rot_track_param(self) -> TrajectoryGenParam:
-            return self._rot_track_param
+        def rot_track_param(self) -> TrajectoryGenParams:
+            return self._config.rot_track_param
 
         @property
-        def grip_move_param(self) -> TrajectoryGenParam:
-            return self._grip_move_param
+        def grip_move_param(self) -> TrajectoryGenParams:
+            return self._config.grip_move_param
 
         @property
-        def grip_track_param(self) -> TrajectoryGenParam:
-            return self._grip_track_param
+        def grip_track_param(self) -> TrajectoryGenParams:
+            return self._config.grip_track_param
 
         def is_filtering(self) -> bool:
             return drd.isFiltering(self._parent._id)
@@ -584,6 +808,8 @@ class HapticDevice(Generic[T]):
                     ID=self._parent._id
                 )
 
+            return self
+
         def regulate_rot(self, enabled: bool = True):
             self._is_rot_regulated = enabled
 
@@ -593,6 +819,8 @@ class HapticDevice(Generic[T]):
                     ID=self._parent._id
                 )
 
+            return self
+
         def regulate_grip(self, enabled: bool = True):
             self._is_grip_regulated = enabled
 
@@ -601,6 +829,8 @@ class HapticDevice(Generic[T]):
                     op=drd.regulateGrip,
                     ID=self._parent._id
                 )
+
+            return self
 
         def enable_filter(self, enabled: bool = True):
             self._is_filter_enabled = enabled
@@ -696,25 +926,54 @@ class HapticDevice(Generic[T]):
                     op=drd.setMotRatioMax, ID=self._parent._id
                 )
 
+            self._config.max_motor_ratio = scale
+
+            return self
+
         def set_enc_move_param(
             self,
             vmax: Optional[float] = None,
             amax: Optional[float] = None,
             jerk: Optional[float] = None
         ):
+            """
+            Sets the trajectory generation parameters for
+            :func:`HapticDevice.Regulator.move_to_enc()`
+            :func:`HapticDevice.Regulator.move_to_all_enc()`. Unset parameters
+            will not be changed.
+
+            :param Optional[float] vmax:
+                Maximum allowable velocity during a generated trajectory
+                (in [inc/s]).
+
+            :param Optional[float] amax:
+                Maximum allowable acceleration during a generated trajectory
+                (in [inc/s^2]).
+
+            :param Optional[float] jerk:
+                Maximum allowable jerk during the generated trajectory
+                (in [inc/s^3])
+            """
+
             if vmax is None:
-                vmax = self.enc_move_param.vmax
+                vmax = self._config.enc_move_param.vmax
 
             if amax is None:
-                amax = self.enc_move_param.amax
+                amax = self._config.enc_move_param.amax
 
             if jerk is None:
-                jerk = self.enc_move_param.jerk
+                jerk = self._config.enc_move_param.jerk
 
             if drd.setEncMoveParam(vmax, amax, jerk, self._parent._id):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.setEncMoveParam, ID=self._parent._id
                 )
+
+            self._config.enc_move_param.vmax = vmax
+            self._config.enc_move_param.amax = amax
+            self._config.enc_move_param.jerk = jerk
+
+            return self
 
 
         def set_enc_track_param(
@@ -723,19 +982,44 @@ class HapticDevice(Generic[T]):
             amax: Optional[float] = None,
             jerk: Optional[float] = None
         ):
+            """
+            Sets the trajectory generation parameters for
+            :func:`HapticDevice.Regulator.track_enc()` and
+            :func:`HapticDevice.Regulator.track_all_enc()`. Unset parameters
+            will not be changed.
+
+            :param Optional[float] vmax:
+                Maximum allowable velocity during a generated trajectory
+                (in [inc/s]).
+
+            :param Optional[float] amax:
+                Maximum allowable acceleration during a generated trajectory
+                (in [inc/s^2]).
+
+            :param Optional[float] jerk:
+                Maximum allowable jerk during the generated trajectory
+                (in [inc/s^3])
+            """
+
             if vmax is None:
-                vmax = self.enc_track_param.vmax
+                vmax = self._config.enc_track_param.vmax
 
             if amax is None:
-                amax = self.enc_track_param.amax
+                amax = self._config.enc_track_param.amax
 
             if jerk is None:
-                jerk = self.enc_track_param.jerk
+                jerk = self._config.enc_track_param.jerk
 
             if drd.setEncMoveParam(vmax, amax, jerk, self._parent._id):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.setEncTrackParam, ID=self._parent._id
                 )
+
+            self._config.enc_track_param.vmax = vmax
+            self._config.enc_track_param.amax = amax
+            self._config.enc_track_param.jerk = jerk
+
+            return self
 
         def set_pos_move_param(
             self,
@@ -743,19 +1027,45 @@ class HapticDevice(Generic[T]):
             amax: Optional[float] = None,
             jerk: Optional[float] = None
         ):
+            """
+            Sets the trajectory generation parameters for
+            :func:`HapticDevice.Regulator.move_to_pos()` and
+            :func:`HapticDevice.Regulator.move_to()` (on DOFs 1-3). Unset
+            parameters will not be changed.
+
+            :param Optional[float] vmax:
+                Maximum allowable velocity during a generated trajectory
+                (in [m/s]).
+
+            :param Optional[float] amax:
+                Maximum allowable acceleration during a generated trajectory
+                (in [m/s^2]).
+
+            :param Optional[float] jerk:
+                Maximum allowable jerk during the generated trajectory
+                (in [m/s^3])
+            """
+
             if vmax is None:
-                vmax = self.pos_move_param.vmax
+                vmax = self._config.pos_move_param.vmax
 
             if amax is None:
-                amax = self.pos_move_param.amax
+                amax = self._config.pos_move_param.amax
 
             if jerk is None:
-                jerk = self.pos_move_param.jerk
+                jerk = self._config.pos_move_param.jerk
 
             if drd.setPosMoveParam(vmax, amax, jerk, self._parent._id):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.setPosMoveParam, ID=self._parent._id
                 )
+
+            self._config.pos_move_param.vmax = vmax
+            self._config.pos_move_param.amax = amax
+            self._config.pos_move_param.jerk = jerk
+
+            return self
+
 
         def set_pos_track_param(
             self,
@@ -763,39 +1073,45 @@ class HapticDevice(Generic[T]):
             amax: Optional[float] = None,
             jerk: Optional[float] = None
         ):
+            """
+            Sets the trajectory generation parameters for
+            :func:`HapticDevice.Regulator.track_pos()` and
+            :func:`HapticDevice.Regulator.track()` (on DOFs 1-3).
+            Unset parameters will not be changed.
+
+            :param Optional[float] vmax:
+                Maximum allowable velocity during a generated trajectory
+                (in [m/s]).
+
+            :param Optional[float] amax:
+                Maximum allowable acceleration during a generated trajectory
+                (in [m/s^2]).
+
+            :param Optional[float] jerk:
+                Maximum allowable jerk during the generated trajectory
+                (in [m/s^3])
+            """
+
             if vmax is None:
-                vmax = self.pos_track_param.vmax
+                vmax = self._config.pos_track_param.vmax
 
             if amax is None:
-                amax = self.pos_track_param.amax
+                amax = self._config.pos_track_param.amax
 
             if jerk is None:
-                jerk = self.pos_track_param.jerk
+                jerk = self._config.pos_track_param.jerk
 
             if drd.setPosTrackParam(vmax, amax, jerk, self._parent._id):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.setPosTrackParam, ID=self._parent._id
                 )
 
-        def set_rot_track_param(
-            self,
-            vmax: Optional[float] = None,
-            amax: Optional[float] = None,
-            jerk: Optional[float] = None
-        ):
-            if vmax is None:
-                vmax = self.rot_track_param.vmax
+            self._config.pos_track_param.vmax = vmax
+            self._config.pos_track_param.amax = amax
+            self._config.pos_track_param.jerk = jerk
 
-            if amax is None:
-                amax = self.rot_track_param.amax
+            return self
 
-            if jerk is None:
-                jerk = self.rot_track_param.jerk
-
-            if drd.setRotTrackParam(vmax, amax, jerk, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
-                    op=drd.setRotTrackParam, ID=self._parent._id
-                )
 
         def set_rot_move_param(
             self,
@@ -803,39 +1119,90 @@ class HapticDevice(Generic[T]):
             amax: Optional[float] = None,
             jerk: Optional[float] = None
         ):
+            """
+            Sets the trajectory generation parameters for
+            :func:`HapticDevice.Regulator.move_to_rot()` and
+            :func:`HapticDevice.Regulator.move_to()` (on DOFs 4-6).
+            Unset parameters will not be changed.
+
+            :param Optional[float] vmax:
+                Maximum allowable velocity during a generated trajectory
+                (in [rad/s]).
+
+            :param Optional[float] amax:
+                Maximum allowable acceleration during a generated trajectory
+                (in [rad/s^2]).
+
+            :param Optional[float] jerk:
+                Maximum allowable jerk during the generated trajectory
+                (in [rad/s^3])
+            """
+
             if vmax is None:
-                vmax = self.rot_move_param.vmax
+                vmax = self._config.rot_move_param.vmax
 
             if amax is None:
-                amax = self.rot_move_param.amax
+                amax = self._config.rot_move_param.amax
 
             if jerk is None:
-                jerk = self.rot_move_param.jerk
+                jerk = self._config.rot_move_param.jerk
 
             if drd.setRotMoveParam(vmax, amax, jerk, self._parent._id):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.setRotMoveParam, ID=self._parent._id
                 )
 
-        def set_grip_track_param(
+            self._config.rot_move_param.vmax = vmax
+            self._config.rot_move_param.amax = amax
+            self._config.rot_move_param.jerk = jerk
+
+            return self
+
+
+        def set_rot_track_param(
             self,
             vmax: Optional[float] = None,
             amax: Optional[float] = None,
             jerk: Optional[float] = None
         ):
+            """
+            Sets the trajectory generation parameters for
+            :func:`HapticDevice.Regulator.track_rot()` and
+            :func:`HapticDevice.Regulator.track()` (on DOFs 4-6).
+            Unset parameters will not be changed.
+
+            :param Optional[float] vmax:
+                Maximum allowable velocity during a generated trajectory
+                (in [rad/s]).
+
+            :param Optional[float] amax:
+                Maximum allowable acceleration during a generated trajectory
+                (in [rad/s^2]).
+
+            :param Optional[float] jerk:
+                Maximum allowable jerk during the generated trajectory
+                (in [rad/s^3])
+            """
+
             if vmax is None:
-                vmax = self.grip_track_param.vmax
+                vmax = self._config.rot_track_param.vmax
 
             if amax is None:
-                amax = self.grip_track_param.amax
+                amax = self._config.rot_track_param.amax
 
             if jerk is None:
-                jerk = self.grip_track_param.jerk
+                jerk = self._config.rot_track_param.jerk
 
-            if drd.setGripTrackParam(vmax, amax, jerk, self._parent._id):
+            if drd.setRotTrackParam(vmax, amax, jerk, self._parent._id):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
-                    op=drd.setGripTrackParam, ID=self._parent._id
+                    op=drd.setRotTrackParam, ID=self._parent._id
                 )
+
+            self._config.rot_track_param.vmax = vmax
+            self._config.rot_track_param.amax = amax
+            self._config.rot_track_param.jerk = jerk
+
+            return self
 
         def set_grip_move_param(
             self,
@@ -843,28 +1210,170 @@ class HapticDevice(Generic[T]):
             amax: Optional[float] = None,
             jerk: Optional[float] = None
         ):
+            """
+            Sets the trajectory generation parameters for
+            :func:`HapticDevice.Regulator.move_to_grip()` and
+            :func:`HapticDevice.Regulator.move_to()` (DOF 7).
+            Unset parameters will not be changed.
+
+            :param Optional[float] vmax:
+                Maximum allowable velocity during a generated trajectory
+                (in [m/s]).
+
+            :param Optional[float] amax:
+                Maximum allowable acceleration during a generated trajectory
+                (in [m/s^2]).
+
+            :param Optional[float] jerk:
+                Maximum allowable jerk during the generated trajectory
+                (in [m/s^3])
+            """
+
             if vmax is None:
-                vmax = self.grip_move_param.vmax
+                vmax = self._config.grip_move_param.vmax
 
             if amax is None:
-                amax = self.grip_move_param.amax
+                amax = self._config.grip_move_param.amax
 
             if jerk is None:
-                jerk = self.grip_move_param.jerk
+                jerk = self._config.grip_move_param.jerk
 
             if drd.setGripMoveParam(vmax, amax, jerk, self._parent._id):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op=drd.setGripMoveParam, ID=self._parent._id
                 )
 
+            self._config.grip_move_param.vmax = vmax
+            self._config.grip_move_param.amax = amax
+            self._config.grip_move_param.jerk = jerk
+
+            return self
+
+
+        def set_grip_track_param(
+            self,
+            vmax: Optional[float] = None,
+            amax: Optional[float] = None,
+            jerk: Optional[float] = None
+        ):
+            """
+            Sets the trajectory generation parameters for
+            :func:`HapticDevice.Regulator.track_grip()` and
+            :func:`HapticDevice.Regulator.track()` (DOF 7).
+            Unset parameters will not be changed.
+
+            :param Optional[float] vmax:
+                Maximum allowable velocity during a generated trajectory
+                (in [m/s]).
+
+            :param Optional[float] amax:
+                Maximum allowable acceleration during a generated trajectory
+                (in [m/s^2]).
+
+            :param Optional[float] jerk:
+                Maximum allowable jerk during the generated trajectory
+                (in [m/s^3])
+            """
+
+            if vmax is None:
+                vmax = self._config.grip_track_param.vmax
+
+            if amax is None:
+                amax = self._config.grip_track_param.amax
+
+            if jerk is None:
+                jerk = self._config.grip_track_param.jerk
+
+            if drd.setGripTrackParam(vmax, amax, jerk, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.setGripTrackParam, ID=self._parent._id
+                )
+
+            self._config.grip_track_param.vmax = vmax
+            self._config.grip_track_param.amax = amax
+            self._config.grip_track_param.jerk = jerk
+
+            return self
+
+
+        _config_setters: Dict[str, Callable[..., Any]] = {
+            'is_pos_regulated': regulate_pos,
+
+            'is_rot_regulated': regulate_rot,
+
+            'is_grip_regulated': regulate_grip,
+
+            'motor_ratio_max': set_mot_ratio_max,
+
+            'enc_move_param':
+                lambda self, value: self.set_enc_move_param(**value),
+
+            'enc_track_param':
+                lambda self, value: self.set_enc_track_param(**value),
+
+            'pos_move_param':
+                lambda self, value: self.set_pos_move_param(**value),
+
+            'pos_track_param':
+                lambda self, value: self.set_pos_track_param(**value),
+
+            'rot_move_param':
+                lambda self, value: self.set_rot_move_param(**value),
+
+            'rot_track_param':
+                lambda self, value: self.set_rot_track_param(**value),
+
+            'grip_move_param':
+                lambda self, value: self.set_grip_move_param(**value),
+
+            'grip_track_param':
+                lambda self, value: self.set_grip_track_param(**value)
+        }
+
+        _config_initializers = {
+            'motor_ratio_max': _init_motor_ratio_max,
+            'enc_move_param': _init_enc_move_param,
+            'enc_track_param': _init_enc_track_param,
+            'pos_move_param': _init_pos_move_param,
+            'pos_track_param': _init_pos_track_param,
+            'rot_move_param': _init_rot_move_param,
+            'rot_track_param': _init_rot_track_param,
+            'grip_move_param': _init_grip_move_param,
+            'grip_track_param': _init_grip_track_param
+        }
+
+    class _Expert:
+        def __init__(self, parent):
+            self._parent: HapticDevice = parent
+
+        def set_timeguard(self, interval: int = dhd.DEFAULT_TIMEGUARD_US):
+            if dhd.expert.setTimeGuard(interval, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=dhd.expert.setTimeGuard,
+                    ID=self._parent._id
+                )
+
+        def set_com_mode(self, mode: dhd.ComMode = dhd.ComMode.ASYNC):
+            if dhd.expert.setComMode(mode, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=dhd.expert.setComMode,
+                    ID=self._parent._id
+                )
+
+            self._parent._config.com_mode = dhd.com_mode_str(mode)
+
     def __init__(
             self,
-            VecType: Type[T] = DefaultVecType,
+            VecType: Type[GenericVecType] = DefaultVecType,
             *,
             ID: Optional[int] = None,
             devtype: Optional[dhd.DeviceType] = None,
             serial_number: Optional[int] = None,
             ensure_memory: bool = False,
+            config: Optional[HapticDeviceConfig] = None,
+            config_file: Optional[str] = None,
+            restore_defaults: bool = False,
+            name: Optional[str] = None,
             **kwargs
     ):
         """
@@ -874,7 +1383,8 @@ class HapticDevice(Generic[T]):
         opened. It is recommended to use context management
         (i.e. using a `with` statement) to ensure the device is properly
         closed. Once opened, properties of the device are stored as fields
-        in the class.
+        in the class. Functions that update internal state of the Haptic Device
+        do not allocate memory.
 
         :param Type[T] VecType:
             The default type for vector buffers used by this class. You may
@@ -901,6 +1411,23 @@ class HapticDevice(Generic[T]):
             If `True`, the device will fail to instantiate if a firmware or
             internal configuration health check fails.
 
+        :param HapticDeviceConfig config:
+            Initial config settings for the Haptic Device. Overrides settings
+            set by `config_file`. Settings unset by both `config` and
+            `config_file` are unchanged or, if
+            `restore_defaults` is `True`, reset to their defaults.
+
+        :param HapticDeviceConfig config_file:
+            Initial config settings for the Haptic Device in a `.json` or
+            `.yml` file. Is overridden by settings set in `config`.
+            Settings unset by both `config` and
+            `config_file` are unchanged or, if
+            `restore_defaults` is `True`, reset to their defaults.
+
+        :param bool restore_defaults:
+            If `True` will restore all config settings not set by either
+            `config` or `config_file`
+
         :raises ValueError:
             If more than one of `ID`, `devtype`, or `serial_number` are
             specified.
@@ -924,15 +1451,24 @@ class HapticDevice(Generic[T]):
             if ID < 0:
                 raise ValueError("ID must be greater than 0.")
 
+        if config_file is not None:
+            is_yaml = config_file.endswith(".yml")
+            is_json = config_file.endswith(".json")
+
+            if not (is_yaml or is_json):
+                raise ValueError(
+                    "The config file must be a .yml or .json file"
+                )
+
         self._VecType = VecType
-        self._devtype = dhd.DeviceType.NONE
-        self._mass = nan
 
-        self._gripper = None
-
-        self._exception: Optional[dhd.DHDIOError] = None
         self._id = 0
         self._serial_number = -1
+        self._devtype = dhd.DeviceType.NONE
+
+        self._exception: Optional[dhd.DHDIOError] = None
+
+        self._expert = HapticDevice._Expert(self)
 
         if (dhd.getDeviceCount() <= 0):
             raise dhd.DHDErrorNoDeviceFound()
@@ -1013,17 +1549,45 @@ class HapticDevice(Generic[T]):
         if 'wait_for_reset' in kwargs:
             self.wait_for_reset(kwargs['wait_for_reset'])
 
-        self._regulator = HapticDevice.Regulator(self)
+        self._config = HapticDeviceConfig()
 
-        self._encs = DefaultDOFEncsType()
-        self._joint_angles = DefaultDOFJointAnglesType()
-        self._base_angles = VecType()
+        config_file_data = None
+        config_data = None
+
+        # Load in the config file
+        if config_file is not None:
+            with open(config_file, 'r') as f:
+                if is_yaml:  # type: ignore
+                    config_file_data = yaml.safe_load(f)
+                elif is_json:   # type: ignore
+                    config_file_data = json.load(f)
+
+            self._config.model_validate(config_file_data)  # type: ignore
+            self._config.model_construct(config_file_data)  # type: ignore
+            config_data = self._config.model_dump(exclude_defaults=True)
+
+        # Load in the provided config
+        if config is not None:
+            config_data =  config.model_dump(exclude_defaults=True)
+
+        self._init_config(config_file_data, config_data, restore_defaults)
+
+        self._mass = nan
+        self._gripper = None
+
+        self._encs = DefaultIntDOFType()
+        self._encs_v = DefaultFloatDOFType()
+
+        self._joint_angles = DefaultFloatDOFType()
+        self._joint_v = DefaultFloatDOFType()
 
         self._pos = VecType()
+        self._v = VecType()
+
         self._orientation_angles = VecType()
 
         self._w = VecType()
-        self._v = VecType()
+
         self._f = VecType()
         self._t = VecType()
 
@@ -1040,8 +1604,6 @@ class HapticDevice(Generic[T]):
         self._vibration_req: List[float] = [0.] * 2
         self._buttons = 0
 
-        self._base_angles_view = ImmutableWrapper(self._base_angles)
-
         self._delta_joint_angles_view = ImmutableWrapper(
             self._joint_angles.delta
         )
@@ -1049,6 +1611,8 @@ class HapticDevice(Generic[T]):
         self._wrist_joint_angles_view = ImmutableWrapper(
             self._joint_angles.wrist
         )
+
+        self._base_angles_view = ImmutableWrapper(self._config.base_angles)
 
         self._pos_view = ImmutableWrapper(self._pos)
         self._w_view = ImmutableWrapper(self._w)
@@ -1064,22 +1628,18 @@ class HapticDevice(Generic[T]):
 
         self._status_view = ImmutableWrapper(self._status)
 
-        self._mock_gripper = HapticDevice.Gripper(self)
-        if dhd.hasGripper(self._id):
-            self._gripper = self._mock_gripper
-
-        self._timeguard = dhd.DEFAULT_TIMEGUARD_US
-
         self._is_neutral = False
         self._is_stopped = False
-        self._button_emulation_enabled = False
-        self._left_handed = dhd.isLeftHanded(self._id)
-        self._has_base = dhd.hasBase(self._id)
-        self._has_gripper = True if self._gripper is not None else False
-        self._has_active_gripper = dhd.hasActiveGripper(self._id)
-        self._has_wrist = dhd.hasWrist(self._id)
-        self._has_active_wrist = dhd.hasActiveWrist(self._id)
-        self._has_serial_number = False
+
+        # Get all device specs.
+
+        handedness = dhd.handedness(self._devtype)
+        has_base = dhd.hasBase(self._id)
+        has_wrist = dhd.hasWrist(self._id)
+        has_active_wrist = dhd.hasActiveWrist(self._id)
+        has_gripper = True if self._gripper is not None else False
+        has_active_gripper = dhd.hasActiveGripper(self._id)
+        num_dof = dhd.num_dof(self._devtype)
 
         serial_number, err = dhd.getSerialNumber(self._id)
 
@@ -1090,55 +1650,491 @@ class HapticDevice(Generic[T]):
                     ID=self._id
                 )
             else:
-                self._has_serial_number = True
-                serial_number = -1
+                serial_number = 0
 
-        if dhd.getBaseAngleXRad(self._base_angles.ptrs[0].contents, self._id):
+        self._specs = HapticDeviceSpecs(
+            name=name,
+            devtype=self._devtype,
+            serial_number=self._serial_number,
+            has_base=has_base,
+            has_wrist=has_wrist,
+            has_active_wrist=has_active_wrist,
+            has_gripper=has_gripper,
+            has_active_gripper=has_active_gripper,
+            num_dof=num_dof,
+            handedness=handedness
+        )
+
+        self._regulator = HapticDevice.Regulator(
+            self, config_file_data, config_data, restore_defaults
+        )
+
+        self._mock_gripper = HapticDevice.Gripper(
+            self, config_file_data, config_data, restore_defaults
+        )
+        if dhd.hasGripper(self._id):
+            self._gripper = self._mock_gripper
+
+        # Pre-compute and cache the spec string since it doesn't change
+        self._spec_str = textwrap.dedent(
+            f"""\
+            Name: {self._specs.name if self._specs.name is not None else ""}
+            Device Model: {
+                dhd.devtype_str(self._specs.devtype)
+            }
+            Serial Number: {
+                self._specs.serial_number
+            }
+            Has Base: {
+                "Yes" if self._specs.has_base else "No"
+            }
+            Has Wrist: {
+                "Yes" if self._specs.has_wrist else "No"
+            }
+            Has Active Wrist: {
+                "Yes" if self._specs.has_active_wrist else "No"
+            }
+            Has Gripper: {
+                "Yes" if self._specs.has_gripper else "No"
+            }
+            Has Active Gripper: {
+                "Yes" if self._specs.has_active_wrist else "No"
+            }
+            Degrees of Freedom: {self._specs.num_dof}
+            Handedness: {dhd.handedness_str(self._specs.handedness)}
+            Supports DRD: {"Yes" if self._specs.is_drd_supported else "No"}\
+            """
+        )
+
+        self.update_delta_encs_and_calculate()
+        self.update_force_and_torque_and_gripper_force()
+
+
+
+        if self._specs.has_wrist:
+            pos_updater = self.update_position_and_orientation
+        else:
+            pos_updater = self.update_position
+
+        self._update_list = [
+            pos_updater,
+            self.update_velocity,
+            self.update_angular_velocity,
+            self.update_buttons,
+            self.update_force_and_torque_and_gripper_force
+        ]
+
+    def _init_force_enabled(self, restore: bool = False):
+        if restore:
+            self.enable_force()
+
+    def _init_brake_enabled(self, restore: bool = False):
+        if restore:
+            self.enable_brakes()
+
+    def _init_linear_velocity_estimator(self, restore: bool = False):
+        if restore:
+            self.config_linear_velocity()
+
+    def _init_angular_velocity_estimator(self, restore: bool = False):
+        if restore:
+            self.config_angular_velocity()
+
+    def _init_base_angles(self, restore: bool = False):
+        if restore:
+            self.set_base_angles(0., 0., 0.)
+            return
+
+        if dhd.getBaseAngleXRad(
+            self._config.base_angles.ptrs[0].contents, self._id
+        ):
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 op=dhd.getBaseAngleXRad,
                 ID=self._id
             )
 
-        if dhd.getDeviceAngleRad(self._base_angles.ptrs[1].contents, self._id):
+        if dhd.getDeviceAngleRad(
+            self._config.base_angles.ptrs[1].contents, self._id
+        ):
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 op=dhd.getDeviceAngleRad,
                 ID=self._id
             )
 
-        if dhd.getBaseAngleZRad(self._base_angles.ptrs[2].contents, self._id):
+        if dhd.getBaseAngleZRad(
+            self._config.base_angles.ptrs[2].contents, self._id
+        ):
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 op=dhd.getBaseAngleZRad,
                 ID=self._id
             )
+
+    def _init_com_mode(self, restore: bool = False):
+        if restore:
+            self._expert_set_com_mode()
+            return
 
         if (com_mode := dhd.getComMode(self._id)) == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id, op=dhd.getComMode
             )
 
+        self._config.com_mode = dhd.com_mode_str(com_mode)
+
+    def _init_max_force(self, restore: bool = False):
+        if restore:
+            self.set_max_force(None)
+            return
+
         if (max_force := dhd.getMaxForce(self._id)) < 0:
             max_force = None
+
+        self._config.max_force = max_force
+
+    def _init_max_torque(self, restore: bool = False):
+        if restore:
+            self.set_max_torque(None)
+            return
 
         if (max_torque := dhd.getMaxTorque(self._id)) < 0:
             max_torque = None
 
-        self._serial_number = serial_number
+        self._config.max_torque = max_torque
 
-        self._standard_gravity = 9.81
-        self._mass, err = dhd.getEffectorMass(self._id)
+    def _init_mass(self, restore: bool = False):
+        self._config.mass, err = dhd.getEffectorMass(self._id)
         if err:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
-        self._com_mode = com_mode
-        self._max_force = max_force
-        self._max_torque = max_torque
+    def _init_config(
+        self,
+        config_file_data: Optional[Dict[str, Any]],
+        config_data: Optional[Dict[str, Any]],
+        restore: bool
+    ):
+        unset_configs = {
+            'is_force_enabled',
+            'is_brake_enabled',
+            'linear_velocity_estimator',
+            'angular_velocity_estimator',
+            'base_angles',
+            'com_mode',
+            'max_force',
+            'max_torque',
+            'mass'
+        }
 
-        self.update_delta_enc_and_calculate()
-        self.update_force_and_torque_and_gripper_force()
+        if config_file_data is not None and config_data is not None:
+            preserved_keys = set(
+                set(config_file_data.keys()) ^ set(config_data.keys())
+            )
+            overwritten_keys = set(
+                set(config_file_data.keys()) & set(config_data.keys())
+            )
+
+            preserved_keys -= {'regulator', 'gripper'}
+            overwritten_keys -= {'regulator', 'gripper'}
+
+            for key in preserved_keys:
+                HapticDevice._config_setters[key](self, config_file_data[key])
+
+            for key in overwritten_keys:
+                HapticDevice._config_setters[key](self, config_data[key])
+
+            unset_configs -= preserved_keys
+            unset_configs -= overwritten_keys
+
+        elif config_file_data is not None and config_data is None:
+            self.set_config(config_file_data)
+            unset_configs -= set(config_file_data.keys())
+
+        elif config_file_data is None and config_data is not None:
+            self.set_config(config_data)
+            unset_configs -= set(config_data.keys())
+
+        # Get all remaining config information
+        for config in unset_configs:
+            HapticDevice._config_initializer[config](self, restore)
+
+    # def set_config(self, config: HapticDeviceConfig):
+        # ...
+
+    def set_config(self, config_data: Dict[str, Any]):
+        for key, value in config_data:
+            HapticDevice._config_setters[key](self, value)
 
     def check_exception(self):
+        """
+        Checks if an exception has occured in an update function, invalidating
+        the device's internal state.
+        """
         if self._exception is not None:
             raise self._exception
+
+    def dump_specs(self):
+        """
+        Dumps the specifictions of the Force Dimension Haptic Device to a
+        serializable Python dictionary.
+        """
+
+        return self._specs.model_dump()
+
+    def dump_config(self, exclude_defaults: bool = False):
+        """
+        Dumps the current configuration as a serializable Python dictionary.
+        """
+
+        return self._config.model_dump(exclude_defaults=exclude_defaults)
+
+    @property
+    def spec_str(self):
+        """
+        A human-readable string that summarizes the specifications of the
+        HapticDevice.
+        """
+
+        return self._spec_str
+
+    def get_config_str(self):
+        """
+        A human-readable string that summarizes the current configuration of
+        the HapticDevice.
+        """
+
+        base_angles = copy(self._config.base_angles)
+        base_angles[0] /= 2 * math.pi
+        base_angles[1] /= 2 * math.pi
+        base_angles[2] /= 2 * math.pi
+
+        return (textwrap.dedent(f"""\
+            Force Enabled: {
+                "Yes (default)" if self._config.is_force_enabled else "No"
+            }
+            Brakes Enabled: {
+                "Yes (default)" if self._config.is_brake_enabled else "No"
+            }
+            Gravity Compensation Enabled: {
+                "Yes"
+                if self._config.is_gravity_compensation_enabled else
+                "No (default)"
+            }
+            Button Emulation Enabled: {
+                "Yes" if self._config.is_button_emulation_enabled
+                else "No (default)"
+            }
+            Base Angles (rev): {base_angles}
+            Communication Mode: {
+                "async (default)" if self._config.com_mode == 'async' else
+                self._config.com_mode
+            }
+            Timeguard: {
+                'default' if self._config.timeguard == dhd.DEFAULT_TIMEGUARD_US
+                else (
+                    'None' if self._config.timeguard == 0 else
+                    self._config.timeguard
+                )
+            }
+            Linear Velocity Estimator:
+                mode: {
+                    dhd.velocity_estimator_mode_str(
+                        self._config.linear_velocity_estimator.mode
+                    )
+                }{
+                    " (default)"
+                    if self._config.linear_velocity_estimator.mode ==
+                    dhd.VelocityEstimatorMode.WINDOWING
+                    else ""
+                }
+                window size: {
+                    self._config.linear_velocity_estimator.window_size
+                } us{
+                    " (default)"
+                    if self._config.linear_velocity_estimator.window_size ==
+                    dhd.DEFAULT_VELOCITY_WINDOW else ""
+                }
+            Angular Velocity Estimator:
+                mode: {
+                    dhd.velocity_estimator_mode_str(
+                        self._config.angular_velocity_estimator.mode
+                    )
+                }{
+                    " (default)"
+                    if self._config.angular_velocity_estimator.mode ==
+                    dhd.VelocityEstimatorMode.WINDOWING
+                    else ""
+                }
+                window size: {
+                    self._config.angular_velocity_estimator.window_size
+                } us{
+                    " (default)"
+                    if self._config.angular_velocity_estimator.window_size ==
+                    dhd.DEFAULT_VELOCITY_WINDOW else ""
+                }
+            Max Force: {self._config.max_force}{
+                " N" if self._config.max_force is not None else ""
+            }{
+                " (default)" if self._config.max_force is None else ""
+            }
+            Max Torque: {self._config.max_torque}{
+                " Nm" if self._config.max_torque is not None else ""
+            }{
+                " (default)" if self._config.max_torque is None else ""
+            }
+            Standard Gravity: {self._config.standard_gravity} m/s^2{
+                " (default)" if self._config.standard_gravity == 9.81 else ""
+            }
+
+            Gripper:
+                Max Force: {self._config.max_force}{
+                    " N" if self._config.gripper.max_force is not None else ""
+                }{
+                " (default)" if self._config.gripper.max_force is None else ""
+            }
+                Velocity Estimator:
+                    mode: {
+                        dhd.velocity_estimator_mode_str(
+                            self._config.gripper.velocity_estimator.mode
+                        )
+                    }{
+                        " (default)" if
+                        self._config.gripper.velocity_estimator.mode ==
+                        dhd.VelocityEstimatorMode.WINDOWING else ""
+                    }
+                    window size: {
+                        self._config.gripper.velocity_estimator.window_size
+                    } us{
+                    " (default)"
+                    if self._config.gripper.velocity_estimator.window_size ==
+                    dhd.DEFAULT_VELOCITY_WINDOW else ""
+                }
+
+            Regulator:
+                Position Regulation: {
+                    "enabled (default)"
+                    if self._config.regulator.is_pos_regulated else
+                    "disabled"
+                  }
+                Rotation Regulation: {
+                    "enabled (default)"
+                    if self._config.regulator.is_rot_regulated else
+                    "disabled"
+                  }
+                Gripper Regulation: {
+                    "enabled (default)"
+                    if self._config.regulator.is_grip_regulated else
+                    "disabled"
+                  }
+                Max Motor Ratio: {self._config.regulator.max_motor_ratio}{
+                    " (default)" if self._config.regulator.max_motor_ratio == 1
+                    else ""
+                }
+
+                Trajectory Generation Parameters:
+                    Encoder Track (inc): {
+                        self._config.regulator.enc_track_param.pretty_str(
+                            drd.DEFAULT_ENC_TRACK_PARAMS.vmax,
+                            drd.DEFAULT_ENC_TRACK_PARAMS.amax,
+                            drd.DEFAULT_ENC_TRACK_PARAMS.jerk
+                        )
+                    }
+                    Encoder Move (inc): {
+                        self._config.regulator.enc_move_param.pretty_str(
+                            drd.DEFAULT_ENC_MOVE_PARAMS.vmax,
+                            drd.DEFAULT_ENC_MOVE_PARAMS.amax,
+                            drd.DEFAULT_ENC_MOVE_PARAMS.jerk
+                        )
+                    }
+
+                    Position Track (m): {
+                        self._config.regulator.pos_track_param.pretty_str(
+                            drd.DEFAULT_POS_TRACK_PARAMS.vmax,
+                            drd.DEFAULT_POS_TRACK_PARAMS.amax,
+                            drd.DEFAULT_POS_TRACK_PARAMS.jerk
+                        )
+                    }
+                    Position Move (m): {
+                        self._config.regulator.pos_move_param.pretty_str(
+                            drd.DEFAULT_POS_MOVE_PARAMS.vmax,
+                            drd.DEFAULT_POS_MOVE_PARAMS.amax,
+                            drd.DEFAULT_POS_MOVE_PARAMS.jerk
+                        )
+                    }
+
+                    Rotation Track (rad): {
+                        self._config.regulator.rot_track_param.pretty_str(
+                            drd.DEFAULT_ROT_TRACK_PARAMS.vmax,
+                            drd.DEFAULT_ROT_TRACK_PARAMS.amax,
+                            drd.DEFAULT_ROT_TRACK_PARAMS.jerk
+                        )
+                    }
+                    Rotation Move (rad): {
+                        self._config.regulator.rot_move_param.pretty_str(
+                            drd.DEFAULT_ROT_MOVE_PARAMS.vmax,
+                            drd.DEFAULT_ROT_MOVE_PARAMS.amax,
+                            drd.DEFAULT_ROT_MOVE_PARAMS.jerk
+                        )
+                    }
+
+                    Gripper Track (m): {
+                        self._config.regulator.grip_track_param.pretty_str(
+                            drd.DEFAULT_GRIP_TRACK_PARAMS.vmax,
+                            drd.DEFAULT_GRIP_TRACK_PARAMS.amax,
+                            drd.DEFAULT_GRIP_TRACK_PARAMS.jerk
+                        )
+                    }
+                    Gripper Move (m): {
+                        self._config.regulator.grip_move_param.pretty_str(
+                            drd.DEFAULT_GRIP_MOVE_PARAMS.vmax,
+                            drd.DEFAULT_GRIP_MOVE_PARAMS.amax,
+                            drd.DEFAULT_GRIP_MOVE_PARAMS.jerk
+                        )
+                    }
+            """
+
+        ))
+
+    def get_summary_str(self) -> str:
+        """
+        Constructs a human-readable string that summarizes the HapticDevice
+        (its specifications and configuration)
+        """
+
+        return (
+            textwrap.dedent(
+                """\
+                Specifications
+                --------------
+                """
+            ) +
+            self._spec_str +
+            textwrap.dedent(
+                """
+
+
+                Configuration
+                -------------
+                """
+            ) +
+            self.get_config_str()
+        )
+
+    def print_summary(self):
+        """
+        Prints a human-readable string that summarizes the HapticDevice (its
+        specifications and configuration)
+        """
+
+        print(self.get_summary_str())
+
+
+    @property
+    def expert(self) -> _Expert:
+        """
+        A wrapper for the expert level functionality. Unlike the C++ API, the
+        Python bindings enable expert mode by default and simply obscures them
+        via scoping.
+        """
+        return self._expert
 
     @property
     def gripper(self) -> Optional[Gripper]:
@@ -1164,7 +2160,7 @@ class HapticDevice(Generic[T]):
 
     @property
     def timeguard(self) -> int:
-        return self._timeguard
+        return self._config.timeguard
 
     @property
     def mass(self) -> float:
@@ -1197,36 +2193,39 @@ class HapticDevice(Generic[T]):
         return self._standard_gravity
 
     @property
-    def left_handed(self) -> Optional[bool]:
-        return self._left_handed
+    def left_handed(self) -> bool:
+        return self._specs.handedness == Handedness.LEFT
+
+    @property
+    def handedness(self) -> Handedness:
+        return self._specs.handedness
 
     @property
     def has_base(self) -> bool:
-        return self._has_base
+        return self._specs.has_base
 
     @property
     def has_wrist(self) -> bool:
-        return self._has_wrist
+        return self._specs.has_wrist
 
     @property
     def has_active_wrist(self) -> bool:
-        return self._has_active_wrist
+        return self._specs.has_active_wrist
 
     @property
     def has_gripper(self) -> bool:
-        return self._has_gripper
+        return self._specs.has_gripper
 
     @property
     def has_active_gripper(self) -> bool:
-        return self._has_active_gripper
+        return self._specs.has_active_gripper
 
-    @property
-    def has_serial_number(self) -> bool:
-        return self._has_serial_number
+    def _expert_set_com_mode(self, mode: dhd.ComMode = dhd.ComMode.ASYNC):
+        self._expert.set_com_mode(mode)
 
     @property
     def com_mode(self) -> dhd.ComMode:
-        return self._com_mode
+        return dhd.com_mode_from_str(self._config.com_mode)
 
     @property
     def is_neutral(self) -> bool:
@@ -1252,13 +2251,13 @@ class HapticDevice(Generic[T]):
         return _cast(Status, self._status_view)
 
     @property
-    def base_angles(self) -> T:
+    def base_angles(self) -> GenericVecType:
         """
         Provides a read-only reference of the device base plate angle
         (in [rad]) about the X, Y, and Z axes.
         """
 
-        return _cast(T, self._base_angles_view)
+        return _cast(GenericVecType, self._base_angles_view)
 
     def set_base_angles(
         self,
@@ -1280,7 +2279,7 @@ class HapticDevice(Generic[T]):
             Angle (in [rad]) to set the device plate angle about the Z axis to.
         """
         if x is not None:
-            self._base_angles[0] = x
+            self._config.base_angles[0] = x
 
             if dhd.setBaseAngleXRad(x):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
@@ -1289,7 +2288,7 @@ class HapticDevice(Generic[T]):
                 )
 
         if y is not None:
-            self._base_angles[1] = y
+            self._config.base_angles[1] = y
 
             if dhd.setDeviceAngleRad(y):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
@@ -1298,7 +2297,7 @@ class HapticDevice(Generic[T]):
                 )
 
         if z is not None:
-            self._base_angles[2] = z
+            self._config.base_angles[2] = z
 
             if dhd.setBaseAngleZRad(z):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
@@ -1432,9 +2431,14 @@ class HapticDevice(Generic[T]):
                 op=dhd.configLinearVelocity, ID=self._id
             )
 
+        self._config.linear_velocity_estimator.window_size = window_size
+        self._config.linear_velocity_estimator.mode = mode
+
 
     def config_angular_velocity(
-        self, window_size: int, mode: dhd.VelocityEstimatorMode
+        self,
+        window_size: int = dhd.DEFAULT_VELOCITY_WINDOW,
+        mode: dhd.VelocityEstimatorMode = dhd.VelocityEstimatorMode.WINDOWING
     ):
         """
         Configures the internal angular velocity estimator used by
@@ -1456,20 +2460,21 @@ class HapticDevice(Generic[T]):
                 op=dhd.configAngularVelocity, ID=self._id
             )
 
-
+        self._config.angular_velocity_estimator.window_size = window_size
+        self._config.angular_velocity_estimator.mode = mode
 
     @property
-    def delta_joint_angles(self) -> T:
+    def delta_joint_angles(self) -> GenericVecType:
         self.check_exception()
-        return _cast(T, self._delta_joint_angles_view)
+        return _cast(GenericVecType, self._delta_joint_angles_view)
 
     @property
-    def wrist_joint_angles(self) -> T:
+    def wrist_joint_angles(self) -> GenericVecType:
         self.check_exception()
-        return _cast(T, self._wrist_joint_angles_view)
+        return _cast(GenericVecType, self._wrist_joint_angles_view)
 
     @property
-    def pos(self) -> T:
+    def pos(self) -> GenericVecType:
         """
         Provides a read-only reference to the last-known position of the
         HapticDevice's end-effector (in [m]) about the X, Y, and Z axes.
@@ -1481,10 +2486,10 @@ class HapticDevice(Generic[T]):
         """
 
         self.check_exception()
-        return _cast(T, self._pos_view)
+        return _cast(GenericVecType, self._pos_view)
 
     @property
-    def v(self) -> T:
+    def v(self) -> GenericVecType:
         """
         Provides a read-only reference to the last-known linear velocity of the
         HapticDevice's end-effector. Thread-safe.
@@ -1495,10 +2500,10 @@ class HapticDevice(Generic[T]):
         """
 
         self.check_exception()
-        return _cast(T, self._v_view)
+        return _cast(GenericVecType, self._v_view)
 
     @property
-    def w(self) -> T:
+    def w(self) -> GenericVecType:
         """
         Provides a read-only reference to the last-known angular velocity of the
         HapticDevice's end-effector. Thread-safe.
@@ -1509,10 +2514,10 @@ class HapticDevice(Generic[T]):
         """
 
         self.check_exception()
-        return _cast(T, self._w_view)
+        return _cast(GenericVecType, self._w_view)
 
     @property
-    def t(self) -> T:
+    def t(self) -> GenericVecType:
         """
         Provides a read-only reference to the last-known applied torque of the
         HapticDevice's end-effector. Thread-safe.
@@ -1523,10 +2528,10 @@ class HapticDevice(Generic[T]):
         """
 
         self.check_exception()
-        return _cast(T, self._t_view)
+        return _cast(GenericVecType, self._t_view)
 
     @property
-    def f(self) -> T:
+    def f(self) -> GenericVecType:
         """
         Provides a read-only reference to the last-known applied force of the
         HapticDevice's end-effector. Thread-safe.
@@ -1537,7 +2542,7 @@ class HapticDevice(Generic[T]):
         """
 
         self.check_exception()
-        return _cast(T, self._f_view)
+        return _cast(GenericVecType, self._f_view)
 
     @property
     def delta_jacobian(self) -> DefaultMat3x3Type:
@@ -1559,16 +2564,26 @@ class HapticDevice(Generic[T]):
         self.check_exception()
         return _cast(DefaultMat6x6Type, self._inertia_matrix_view)
 
+    def set_update_list(self, lst: List[Callable[..., Any]]):
+        self._update_list = lst
+
+    def update(self):
+        for updater in self._update_list:
+            updater()
+
+        return self
 
     def calculate_pos(self):
         """
         Calculates and stores the position of the device given the current
-        end-effector positionin the internal buffer.
+        value of the delta encoders in the internal buffer.
         """
 
         dhd.expert.direct.deltaEncoderToPosition(
             self._encs.delta, self._pos, self._id
         )
+
+        return self
 
     def calculate_delta_joint_angles(self):
         """
@@ -1579,6 +2594,8 @@ class HapticDevice(Generic[T]):
         dhd.expert.direct.deltaEncodersToJointAngles(
             self._encs.wrist, self._joint_angles.delta, self._id
         )
+
+        return self
 
     def calculate_delta_jacobian(self):
         """
@@ -1592,15 +2609,19 @@ class HapticDevice(Generic[T]):
             self._joint_angles.delta, self._delta_jacobian, self._id
         )
 
+        return self
+
     def calculate_wrist_joint_angles(self):
         """
         Calculates and stores the joint angles of the WRIST structure given
-        the current end-effector encoder readings in the internal buffer.
+        the current end-effector encoder values in the internal buffer.
         """
 
         dhd.expert.direct.wristEncodersToJointAngles(
             self._encs.wrist, self._joint_angles.wrist, self._id
         )
+
+        return self
 
     def calculate_wrist_jacobian(self):
         """
@@ -1611,6 +2632,8 @@ class HapticDevice(Generic[T]):
         dhd.expert.direct.wristJointAnglesToJacobian(
             self._joint_angles.wrist, self._wrist_jacobian, self._id
         )
+
+        return self
 
     def calculate_inertia_matrix(self):
         """
@@ -1623,29 +2646,69 @@ class HapticDevice(Generic[T]):
             self._joint_angles, self._inertia_matrix, self._id
         )
 
-    def update_delta_enc_and_calculate(self):
+        return self
+
+    def update_encs_and_calculate(self):
+        self.update_encs()
+        self.calculate_pos()
+        self.calculate_wrist_joint_angles()
+        self.calculate_delta_jacobian()
+        self.calculate_wrist_jacobian()
+
+    def update_enc_velocities_and_calculate(self):
+        self.update_enc_velocities()
+
+
+    def update_delta_encs_and_calculate(self):
         """
         Updates the DELTA encoders and given those values, calculates the
         position of the end-effector, DELTA joint angles, and the DELTA
         jacobian.
         """
 
-        self.update_delta_enc()
+        self.update_delta_encs()
         self.calculate_pos()
         self.calculate_delta_joint_angles()
         self.calculate_delta_jacobian()
 
-    def update_wrist_enc_and_calculate(self):
+        return self
+
+    def update_wrist_encs_and_calculate(self):
         """
         Updates the WRIST encoders and given those values, calculates the wrist
         joint angles and the WRIST jacobian.
         """
 
-        self.update_wrist_enc()
+        self.update_wrist_encs()
         self.calculate_wrist_joint_angles()
         self.calculate_wrist_jacobian()
 
-    def update_delta_enc(self):
+        return self
+
+    def update_encs(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting the current
+        encoder readers of the DELTA structure that controls the end-effector
+        and updates the last-known position with the response. The requested
+        values are then loaded into an internal buffer.
+
+        :raises DHDError:
+            If an error has occured with the device.
+        """
+
+        err = dhd.expert.direct.getEnc(self._encs, 0xff, self._id)
+
+        if err == -1:
+            raise dhd.errno_to_exception(
+                dhd.errorGetLast())(
+                    ID=self._id,
+                    feature=dhd.expert.getEnc
+            )
+
+        return self
+
+
+    def update_delta_encs(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
         encoder readers of the DELTA structure that controls the end-effector
@@ -1665,7 +2728,9 @@ class HapticDevice(Generic[T]):
                     feature=dhd.expert.getDeltaEncoders
             )
 
-    def update_wrist_enc(self):
+        return self
+
+    def update_wrist_encs(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
         encoder readers of the DELTA structure that controls the end-effector
@@ -1684,6 +2749,56 @@ class HapticDevice(Generic[T]):
                     ID=self._id,
                     feature=dhd.expert.getWristEncoders
             )
+
+        return self
+
+    def update_enc_velocities(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting the current
+        encoder readers of the DELTA structure that controls the end-effector
+        and updates the last-known position with the response. The requested
+        values are then loaded into an internal buffer.
+
+        :raises DHDError:
+            If an error has occured with the device.
+        """
+
+        err = dhd.expert.direct.getEncVelocities(self._encs_v, self._id)
+
+        if err == -1:
+            raise dhd.errno_to_exception(
+                dhd.errorGetLast())(
+                    ID=self._id,
+                    feature=dhd.expert.getEncVelocities
+            )
+
+        return self
+
+    def update_joint_angles(self):
+        err = dhd.expert.direct.getJointAngles(self._joint_angles, self._id)
+
+        if err == -1:
+            raise dhd.errno_to_exception(
+                dhd.errorGetLast())(
+                    ID=self._id,
+                    feature=dhd.expert.getJointAngles
+            )
+
+        return self
+
+    def update_joint_angle_velocities(self):
+        err = dhd.expert.direct.getJointVelocities(
+            self._joint_v, self._id
+        )
+
+        if err == -1:
+            raise dhd.errno_to_exception(
+                dhd.errorGetLast())(
+                    ID=self._id,
+                    feature=dhd.expert.getJointVelocities
+            )
+
+        return self
 
     def update_position(self):
         """
@@ -1704,6 +2819,8 @@ class HapticDevice(Generic[T]):
                     ID=self._id,
                     feature=dhd.getPosition
             )
+
+        return self
 
     def update_velocity(self):
         """
@@ -1729,6 +2846,8 @@ class HapticDevice(Generic[T]):
                 self._v[1] = nan
                 self._v[2] = nan
 
+        return self
+
     def update_angular_velocity(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
@@ -1753,6 +2872,8 @@ class HapticDevice(Generic[T]):
                 self._w[1] = nan
                 self._w[2] = nan
 
+        return self
+
     def update_force(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
@@ -1772,6 +2893,8 @@ class HapticDevice(Generic[T]):
                 feature=dhd.getForce
             )
 
+        return self
+
     def update_force_and_torque(self):
         """
         Performs a blocking read to the HapticDevice, requesting in parallel
@@ -1789,6 +2912,8 @@ class HapticDevice(Generic[T]):
                 ID=self._id,
                 feature=dhd.getForceAndTorque
             )
+
+        return self
 
     def update_force_and_torque_and_gripper_force(self):
         """
@@ -1813,6 +2938,8 @@ class HapticDevice(Generic[T]):
                 feature=dhd.getForceAndTorqueAndGripperForce
             )
 
+        return self
+
     def update_orientation(self):
         """
         Performs a blocking read to the HapticDevice,
@@ -1823,8 +2950,10 @@ class HapticDevice(Generic[T]):
         if dhd.direct.getOrientationFrame(self._frame, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
-                feature=dhd.getForceAndTorqueAndGripperForce
+                feature=dhd.getOrientationFrame
             )
+
+        return self
 
 
     def update_position_and_orientation(self):
@@ -1842,8 +2971,10 @@ class HapticDevice(Generic[T]):
         if err:
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
-                feature=dhd.getForceAndTorqueAndGripperForce
+                feature=dhd.getPositionAndOrientationFrame
             )
+
+        return self
 
     def update_buttons(self):
         """
@@ -1856,6 +2987,8 @@ class HapticDevice(Generic[T]):
         """
 
         self._buttons = dhd.getButtonMask(ID=self._id)
+
+        return self
 
     def update_status(self):
         """
@@ -1872,6 +3005,8 @@ class HapticDevice(Generic[T]):
 
         if dhd.getStatus(self._status, ID=self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
+
+        return self
 
 
     def submit(self, respect_neutral_stop=False):
@@ -1903,6 +3038,8 @@ class HapticDevice(Generic[T]):
                 feature=dhd.setForceAndTorqueAndGripperForce
             )
 
+        return self
+
     def req(self, f: IntVectorLike, t: IntVectorLike = (0, 0, 0)):
         """
         Load the request force and request torque buffer for this device.
@@ -1933,6 +3070,8 @@ class HapticDevice(Generic[T]):
         self._t_req[1] = t[1]
         self._t_req[2] = t[2]
 
+        return self
+
     def req_vibration(self, freq: float, amplitude: float):
         """
         Load the requested vibration into the vibration buffer. This won't
@@ -1953,6 +3092,8 @@ class HapticDevice(Generic[T]):
         self._vibration_req[0] = freq
         self._vibration_req[1] = amplitude
 
+        return self
+
     def submit_vibration(self):
         err = dhd.setVibration(
             self._vibration_req[0], self._vibration_req[1], 0, self._id
@@ -1964,13 +3105,15 @@ class HapticDevice(Generic[T]):
                 feature=dhd.setVibration
             )
 
+        return self
+
     def neutral(self):
         """
         Disable electromagnetic braking and put the device in IDLE mode,
         consequently disabling forces. A call to
         :func:`forcedimension.HapticDevice.req` or
-        :func:`forcedimension.HapticDevice.submit` with `respect_neutral=False`
-        will re-enable forces.
+        :func:`forcedimension.HapticDevice.submit` with
+        `respect_neutral_stop=False` will re-enable forces.
         """
 
         self._is_neutral = True
@@ -1982,8 +3125,8 @@ class HapticDevice(Generic[T]):
         force that keeps that device from moving too quickly in this mode if
         the electromagnetic brakes are enabled. A call to
         :func:`forcedimension.HapticDevice.req` or
-        :func:`forcedimension.HapticDevice.submit` with `respect_neutral=False`
-        will re-enable forces.
+        :func:`forcedimension.HapticDevice.submit` with
+        `respect_neutral_stop=False` will re-enable forces.
         """
 
         if dhd.stop(self._id):
@@ -2054,6 +3197,8 @@ class HapticDevice(Generic[T]):
         if dhd.setMaxForce(limit, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())
 
+        return self
+
     @property
     def max_torque(self) -> Optional[float]:
         """
@@ -2089,6 +3234,8 @@ class HapticDevice(Generic[T]):
         if dhd.setMaxTorque(limit, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
+        return self
+
 
     def get_button(self, button_id: int = 0) -> bool:
         """
@@ -2122,6 +3269,51 @@ class HapticDevice(Generic[T]):
 
     def __exit__(self, t, value, traceback):
         self.close()
+
+    _summary_switch = {
+        'all': (True, True), 'info': (True, False), 'config': (False, True)
+    }
+
+    _config_setters: Dict[str, Callable[..., Any]] = {
+        'mass': set_mass,
+
+        'is_force_enabled': enable_force,
+
+        'is_brake_enabled': enable_brakes,
+
+        'is_button_emulation_enabled': enable_button_emulation,
+
+        'base_angles':
+            lambda self, value: self.set_base_angles(
+                value[0], value[1], value[2]
+            ),
+
+        'com_mode': _expert_set_com_mode,
+
+        'linear_velocity_estimator':
+            lambda self, value: self.config_linear_velocity(**value),
+
+        'angular_velocity_estimator':
+            lambda self, value: self.config_linear_velocity(**value),
+
+        'max_force': set_max_force,
+
+        'max_torque': set_max_torque,
+
+        'standard_gravity': set_standard_gravity,
+    }
+
+    _config_initializer = {
+        'com_mode': _init_com_mode,
+        'is_force_enabled': _init_force_enabled,
+        'is_brake_enabled': _init_brake_enabled,
+        'linear_velocity_estimator': _init_linear_velocity_estimator,
+        'angular_velocity_estimator': _init_angular_velocity_estimator,
+        'mass': _init_mass,
+        'base_angles': _init_base_angles,
+        'max_force': _init_max_force,
+        'max_torque': _init_max_torque
+    }
 
 
 class _Poller(Thread):

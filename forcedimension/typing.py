@@ -1,7 +1,7 @@
 import ctypes as ct
 from ctypes import c_double, c_int, c_ubyte, c_uint, c_ushort
 from typing import (
-    TYPE_CHECKING, Container, Generic, List, Protocol, Sized, Tuple,
+    TYPE_CHECKING, Container, Generic, List, Literal, Protocol, Sized, Tuple,
     TypeVar, Union
 )
 
@@ -22,9 +22,10 @@ except ImportError:
     MutableIntReturnArray = List[int]
 
 
+ComModeStr = Literal['sync', 'async', 'virtual', 'network']
+
 class _Array(Sized, Container[_VT_co], Protocol[_KT_contra, _VT_co]):
     def __getitem__(self, __k: _KT_contra) -> _VT_co: ...
-
 
 class _MutableArray(
     _Array[_KT_contra, _VT], Protocol[_KT_contra, _VT]
@@ -140,3 +141,4 @@ class GenericVec(_MutableArray[int, float], Protocol):
     ]:
         ...
 
+GenericVecType = TypeVar('GenericVecType', bound=GenericVec)

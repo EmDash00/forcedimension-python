@@ -4,65 +4,26 @@ from typing import Any, Literal, Optional
 import pydantic
 
 from forcedimension.containers import DefaultVecType
+from forcedimension.dhd import Handedness, VelocityEstimatorConfig
 from forcedimension.dhd.constants import (
     DEFAULT_TIMEGUARD_US, DEFAULT_VELOCITY_WINDOW, DeviceType,
     VelocityEstimatorMode
 )
 
+from forcedimension.drd import (
+    DEFAULT_ENC_MOVE_PARAMS,
+    DEFAULT_ENC_TRACK_PARAMS,
+    DEFAULT_POS_MOVE_PARAMS,
+    DEFAULT_POS_TRACK_PARAMS,
+    DEFAULT_ROT_MOVE_PARAMS,
+    DEFAULT_ROT_TRACK_PARAMS,
+    DEFAULT_GRIP_MOVE_PARAMS,
+    DEFAULT_GRIP_TRACK_PARAMS,
+    TrajectoryGenParams
+)
 
-class TrajectoryGenParam(pydantic.BaseModel):
-    vmax: float = nan
-    amax: float = nan
-    jerk: float = nan
-
-    def __iter__(self):
-        yield self.vmax
-        yield self.amax
-        yield self.jerk
-
-    @pydantic.field_validator('vmax')
-    @classmethod
-    def validate_vmax(cls, val: Optional[float]):
-        if val is None:
-            return
-
-        if val < 0:
-            raise ValueError("vmax must be greater than 0")
-
-    @pydantic.field_validator('amax')
-    @classmethod
-    def validate_amax(cls, val: Optional[float]):
-        if val is None:
-            return
-
-        if val < 0:
-            raise ValueError("amax must be greater than 0")
-
-    @pydantic.field_validator('jerk')
-    @classmethod
-    def validate_jerk(cls, val: Optional[float]):
-        if val is None:
-            return
-
-        if val < 0:
-            raise ValueError("jerk must be greater than 0")
-
-
-class VelocityEstimatorConfig(pydantic.BaseModel):
-    window_size: int = DEFAULT_VELOCITY_WINDOW
-    mode: VelocityEstimatorMode = VelocityEstimatorMode.WINDOWING
-
-    @pydantic.field_validator('window')
-    @classmethod
-    def validate_window(cls, val: Optional[int]):
-        if val is None:
-            return
-
-        if val < 0:
-            raise ValueError("window must be greater than 0")
-
-
-class HapticDeviceInfo(pydantic.BaseModel):
+class HapticDeviceSpecs(pydantic.BaseModel):
+    name: Optional[str]
     devtype: DeviceType
     serial_number: int = 0
     has_base: bool
@@ -70,7 +31,8 @@ class HapticDeviceInfo(pydantic.BaseModel):
     has_active_wrist: bool
     has_gripper: bool
     has_active_gripper: bool
-    is_left_handed: bool
+    num_dof: int
+    handedness: Handedness
     is_drd_supported: bool = False
 
     @pydantic.field_validator('serial_number')
@@ -79,7 +41,7 @@ class HapticDeviceInfo(pydantic.BaseModel):
         if val is None:
             return
 
-        if val < 0:
+        if val < 0 and val != -1:
             raise ValueError("serial_number must be greater than 0")
 
 
@@ -102,36 +64,54 @@ class HapticDeviceConfig(pydantic.BaseModel):
                 )
 
     class RegulatorConfig(pydantic.BaseModel):
-        is_pos_regulated: bool = False
-        is_rot_regulated: bool = False
-        is_grip_regulated: bool = False
-        motor_ratio_max: float = 1.0
-        enc_move_param: TrajectoryGenParam = pydantic.Field(
-            default_factory=TrajectoryGenParam
+        is_filtering_enabled: bool = True
+        is_pos_regulated: bool = True
+        is_rot_regulated: bool = True
+        is_grip_regulated: bool = True
+        max_motor_ratio: float = 1.0
+        enc_move_param: TrajectoryGenParams = pydantic.Field(
+            default_factory = lambda: TrajectoryGenParams(
+                vmax=2e4, amax=2e4, jerk=2e4
+            )
         )
-        enc_track_param: TrajectoryGenParam = pydantic.Field(
-            default_factory=TrajectoryGenParam
+        enc_track_param: TrajectoryGenParams = pydantic.Field(
+            default_factory = lambda: TrajectoryGenParams(
+                vmax=1.0, amax=1.0, jerk=1.0
+            )
         )
-        pos_move_param: TrajectoryGenParam = pydantic.Field(
-            default_factory=TrajectoryGenParam
+        pos_move_param: TrajectoryGenParams = pydantic.Field(
+            default_factory = lambda: TrajectoryGenParams(
+                vmax=1.0, amax=1.0, jerk=1.0
+            )
         )
-        pos_track_param: TrajectoryGenParam = pydantic.Field(
-            default_factory=TrajectoryGenParam
+        pos_track_param: TrajectoryGenParams = pydantic.Field(
+            default_factory = lambda: TrajectoryGenParams(
+                vmax=1.0, amax=1.0, jerk=1.0
+            )
         )
-        rot_move_param: TrajectoryGenParam = pydantic.Field(
-            default_factory=TrajectoryGenParam
+        rot_move_param: TrajectoryGenParams = pydantic.Field(
+            default_factory = lambda: TrajectoryGenParams(
+                vmax=30.0, amax=30.0, jerk=30.0
+            )
         )
-        rot_track_param: TrajectoryGenParam = pydantic.Field(
-            default_factory=TrajectoryGenParam
+        rot_track_param: TrajectoryGenParams = pydantic.Field(
+            default_factory = lambda: TrajectoryGenParams(
+                vmax=30.0, amax=30.0, jerk=30.0
+            )
         )
-        grip_move_param: TrajectoryGenParam = pydantic.Field(
-            default_factory=TrajectoryGenParam
+        grip_move_param: TrajectoryGenParams = pydantic.Field(
+            default_factory = lambda: TrajectoryGenParams(
+                vmax=1.0, amax=1.0, jerk=1.0
+            )
+
         )
-        grip_track_param: TrajectoryGenParam = pydantic.Field(
-            default_factory=TrajectoryGenParam
+        grip_track_param: TrajectoryGenParams = pydantic.Field(
+            default_factory = lambda: TrajectoryGenParams(
+                vmax=1.0, amax=1.0, jerk=1.0
+            )
         )
 
-        @pydantic.field_validator('motor_ratio_max')
+        @pydantic.field_validator('max_motor_ratio')
         @classmethod
         def validate_motor_ratio_max(cls, val: float):
             if val < 0.0 or val > 1.0:
@@ -141,8 +121,8 @@ class HapticDeviceConfig(pydantic.BaseModel):
 
     is_force_enabled: bool = True
     is_brake_enabled: bool = True
-    is_button_emulation_enabled: bool = True
-    is_gravity_compensation_enabled: bool = True
+    is_button_emulation_enabled: bool = False
+    is_gravity_compensation_enabled: bool = False
 
     base_angles: DefaultVecType = pydantic.Field(  # type: ignore
         default_factory=DefaultVecType

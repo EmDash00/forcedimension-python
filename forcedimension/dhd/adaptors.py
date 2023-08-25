@@ -1,10 +1,31 @@
 import ctypes
 from ctypes import Structure, c_int, pointer
 from enum import IntEnum
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Callable, Dict, Literal, Optional
+import typing
 
-from forcedimension.dhd.constants import MAX_STATUS, ComMode, DeviceType, ErrorNum, VelocityEstimatorMode
-from forcedimension.typing import Pointer, c_int_ptr
+import pydantic
+import pydantic_core
+
+from forcedimension.dhd.constants import (
+    DEFAULT_VELOCITY_WINDOW, MAX_STATUS,
+    ComMode, DeviceType, ErrorNum, VelocityEstimatorMode
+)
+from forcedimension.typing import ComModeStr, Pointer, c_int_ptr
+
+
+class VelocityEstimatorConfig(pydantic.BaseModel):
+    window_size: int = DEFAULT_VELOCITY_WINDOW
+    mode: VelocityEstimatorMode = VelocityEstimatorMode.WINDOWING
+
+    @pydantic.field_validator('window_size')
+    @classmethod
+    def validate_window(cls, val: Optional[int]):
+        if val is None:
+            return
+
+        if val < 0:
+            raise ValueError("window must be greater than 0")
 
 
 class Status(Structure):
@@ -16,6 +37,14 @@ class Status(Structure):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._ptr = ctypes.cast(pointer(self), c_int_ptr)
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
+    ) -> pydantic_core.CoreSchema:
+        return pydantic_core.core_schema.no_info_after_validator_function(
+            cls, handler(cls.__init__)
+        )
 
     @property
     def ptr(self) -> Pointer[c_int]:
@@ -78,50 +107,50 @@ class Status(Structure):
     #: Indicates if the device is in RESET mode or not.
     #: See device modes for details.
     reset: int
-    "Indicates if the device controller is in RESET mode or not."
+    "1 if the device controller is in RESET mode, 0 otherwise"
 
     #: Indicates if the device is in IDLE mode or not.
     #: see device modes for details.
     idle: int
-    "Indicates if the device controller is in idle mode or not."
+    "1 if the device controller is in idle mode or not, 0 otherwise"
 
     #: Indicates if the device is in force mode or not.
     #: see device modes for details.
     force: int
-    "Indicates if the device controller is in force mode or not."
+    "1 if the device controller is in force mode or not, 0 otherwise"
 
     #: Indicates if the device is in brake mode or not.
     #: see device modes for details.
     brake: int
-    "Indicates if device controller is in break mode or not."
+    "1 if device controller is in break mode or not, 0 otherwise"
 
     #: indicates if the torques are active or not when the device is
     #: in force mode. see device modes for details.
     torque: int
-    "indicates if torques are active when the device is in force mode."
+    "1 if torques are active when the device is in force mode, 0 otherwise"
 
     #: Indicates if the device has a wrist or not.
     #: see device types for details.
     wrist_detected: int
-    "Indicates if the device has a wrist or not."
+    "1 if the device has a wrist, 0 otherwise."
 
     #: Indicates if the an error happened on the device controller.
     error: int
-    "Indicates if an error happend on the device controller."
+    "1 if an error happend on the device controller, 0 otherwise"
 
     #: Indicates if the gravity compensation option is enabled or not.
     gravity: int
-    "Indicates if the gravity compensation option is enabled or not."
+    "1 if the gravity compensation option is enabled, 0 otherwise"
 
     #: Indicates if the TimeGuard feature is enabled or not.
     #: See TimeGuard feature for details.
     timeguard: int
-    "Indicates if the TimeGuard option is enabled or not."
+    "1 if the TimeGuard option is enabled, 0 otherwise"
 
     #: Indicates if the device wrist is initialized or not.
     #: See device types for details.
     wrist_init: int
-    "Indicates if the device wrist is initialized or not."
+    "1 if the device wrist is initialized, 0 otherwise."
 
     #: The status of the redundant encoder consistency check. For devices
     #: equipped with redundant encoders, a value of 1 indicates that the
@@ -129,7 +158,7 @@ class Status(Structure):
     # if the device does not feature redundant encoders.
     redundancy: int
     """
-    Indicates if the redundant encoder check was successful. For devices that
+    1 if the redundant encoder check was successful. For devices that
     don't feature redundant encoders, this value is 0.
     """
 
@@ -141,8 +170,29 @@ class Status(Structure):
     forces were turned off).
     """
 
-    unknown_status: int  # TODO: figure out what this is
+    #: The status of the locks on supported devices. The value can be either
+    #: 1 if the locks are engaged, 0 if the locks are disengagned,
+    #: or -1 if the status of the locks is unknown.
+    locks: int
+    """
+    The status of the locks on supported devices. The value can be either
+    1 if the locks are engaged, 0 if the locks are disengagned, or -1 if the
+    status of the locks is unknown.
+    """
 
+    #: A bit vector that indicates the validation status of each axis. The
+    #: validation status of all device axes can be assessed by calling the
+    #: :func:`forcedimension.drd.checkInit()` function in the Force Dimension
+    #: Robotic SDK (DRD). Each bit of the status value returned corresponds
+    #: to the validation status of the corresponding axis.
+    axis_checked: int
+    """
+    A bit vector that indicates the validation status of each axis. The
+    validation status of all device axes can be assessed by calling the
+    drd.checkInit() function in the Force Dimension Robotic SDK (DRD). Each bit
+    of the status value returned corresponds to a the validation status of the
+    corresponding axis:
+    """
 
 class Handedness(IntEnum):
     NONE = 0
@@ -457,7 +507,7 @@ _com_mode_strs = [
     'network'
 ]
 
-_com_modes = {
+_com_modes: Dict[ComModeStr, ComMode] = {
     'sync': ComMode.SYNC,
     'async': ComMode.ASYNC,
     'virtual': ComMode.VIRTUAL,
@@ -465,22 +515,22 @@ _com_modes = {
 }
 
 _devtype_strs = {
-    DeviceType.NONE: 'none',
-    DeviceType.DELTA3: 'delta.3',
-    DeviceType.OMEGA3: 'omega.3',
-    DeviceType.OMEGA6_RIGHT: 'omega.6 right',
-    DeviceType.OMEGA6_LEFT: 'omega.6 left',
-    DeviceType.OMEGA7_RIGHT: 'omega.7 right',
-    DeviceType.OMEGA7_LEFT: 'omega.7 left',
-    DeviceType.CONTROLLER: 'controller',
-    DeviceType.CONTROLLER_HR: 'controller HR',
-    DeviceType.CUSTOM: 'custom',
-    DeviceType.SIGMA3: 'sigma.3',
-    DeviceType.SIGMA7_RIGHT: 'sigma.7 right',
-    DeviceType.SIGMA7_LEFT: 'sigma.7 left',
-    DeviceType.LAMBDA3: 'lambda.3',
-    DeviceType.LAMBDA7_RIGHT: 'lambda.7 right',
-    DeviceType.LAMBDA7_LEFT: 'lambda.7 left',
+    DeviceType.NONE: 'None',
+    DeviceType.DELTA3: 'DELTA.3',
+    DeviceType.OMEGA3: 'OMEGA.3',
+    DeviceType.OMEGA6_RIGHT: 'OMEGA.6 right',
+    DeviceType.OMEGA6_LEFT: 'OMEGA.6 Left',
+    DeviceType.OMEGA7_RIGHT: 'OMEGA.7 Right',
+    DeviceType.OMEGA7_LEFT: 'OMEGA.7 Left',
+    DeviceType.CONTROLLER: 'CONTROLLER',
+    DeviceType.CONTROLLER_HR: 'CONTROLLER HR',
+    DeviceType.CUSTOM: 'Custom',
+    DeviceType.SIGMA3: 'SIGMA.3',
+    DeviceType.SIGMA7_RIGHT: 'SIGMA.7 Right',
+    DeviceType.SIGMA7_LEFT: 'SIGMA.7 Left',
+    DeviceType.LAMBDA3: 'LAMBDA.3',
+    DeviceType.LAMBDA7_RIGHT: 'LAMBDA.7 Right',
+    DeviceType.LAMBDA7_LEFT: 'LAMBDA.7 Left',
     DeviceType.FALCON: 'Novint Falcon',
 }
 
@@ -501,17 +551,39 @@ _estimator_mode_str = {
     VelocityEstimatorMode.WINDOWING: "Windowing"
 }
 
+_dof = {
+    DeviceType.DELTA3: 3,
+    DeviceType.OMEGA3: 3,
+    DeviceType.OMEGA6_RIGHT: 6,
+    DeviceType.OMEGA6_LEFT: 6,
+    DeviceType.OMEGA7_RIGHT: 7,
+    DeviceType.OMEGA7_LEFT: 6,
+    DeviceType.SIGMA3: 3,
+    DeviceType.SIGMA7_RIGHT: 7,
+    DeviceType.SIGMA7_LEFT: 7,
+    DeviceType.LAMBDA3: 3,
+    DeviceType.LAMBDA7_RIGHT: 7,
+    DeviceType.LAMBDA7_LEFT: 7,
+    DeviceType.FALCON: 3,
+}
 
-def com_mode_str(com_mode: int) -> Literal[
-    'sync', 'async', 'virtual', 'network'
-]:
-    return _com_mode_strs[com_mode]  # type: ignore
+def com_mode_str(com_mode: int) -> ComModeStr:
+    return typing.cast(ComModeStr, _com_mode_strs[com_mode])
 
-def com_mode_from_str(com_mode_str: str) -> ComMode:
+
+def com_mode_from_str(com_mode_str: ComModeStr) -> ComMode:
     return _com_modes[com_mode_str]
+
+
+def num_dof(devtype: DeviceType) -> int:
+    if devtype not in _dof:
+        return 0
+
+    return _dof[devtype]
 
 def devtype_str(devtype: DeviceType) -> str:
     return _devtype_strs[devtype]
+
 
 def handedness(devtype: DeviceType) -> Handedness:
     if devtype in _handedness:
@@ -522,8 +594,11 @@ def handedness(devtype: DeviceType) -> Handedness:
 def handedness_str(handedness: Handedness) -> str:
     return _handedness_str[handedness]
 
+
 def velocity_estimator_mode_str(mode: VelocityEstimatorMode):
     return _estimator_mode_str[mode]
+
+
 
 def errno_to_exception(errno: int):
     """

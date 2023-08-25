@@ -209,7 +209,7 @@ class Enc4(array, SupportsPtr[c_int]):
         return self._ptr
 
 
-class DOFEncs(array, SupportsPtr[c_int]):
+class DOFInt(array, SupportsPtr[c_int]):
     """
     Represents an array of encoders for each degree-of-freedom as a Python
     `array.array`
@@ -218,7 +218,7 @@ class DOFEncs(array, SupportsPtr[c_int]):
     def __new__(
         cls, initializer: Iterable[int] = (0 for _ in range(MAX_DOF))
     ):
-        arr = super(DOFEncs, cls).__new__(
+        arr = super(DOFInt, cls).__new__(
             cls, 'i', initializer  # type: ignore
         )
 
@@ -298,7 +298,7 @@ class DOFMotorArray(array, SupportsPtr[c_ushort]):
         return self._ptr
 
 
-class DOFJointAngles(array, SupportsPtr[c_double]):
+class DOFFloat(array, SupportsPtr[c_double]):
     """
     Represents an array of joint angles as a Python `array.array`.
     """
@@ -306,7 +306,7 @@ class DOFJointAngles(array, SupportsPtr[c_double]):
     def __new__(
         cls, initializer: Iterable[float] = (0 for _ in range(MAX_DOF))
     ):
-        arr = super(DOFJointAngles, cls).__new__(
+        arr = super(DOFFloat, cls).__new__(
             cls, 'd', initializer  # type: ignore
         )
 
@@ -414,8 +414,8 @@ class Mat6x6(List[array], SupportsPtr[c_double]):
 DefaultVecType = Vector3
 DefaultEnc3Type = Enc3
 DefaultEnc4Type = Enc4
-DefaultDOFEncsType = DOFEncs
-DefaultDOFJointAnglesType = DOFJointAngles
+DefaultIntDOFType = DOFInt
+DefaultFloatDOFType = DOFFloat
 DefaultMat3x3Type = Mat3x3
 DefaultMat6x6Type = Mat6x6
 
@@ -560,7 +560,7 @@ try:
         def ptr(self) -> c_int_ptr:
             return self._ptr
 
-    class NumpyDOFEncs(np.ndarray, SupportsPtr[c_int]):
+    class NumpyDOFInt(np.ndarray, SupportsPtr[c_int]):
         """
         Represents an array of encoder values for each degree-of-freedom as a
         view over a `numpy.ndarray`.
@@ -644,7 +644,7 @@ try:
         def ptr(self) -> c_ushort_ptr:
             return self._ptr
 
-    class NumpyDOFJointAngles(np.ndarray, SupportsPtr[c_double]):
+    class NumpyDOFFloat(np.ndarray, SupportsPtr[c_double]):
         """
         A class representing an array of joint angles for all
         degree-of-freedoms as a view over a `numpy.ndarray`.
@@ -756,8 +756,8 @@ try:
     DefaultVecType = NumpyVector3
     DefaultEnc3Type = NumpyEnc3
     DefaultEnc4Type = NumpyEnc4
-    DefaultDOFEncsType = NumpyDOFEncs
-    DefaultDOFJointAnglesType = NumpyDOFJointAngles
+    DefaultIntDOFType = NumpyDOFInt
+    DefaultFloatDOFType = NumpyDOFFloat
     DefaultMat3x3Type = NumpyMat3x3
     DefaultMat6x6Type = NumpyMat6x6
 except ImportError:
