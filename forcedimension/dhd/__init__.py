@@ -5,7 +5,6 @@ import ctypes as ct
 from typing import Optional, Tuple, Union
 
 import forcedimension.runtime as _runtime
-from forcedimension.containers import VersionTuple
 from forcedimension.typing import (
     c_double_ptr, c_int_ptr, c_ushort_ptr, MutableFloatMatrixLike
 )
@@ -567,7 +566,7 @@ _libdhd.dhdGetSDKVersion.argtypes = [
 _libdhd.dhdGetSDKVersion.restype = None
 
 
-def getSDKVersion() -> VersionTuple:
+def getSDKVersion() -> _runtime.VersionTuple:
     """
     Get the version of the Force Dimension SDK in the form (major, minor,
     release, revision). Versions of the Force Dimension SDK
@@ -575,7 +574,7 @@ def getSDKVersion() -> VersionTuple:
 
     See Also
     --------
-    :class:`forcedimension.dhd.adaptors.VersionTuple`
+    :class:`forcedimension.runtime.VersionTuple`
 
 
     :returns:

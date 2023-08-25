@@ -2,8 +2,8 @@ from math import nan
 from typing import Any, Literal, Optional
 
 import pydantic
+from forcedimension import containers
 
-from forcedimension.containers import DefaultVecType
 from forcedimension.dhd import Handedness, VelocityEstimatorConfig
 from forcedimension.dhd.constants import (
     DEFAULT_TIMEGUARD_US, DEFAULT_VELOCITY_WINDOW, DeviceType,
@@ -124,8 +124,8 @@ class HapticDeviceConfig(pydantic.BaseModel):
     is_button_emulation_enabled: bool = False
     is_gravity_compensation_enabled: bool = False
 
-    base_angles: DefaultVecType = pydantic.Field(  # type: ignore
-        default_factory=DefaultVecType
+    base_angles: containers.Vector3 = pydantic.Field(  # type: ignore
+        default_factory=containers.Vector3
     )
 
     com_mode: Literal['async', 'sync', 'virtual', 'network'] = 'async'

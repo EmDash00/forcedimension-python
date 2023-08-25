@@ -5,11 +5,23 @@ import platform
 import sys
 import typing
 from functools import lru_cache
+from typing import NamedTuple
 
-from forcedimension.containers import VersionTuple
+class VersionTuple(NamedTuple):
+    """
+    Adapts the four seperate number return into a single grouped
+    NamedTuple.
+    """
+    major: int
+    minor: int
+    release: int
+    revision: int
+
+    def __str__(self):
+        return f"{self.major}.{self.minor}.{self.release}-{self.revision}"
+
 
 VERSION_TARGET = VersionTuple(3, 16, 0, 0)
-
 
 @lru_cache
 def load(lib_name, search_dirs=(), silent=False):

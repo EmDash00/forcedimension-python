@@ -14,6 +14,7 @@ import warnings
 from copy import copy
 import yaml
 
+import forcedimension.containers as containers
 import forcedimension.dhd as dhd
 from forcedimension.dhd.adaptors import Handedness
 import forcedimension.drd as drd
@@ -27,13 +28,13 @@ from forcedimension.serialization import (
     HapticDeviceSpecs, HapticDeviceConfig, TrajectoryGenParams
 )
 from forcedimension.dhd import ErrorNum, Status
-from forcedimension.typing import FloatVectorLike, GenericVecType, IntVectorLike, MutableFloatVectorLike
+from forcedimension.typing import FloatVectorLike, IntVectorLike
 from forcedimension.util import ImmutableWrapper
 
 
 dhd.expert.enableExpertMode()
 
-class HapticDevice(Generic[GenericVecType]):
+class HapticDevice:
     """
     A HapticDevice is a high-level wrapper for any compatible Force Dimension
     device.
@@ -69,8 +70,8 @@ class HapticDevice(Generic[GenericVecType]):
             self._w = ct.c_double()
             self._fg = ct.c_double()
 
-            self._thumb_pos = self._parent._VecType()
-            self._finger_pos = self._parent._VecType()
+            self._thumb_pos = containers.Vector3()
+            self._finger_pos = containers.Vector3()
 
             self._thumb_pos_view = ImmutableWrapper(self._thumb_pos)
             self._finger_pos_view = ImmutableWrapper(self._finger_pos)
@@ -193,7 +194,7 @@ class HapticDevice(Generic[GenericVecType]):
             self._config.max_force = limit
 
         @property
-        def thumb_pos(self) -> GenericVecType:
+        def thumb_pos(self) -> containers.Vector3:
             """
             Provides a read-only reference to the last-known position of the
             thumb rest position (in [m]) of the gripper about the X, Y, and Z
@@ -205,14 +206,14 @@ class HapticDevice(Generic[GenericVecType]):
             """
 
             self.check_exception()
-            return _cast(GenericVecType, self._thumb_pos_view)
+            return _cast(containers.Vector3, self._thumb_pos_view)
 
         @property
-        def finger_pos(self) -> GenericVecType:
+        def finger_pos(self) -> containers.Vector3:
             """
             Provides a read-only reference to the last-known position of the
-            forefinger rest position of the gripper (in [m]) about the X, Y, and Z
-            axes.
+            forefinger rest position of the gripper (in [m]) about the X, Y,
+            and Z axes.
 
             :raises DHDError:
                 If an error has occured with the device, invalidating the
@@ -220,7 +221,7 @@ class HapticDevice(Generic[GenericVecType]):
             """
 
             self.check_exception()
-            return _cast(GenericVecType, self._finger_pos_view)
+            return _cast(containers.Vector3, self._finger_pos_view)
 
         @property
         def gap(self) -> float:
@@ -1978,7 +1979,6 @@ class HapticDevice(Generic[GenericVecType]):
 
     def __init__(
             self,
-            VecType: Type[GenericVecType] = DefaultVecType,
             *,
             ID: Optional[int] = None,
             devtype: Optional[dhd.DeviceType] = None,
@@ -1999,11 +1999,6 @@ class HapticDevice(Generic[GenericVecType]):
         closed. Once opened, properties of the device are stored as fields
         in the class. Functions that update internal state of the Haptic Device
         do not allocate memory.
-
-        :param Type[T] VecType:
-            The default type for vector buffers used by this class. You may
-            make your own custom types, but it's recommended to use
-            `forcedimension.containers.DefaultVecType`.
 
         :param Optional[int] ID:
             If specified, will open the device of the given ID.
@@ -2073,8 +2068,6 @@ class HapticDevice(Generic[GenericVecType]):
                 raise ValueError(
                     "The config file must be a .yml or .json file"
                 )
-
-        self._VecType = VecType
 
         self._id = 0
         self._serial_number = -1
@@ -2189,32 +2182,32 @@ class HapticDevice(Generic[GenericVecType]):
         self._mass = nan
         self._gripper = None
 
-        self._encs = DefaultIntDOFType()
-        self._encs_v = DefaultFloatDOFType()
+        self._encs = containers.DOFIntArray()
+        self._encs_v = containers.DOFFloatArray()
 
-        self._joint_angles = DefaultFloatDOFType()
-        self._joint_v = DefaultFloatDOFType()
+        self._joint_angles = containers.DOFFloatArray()
+        self._joint_v = containers.DOFFloatArray()
 
-        self._pos = VecType()
-        self._v = VecType()
+        self._pos = containers.Vector3()
+        self._v = containers.Vector3()
 
-        self._orientation_angles = VecType()
+        self._orientation_angles = containers.Vector3()
 
-        self._w = VecType()
+        self._w = containers.Vector3()
 
-        self._f = VecType()
-        self._t = VecType()
+        self._f = containers.Vector3()
+        self._t = containers.Vector3()
 
-        self._delta_jacobian = DefaultMat3x3Type()
-        self._wrist_jacobian = DefaultMat3x3Type()
-        self._frame = DefaultMat3x3Type()
+        self._delta_jacobian = containers.Mat3x3()
+        self._wrist_jacobian = containers.Mat3x3()
+        self._frame = containers.Mat3x3()
 
-        self._inertia_matrix = DefaultMat6x6Type()
+        self._inertia_matrix = containers.Mat6x6()
 
         self._status = Status()
 
-        self._f_req = VecType()
-        self._t_req = VecType()
+        self._f_req = containers.Vector3()
+        self._t_req = containers.Vector3()
         self._vibration_req: List[float] = [0.] * 2
         self._buttons = 0
 
@@ -2865,13 +2858,13 @@ class HapticDevice(Generic[GenericVecType]):
         return _cast(Status, self._status_view)
 
     @property
-    def base_angles(self) -> GenericVecType:
+    def base_angles(self) -> containers.Vector3:
         """
         Provides a read-only reference of the device base plate angle
         (in [rad]) about the X, Y, and Z axes.
         """
 
-        return _cast(GenericVecType, self._base_angles_view)
+        return _cast(containers.Vector3, self._base_angles_view)
 
     def set_base_angles(
         self,
@@ -3078,17 +3071,17 @@ class HapticDevice(Generic[GenericVecType]):
         self._config.angular_velocity_estimator.mode = mode
 
     @property
-    def delta_joint_angles(self) -> GenericVecType:
+    def delta_joint_angles(self) -> containers.Vector3:
         self.check_exception()
-        return _cast(GenericVecType, self._delta_joint_angles_view)
+        return _cast(containers.Vector3, self._delta_joint_angles_view)
 
     @property
-    def wrist_joint_angles(self) -> GenericVecType:
+    def wrist_joint_angles(self) -> containers.Vector3:
         self.check_exception()
-        return _cast(GenericVecType, self._wrist_joint_angles_view)
+        return _cast(containers.Vector3, self._wrist_joint_angles_view)
 
     @property
-    def pos(self) -> GenericVecType:
+    def pos(self) -> containers.Vector3:
         """
         Provides a read-only reference to the last-known position of the
         HapticDevice's end-effector (in [m]) about the X, Y, and Z axes.
@@ -3100,10 +3093,10 @@ class HapticDevice(Generic[GenericVecType]):
         """
 
         self.check_exception()
-        return _cast(GenericVecType, self._pos_view)
+        return _cast(containers.Vector3, self._pos_view)
 
     @property
-    def v(self) -> GenericVecType:
+    def v(self) -> containers.Vector3:
         """
         Provides a read-only reference to the last-known linear velocity of the
         HapticDevice's end-effector. Thread-safe.
@@ -3114,10 +3107,10 @@ class HapticDevice(Generic[GenericVecType]):
         """
 
         self.check_exception()
-        return _cast(GenericVecType, self._v_view)
+        return _cast(containers.Vector3, self._v_view)
 
     @property
-    def w(self) -> GenericVecType:
+    def w(self) -> containers.Vector3:
         """
         Provides a read-only reference to the last-known angular velocity of the
         HapticDevice's end-effector. Thread-safe.
@@ -3128,10 +3121,10 @@ class HapticDevice(Generic[GenericVecType]):
         """
 
         self.check_exception()
-        return _cast(GenericVecType, self._w_view)
+        return _cast(containers.Vector3, self._w_view)
 
     @property
-    def t(self) -> GenericVecType:
+    def t(self) -> containers.Vector3:
         """
         Provides a read-only reference to the last-known applied torque of the
         HapticDevice's end-effector. Thread-safe.
@@ -3142,10 +3135,10 @@ class HapticDevice(Generic[GenericVecType]):
         """
 
         self.check_exception()
-        return _cast(GenericVecType, self._t_view)
+        return _cast(containers.Vector3, self._t_view)
 
     @property
-    def f(self) -> GenericVecType:
+    def f(self) -> containers.Vector3:
         """
         Provides a read-only reference to the last-known applied force of the
         HapticDevice's end-effector. Thread-safe.
@@ -3156,27 +3149,27 @@ class HapticDevice(Generic[GenericVecType]):
         """
 
         self.check_exception()
-        return _cast(GenericVecType, self._f_view)
+        return _cast(containers.Vector3, self._f_view)
 
     @property
-    def delta_jacobian(self) -> DefaultMat3x3Type:
+    def delta_jacobian(self) -> containers.Mat3x3:
         self.check_exception()
-        return _cast(DefaultMat3x3Type, self._delta_jacobian_view)
+        return _cast(containers.Mat3x3, self._delta_jacobian_view)
 
     @property
-    def wrist_jacobian(self) -> DefaultMat3x3Type:
+    def wrist_jacobian(self) -> containers.Mat3x3:
         self.check_exception()
-        return _cast(DefaultMat3x3Type, self._wrist_jacobian_view)
+        return _cast(containers.Mat3x3, self._wrist_jacobian_view)
 
     @property
-    def frame(self) -> DefaultMat3x3Type:
+    def frame(self) -> containers.Mat3x3:
         self.check_exception()
-        return _cast(DefaultMat3x3Type, self._frame_view)
+        return _cast(containers.Mat3x3, self._frame_view)
 
     @property
-    def inertia_matrix(self) -> DefaultMat6x6Type:
+    def inertia_matrix(self) -> containers.Mat6x6:
         self.check_exception()
-        return _cast(DefaultMat6x6Type, self._inertia_matrix_view)
+        return _cast(containers.Mat6x6, self._inertia_matrix_view)
 
     def set_update_list(self, lst: List[Callable[..., Any]]):
         self._update_list = lst
