@@ -1295,6 +1295,620 @@ class HapticDevice(Generic[GenericVecType]):
 
             return self
 
+        def zero(self, block: bool = True):
+            """
+            Simultaneously sends the device end-effector position and
+            orientation to zero. The motion uses smooth
+            acceleration/deceleration and follows a straight line in space and
+            a straight curve for the rotation. The acceleration and velocity
+            profiles can be controlled by adjusting the trajectory generation
+            parameters.
+            """
+
+            gap = 0
+
+            if self._parent._specs.has_gripper:
+                gap = self._parent._mock_gripper.gap
+
+            self.move_to((0, 0, 0, 0, 0, 0, gap), block=block)
+
+            return self
+
+        def zero_pos(self, block: bool = True):
+            """
+            Sends the device end-effector position to the origin.
+            The motion uses smooth acceleration/deceleration and follows a
+            straight line in space. The acceleration and velocity profiles can
+            be controlled by adjusting the trajectory generation parameters.
+            """
+
+            return self.move_to_pos((0., 0., 0.), block=block)
+
+        def zero_rot(self, block: bool = True):
+            """
+            Sends the device end-effector to zero rotation about the first,
+            second, and third joint angles The motion uses smooth
+            acceleration/deceleration and follows a straight curve. The
+            acceleration and velocity profiles can be controlled by adjusting
+            the trajectory generation parameters.
+            """
+            return self.move_to_rot((0., 0., 0.), block=block)
+
+        def move_to_enc(
+            self,
+            *cmds: Union[IntVectorLike, Iterable[IntVectorLike]],
+            block: bool = True
+        ):
+            """
+            Sequentially sends the device end-effector to a sequence desired
+            delta encoder configurations. The motion uses smooth
+            acceleration/deceleration. The acceleration and velocity profiles
+            can be controlled by adjusting the trajectory generation
+            parameters.
+
+            :param Union[IntVectorLike, Iterable[IntVectorLike]] *cmds:
+                Encoder values (or an iterable of encoder values) for each
+                delta encoder axis.
+
+            :param bool block:
+                If `True` the call will block until the command is completed.
+                If `False` the call will return immediately. `False` values are
+                only supported for calls with a single target (non-iterable).
+
+
+            Warning
+            -------
+            Paths are NOT guarunteed to be continuous if a new command is
+            given before the previous command has ended. This can happen if
+            `block` is `False` and multiple commands are provided without
+            proper synchronization. Setting `block` to `False` should be
+            reserved for use cases for iteratables which continously feed
+            inputs spaced over time (i.e. reading from some stream which
+            periodically sends commands).
+
+
+            See Also
+            --------
+            :func:`forcedimension.Regulator.track_enc()`
+            """
+
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for point in cmd:
+                        if drd.moveToEnc(point, block, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.moveToEnc, ID=self._parent._id
+                            )
+                else:
+                    if drd.moveToEnc(cmd, block, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.moveToEnc, ID=self._parent._id
+                        )
+
+            return self
+
+        def track_enc(self,
+            *cmds: Union[IntVectorLike, Iterable[IntVectorLike]]
+        ):
+            """
+            Sequentially sends the device end-effector to a sequence of
+            delta encoder configurations. This motion is guaunteed to be
+            continuous. If motion filters are enabled, the
+            motion follows a smooth acceleration/deceleration constraint on
+            each encoder axis. The acceleration and velocity profiles can be
+            controlled by adjusting the trajectory generation parameters.
+
+            :param Union[IntVectorLike, Iterable[IntVectorLike]] *cmds:
+                A sequence of end-effector encoder values.
+            """
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for point in cmd:
+                        if drd.trackEnc(point, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.trackEnc, ID=self._parent._id
+                            )
+                else:
+                    if drd.trackEnc(cmd, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.trackEnc, ID=self._parent._id
+                        )
+
+            return self
+
+        def move_to(
+            self,
+            *cmds: Union[FloatVectorLike, Iterable[FloatVectorLike]],
+            block: bool = True
+        ):
+            """
+            Sends the device end-effector to a set of desired
+            7-DOF configurations.  The motion uses smooth
+            acceleration/deceleration and will follow straight lines in
+            position space as well as straight curves in orientation space. The
+            acceleration and velocity profiles can be controlled by adjusting
+            the trajectory generation parameters.
+
+            :param Union[IntVectorLike, Iterable[IntVectorLike]] *cmds:
+                An iterable where each element is a target 7 DOF configuration
+                or an iterable of 7 DOF configurations to sequentially
+                follow. DOFs 1-3 represent the position about the X,
+                Y, and Z axes (in [m]). DOFs 4-6 represent the orientation about
+                the first, second, and third wrist joints (in [rad]). DOF 7
+                represents the gripper opening gap (in [m]).
+
+            :param bool block:
+                If `True` the call will block until the command is completed.
+                If `False` the call will return immediately. `False` values are
+                only supported for calls with a single target (non-iterable).
+
+
+            Warning
+            -------
+            Paths are NOT guarunteed to be continuous if a new command is
+            given before the previous command has ended. This can happen if
+            `block` is `False` and multiple commands are provided without
+            proper synchronization. Setting `block` to `False` should be
+            reserved for use cases for iteratables which continously feed
+            inputs spaced over time (i.e. reading from some stream which
+            periodically sends commands).
+
+
+            See Also
+            --------
+            :func:`forcedimension.Regulator.track_pos()`
+            """
+
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for conf in cmd:
+                        if drd.moveTo(conf, block, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.moveTo, ID=self._parent._id
+                            )
+                else:
+                    if drd.moveTo(cmd, block, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.moveTo, ID=self._parent._id
+                        )
+
+            return self
+
+        def track(
+            self,
+            *cmds: Union[FloatVectorLike, Iterable[FloatVectorLike]],
+        ):
+            """
+            This function sends the device end-effector to a desired Cartesian
+            7-DOF configuration. If motion filters are enabled, the motion
+            follows a smooth acceleration/deceleration constraint on each
+            Cartesian axis. The acceleration and velocity profiles can be
+            controlled by adjusting the trajectory generation parameters.
+
+            :param Union[FloatVectorLike, Iterable[FloatVectorLike]] *cmds:
+                An iterable where each element is a target 7 DOF configuration
+                or an iterable of 7 DOF configurations to sequentially
+                follow. DOFs 1-3 represent the position about the X,
+                Y, and Z axes, respectively (in [m]).
+                DOFs 4-6 represent the orientation about the first, second, and
+                third wrist joints, respectively (in [rad]). DOF 7
+                represents the gripper opening gap (in [m]).
+            """
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for conf in cmd:
+                        if drd.track(conf, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.track, ID=self._parent._id
+                            )
+                else:
+                    if drd.track(cmd, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.track, ID=self._parent._id
+                        )
+            return self
+
+
+        def move_to_all_enc(
+            self,
+            *cmds: Union[IntVectorLike, Iterable[IntVectorLike]],
+            block: bool = True
+        ):
+            """
+            Sends the device end-effector to a set of desired encoder
+            positions in each degree-of-freedom. The motion follows a straight
+            line in the encoder space, with smooth acceleration/deceleration.
+            The acceleration and velocity profiles can be controlled by
+            adjusting the trajectory generation parameters.
+
+            :param Union[IntVectorLike, Iterable[IntVectorLike]] *cmds:
+                An iterable where each element is a target encoder position
+                or an iterable of target encoder positions to sequentially
+                follow. Each position specifies a target for each
+                degree-of-freedom.
+
+            :param bool block:
+                If `True` the call will block until the command is completed.
+                If `False` the call will return immediately. `False` values are
+                only supported for calls with a single target (non-iterable).
+
+            Warning
+            -------
+            Paths are NOT guarunteed to be continuous if a new command is
+            given before the previous command has ended. This can happen if
+            `block` is `False` and multiple commands are provided without
+            proper synchronization. Setting `block` to `False` should be
+            reserved for use cases for iteratables which continously feed
+            inputs spaced over time (i.e. reading from some stream which
+            periodically sends commands).
+
+
+            See Also
+            --------
+            :func:`forcedimension.Regulator.track_all_enc()`
+            """
+
+            if block:
+                if len(cmds) > 1:
+                    raise ValueError(
+                        "Blocking is only supported for single position, "
+                        "non-iterable, commands."
+                    )
+
+                if isinstance(cmds, Iterable):
+                    raise ValueError(
+                        "Blocking is only supported for single position, "
+                        "non-iterable, commands."
+                    )
+
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for point in cmd:
+                        if drd.moveToAllEnc(point, block, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.moveToAllEnc, ID=self._parent._id
+                            )
+                else:
+                    if drd.moveToAllEnc(cmd, block, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.moveToAllEnc, ID=self._parent._id
+                        )
+            return self
+
+        def track_all_enc(
+            self,
+            *cmds: Union[IntVectorLike, Iterable[IntVectorLike]]
+        ):
+            """
+            Sequentially sends the device end-effector to a set
+            of desired encoder positions in each degree of freedom. If motion
+            filters are enabled, the motion follows a smooth
+            acceleration/deceleration constraint on each encoder axis. The
+            acceleration and velocity profiles can be controlled by adjusting
+            the trajectory generation parameters.
+
+            :param Union[IntVectorLike, Iterable[IntVectorLike]] *cmds:
+                An iterable where each element is a target encoder position
+                or an iterable of target encoder positions to sequentially
+                follow. Each position specifies a target for each
+                degree-of-freedom.
+
+            """
+
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for point in cmd:
+                        if drd.trackAllEnc(point, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.trackAllEnc, ID=self._parent._id
+                            )
+                else:
+                    if drd.trackAllEnc(cmd, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.trackAllEnc, ID=self._parent._id
+                        )
+            return self
+
+        def move_to_pos(
+            self,
+            *cmds: Union[FloatVectorLike, Iterable[FloatVectorLike]],
+            block: bool = True
+        ):
+            """
+            Sends the device end-effector to a set of desired
+            positions. The motion follows a straight line in position space,
+            with smooth acceleration/deceleration. The acceleration and
+            velocity profiles can be controlled by adjusting the trajectory
+            generation parameters.
+
+            :param Union[FloatVectorLike, Iterable[FloatVectorLike]] *cmds:
+                An iterable where each element is a target position
+                or an iterable of target positions to sequentially
+                follow. Positions are about the X, Y, and Z axes (in [m]).
+
+            :param bool block:
+                If `True` the call will block until the command is completed.
+                If `False` the call will return immediately. `False` values are
+                only supported for calls with a single target (non-iterable).
+
+            :raises ValueError:
+                If more than one command (or an iterable of commands) was
+                requested when `block` is `False`.
+
+            Warning
+            -------
+            Paths are NOT guarunteed to be continuous if a new command is
+            given before the previous command has ended. This can happen if
+            `block` is `False` and multiple commands are provided without
+            proper synchronization. Setting `block` to `False` should be
+            reserved for use cases for iteratables which continously feed
+            inputs spaced over time (i.e. reading from some stream which
+            periodically sends commands).
+
+
+            See Also
+            --------
+            :func:`forcedimension.Regulator.track_pos()`
+            """
+
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for point in cmd:
+                        if drd.moveToPos(point, block, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.moveToPos, ID=self._parent._id
+                            )
+                else:
+                    if drd.moveToPos(cmd, block, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.moveToPos, ID=self._parent._id
+                        )
+
+            return self
+
+
+        def track_pos(self,
+            *cmds: Union[FloatVectorLike, Iterable[FloatVectorLike]]
+        ):
+            """
+            Sends the device end-effector to a set of desired
+            positions. The motion follows a straight line in position space,
+            with smooth acceleration/deceleration. The acceleration and
+            velocity profiles can be controlled by adjusting the trajectory
+            generation parameters.
+
+            :param Union[FloatVectorLike, Iterable[FloatVectorLike]] *cmds:
+                An iterable where each element is a target position
+                or an iterable of target positions to sequentially
+                follow. Positions are about the X, Y, and Z axes (in [m]).
+
+            :param bool block:
+                If `True` the call will block until the command is completed.
+                If `False` the call will return immediately. `False` values are
+                only supported for calls with a single target (non-iterable).
+            """
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for point in cmd:
+                        if drd.trackPos(point, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.trackPos, ID=self._parent._id
+                            )
+                else:
+                    if drd.trackPos(cmd, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.trackPos, ID=self._parent._id
+                        )
+
+            return self
+
+        def move_to_rot(
+            self,
+            *cmds: Union[FloatVectorLike, Iterable[FloatVectorLike]],
+            block: bool = True
+        ):
+            """
+            Sequentially sends the device end-effector to a set of desired
+            Cartesian rotations. The motion follows a straight curve between
+            each command, with smooth acceleration/deceleration. The
+            acceleration and velocity profiles can be controlled by adjusting
+            the trajectory generation parameters.
+
+            :param Union[FloatVectorLike, Iterable[FloatVectorLike]] *cmds:
+                An iterable where each element is a target orientation
+                or an iterable of target orientations to sequentially
+                follow. Orientations are about the first, second, and third
+                joint angles (in [rad]).
+
+            :param bool block:
+                If `True` the call will block until the command is completed.
+                If `False` the call will return immediately. `False` values are
+                only supported for calls with a single target (non-iterable).
+
+            Info
+            ----
+            Paths are NOT guarunteed to be continuous a sequence of calls where
+            `block` is `False`. Use
+            :func:`forcedimension.HapticDevice.Regulator.track_rot()` for
+            that instead.
+
+            :raises ValueError:
+                If more than one command (or an iterable of commands) was
+                requested when `block` is `False`.
+            """
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for point in cmd:
+                        if drd.moveToRot(point, block, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.moveToRot, ID=self._parent._id
+                            )
+                else:
+                    if drd.moveToRot(cmd, block, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.moveToRot, ID=self._parent._id
+                        )
+
+            return self
+
+        def track_rot(self,
+            *cmds: Union[FloatVectorLike, Iterable[FloatVectorLike]]
+        ):
+            """
+            Sequentially sends the device end-effector to a set of
+            desired Cartesian orientation. If motion filters are enabled, the
+            motion follows a smooth acceleration/deceleration curve along each
+            Cartesian axis. The acceleration and velocity profiles can be
+            controlled by adjusting the trajectory generation parameters.
+
+            :param Union[FloatVectorLike, Iterable[FloatVectorLike]] *cmds:
+                An iterable where each element is a target orientation
+                or an iterable of target orientations to sequentially
+                follow. Orientations are about the first, second, and third
+                joint angles (in [rad]).
+
+            :param bool block:
+                If `True` the call will block until the command is completed.
+                If `False` the call will return immediately. `False` values are
+                only supported for calls with a single target (non-iterable).
+
+            :raises ValueError:
+                If more than one command (or an iterable of commands) was
+                requested when `block` is `False`.
+            """
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for point in cmd:
+                        if drd.trackRot(point, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.trackRot, ID=self._parent._id
+                            )
+                else:
+                    if drd.trackRot(cmd, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.trackRot, ID=self._parent._id
+                        )
+
+            return self
+
+        def move_to_grip(
+            self,
+            *cmds: Union[float, Iterable[float]],
+            block: bool = True
+        ):
+            """
+            Sequentially sends the device gripper to a set of desired opening
+            distances. The motion is executed with smooth
+            acceleration/deceleration. The acceleration and velocity profiles
+            can be controlled by adjusting the trajectory generation
+            parameters.
+
+            :param Union[float, Iterable[float]] *cmds:
+                An iterable where each element is a target gripper opening
+                distance or an iterable of target gripper opening distances.
+                Gripper opening distances are in [m].
+
+            :param bool block:
+                If `True` the call will block until the command is completed.
+                If `False` the call will return immediately. `False` values are
+                only supported for calls with a single target (non-iterable).
+
+            Info
+            ----
+            Paths are NOT guarunteed to be continuous a sequence of calls where
+            `block` is `False`. Use
+            :func:`forcedimension.Regulator.HapticDevice.track_grip()` for that
+            instead.
+
+            :raises ValueError:
+                If more than one command (or an iterable of commands) was
+                requested when `block` is `False`.
+            """
+
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for point in cmd:
+                        if drd.moveToGrip(point, block, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.moveToGrip, ID=self._parent._id
+                            )
+                else:
+                    if drd.moveToGrip(cmd, block, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.moveToGrip, ID=self._parent._id
+                        )
+
+            return self
+
+        def track_grip(self,
+            *cmds: Union[float, Iterable[float]]
+        ):
+            """
+            This function sequentially sends the device gripper to a set of
+            desired opening distances (in [m]). If motion filters are enabled,
+            the motion follows a smooth acceleration/deceleration. The
+            acceleration and velocity profiles can be controlled by adjusting
+            the trajectory generation parameters.
+
+            :param Union[float, Iterable[float]] *cmds:
+                An iterable where each element is a target gripper opening
+                distance or an iterable of target gripper opening distances.
+                Gripper opening distances are in [m].
+            """
+
+            for cmd in cmds:
+                if isinstance(cmd, Iterable):
+                    for point in cmd:
+                        if drd.trackGrip(point, self._parent._id):
+                            dhd.errno_to_exception(dhd.errorGetLast())(
+                                op=drd.trackGrip, ID=self._parent._id
+                            )
+                else:
+                    if drd.trackGrip(cmd, self._parent._id):
+                        dhd.errno_to_exception(dhd.errorGetLast())(
+                            op=drd.trackGrip, ID=self._parent._id
+                        )
+
+            return self
+
+        def hold(self):
+            """
+            This function immediately makes the device hold its current
+            position. All motion commands are abandoned.
+            """
+
+            if drd.hold(self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.hold, ID=self._parent._id
+                )
+
+            return self
+
+        def lock(self, enabled: bool = True):
+            """
+                If `enabled` is `True`, the device moves to its park position
+                engages the mechanical locks. If `enabled` is `False`, the
+                mechanical locks are disengaged. It is recommended to follow
+                engaging locks with
+                `:func:forcedimension.HapticDevice.Regulator.stop()`.
+
+                :param bool enabled:
+                    `True` to park and engage mechanical locks, `False` to
+                    disengage locks.
+
+                :raises ArgumentError:
+                    If enabled is not implicitly converitble to C uchar.
+
+                :raises DHDErrorNotAvailable:
+                    If the device is not equipped with mechanical locks.
+            """
+
+            if drd.lock(enabled, False, self._parent._id):
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    op=drd.hold, ID=self._parent._id
+                )
+
+            return self
 
         _config_setters: Dict[str, Callable[..., Any]] = {
             'is_pos_regulated': regulate_pos,
