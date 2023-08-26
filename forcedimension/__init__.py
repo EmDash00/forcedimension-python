@@ -4166,7 +4166,7 @@ class HapticDaemon(Thread):
     def _set_pollers(self, update_list):
         if update_list is not None:
             funcs = (
-                self._dev.update_delta_enc_and_calculate,
+                self._dev.update_delta_encs_and_calculate,
                 self._dev.update_velocity,
                 self._dev.update_angular_velocity,
                 self._dev.update_buttons
