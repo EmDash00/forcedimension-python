@@ -312,9 +312,9 @@ class DHDIOError(DHDError, OSError):
         *,
         err: str,
         ID: Optional[int] = None,
-        op: Optional[Callable[[Any], Any]] = None
+        op: Optional[str] = None
     ):
-        op_seg = "" if op is None else f"{op} failed."
+        op_seg = "" if op is None else f"{op} failed. "
         id_seg = "" if ID is None else f" occured on device {ID}"
 
         return super().__init__(f"{op_seg}{err}{id_seg}")
@@ -324,7 +324,7 @@ class DHDErrorTimeout(DHDIOError):
     def __init__(
         self,
         *,
-        op: Optional[Callable[[Any], Any]] = None,
+        op: Optional[str] = None,
         ID: Optional[int] = None,
         **kwargs
     ):
