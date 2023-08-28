@@ -985,6 +985,15 @@ class HapticDevice:
             return self
 
         def start_drd(self):
+            """
+            This function starts the robotic control loop for the given device.
+            The device must be initialized either manually (by moving around
+            the device end-effector) with
+            :func:`HapticDevice.Regulator.initialize()` or
+            :func:`HapticDevice.Regulator.precision_initialize()`
+            before this function can be called successfully.
+            """
+
             if not self._is_drd_running:
                 if drd.start(self._parent._id):
                     raise dhd.errno_to_exception(dhd.errorGetLast())(
@@ -993,6 +1002,8 @@ class HapticDevice:
                     )
 
                 self._is_drd_running = True
+
+            return self
 
         def stop_drd(self):
             if self._is_drd_running:
