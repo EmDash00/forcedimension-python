@@ -1389,7 +1389,7 @@ class HapticDevice:
 
             :param bool block:
                 If ``True`` the call will block until the command is completed.
-                If ``False``` the call will return immediately. ``False``` values are
+                If ``False`` the call will return immediately. ``False`` values are
                 only supported for calls with a single target (non-iterable).
 
 
@@ -1397,8 +1397,8 @@ class HapticDevice:
             -------
             Paths are NOT guarunteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
-            `block` is ``False``` and multiple commands are provided without
-            proper synchronization. Setting `block` to ``False``` should be
+            `block` is ``False`` and multiple commands are provided without
+            proper synchronization. Setting `block` to ``False`` should be
             reserved for use cases for iteratables which continously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
@@ -1480,7 +1480,7 @@ class HapticDevice:
 
             :param bool block:
                 If ``True`` the call will block until the command is completed.
-                If ``False``` the call will return immediately. ``False``` values are
+                If ``False`` the call will return immediately. ``False`` values are
                 only supported for calls with a single target (non-iterable).
 
 
@@ -1488,8 +1488,8 @@ class HapticDevice:
             -------
             Paths are NOT guarunteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
-            `block` is ``False``` and multiple commands are provided without
-            proper synchronization. Setting `block` to ``False``` should be
+            `block` is ``False`` and multiple commands are provided without
+            proper synchronization. Setting `block` to ``False`` should be
             reserved for use cases for iteratables which continously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
@@ -1572,15 +1572,15 @@ class HapticDevice:
 
             :param bool block:
                 If ``True`` the call will block until the command is completed.
-                If ``False``` the call will return immediately. ``False``` values are
+                If ``False`` the call will return immediately. ``False`` values are
                 only supported for calls with a single target (non-iterable).
 
             Warning
             -------
             Paths are NOT guarunteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
-            `block` is ``False``` and multiple commands are provided without
-            proper synchronization. Setting `block` to ``False``` should be
+            `block` is ``False`` and multiple commands are provided without
+            proper synchronization. Setting `block` to ``False`` should be
             reserved for use cases for iteratables which continously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
@@ -1675,19 +1675,19 @@ class HapticDevice:
 
             :param bool block:
                 If ``True`` the call will block until the command is completed.
-                If ``False``` the call will return immediately. ``False``` values are
+                If ``False`` the call will return immediately. ``False`` values are
                 only supported for calls with a single target (non-iterable).
 
             :raises ValueError:
                 If more than one command (or an iterable of commands) was
-                requested when `block` is ``False```.
+                requested when `block` is ``False``.
 
             Warning
             -------
             Paths are NOT guarunteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
-            `block` is ``False``` and multiple commands are provided without
-            proper synchronization. Setting `block` to ``False``` should be
+            `block` is ``False`` and multiple commands are provided without
+            proper synchronization. Setting `block` to ``False`` should be
             reserved for use cases for iteratables which continously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
@@ -1733,7 +1733,7 @@ class HapticDevice:
 
             :param bool block:
                 If ``True`` the call will block until the command is completed.
-                If ``False``` the call will return immediately. ``False``` values are
+                If ``False`` the call will return immediately. ``False`` values are
                 only supported for calls with a single target (non-iterable).
             """
             for cmd in cmds:
@@ -1773,13 +1773,13 @@ class HapticDevice:
 
             :param bool block:
                 If ``True`` the call will block until the command is completed.
-                If ``False``` the call will return immediately. ``False``` values are
+                If ``False`` the call will return immediately. ``False`` values are
                 only supported for calls with a single target (non-iterable).
 
             Info
             ----
             Paths are NOT guarunteed to be continuous a sequence of calls where
-            `block` is ``False```. Use
+            `block` is ``False``. Use
             :func:`forcedimension.HapticDevice.Regulator.track_rot()` for
             that instead.
             """
@@ -1818,7 +1818,7 @@ class HapticDevice:
 
             :param bool block:
                 If ``True`` the call will block until the command is completed.
-                If ``False``` the call will return immediately. ``False``` values are
+                If ``False`` the call will return immediately. ``False`` values are
                 only supported for calls with a single target (non-iterable).
             """
             for cmd in cmds:
@@ -1857,13 +1857,14 @@ class HapticDevice:
 
             :param bool block:
                 If ``True`` the call will block until the command is completed.
-                If ``False``` the call will return immediately. ``False``` values are
-                only supported for calls with a single target (non-iterable).
+                If ``False`` the call will return immediately. ``False`` values
+                are only supported for calls with a single target
+                (non-iterable).
 
             Info
             ----
             Paths are NOT guarunteed to be continuous a sequence of calls where
-            `block` is ``False```. Use
+            `block` is ``False``. Use
             :func:`forcedimension.Regulator.HapticDevice.track_grip()` for that
             instead.
             """
@@ -1934,13 +1935,13 @@ class HapticDevice:
         def lock(self, enabled: bool = True):
             """
                 If `enabled` is ``True``, the device moves to its park position
-                engages the mechanical locks. If `enabled` is ``False```, the
+                engages the mechanical locks. If `enabled` is ``False``, the
                 mechanical locks are disengaged. It is recommended to follow
                 engaging locks with
                 `:func:forcedimension.HapticDevice.Regulator.stop()`.
 
                 :param bool enabled:
-                    ``True`` to park and engage mechanical locks, ``False``` to
+                    ``True`` to park and engage mechanical locks, ``False`` to
                     disengage locks.
 
                 :raises ArgumentError:
@@ -3083,7 +3084,7 @@ class HapticDevice:
         gripper.
 
         :param bool enabled:
-            ``True`` to enable button emulation, ``False``` to disable.
+            ``True`` to enable button emulation, ``False`` to disable.
 
         :raises ArgumentError:
             If `enabled` is not implicitly convertible to C bool.
@@ -3109,7 +3110,7 @@ class HapticDevice:
         Enable/disable force on the end-effector.
 
         :param bool enabled:
-            ``True`` to enable, ``False``` to disable.
+            ``True`` to enable, ``False`` to disable.
         """
 
         if dhd.enableForce(enabled, ID=self._id):
@@ -3128,7 +3129,7 @@ class HapticDevice:
         applied in that mode.
 
         :param enabled bool:
-            ``True`` to enable electromagnetic braking, ``False``` to disable.
+            ``True`` to enable electromagnetic braking, ``False`` to disable.
         """
 
         if dhd.setBrakes(enabled, self._id):
@@ -3145,7 +3146,7 @@ class HapticDevice:
         added on top of the force request.
 
         :param bool enabled:
-            ``True`` to enable, ``False``` to disable.
+            ``True`` to enable, ``False`` to disable.
 
         See Also
         --------
@@ -4067,7 +4068,7 @@ class HapticDevice:
         configuration on supported device types.
 
         :returns:
-            ``True`` if the check succeeded, and ``False``` if the firmware of
+            ``True`` if the check succeeded, and ``False`` if the firmware of
             internal heatlh configuration health check failed.
         """
         return not bool(dhd.checkControllerMemory(self._id))
@@ -4154,7 +4155,7 @@ class HapticDevice:
             The button to check
 
         :returns:
-            ``True`` if the button is being pressed, ``False``` otherwise.
+            ``True`` if the button is being pressed, ``False`` otherwise.
 
         See Also
         --------
