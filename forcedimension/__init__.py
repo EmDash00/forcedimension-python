@@ -1006,6 +1006,10 @@ class HapticDevice:
             return self
 
         def stop_drd(self):
+            """
+            This function stops the robotic control loop for the given device.
+            """
+
             if self._is_drd_running:
                 if drd.stop(self._parent._id):
                     raise dhd.errno_to_exception(dhd.errorGetLast())(
@@ -1014,6 +1018,8 @@ class HapticDevice:
                     )
 
                 self._is_drd_running = False
+
+            return self
 
 
             if self._haptic_daemon is not None:
