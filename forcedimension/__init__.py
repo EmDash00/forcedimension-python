@@ -782,6 +782,11 @@ class HapticDevice:
             return drd.isFiltering(self._parent._id)
 
         def update_control_freq(self):
+            """
+            Updates an internal buffer witht he average refresh rate of the
+            control loop (in [kHz]) since this function was last called.
+            """
+
             if (control_freq := drd.getCtrlFreq(self._parent._id)) < 0:
                 dhd.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getCtrlFreq()',
@@ -789,6 +794,8 @@ class HapticDevice:
                 )
 
             self._control_freq = control_freq
+
+            return self
 
         def initialize(self, redo=False):
             if redo:
