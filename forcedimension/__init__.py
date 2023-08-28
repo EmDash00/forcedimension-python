@@ -4178,10 +4178,6 @@ class HapticDevice:
     def __exit__(self, t, value, traceback):
         self.close()
 
-    _summary_switch = {
-        'all': (True, True), 'info': (True, False), 'config': (False, True)
-    }
-
     _config_setters: Dict[str, Callable[..., Any]] = {
         'mass': set_mass,
 
