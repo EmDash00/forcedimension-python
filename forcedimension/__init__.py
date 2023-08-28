@@ -872,7 +872,13 @@ class HapticDevice:
         def regulate(self, enabled: bool = True):
             """
             Enable or disable regulation for position, rotation, and the force
-            gripper.
+            gripper. If regulation is disabled, the base
+            can move freely and will display any force set using
+            :func:`HapticDevice.req()` and :func:`HapticDevice.submit()`. If it
+            is enabled, delta position, wrist rotation, and gripper opening is
+            locked and can be controlled by calling all robotic functions
+            (e.g. :func:`HapticDevice.Regulator.move_to()`). By default,
+            regulation is enabled.
 
             :param bool enabled:
                 ``True`` to enable ``False`` to disable.
