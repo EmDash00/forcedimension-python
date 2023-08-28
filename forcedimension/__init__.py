@@ -839,11 +839,11 @@ class HapticDevice:
             encoder counter to the correct values. The initialization is
             carreid out for each device axis in turn, and validates the
             initialization by asserting the position of a validation reference
-            for each axis.This function takes longer than
-            :func:`HapticDevice.Regulator.initialize()`, but
-            :func:`HapticDevice.Regulator.check_initialization()` is not
-            necessary after calling this function.
+            for each axis. This is preferred to
+            :func:`HapticDevice.initialize()` for devices that support it.
 
+            :raises DHDErrorNotAvailable:
+                If the device does not support precision initialization.
 
             Info
             ----
