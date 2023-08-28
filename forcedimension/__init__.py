@@ -4052,6 +4052,7 @@ class HapticDevice:
         --------
         :func:`HapticDevice.req`
         """
+
         if respect_neutral_stop and (self._is_neutral or self._is_stopped):
             return
 
