@@ -4131,6 +4131,17 @@ class HapticDevice:
         return self
 
     def submit_vibration(self):
+        """
+        Push the requested vibration to the device in a blocking send.
+
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
+
+        See Also
+        --------
+        :func:`HapticDevice.submit()`
+        """
+
         err = dhd.setVibration(
             self._vibration_req[0], self._vibration_req[1], 0, self._id
         )
