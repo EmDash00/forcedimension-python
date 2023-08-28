@@ -933,6 +933,19 @@ class HapticDevice:
             return self
 
         def regulate_grip(self, enabled: bool = True):
+            """
+            This function toggles robotic regulation of the device gripper.
+            If regulation is disabled, the gripper can move freely and will
+            display any force set using :func:`HapticDevice.req()` and
+            :func:`HapticDevice.submit()`. If it is enabled, gripper
+            orientation is locked and can be controlled by calling all robotic
+            functions (e.g. :func:`HapticDevice.Regulator.move_to_grip()`). By
+            default, gripper regulation is enabled.
+
+            :param bool enabled:
+                ``True`` to enable ``False`` to disable.
+            """
+
             self._is_grip_regulated = enabled
 
             if drd.regulateGrip(enabled, self._parent._id):
