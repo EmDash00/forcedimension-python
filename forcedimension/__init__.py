@@ -963,6 +963,17 @@ class HapticDevice:
             return self
 
         def enable_filter(self, enabled: bool = True):
+            """
+            This function controls the motion filtering for subsequent calls to
+            :func:`HapticDevice.Regulator.track()`,
+            :func:`HapticDevice.Regulator.track_all_enc()`,
+            :func:`HapticDevice.Regulator.track_enc()`,
+            :func:`HapticDevice.Regulator.track_pos()`
+            :func:`HapticDevice.Regulator.track_rot()`
+            :func:`HapticDevice.Regulator.track_grip()`. This guauntees
+            acceleration contunity.
+            """
+
             self._is_filter_enabled = enabled
 
             if drd.enableFilter(enabled, self._parent._id):
@@ -970,6 +981,8 @@ class HapticDevice:
                     op='forcedimension.drd.enableFilter()',
                     ID=self._parent._id
                 )
+
+            return self
 
         def start_drd(self):
             if not self._is_drd_running:
