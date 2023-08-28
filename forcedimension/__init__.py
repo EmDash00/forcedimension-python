@@ -870,9 +870,19 @@ class HapticDevice:
             return self
 
         def regulate(self, enabled: bool = True):
+            """
+            Enable or disable regulation for position, rotation, and the force
+            gripper.
+
+            :param bool enabled:
+                ``True`` to enable ``False`` to disable.
+            """
+
             self.regulate_pos(enabled)
             self.regulate_rot(enabled)
             self.regulate_grip(enabled)
+
+            return self
 
         def regulate_pos(self, enabled: bool = True):
             self._is_pos_regulated = enabled
