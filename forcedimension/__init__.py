@@ -142,6 +142,10 @@ class HapticDevice:
                 )
 
         def req(self, fg: float):
+            """
+            Load the requested gripper force into the request buffer.
+            """
+
             self._fg_req = fg
 
         def config_velocity(
@@ -197,9 +201,9 @@ class HapticDevice:
         @property
         def thumb_pos(self) -> containers.Vector3:
             """
-            Provides a read-only reference to the last-known position of the
-            thumb rest position (in [m]) of the gripper about the X, Y, and Z
-            axes.
+            A read-only reference to the position of the thumb rest position
+            (in [m]) of the gripper about the X, Y, and Z axes at the time of
+            the last update.
 
             :raises DHDError:
                 If an error has occured with the device, invalidating the
@@ -212,9 +216,9 @@ class HapticDevice:
         @property
         def finger_pos(self) -> containers.Vector3:
             """
-            Provides a read-only reference to the last-known position of the
+            A read-only reference to the position of the
             forefinger rest position of the gripper (in [m]) about the X, Y,
-            and Z axes.
+            and Z axes at the time of the last update.
 
             :raises DHDError:
                 If an error has occured with the device, invalidating the
@@ -227,8 +231,8 @@ class HapticDevice:
         @property
         def gap(self) -> float:
             """
-            Provides a read-only copy of the last-known gripper opening distance
-            (in [m]).
+            A read-only copy of the gripper opening distance (in [m]) at the
+            time of the last update.
 
             :raises DHDError:
                 If an error has occured with the device, invalidating the
@@ -241,8 +245,8 @@ class HapticDevice:
         @property
         def angle(self) -> float:
             """
-            Provides a read-only copy of the last-known gripper opening angle
-            (in [rad]).
+            A read-only copy of the gripper opening angle (in [rad]) at the
+            time of the last update.
 
             :raises DHDError:
                 If an error has occured with the device, invalidating the
@@ -255,8 +259,8 @@ class HapticDevice:
         @property
         def v(self) -> float:
             """
-            Provides a read-only copy of the last-known linear velocity of the
-            gripper (in [m/s]).
+            A read-only copy of the linear velocity of the gripper (in [m/s])
+            at the time of the last update.
 
             :raises DHDError:
                 If an error has occured with the device, invalidating the
@@ -269,7 +273,7 @@ class HapticDevice:
         @property
         def w(self) -> float:
             """
-            Provides a read-only copy of the last-known angular velocity of the
+            A read-only copy of the last-known angular velocity of the
             gripper (in [rad/s]).
 
             :raises DHDError:
@@ -283,7 +287,7 @@ class HapticDevice:
         @property
         def fg(self) -> float:
             """
-            Provides a read-only copy of the last-known force applied by the
+            A read-only copy of the last-known force applied by the
             gripper (in [N]).
 
             :raises DHDError:
@@ -323,9 +327,8 @@ class HapticDevice:
             Performs a blocking read to the HapticDevice, requesting the value
             of the gripper encoder.
 
-            :raises DHDError:
-                If an error has occured with the device, invalidating the
-                device state.
+            :raises DHDErrorCom:
+                If a communication error has occured with the device.
             """
 
             err = dhd.expert.getGripperEncoder(self._enc, self._id)
@@ -340,9 +343,8 @@ class HapticDevice:
             Update the value of the gripper encoders and calculate the value of
             the gripper opening (in [m]) and gripper opening angle (in [rad]).
 
-            :raises DHDError:
-                If an error has occured with the device, invalidating the
-                device state.
+            :raises DHDErrorCom:
+                If an communication error has occured with the device.
             """
 
             self.update_enc()
@@ -354,9 +356,8 @@ class HapticDevice:
             Computes the estimated instanteous linear velocity of the gripper
             (in [m/s]).
 
-            :raises DHDError:
-                If an error has occured with the device, invalidating the
-                device state.
+            :raises DHDErrorCom:
+                If an communication error has occured with the device.
             """
 
             err = dhd.getGripperLinearVelocity(self._v, self._id)
@@ -369,9 +370,8 @@ class HapticDevice:
             Computes the estimated instanteous linear velocity of the gripper
             (in [rad/s]).
 
-            :raises DHDError:
-                If an error has occured with the device, invalidating the
-                device state.
+            :raises DHDErrorCom:
+                If an communication error has occured with the device.
             """
 
             err = dhd.getGripperAngularVelocityRad(self._w, self._id)
@@ -384,9 +384,8 @@ class HapticDevice:
             Performs a blocking read to the HapticDevice, requesting the value
             of the gripper opening angle (in [rad]).
 
-            :raises DHDError:
-                If an error has occured with the device, invalidating the
-                device state.
+            :raises DHDErrorCom:
+                If an communication error has occured with the device.
             """
 
             err = dhd.getGripperAngleRad(self._angle, self._id)
@@ -399,9 +398,8 @@ class HapticDevice:
             Performs a blocking read to the HapticDevice, requesting the value
             of the gripper opening (in [m]).
 
-            :raises DHDError:
-                If an error has occured with the device, invalidating the
-                device state.
+            :raises DHDErrorCom:
+                If an communication error has occured with the device.
             """
 
             err = dhd.getGripperGap(self._gap, self._id)
@@ -414,9 +412,8 @@ class HapticDevice:
             Performs a blocking read to the HapticDevice, requesting the value
             of the gripper thumb rest position (in [m]) about the X, Y, and Z axes.
 
-            :raises DHDError:
-                If an error has occured with the device, invalidating the
-                device state.
+            :raises DHDErrorCom:
+                If an communication error has occured with the device.
             """
 
             err = dhd.direct.getGripperThumbPos(self._thumb_pos, self._id)
@@ -430,9 +427,8 @@ class HapticDevice:
             of the gripper forefinger rest position (in [m]) about the X, Y,
             and Z axes.
 
-            :raises DHDError:
-                If an error has occured with the device, invalidating the
-                device state.
+            :raises DHDErrorCom:
+                If an communication error has occured with the device.
             """
 
             err = dhd.direct.getGripperFingerPos(self._finger_pos, self._id)
@@ -1370,8 +1366,8 @@ class HapticDevice:
                 delta encoder axis.
 
             :param bool block:
-                If `True` the call will block until the command is completed.
-                If `False` the call will return immediately. `False` values are
+                If ``True`` the call will block until the command is completed.
+                If ``False``` the call will return immediately. ``False``` values are
                 only supported for calls with a single target (non-iterable).
 
 
@@ -1379,8 +1375,8 @@ class HapticDevice:
             -------
             Paths are NOT guarunteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
-            `block` is `False` and multiple commands are provided without
-            proper synchronization. Setting `block` to `False` should be
+            `block` is ``False``` and multiple commands are provided without
+            proper synchronization. Setting `block` to ``False``` should be
             reserved for use cases for iteratables which continously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
@@ -1461,8 +1457,8 @@ class HapticDevice:
                 represents the gripper opening gap (in [m]).
 
             :param bool block:
-                If `True` the call will block until the command is completed.
-                If `False` the call will return immediately. `False` values are
+                If ``True`` the call will block until the command is completed.
+                If ``False``` the call will return immediately. ``False``` values are
                 only supported for calls with a single target (non-iterable).
 
 
@@ -1470,8 +1466,8 @@ class HapticDevice:
             -------
             Paths are NOT guarunteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
-            `block` is `False` and multiple commands are provided without
-            proper synchronization. Setting `block` to `False` should be
+            `block` is ``False``` and multiple commands are provided without
+            proper synchronization. Setting `block` to ``False``` should be
             reserved for use cases for iteratables which continously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
@@ -1553,16 +1549,16 @@ class HapticDevice:
                 degree-of-freedom.
 
             :param bool block:
-                If `True` the call will block until the command is completed.
-                If `False` the call will return immediately. `False` values are
+                If ``True`` the call will block until the command is completed.
+                If ``False``` the call will return immediately. ``False``` values are
                 only supported for calls with a single target (non-iterable).
 
             Warning
             -------
             Paths are NOT guarunteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
-            `block` is `False` and multiple commands are provided without
-            proper synchronization. Setting `block` to `False` should be
+            `block` is ``False``` and multiple commands are provided without
+            proper synchronization. Setting `block` to ``False``` should be
             reserved for use cases for iteratables which continously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
@@ -1656,20 +1652,20 @@ class HapticDevice:
                 follow. Positions are about the X, Y, and Z axes (in [m]).
 
             :param bool block:
-                If `True` the call will block until the command is completed.
-                If `False` the call will return immediately. `False` values are
+                If ``True`` the call will block until the command is completed.
+                If ``False``` the call will return immediately. ``False``` values are
                 only supported for calls with a single target (non-iterable).
 
             :raises ValueError:
                 If more than one command (or an iterable of commands) was
-                requested when `block` is `False`.
+                requested when `block` is ``False```.
 
             Warning
             -------
             Paths are NOT guarunteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
-            `block` is `False` and multiple commands are provided without
-            proper synchronization. Setting `block` to `False` should be
+            `block` is ``False``` and multiple commands are provided without
+            proper synchronization. Setting `block` to ``False``` should be
             reserved for use cases for iteratables which continously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
@@ -1714,8 +1710,8 @@ class HapticDevice:
                 follow. Positions are about the X, Y, and Z axes (in [m]).
 
             :param bool block:
-                If `True` the call will block until the command is completed.
-                If `False` the call will return immediately. `False` values are
+                If ``True`` the call will block until the command is completed.
+                If ``False``` the call will return immediately. ``False``` values are
                 only supported for calls with a single target (non-iterable).
             """
             for cmd in cmds:
@@ -1754,20 +1750,16 @@ class HapticDevice:
                 joint angles (in [rad]).
 
             :param bool block:
-                If `True` the call will block until the command is completed.
-                If `False` the call will return immediately. `False` values are
+                If ``True`` the call will block until the command is completed.
+                If ``False``` the call will return immediately. ``False``` values are
                 only supported for calls with a single target (non-iterable).
 
             Info
             ----
             Paths are NOT guarunteed to be continuous a sequence of calls where
-            `block` is `False`. Use
+            `block` is ``False```. Use
             :func:`forcedimension.HapticDevice.Regulator.track_rot()` for
             that instead.
-
-            :raises ValueError:
-                If more than one command (or an iterable of commands) was
-                requested when `block` is `False`.
             """
             for cmd in cmds:
                 if isinstance(cmd, Iterable):
@@ -1803,13 +1795,9 @@ class HapticDevice:
                 joint angles (in [rad]).
 
             :param bool block:
-                If `True` the call will block until the command is completed.
-                If `False` the call will return immediately. `False` values are
+                If ``True`` the call will block until the command is completed.
+                If ``False``` the call will return immediately. ``False``` values are
                 only supported for calls with a single target (non-iterable).
-
-            :raises ValueError:
-                If more than one command (or an iterable of commands) was
-                requested when `block` is `False`.
             """
             for cmd in cmds:
                 if isinstance(cmd, Iterable):
@@ -1846,20 +1834,16 @@ class HapticDevice:
                 Gripper opening distances are in [m].
 
             :param bool block:
-                If `True` the call will block until the command is completed.
-                If `False` the call will return immediately. `False` values are
+                If ``True`` the call will block until the command is completed.
+                If ``False``` the call will return immediately. ``False``` values are
                 only supported for calls with a single target (non-iterable).
 
             Info
             ----
             Paths are NOT guarunteed to be continuous a sequence of calls where
-            `block` is `False`. Use
+            `block` is ``False```. Use
             :func:`forcedimension.Regulator.HapticDevice.track_grip()` for that
             instead.
-
-            :raises ValueError:
-                If more than one command (or an iterable of commands) was
-                requested when `block` is `False`.
             """
 
             for cmd in cmds:
@@ -1927,14 +1911,14 @@ class HapticDevice:
 
         def lock(self, enabled: bool = True):
             """
-                If `enabled` is `True`, the device moves to its park position
-                engages the mechanical locks. If `enabled` is `False`, the
+                If `enabled` is ``True``, the device moves to its park position
+                engages the mechanical locks. If `enabled` is ``False```, the
                 mechanical locks are disengaged. It is recommended to follow
                 engaging locks with
                 `:func:forcedimension.HapticDevice.Regulator.stop()`.
 
                 :param bool enabled:
-                    `True` to park and engage mechanical locks, `False` to
+                    ``True`` to park and engage mechanical locks, ``False``` to
                     disengage locks.
 
                 :raises ArgumentError:
@@ -2002,6 +1986,19 @@ class HapticDevice:
             self._parent: HapticDevice = parent
 
         def set_timeguard(self, interval: int = dhd.DEFAULT_TIMEGUARD_US):
+            """
+            Sets the arbitrary minimum period for the TimeGuard feature in the
+            Force Dimension SDK. A value of
+            :data:`forcedimension.dhd.DEFAULT_TIMEGUARD_US` will reset the
+            period to its default value (recommended).
+
+            :raises ArgumentError:
+                If interval is not implicitly ocnvertible to C char.
+
+            :raises forcedimension.dhd.adaptors.DHDErrorArgument:
+                If interval was an invalid value.
+            """
+
             if dhd.expert.setTimeGuard(interval, self._parent._id):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.dhd.expert.setTimeGuard()',
@@ -2009,6 +2006,13 @@ class HapticDevice:
                 )
 
         def set_com_mode(self, mode: dhd.ComMode = dhd.ComMode.ASYNC):
+            """
+            Sets the COM operation mode on compatible devices.
+
+            :raises forcedimension.dhd.adaptors.DHDErrorArgument:
+                If interval was an invalid value.
+            """
+
             if dhd.expert.setComMode(mode, self._parent._id):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.dhd.expert.setComMode()',
@@ -2057,24 +2061,24 @@ class HapticDevice:
             ensures the device is calibrated before use.
 
         :param bool ensure_memory:
-            If `True`, the device will fail to instantiate if a firmware or
+            If ``True``, the device will fail to instantiate if a firmware or
             internal configuration health check fails.
 
         :param HapticDeviceConfig config:
             Initial config settings for the Haptic Device. Overrides settings
             set by `config_file`. Settings unset by both `config` and
             `config_file` are unchanged or, if
-            `restore_defaults` is `True`, reset to their defaults.
+            `restore_defaults` is ``True``, reset to their defaults.
 
         :param HapticDeviceConfig config_file:
             Initial config settings for the Haptic Device in a `.json` or
             `.yml` file. Is overridden by settings set in `config`.
             Settings unset by both `config` and
             `config_file` are unchanged or, if
-            `restore_defaults` is `True`, reset to their defaults.
+            `restore_defaults` is ``True``, reset to their defaults.
 
         :param bool restore_defaults:
-            If `True` will restore all config settings not set by either
+            If ``True`` will restore all config settings not set by either
             `config` or `config_file`
 
         :raises ValueError:
@@ -2356,8 +2360,6 @@ class HapticDevice:
         self.update_delta_encs_and_calculate()
         self.update_force_and_torque_and_gripper_force()
 
-
-
         if self._specs.has_wrist:
             pos_updater = self.update_position_and_orientation
         else:
@@ -2512,8 +2514,8 @@ class HapticDevice:
 
     def check_exception(self):
         """
-        Checks if an exception has occured in an update function, invalidating
-        the device's internal state.
+        Checks if an exception has occured in an update function and raises it.
+        Most property functions implicitly check this.
         """
         if self._exception is not None:
             raise self._exception
@@ -2544,8 +2546,8 @@ class HapticDevice:
 
     def get_config_str(self):
         """
-        A human-readable string that summarizes the current configuration of
-        the HapticDevice.
+        Constructs a human-readable string that summarizes the current
+        configuration of the HapticDevice.
         """
 
         base_angles = copy(self._config.base_angles)
@@ -2807,12 +2809,15 @@ class HapticDevice:
 
     @property
     def timeguard(self) -> int:
+        """
+        The current value of the TimeGuard period (in [us]).
+        """
         return self._config.timeguard
 
     @property
     def mass(self) -> float:
         """
-        Get the mass of the end-effector used for gravity compensation
+        The mass of the end-effector used for gravity compensation
         (in [kg]). Thread-safe.
 
         :raises DHDError:
@@ -2829,14 +2834,21 @@ class HapticDevice:
         Sets the mass of the end-effector used for gravity compensation
         (in [kg]). Thread-safe.
 
-        :raises DHDError:
-            If the operation failed.
+        :raises ArgumentError:
+            If `m` is not implicitly converitble to a C double.
+
+        :raises DHDErrorArgument:
+            If `m` was not a valid value.
         """
         if dhd.setEffectorMass(m, ID=self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
     @property
     def standard_gravity(self) -> float:
+        """
+        The acceleration due to gravity (in m/s^2) used for gravity
+        compensation.
+        """
         return self._standard_gravity
 
     @property
@@ -2845,6 +2857,11 @@ class HapticDevice:
 
     @property
     def handedness(self) -> Handedness:
+        """
+        The handedness of the device. Some devices are not handed and the value
+        of this property for those devices is
+        :data:`forcedimension.dhd.adaptors.Handedness.NONE`
+        """
         return self._specs.handedness
 
     @property
@@ -2872,18 +2889,46 @@ class HapticDevice:
 
     @property
     def com_mode(self) -> dhd.ComMode:
+        """
+        Gets the COM operation mode of the device.
+        """
+
         return dhd.com_mode_from_str(self._config.com_mode)
 
     @property
     def is_neutral(self) -> bool:
+        """
+        Gets the neutral status of the device.
+
+        See Also
+        --------
+        :func:`forcedimension.HapticDevice.neutral()`
+        """
+
         return self._is_neutral
 
     @property
     def is_stopped(self) -> bool:
+        """
+        Gets the stop status of the device.
+
+        See Also
+        --------
+        :func:`forcedimension.HapticDevice.stop()`
+        """
+
         return self._is_stopped
 
     @property
-    def button_emulation_enabled(self) -> bool:
+    def is_button_emulation_enabled(self) -> bool:
+        """
+        Gets the button emulation status.
+
+        See Also
+        --------
+        :func:`forcedimension.HapticDevice.get_button()`
+        """
+
         return self._button_emulation_enabled
 
     @property
@@ -2893,8 +2938,10 @@ class HapticDevice:
         Thread-safe.
 
         :returns:
-            A Status object representing the last-known status of the device.
+            A :class:`forcedimension.dhd.adaptors.Status` object representing
+            the last-known status of the device.
         """
+
         return _cast(Status, self._status_view)
 
     @property
@@ -2915,6 +2962,8 @@ class HapticDevice:
         """
         Sets the device base plate angles (in [rad]) about the X, Y, and Z
         axes. If an angle is not specified, it is not set.
+        I.E. set_base_angles(x=1) will set the base angle about the X axis to 1
+        radian while keeping the Y and Z base angles unchanged.
 
         :param Optional[float] x:
             Angle (in [rad]) to set the device plate angle about the X axis to.
@@ -2924,7 +2973,15 @@ class HapticDevice:
 
         :param Optional[float] z:
             Angle (in [rad]) to set the device plate angle about the Z axis to.
+
+        :raises ArgumentError:
+            If any of `x`, `y`, and `z` are not implicitly convertible to C
+            double.
+
+        :raises DHDErrorArgument:
+            If any of `x`, `y`, and `z` is an invalid value.
         """
+
         if x is not None:
             self._config.base_angles[0] = x
 
@@ -2954,13 +3011,16 @@ class HapticDevice:
 
     def set_output_bits(self, mask: int):
         """
-        Sets the user programmable output bbits on devices that support it.
+        Sets the user programmable output bits on devices that support it.
 
         :param int mask:
             Bitwise mask that toggles the progammable output bits.
 
         :raises ArgumentError:
             If `mask` is not implicitly convertible to a C uint.
+
+        :raises DHDErrorNotAvailable:
+            If programmable output bits are not supported on the device.
         """
 
         if dhd.setOutput(mask, self._id):
@@ -2989,7 +3049,13 @@ class HapticDevice:
         gripper.
 
         :param bool enabled:
-            `True` to enable button emulation, `False` to disable.
+            ``True`` to enable button emulation, ``False``` to disable.
+
+        :raises ArgumentError:
+            If `enabled` is not implicitly convertible to C bool.
+
+        :raises DHDErrorNotAvailable:
+            If button emulation is not supported on the device.
 
         Info
         ----
@@ -3007,10 +3073,16 @@ class HapticDevice:
         """
         Enable/disable force on the end-effector.
 
-        :param bool enabled: `True` to enable, `False` to disable
+        :param bool enabled:
+            ``True`` to enable, ``False``` to disable.
         """
 
-        dhd.enableForce(enabled, ID=self._id)
+        if dhd.enableForce(enabled, ID=self._id):
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                ID=self._id,
+                op='forcedimension.dhd.enableForce()'
+            )
+
 
     def enable_brakes(self, enabled: bool = True):
         """
@@ -3019,10 +3091,10 @@ class HapticDevice:
         applied in that mode.
 
         :param enabled bool:
-            `True` to enable electromagnetic braking, `False` to disable.
+            ``True`` to enable electromagnetic braking, ``False``` to disable.
         """
 
-        if dhd.setBrakes(enabled):
+        if dhd.setBrakes(enabled, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.setBrakes()'
@@ -3034,11 +3106,12 @@ class HapticDevice:
         added on top of the force request.
 
         :param bool enabled:
-            `True` to enable, `False` to disable.
+            ``True`` to enable, ``False``` to disable.
 
         See Also
         --------
-        :func:`forcedimension.HapticDevice.set_mass`
+        :func:`forcedimension.HapticDevice.set_mass()`
+        :func:`forcedimension.HapticDevice.set_standard_gravity()`
         """
 
         dhd.setGravityCompensation(enabled, ID=self._id)
@@ -3071,6 +3144,13 @@ class HapticDevice:
             Velocity estimator mode. Currently only
             :data:`forcedimension.dhd.VelocityEstimatorMode.WINDOWING` is
             supported by the Force Dimension SDK.
+
+        :raises ArgumentError:
+            If either ``window_size`` or ``mode`` are not implicitly
+            convertible to C int.
+
+        :raises DHDErrorArgument:
+            If either ``window_size`` or ``mode`` was set to an invalid value.
         """
 
         if dhd.configLinearVelocity(window_size, mode, self._id):
@@ -3100,6 +3180,13 @@ class HapticDevice:
             Velocity estimator mode. Currently only
             :data:`forcedimension.dhd.VelocityEstimatorMode.WINDOWING` is
             supported by the Force Dimension SDK.
+
+        :raises ArgumentError:
+            If either ``window_size`` or ``mode`` are not implicitly
+            convertible to C int.
+
+        :raises DHDErrorArgument:
+            If either ``window_size`` or ``mode`` was set to an invalid value.
         """
 
         if dhd.configAngularVelocity(window_size, mode, self._id):
@@ -3112,20 +3199,40 @@ class HapticDevice:
 
     @property
     def delta_joint_angles(self) -> containers.Vector3:
+        """
+        A read-only reference to the DELTA joint angles about the first,
+        second, and third DELTA joint angles, respectively (in [rad]) at
+        the time of the last update.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.check_exception()
         return _cast(containers.Vector3, self._delta_joint_angles_view)
 
     @property
     def wrist_joint_angles(self) -> containers.Vector3:
+        """
+        A read-only reference to the DELTA joint angles about the first,
+        second, and third WRIST joint angles, respectively (in [rad]) at
+        the time of the last update.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.check_exception()
         return _cast(containers.Vector3, self._wrist_joint_angles_view)
 
     @property
     def pos(self) -> containers.Vector3:
         """
-        Provides a read-only reference to the last-known position of the
-        HapticDevice's end-effector (in [m]) about the X, Y, and Z axes.
-        Thread-safe.
+        A read-only reference to the position of the
+        HapticDevice's end-effector about the X, Y, and Z axes (in [m]) at
+        the time of the last update. Thread-safe.
 
         :raises DHDError:
             If an error has occured with the device, invalidating the
@@ -3138,8 +3245,9 @@ class HapticDevice:
     @property
     def v(self) -> containers.Vector3:
         """
-        Provides a read-only reference to the last-known linear velocity of the
-        HapticDevice's end-effector. Thread-safe.
+        A read-only reference to the linear velocity of the
+        HapticDevice's end-effector (in [m/s]) at the time of the last update.
+        Thread-safe.
 
         :raises DHDError:
             If an error has occured with the device, invalidating the
@@ -3152,8 +3260,9 @@ class HapticDevice:
     @property
     def w(self) -> containers.Vector3:
         """
-        Provides a read-only reference to the last-known angular velocity of the
-        HapticDevice's end-effector. Thread-safe.
+        A read-only reference angular velocity of
+        the HapticDevice's end-effector (in [rad/s]) at the time of the last
+        update. Thread-safe.
 
         :raises DHDError:
             If an error has occured with the device, invalidating the
@@ -3166,8 +3275,8 @@ class HapticDevice:
     @property
     def t(self) -> containers.Vector3:
         """
-        Provides a read-only reference to the last-known applied torque of the
-        HapticDevice's end-effector. Thread-safe.
+        A read-only reference to the HapticDevice's end-effector
+        (in [Nm]) at the time of the last update. Thread-safe.
 
         :raises DHDError:
             If an error has occured with the device, invalidating the
@@ -3180,8 +3289,8 @@ class HapticDevice:
     @property
     def f(self) -> containers.Vector3:
         """
-        Provides a read-only reference to the last-known applied force of the
-        HapticDevice's end-effector. Thread-safe.
+        A read-only reference to the applied force of the HapticDevice's
+        end-effector (in [N]) at the time of the last update. Thread-safe.
 
         :raises DHDError:
             If an error has occured with the device, invalidating the
@@ -3193,28 +3302,87 @@ class HapticDevice:
 
     @property
     def delta_jacobian(self) -> containers.Mat3x3:
+        """
+        A read-only reference to the last-known DELTA jacobian based on the
+        of the HapticDevice's end-effector configuration at the time of the
+        last update. Thread-safe.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.check_exception()
         return _cast(containers.Mat3x3, self._delta_jacobian_view)
 
     @property
     def wrist_jacobian(self) -> containers.Mat3x3:
+        """
+        A read-only reference to the last-known WRIST jacobian based on the
+        of the HapticDevice's end-effector configuration at the time of the
+        last update. Thread-safe.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
+
         self.check_exception()
         return _cast(containers.Mat3x3, self._wrist_jacobian_view)
 
     @property
     def frame(self) -> containers.Mat3x3:
+        """
+        A read-only reference to the orientation frame of the of the
+        HapticDevice's end-effector at the time of the last update. This
+        function only applies to haptic devices with a wrist.
+        Thread-safe.
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+        """
         self.check_exception()
         return _cast(containers.Mat3x3, self._frame_view)
 
     @property
     def inertia_matrix(self) -> containers.Mat6x6:
+        """
+        A read-only reference to the inertia matrix about the X, Y, and Z axes
+        based on the joint configuration at the last update. Thread-safe.
+        """
+
         self.check_exception()
         return _cast(containers.Mat6x6, self._inertia_matrix_view)
 
     def set_update_list(self, lst: List[Callable[..., Any]]):
+        """
+        Sets the functions to be sequentially called in the default update
+        function.
+
+        See Also
+        --------
+        :func:`forcedimension.HapticDevice.update()`
+        """
+
+        if not isinstance(lst, list):
+            raise ValueError("Update list must be a list.")
+
+        for func in lst:
+            if not isinstance(func, Callable):
+                raise ValueError("Each element must be callable.")
+
         self._update_list = lst
 
     def update(self):
+        """
+        Sequentially calls the functions in the internal default update list.
+
+        See Also
+        --------
+        :func:`forcedimension.HapticDevice.set_update_list()`
+        """
+
         for updater in self._update_list:
             updater()
 
@@ -3296,6 +3464,14 @@ class HapticDevice:
         return self
 
     def update_encs_and_calculate(self):
+        """
+        Updates the encoders for each degree-of-freedom and given those values,
+        calculates the position of the end-effector, DELTA joint angles, the
+        DELTA jacobia, the WRIST joint angles, and the WRIST jacobian.
+
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
+        """
         self.update_encs()
         self.calculate_pos()
         self.calculate_wrist_joint_angles()
@@ -3311,6 +3487,9 @@ class HapticDevice:
         Updates the DELTA encoders and given those values, calculates the
         position of the end-effector, DELTA joint angles, and the DELTA
         jacobian.
+
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
         """
 
         self.update_delta_encs()
@@ -3324,6 +3503,9 @@ class HapticDevice:
         """
         Updates the WRIST encoders and given those values, calculates the wrist
         joint angles and the WRIST jacobian.
+
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
         """
 
         self.update_wrist_encs()
@@ -3339,8 +3521,8 @@ class HapticDevice:
         and updates the last-known position with the response. The requested
         values are then loaded into an internal buffer.
 
-        :raises DHDError:
-            If an error has occured with the device.
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
         """
 
         err = dhd.expert.direct.getEnc(self._encs, 0xff, self._id)
@@ -3363,7 +3545,7 @@ class HapticDevice:
         values are then loaded into an internal buffer.
 
         :raises DHDError:
-            If an error has occured with the device.
+            If a communication error has occured with the device.
         """
 
         err = dhd.expert.direct.getDeltaEncoders(self._encs.delta, self._id)
@@ -3384,8 +3566,8 @@ class HapticDevice:
         and updates the last-known position with the response. The requested
         values are then loaded into an internal buffer.
 
-        :raises DHDError:
-            If an error has occured with the device.
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
         """
 
         err = dhd.expert.direct.getWristEncoders(self._encs.wrist, self._id)
@@ -3406,8 +3588,8 @@ class HapticDevice:
         and updates the last-known position with the response. The requested
         values are then loaded into an internal buffer.
 
-        :raises DHDError:
-            If an error has occured with the device.
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
         """
 
         err = dhd.expert.direct.getEncVelocities(self._encs_v, self._id)
@@ -3422,6 +3604,15 @@ class HapticDevice:
         return self
 
     def update_joint_angles(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting the current
+        joint angles for each degree-of-freedom (in [rad]). The requested
+        values  are then loaded into an internal buffer.
+
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
+        """
+
         err = dhd.expert.direct.getJointAngles(self._joint_angles, self._id)
 
         if err == -1:
@@ -3434,6 +3625,15 @@ class HapticDevice:
         return self
 
     def update_joint_angle_velocities(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting the current
+        joint velocities for each degree-of-freedom (in [rad/s]). The requested
+        values are then loaded into an internal buffer.
+
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
+        """
+
         err = dhd.expert.direct.getJointVelocities(
             self._joint_v, self._id
         )
@@ -3450,12 +3650,11 @@ class HapticDevice:
     def update_position(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
-        position of the end-effector and updates the last-known position with
-        the response. The requested values are then loaded into an internal
-        buffer.
+        position of the end-effector. The requested values are then loaded into
+        an internal buffer.
 
-        :raises DHDError:
-            If an error has occured with the device.
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
         """
 
         err = dhd.direct.getPosition(self._pos, self._id)
@@ -3471,12 +3670,11 @@ class HapticDevice:
     def update_velocity(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
-        linear velocity of the end-effector and updates the last-known linear
-        velocity with the response. The requested values are then loaded into
-        an internal buffer.
+        linear velocity of the end-effector. The requested values are then
+        loaded into an internal buffer.
 
-        :raises DHDError:
-            If an error has occured with the device.
+        :raises DHDErrorCom:
+            If a communication error occurred with the device.
         """
 
         err = dhd.direct.getLinearVelocity(self._v, self._id)
@@ -3497,12 +3695,11 @@ class HapticDevice:
     def update_angular_velocity(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
-        angular velocity of the end-effector and updates the last-known
-        angular velocity with the response. The requested values are then
+        angular velocity of the end-effector. The requested values are then
         loaded into an internal buffer.
 
-        :raises DHDError:
-            If an error has occured with the device.
+        :raises DHDErrorCom:
+            If a communication error occurred with the device.
         """
 
         err = dhd.direct.getAngularVelocityRad(self._w, self._id)
@@ -3523,12 +3720,11 @@ class HapticDevice:
     def update_force(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
-        force the end end-effector is experiencing and updates the last-known
-        force with the response. The requested values are then loaded into an
-        internal buffer.
+        force the end end-effector is experiencing. The requested values are
+        then loaded into an internal buffer.
 
-        :raises DHDError:
-            If an error has occured with the device.
+        :raises DHDErrorCom:
+            If a communication error occurred with the device.
         """
 
         err = dhd.getForce(self._f, self._id)
@@ -3544,13 +3740,11 @@ class HapticDevice:
     def update_force_and_torque(self):
         """
         Performs a blocking read to the HapticDevice, requesting in parallel
-        the current force and torque applied to the end-effector and
-        updates the last-known force and torque with the response. The
-        requested values are then loaded into internal buffers.
+        the current force and torque applied to the end-effector. The requested
+        values are then loaded into internal buffers.
 
-
-        :raises DHDError:
-            If an error has occured with the device.
+        :raises DHDErrorCom:
+            If a communication error occurred with the device.
         """
 
         if dhd.direct.getForceAndTorque(self._f, self._t, self._id):
@@ -3566,12 +3760,14 @@ class HapticDevice:
         Performs a blocking read to the HapticDevice, requesting in parallel
         the force and torque applied to the end-effector as well as the force
         applied to the gripper. The requested values are then
-        loaded into internal buffers. This is equivalent to
-        :func:`forcedimension.HapticDevice.update_force_and_torque()` if the
-        device does not have a gripper.
+        loaded into internal buffers.
 
-        :raises DHDError:
-            If an error has occured with the device.
+        :raises DHDErrorCom:
+            If a communication error occurred with the device.
+
+        :raises DHDErrorNotAvailable:
+            If the device does not have a gripper.
+
         """
 
         err = dhd.direct.getForceAndTorqueAndGripperForce(
@@ -3591,6 +3787,13 @@ class HapticDevice:
         Performs a blocking read to the HapticDevice,
         its orientation frame matrix and updates an internal buffer with those
         values.
+
+        :raises DHDErrorCom:
+            If a communication error occurred with the device.
+
+        :raises DHDErrorNotAvailable:
+            If the device does not have a wrist.
+
         """
 
         if dhd.direct.getOrientationFrame(self._frame, self._id):
@@ -3608,6 +3811,12 @@ class HapticDevice:
         the position of the end effector (in [m]) about the X, Y, and Z axes
         as well as its orientation frame matrix. The requested values are then
         loaded into internal buffers.
+
+        :raises DHDErrorCom:
+            If a communication error occurred with the device.
+
+        :raises DHDErrorNotAvailable:
+            If the device does not have a wrist.
         """
 
         err = dhd.direct.getPositionAndOrientationFrame(
@@ -3641,8 +3850,8 @@ class HapticDevice:
         Perform a blocking read to the HapticDevice, requesting all pertinent
         status information.
 
-        :raises DHDError:
-            If an error has occured with the device.
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
 
         :returns:
             :class:`forcedimension.dhd.adaptors.Status` object containing all
@@ -3658,6 +3867,9 @@ class HapticDevice:
     def submit(self, respect_neutral_stop: bool = True):
         """
         Push the requested forces and torques to the device in a blocking send.
+
+        :raises DHDErrorCom:
+            If a communication error has occured with the device.
 
         See Also
         --------
@@ -3688,7 +3900,7 @@ class HapticDevice:
 
     def req(self, f: IntVectorLike, t: IntVectorLike = (0, 0, 0)):
         """
-        Load the request force and request torque buffer for this device.
+        Load the requested force and request torque buffer for this device.
         This won't send the request to the device. This is used by the
         HapticDaemon.
 
@@ -3807,7 +4019,7 @@ class HapticDevice:
         configuration on supported device types.
 
         :returns:
-            `True` if the check succeeded, and `False` if the firmware of
+            ``True`` if the check succeeded, and ``False``` if the firmware of
             internal heatlh configuration health check failed.
         """
         return not bool(dhd.checkControllerMemory(self._id))
@@ -3899,7 +4111,7 @@ class HapticDevice:
             The button to check
 
         :returns:
-            `True` if the button is being pressed, `False` otherwise.
+            ``True`` if the button is being pressed, ``False``` otherwise.
         """
 
         return bool(self._buttons & _cast(int, 1 << button_id))
