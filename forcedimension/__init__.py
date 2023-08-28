@@ -798,6 +798,16 @@ class HapticDevice:
             return self
 
         def initialize(self, redo=False):
+            """
+            Performs automatic initialization by robotically moving to a
+            known position and reseting encoder counters to their correct
+            values and subsequently ensures that the initialization was
+            correctly performed.
+
+            :raises DHDErrorNotAvailable:
+                If automatic initialization is not available on this device.
+            """
+
             if redo:
                 self._initialized = False
 
@@ -819,6 +829,8 @@ class HapticDevice:
                 )
 
             self._initialized = True
+
+            return self
 
         def precision_initialize(self):
             if drd.precisionInit(self._parent._id):
