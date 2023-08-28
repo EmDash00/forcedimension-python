@@ -143,10 +143,12 @@ class HapticDevice:
 
         def req(self, fg: float):
             """
-            Load the requested gripper force into the request buffer.
+            Loads the requested gripper force into the request buffer.
             """
 
             self._fg_req = fg
+
+            return self
 
         def config_velocity(
             self,
@@ -175,6 +177,8 @@ class HapticDevice:
 
             self._config.velocity_estimator.window_size = window_size
             self._config.velocity_estimator.mode = mode
+
+            return self
 
         def set_max_force(self, limit: Optional[float]):
             """
@@ -311,6 +315,8 @@ class HapticDevice:
             if err:
                 raise dhd.errno_to_exception(dhd.errorGetLast())()
 
+            return self
+
         def calculate_angle(self):
             """
             Calculate the value of the gripper opening angle (in [rad]) from the
@@ -321,6 +327,8 @@ class HapticDevice:
             dhd.expert.gripperEncoderToAngleRad(
                 self._enc.value, self._angle, self._id
             )
+
+            return self
 
         def update_enc(self):
             """
@@ -351,6 +359,8 @@ class HapticDevice:
             self.calculate_angle()
             self.calculate_gap()
 
+            return self
+
         def update_linear_velocity(self):
             """
             Computes the estimated instanteous linear velocity of the gripper
@@ -364,6 +374,8 @@ class HapticDevice:
 
             if err == -1:
                 raise dhd.errno_to_exception(dhd.errorGetLast())()
+
+            return self
 
         def update_angular_velocity(self):
             """
@@ -379,6 +391,8 @@ class HapticDevice:
             if err == -1:
                 raise dhd.errno_to_exception(dhd.errorGetLast())()
 
+            return self
+
         def update_angle(self):
             """
             Performs a blocking read to the HapticDevice, requesting the value
@@ -392,6 +406,8 @@ class HapticDevice:
 
             if err == -1:
                 raise dhd.errno_to_exception(dhd.errorGetLast())()
+
+            return self
 
         def update_gap(self):
             """
@@ -407,6 +423,8 @@ class HapticDevice:
             if err == -1:
                 raise dhd.errno_to_exception(dhd.errorGetLast())()
 
+            return self
+
         def update_thumb_pos(self):
             """
             Performs a blocking read to the HapticDevice, requesting the value
@@ -420,6 +438,8 @@ class HapticDevice:
 
             if err == -1:
                 raise dhd.errno_to_exception(dhd.errorGetLast())()
+
+            return self
 
         def update_finger_pos(self):
             """
@@ -435,6 +455,8 @@ class HapticDevice:
 
             if err == -1:
                 raise dhd.errno_to_exception(dhd.errorGetLast())()
+
+            return self
 
         def check_exception(self):
             self._parent.check_exception()
@@ -2005,6 +2027,8 @@ class HapticDevice:
                     ID=self._parent._id
                 )
 
+            return self._parent
+
         def set_com_mode(self, mode: dhd.ComMode = dhd.ComMode.ASYNC):
             """
             Sets the COM operation mode on compatible devices.
@@ -2020,6 +2044,8 @@ class HapticDevice:
                 )
 
             self._parent._config.com_mode = dhd.com_mode_str(mode)
+
+            return self._parent
 
     def __init__(
             self,
@@ -2511,6 +2537,8 @@ class HapticDevice:
     def set_config(self, config_data: Dict[str, Any]):
         for key, value in config_data:
             HapticDevice._config_setters[key](self, value)
+
+        return self
 
     def check_exception(self):
         """
@@ -3009,6 +3037,8 @@ class HapticDevice:
                     ID=self._id
                 )
 
+        return self
+
     def set_output_bits(self, mask: int):
         """
         Sets the user programmable output bits on devices that support it.
@@ -3026,6 +3056,8 @@ class HapticDevice:
         if dhd.setOutput(mask, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())
 
+        return self
+
     def set_standard_gravity(self, g: float = 9.81):
         """
         Sets the standard gravity constant (in [m/s^2]) used in gravity compensation.
@@ -3042,6 +3074,8 @@ class HapticDevice:
             raise dhd.errno_to_exception(dhd.errorGetLast())
 
         self._standard_gravity = g
+
+        return self
 
     def enable_button_emulation(self, enabled: bool = True):
         """
@@ -3068,6 +3102,7 @@ class HapticDevice:
         if dhd.emulateButton(enabled, self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())
 
+        return self
 
     def enable_force(self, enabled: bool = True):
         """
@@ -3082,6 +3117,8 @@ class HapticDevice:
                 ID=self._id,
                 op='forcedimension.dhd.enableForce()'
             )
+
+        return self
 
 
     def enable_brakes(self, enabled: bool = True):
@@ -3099,6 +3136,8 @@ class HapticDevice:
                 ID=self._id,
                 op='forcedimension.dhd.setBrakes()'
             )
+
+        return self
 
     def enable_gravity_compensation(self, enabled: bool = True):
         """
@@ -3125,6 +3164,8 @@ class HapticDevice:
         self._t_req[2] = 0.
 
         dhd.stop(self._id)
+
+        return self
 
     def config_linear_velocity(
         self,
@@ -3161,6 +3202,8 @@ class HapticDevice:
         self._config.linear_velocity_estimator.window_size = window_size
         self._config.linear_velocity_estimator.mode = mode
 
+        return self
+
 
     def config_angular_velocity(
         self,
@@ -3196,6 +3239,8 @@ class HapticDevice:
 
         self._config.angular_velocity_estimator.window_size = window_size
         self._config.angular_velocity_estimator.mode = mode
+
+        return self
 
     @property
     def delta_joint_angles(self) -> containers.Vector3:
@@ -3374,6 +3419,8 @@ class HapticDevice:
 
         self._update_list = lst
 
+        return self
+
     def update(self):
         """
         Sequentially calls the functions in the internal default update list.
@@ -3478,9 +3525,7 @@ class HapticDevice:
         self.calculate_delta_jacobian()
         self.calculate_wrist_jacobian()
 
-    def update_enc_velocities_and_calculate(self):
-        self.update_enc_velocities()
-
+        return self
 
     def update_delta_encs_and_calculate(self):
         """
@@ -3804,7 +3849,6 @@ class HapticDevice:
 
         return self
 
-
     def update_position_and_orientation(self):
         """
         Performs a blocking read to the HapticDevice, requesting in parallel
@@ -3862,7 +3906,6 @@ class HapticDevice:
             raise dhd.errno_to_exception(dhd.errorGetLast())()
 
         return self
-
 
     def submit(self, respect_neutral_stop: bool = True):
         """
@@ -3977,6 +4020,8 @@ class HapticDevice:
         self._is_neutral = True
         self.enable_brakes(enabled=False)
 
+        return self
+
     def stop(self):
         """
         Disable force and put the device in BRAKE mode. You may feel a viscous
@@ -3992,6 +4037,8 @@ class HapticDevice:
                 ID=self._id,
                 op='forcedimension.dhd.stop()'
             )
+
+        return self
 
     def wait_for_reset(self, timeout: Optional[int] = None):
         """
