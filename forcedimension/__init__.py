@@ -3387,6 +3387,7 @@ class HapticDevice:
             If an error has occured with the device, invalidating the
             device state.
         """
+
         self.check_exception()
         return _cast(containers.Mat3x3, self._frame_view)
 
