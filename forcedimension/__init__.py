@@ -885,6 +885,20 @@ class HapticDevice:
             return self
 
         def regulate_pos(self, enabled: bool = True):
+            """
+            This function toggles robotic regulation of the device delta base, 
+            which provides translations. If regulation is disabled, the base 
+            can move freely and will display any force set using 
+            :func:`HapticDevice.req()` and :func:`HapticDevice.submit()`. If it 
+            is enabled, base  position is locked and can be controlled by 
+            calling all robotic functions 
+            (e.g. :func:`HapticDevice.Regulator.move_to_pos()`). By default, 
+            delta base regulation is enabled.
+
+            :param bool enabled:
+                ``True`` to enable ``False`` to disable.
+            """
+
             self._is_pos_regulated = enabled
 
             if drd.regulatePos(enabled, self._parent._id):
