@@ -801,8 +801,10 @@ class HapticDevice:
             """
             Performs automatic initialization by robotically moving to a
             known position and reseting encoder counters to their correct
-            values and subsequently ensures that the initialization was
-            correctly performed.
+            values. It subsequently ensures that the initialization was
+            correctly performed by robotically sweeping the by robotically
+            sweeping all endstops and comparing their joint space position to
+            expected values (stored in each device internal memory).
 
             :raises DHDErrorNotAvailable:
                 If automatic initialization is not available on this device.
