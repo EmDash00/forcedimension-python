@@ -4149,16 +4149,16 @@ class HapticDevice:
         """
         See if the button on the device is being pressed.
 
-        See Also
-        --------
-        :class:`forcedimension.dhd.constants.NovintButtonID`
-
-
         :param int button_id:
             The button to check
 
         :returns:
             ``True`` if the button is being pressed, ``False``` otherwise.
+
+        See Also
+        --------
+        :class:`forcedimension.dhd.constants.NovintButtonID`
+
         """
 
         return bool(self._buttons & _cast(int, 1 << button_id))
