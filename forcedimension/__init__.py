@@ -833,6 +833,30 @@ class HapticDevice:
             return self
 
         def precision_initialize(self):
+            """
+            Performs automatic initialization for supported devices by
+            robotically moving each axis to a knokwn position and resetting its
+            encoder counter to the correct values. The initialization is
+            carreid out for each device axis in turn, and validates the
+            initialization by asserting the position of a validation reference
+            for each axis.This function takes longer than
+            :func:`HapticDevice.Regulator.initialize()`, but
+            :func:`HapticDevice.Regulator.check_initialization()` is not
+            necessary after calling this function.
+
+
+            Info
+            ----
+            In order to make regulation as stable as possible, this function
+            will automaticallyincrease the priority level of the regulation
+            thread to a higher value than normal system process priority.
+
+            See Also
+            --------
+            :func:`HapticDevice.Regulator.initialize()`
+            :func:`HapticDevice.Regulator.check_initialization()`
+            """
+
             if drd.precisionInit(self._parent._id):
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.precisionInit()',
@@ -840,6 +864,8 @@ class HapticDevice:
                 )
 
             self._initialized = True
+
+            return self
 
         def regulate(self, enabled: bool = True):
             self.regulate_pos(enabled)
