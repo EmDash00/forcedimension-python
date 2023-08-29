@@ -4076,7 +4076,7 @@ class HapticDevice:
 
         return self
 
-    def req(self, f: IntVectorLike, t: IntVectorLike = (0, 0, 0)):
+    def req(self, f: FloatVectorLike, t: FloatVectorLike = (0, 0, 0)):
         """
         Load the requested force and request torque buffer for this device.
         This won't send the request to the device. This is used by the
