@@ -46,9 +46,9 @@ class HapticDevice:
         A high-level wrapper for methods and kinematic data of a Gripper on a
         HapticDevice.
 
-        Certain kinds of HapticDevices opened will have grippers. If that is the
-        case, a Gripper object will be instantiated as well containing methods to
-        get kinematic information about the Gripper.
+        Certain kinds of HapticDevices opened will have grippers. If that is 
+        the case, a Gripper object will be instantiated as well containing 
+        methods to get kinematic information about the Gripper.
         """
 
         def __init__(
