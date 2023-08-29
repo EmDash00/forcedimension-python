@@ -3284,6 +3284,23 @@ class HapticDevice:
         return self
 
     @property
+    def joint_state(self) -> containers.DOFFloatState:
+        """
+        A read-only reference to the state of the HapticDevice, which is a
+        ndarray of [[x, y, z], [vx, vy, vz]]. The position and linear
+        velocity are about the X, Y, and Z axes (in [m] and [m/s],
+        respectively).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+
+        """
+
+        return _cast(containers.DOFFloatState, self._joint_state)
+
+
+    @property
     def delta_joint_angles(self) -> containers.Vector3:
         """
         A read-only reference to the DELTA joint angles about the first,
@@ -3314,7 +3331,7 @@ class HapticDevice:
         return _cast(containers.Vector3, self._wrist_joint_angles_view)
 
     @property
-    def state(self) -> containers.State3:
+    def state(self) -> containers.DOFFloatState:
         """
         A read-only reference to the state of the HapticDevice, which is a
         ndarray of [[x, y, z], [vx, vy, vz]]. The position and linear
@@ -3327,7 +3344,7 @@ class HapticDevice:
 
         """
 
-        return _cast(containers.State3, self._state_view)
+        return _cast(containers.DOFFloatState, self._state_view)
 
     @property
     def pos(self) -> containers.Vector3:
@@ -3706,6 +3723,12 @@ class HapticDevice:
 
         return self
 
+    def update_joint_state(self):
+        self.update_joint_angles()
+        self.update_joint_angle_velocities()
+
+        return self
+
     def update_joint_angles(self):
         """
         Performs a blocking read to the HapticDevice, requesting the current
@@ -3747,6 +3770,22 @@ class HapticDevice:
                     ID=self._id,
                     op='forcedimension.dhd.expert.getJointVelocities()'
             )
+
+        return self
+
+    def update_state(self):
+        self.update_delta_state()
+        self.update_delta_state()
+
+        return self
+
+    def update_delta_state(self):
+        """
+        Sequentially updates the position and the velocity of end-effectors
+        (states affected by the DLETA structure).
+        """
+        self.update_position()
+        self.update_velocity()
 
         return self
 
@@ -3794,6 +3833,43 @@ class HapticDevice:
                 self._v[2] = nan
 
         return self
+
+    def update_wrist_state(self):
+        """
+        Sequentially updates the position and the velocity of end-effectors
+        (states affected by the DLETA structure).
+        """
+
+        self.update_orientation_angles()
+        self.update_velocity()
+
+        return self
+
+    def update_orientation_angles(self):
+        """
+        Performs a blocking read to the HapticDevice, requesting the current
+        angle of each joint (in [rad]), starting with the one located nearest
+        to the wrist base plate and stores it in an internal buffer. For the
+        :data:`forcedimension.dhd.constants.DHD_DEVICE_OMEGA6_RIGHT` and
+        :data:`forcedimension.dhd.constants.DHD_DEVICE_OMEGA6_LEFT`
+        DHD_DEVICE_OMEGA6_LEFT devices, angles are computed with respect to
+        their internal reference frame, which is rotated 45 degrees around the
+        Y axis.
+
+        :raises DHDErrorNotAvailable:
+            If the device does not have a wrist.
+
+        :raises DHDErrorCom:
+            If a communication error occurred with the device.
+        """
+
+        err = dhd.direct.getOrientationRad(self._orientation_angles, self._id)
+
+        if err == -1:
+            raise dhd.errno_to_exception(dhd.errorGetLast())(
+                ID=self._id,
+                op='forcedimension.dhd.getLinearVelocity()'
+            )
 
     def update_angular_velocity(self):
         """
