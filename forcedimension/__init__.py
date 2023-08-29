@@ -2435,9 +2435,10 @@ class HapticDevice:
         self._update_list = [
             pos_updater,
             self.update_velocity,
-            self.update_angular_velocity,
+            self.update_joint_state,
+            self.update_force_and_torque_and_gripper_force,
             self.update_buttons,
-            self.update_force_and_torque_and_gripper_force
+            self.update_status
         ]
 
     def _init_force_enabled(self, restore: bool = False):
