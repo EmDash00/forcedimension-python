@@ -64,10 +64,14 @@ class HapticDevice:
 
             self._id = parent.ID
             self._enc = ct.c_int()
+
+            self._state = self._parent.state.gripper
+            self._gap = self._parent._state._gripper_pos
+            self._v = self._parent._state._gripper_v
+
             self._angle = ct.c_double()
-            self._gap = ct.c_double()
-            self._v = ct.c_double()
             self._w = ct.c_double()
+
             self._fg = ct.c_double()
 
             self._thumb_pos = containers.Vector3()
@@ -2388,15 +2392,17 @@ class HapticDevice:
         self._encs = containers.DOFIntArray()
         self._encs_v = containers.DOFFloatArray()
 
-        self._joint_angles = containers.DOFFloatArray()
-        self._joint_v = containers.DOFFloatArray()
+        self._joint_state = containers.DOFFloatState()
+        self._joint_angles = containers.DOFFloatArray(self._joint_state[0])
+        self._joint_v = containers.DOFFloatArray(self._joint_state[1])
 
-        self._pos = containers.Vector3()
-        self._v = containers.Vector3()
+        self._state = containers.DOFFloatState()
 
-        self._orientation_angles = containers.Vector3()
+        self._pos = containers.Vector3(self._state[0, :3])
+        self._v = containers.Vector3(self._state[1, :3])
 
-        self._w = containers.Vector3()
+        self._orientation_angles = containers.Vector3(self._state[0, 3:6])
+        self._w = containers.Vector3(self._state[1, 3:6])
 
         self._f = containers.Vector3()
         self._t = containers.Vector3()
@@ -2424,9 +2430,11 @@ class HapticDevice:
 
         self._base_angles_view = ImmutableWrapper(self._config.base_angles)
 
+        self._state_view = ImmutableWrapper(self._state)
         self._pos_view = ImmutableWrapper(self._pos)
-        self._w_view = ImmutableWrapper(self._w)
         self._v_view = ImmutableWrapper(self._v)
+
+        self._w_view = ImmutableWrapper(self._w)
         self._f_view = ImmutableWrapper(self._f)
         self._t_view = ImmutableWrapper(self._t)
 
@@ -3404,6 +3412,22 @@ class HapticDevice:
 
         self.check_exception()
         return _cast(containers.Vector3, self._wrist_joint_angles_view)
+
+    @property
+    def state(self) -> containers.State3:
+        """
+        A read-only reference to the state of the HapticDevice, which is a
+        ndarray of [[x, y, z], [vx, vy, vz]]. The position and linear
+        velocity are about the X, Y, and Z axes (in [m] and [m/s],
+        respectively).
+
+        :raises DHDError:
+            If an error has occured with the device, invalidating the
+            device state.
+
+        """
+
+        return _cast(containers.State3, self._state_view)
 
     @property
     def pos(self) -> containers.Vector3:
