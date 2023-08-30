@@ -539,7 +539,7 @@ def regulateGrip(enable: bool, ID: int = -1) -> int:
     return _libdrd.drdRegulateGrip(enable, ID)
 
 
-_libdrd.dhdSetForceAndTorqueAndGripperForce.argtypes = [
+_libdrd.drdSetForceAndTorqueAndGripperForce.argtypes = [
     c_double,
     c_double,
     c_double,
@@ -549,7 +549,7 @@ _libdrd.dhdSetForceAndTorqueAndGripperForce.argtypes = [
     c_double,
     c_byte
 ]
-_libdrd.dhdSetForceAndTorqueAndGripperForce.restype = c_int
+_libdrd.drdSetForceAndTorqueAndGripperForce.restype = c_int
 
 
 def setForceAndTorqueAndGripperForce(
@@ -615,7 +615,7 @@ def setForceAndTorqueAndGripperForce(
 
     """
 
-    return _libdrd.dhdSetForceAndTorqueAndGripperForce(
+    return _libdrd.drdSetForceAndTorqueAndGripperForce(
         f[0],
         f[1],
         f[2],
@@ -627,7 +627,7 @@ def setForceAndTorqueAndGripperForce(
     )
 
 
-_libdrd.dhdSetForceAndWristJointTorquesAndGripperForce.argtypes = [
+_libdrd.drdSetForceAndWristJointTorquesAndGripperForce.argtypes = [
     c_double,
     c_double,
     c_double,
@@ -637,7 +637,7 @@ _libdrd.dhdSetForceAndWristJointTorquesAndGripperForce.argtypes = [
     c_double,
     c_byte
 ]
-_libdrd.dhdSetForceAndWristJointTorquesAndGripperForce.restype = c_int
+_libdrd.drdSetForceAndWristJointTorquesAndGripperForce.restype = c_int
 
 
 def setForceAndWristJointTorquesAndGripperForce(
@@ -690,7 +690,7 @@ def setForceAndWristJointTorquesAndGripperForce(
 
     :returns: 0 on success, -1 otherwise
     """
-    return _libdrd.dhdSetForceAndWristJointTorquesAndGripperForce(
+    return _libdrd.drdSetForceAndWristJointTorquesAndGripperForce(
         f[0],
         f[1],
         f[2],
