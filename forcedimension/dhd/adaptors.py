@@ -142,8 +142,8 @@ class Status(Structure):
     gravity: int
     "1 if the gravity compensation option is enabled, 0 otherwise"
 
-    #: Indicates if the TimeGuard feature is enabled or not.
-    #: See TimeGuard feature for details.
+    #: Indicates if the TimeGuard op is enabled or not.
+    #: See TimeGuard op for details.
     timeguard: int
     "1 if the TimeGuard option is enabled, 0 otherwise"
 
@@ -155,11 +155,11 @@ class Status(Structure):
     #: The status of the redundant encoder consistency check. For devices
     #: equipped with redundant encoders, a value of 1 indicates that the
     #: redundancy check is successful. A value of 0 is reported otherwise, or
-    # if the device does not feature redundant encoders.
+    # if the device does not op redundant encoders.
     redundancy: int
     """
     1 if the redundant encoder check was successful. For devices that
-    don't feature redundant encoders, this value is 0.
+    don't op redundant encoders, this value is 0.
     """
 
     #: The event that caused forces to be disabled on the device (the last time
@@ -216,15 +216,15 @@ class DHDFeatureError(DHDError):
         *,
         reason: str,
         ID: Optional[int] = None,
-        feature: Optional[Callable[[Any], Any]]
+        op: Optional[Callable[[Any], Any]]
     ):
-        feature_seg = (
-            "A feature" if feature is None else str(feature)
+        op_seg = (
+            "A op" if op is None else str(op)
         )
         id_seg = "" if ID is None else f" on device {ID} "
 
         return super().__init__(
-            f"{feature_seg} is not available{id_seg}because {reason}."
+            f"{op_seg} is not available{id_seg}because {reason}."
         )
 
 
@@ -232,13 +232,13 @@ class DHDErrorExpertModeDisabled(DHDFeatureError):
     def __init__(
         self,
         *,
-        feature: Optional[Callable[[Any], Any]] = None,
+        op: Optional[Callable[[Any], Any]] = None,
         **kwargs
     ):
         return super().__init__(
             reason="expert mode is disabled",
             ID=None,
-            feature=feature,
+            op=op,
             **kwargs
         )
 
@@ -247,7 +247,7 @@ class DHDErrorFeatureNotAvailable(DHDFeatureError):
     def __init__(
         self,
         *,
-        feature: Optional[Callable[[Any], Any]],
+        op: Optional[Callable[[Any], Any]],
         ID: Optional[int] = None,
         **kwargs
     ):
@@ -255,7 +255,7 @@ class DHDErrorFeatureNotAvailable(DHDFeatureError):
         return super().__init__(
             reason="it is not supported on this device",
             ID=ID,
-            feature=feature,
+            op=op,
             **kwargs
         )
 
@@ -264,7 +264,7 @@ class DHDErrorFeatureNotEnabled(DHDFeatureError):
     def __init__(
         self,
         *,
-        feature: Optional[Callable[[Any], Any]] = None,
+        op: Optional[Callable[[Any], Any]] = None,
         ID: Optional[int] = None,
         **kwargs
     ):
@@ -272,7 +272,7 @@ class DHDErrorFeatureNotEnabled(DHDFeatureError):
         return super().__init__(
             reason="it was previously disabled for this device",
             ID=ID,
-            feature=feature,
+            op=op,
             **kwargs
         )
 
@@ -281,13 +281,13 @@ class DHDErrorDeviceNotReady(DHDFeatureError):
     def __init__(
         self,
         *,
-        feature: Optional[Callable[[Any], Any]],
+        op: Optional[Callable[[Any], Any]],
         ID: Optional[int] = None,
         **kwargs
     ):
         return super().__init__(
             reason="the device isn't ready to proccess a new command",
-            feature=feature,
+            op=op,
             ID=ID,
             **kwargs
         )
@@ -422,7 +422,7 @@ class DHDErrorMemory(DHDError, MemoryError):
 class DHDErrorNotImplemented(DHDError, NotImplementedError):
     def __init__(self, *args, **kwargs):
         return super().__init__(
-            "The command or feature is currently not implemented."
+            "The command or op is currently not implemented."
         )
 
 
@@ -434,7 +434,7 @@ class DHDErrorFileNotFound(DHDError, FileNotFoundError):
 class DHDErrorDeprecated(DHDError):
     def __init__(self):
         super().__init__(
-            "This feature, function, or current device is marked as "
+            "This op, function, or current device is marked as "
             "deprecated."
         )
 
