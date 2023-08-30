@@ -397,7 +397,7 @@ _libdrd.drdGetVelocity.restype = c_int
 
 
 _libdrd.drdGetCtrlFreq.argtypes = [c_byte]
-_libdrd.drdGetCtrlFreq.restype = c_int
+_libdrd.drdGetCtrlFreq.restype = c_double
 
 
 def getCtrlFreq(ID: int = -1) -> float:
@@ -812,6 +812,7 @@ _libdrd.drdGetVelocity.argtypes = [
     c_double_ptr,
     c_double_ptr,
     c_double_ptr,
+    c_double_ptr,
     c_byte
 ]
 _libdrd.drdGetVelocity.restype = c_int
@@ -820,6 +821,7 @@ _libdrd.drdGetVelocity.restype = c_int
 def getVelocity(
     v_out: MutableFloatVectorLike,
     w_out: MutableFloatVectorLike,
+    vg_out: c_double,
     ID: int = -1
 ) -> int:
     """
@@ -832,10 +834,13 @@ def getVelocity(
         Device ID (see multiple devices section for details), defaults to -1.
 
     :param VectorLike v_out:
-        Output buffer for the linear velocity.
+        Output buffer for the linear velocity (in [m/s]).
 
     :param VectorLike w_out:
-        Output buffer for the angular velocity.
+        Output buffer for the angular velocity (in [rad/s]).
+
+    :param VectorLike vg_out:
+        Output buffer for the gripper linear velocity (in [m/s]).
 
     :raises TypeError:
         if ``v_out`` does not support item assignment either
@@ -864,7 +869,7 @@ def getVelocity(
     wy = c_double()
     wz = c_double()
 
-    err = _libdrd.drdGetVelocity(vx, vy, vz, wx, wy, wz, ID)
+    err = _libdrd.drdGetVelocity(vx, vy, vz, wx, wy, wz, vg_out, ID)
 
     v_out[0] = vx.value
     v_out[1] = vy.value

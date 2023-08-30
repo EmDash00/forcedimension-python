@@ -88,6 +88,9 @@ def getPositionAndOrientation(
         If ``matrix_out.ptr`` is not a Pointer[c_double] type
 
     :raises ArgumentError:
+        If ``pg_out`` is not a c_double type.
+
+    :raises ArgumentError:
         If ``ID`` is not implicitly convertible to a C int.
 
     :returns:
@@ -107,6 +110,7 @@ _libdrd.drdGetVelocity.argtypes = [
     c_double_ptr,
     c_double_ptr,
     c_double_ptr,
+    c_double_ptr,
     c_byte
 ]
 _libdrd.drdGetVelocity.restype = c_int
@@ -115,10 +119,11 @@ _libdrd.drdGetVelocity.restype = c_int
 def getVelocity(
     v_out: SupportsPtrs3[c_double],
     w_out: SupportsPtrs3[c_double],
+    vg_out: c_double,
     ID: int = -1
 ) -> int:
     """
-    Retrieve the linear velocity of the end-effector (in [m/s])
+    Retrieve the linear velocity of the end-effector (in [m/s]k)
     as well as the angular velocity (in [rad/s]) about the X, Y, and Z
     axes. Please refer to your device user manual for more information on
     your device coordinate system.
@@ -138,6 +143,9 @@ def getVelocity(
 
     :param SupportsPtrs3[c_double] w_out:
         Output buffer for the angular velocity (in [rad/s]).
+
+    :param SupportsPtrs3[c_double] vg_out:
+        Output buffer for the gripper linear velocity (in [m/s]).
 
     :raises AttributeError:
         If ``v_out.ptrs`` is not a valid attribute of ``v_out``
@@ -160,12 +168,15 @@ def getVelocity(
         ``Pointer[c_double]`` types.
 
     :raises ArgumentError:
+        If ``pg_out`` is not a c_double type.
+
+    :raises ArgumentError:
         If ``ID`` is not implicitly convertible to a C int.
 
     :returns:
         0 on success and -1 otherwise.
     """
-    return _libdrd.drdGetVelocity(*v_out.ptrs, *w_out.ptrs, ID)
+    return _libdrd.drdGetVelocity(*v_out.ptrs, *w_out.ptrs, vg_out, ID)
 
 
 _libdrd.drdMoveTo.argtypes = [c_double_ptr, c_bool, c_byte]
