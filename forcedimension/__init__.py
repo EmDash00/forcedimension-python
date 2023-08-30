@@ -804,38 +804,86 @@ class HapticDevice:
 
             return self
 
-        def initialize(self, redo=False) -> Self:
+        def _manual_init(
+            self, manual_init_wait: float = 5.
+        ) -> Self:
+            if drd.isInitialized(self._parent._id):
+                return self
+
+            print("Please manually initialize the device by moving the "
+                  "end-effector back and forth.")
+
+            while not drd.isInitialized(self._parent._id):
+                time.sleep(0.001)
+
+            print(
+                "Manual initialization complete. Starting in "
+                f"{manual_init_wait:.2f} seconds."
+            )
+
+            if manual_init_wait > 0:
+                time.sleep(manual_init_wait)
+
+            return self
+
+        def initialize(
+            self, redo: bool = False, manual_init_wait: float = 5.
+        ) -> Self:
             """
-            Performs automatic initialization by robotically moving to a
-            known position and reseting encoder counters to their correct
+            Initializes the haptic device. If the device supports
+            automatic initialization, it robotically moves to a
+            known position and resets encoder counters to their correct
             values. It subsequently ensures that the initialization was
             correctly performed by robotically sweeping the by robotically
             sweeping all endstops and comparing their joint space position to
             expected values (stored in each device internal memory).
 
+            If the device does not support automatic initialization, you will
+            be prompted to perform manual initializaiton.
+
+            :param bool redo:
+                ``True`` to reinitialize. If ``False`` and the device is
+                already initialized, this function will do nothing. Devices
+                that do not support automatic initialization cannot be
+                reinitialized.
+
+            :param float manual_init_wait:
+                The amount of time to wait after manually initializing.
+
             :raises DHDErrorNotAvailable:
                 If automatic initialization is not available on this device.
             """
 
+            if manual_init_wait < 0:
+                raise ValueError(
+                    "'manual_init_wait' must be a greater than 0."
+                )
+
             if redo:
-                self._initialized = False
+                self._is_initialized = False
 
                 if drd.autoInit(self._parent._id):
+                    if dhd.errorGetLast() != ErrorNum.NOT_AVAILABLE:
+                        raise dhd.errno_to_exception(dhd.errorGetLast())(
+                            op='forcedimension.drd.autoInit()',
+                            ID=self._parent._id
+                        )
+
+                    self._manual_init(manual_init_wait)
+
+
+            if self._is_initialized:
+                return self
+
+            if drd.checkInit(self._parent._id):
+                if dhd.errorGetLast() != ErrorNum.NOT_AVAILABLE:
                     raise dhd.errno_to_exception(dhd.errorGetLast())(
-                        op='forcedimension.drd.autoInit()',
+                        op='forcedimension.drd.checkInit()',
                         ID=self._parent._id
                     )
 
-                self._initialized = True
+                self._manual_init(manual_init_wait)
 
-            if self._initialized:
-                return
-
-            if drd.checkInit(self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
-                    op='forcedimension.drd.checkInit()',
-                    ID=self._parent._id
-                )
 
             self._initialized = True
 
