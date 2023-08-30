@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __version__ = '0.2.0'
 
 import ctypes as ct
@@ -10,6 +12,8 @@ import textwrap
 from threading import Condition, Lock, Thread, Event
 from typing import Callable, Generic, List, Optional, Type, TypeVar
 from typing import cast as _cast
+from typing_extensions import Self
+import typing_extensions
 import warnings
 from copy import copy
 import yaml
@@ -53,7 +57,7 @@ class HapticDevice:
 
         def __init__(
             self,
-            parent,
+            parent: HapticDevice,
             config_file_data: Optional[Dict[str, Any]],
             config_data: Optional[Dict[str, Any]],
             restore: bool
@@ -145,7 +149,7 @@ class HapticDevice:
                     self, restore
                 )
 
-        def req(self, fg: float):
+        def req(self, fg: float) -> Self:
             """
             Loads the requested gripper force into the request buffer.
             """
@@ -158,7 +162,7 @@ class HapticDevice:
             self,
             window_size: int = dhd.DEFAULT_VELOCITY_WINDOW,
             mode: dhd.VelocityEstimatorMode = dhd.VelocityEstimatorMode.WINDOWING
-        ):
+        ) -> Self:
             """
             Configures the internal shared linear and angular velocity
             estimator used by the Force Dimension SDK for the force gripper.
@@ -184,7 +188,7 @@ class HapticDevice:
 
             return self
 
-        def set_max_force(self, limit: Optional[float]):
+        def set_max_force(self, limit: Optional[float]) -> Self:
             """
             Define or disable a limit (in [N]) to the force magnitude that can be
             applied by the haptic device.
@@ -205,6 +209,8 @@ class HapticDevice:
                 raise dhd.errno_to_exception(dhd.errorGetLast())()
 
             self._config.max_force = limit
+
+            return self
 
         @property
         def thumb_pos(self) -> containers.Vector3:
@@ -306,7 +312,7 @@ class HapticDevice:
             self.check_exception()
             return self._fg.value
 
-        def calculate_gap(self):
+        def calculate_gap(self) -> Self:
             """
             Calculate the value of the gripper opening (in [m]) from the current
             value of the gripper encoder and store it in an internal buffer.
@@ -321,7 +327,7 @@ class HapticDevice:
 
             return self
 
-        def calculate_angle(self):
+        def calculate_angle(self) -> Self:
             """
             Calculate the value of the gripper opening angle (in [rad]) from the
             current value of the gripper encoder and store it in an internal
@@ -334,7 +340,7 @@ class HapticDevice:
 
             return self
 
-        def update_enc(self):
+        def update_enc(self) -> Self:
             """
             Performs a blocking read to the HapticDevice, requesting the value
             of the gripper encoder.
@@ -350,7 +356,7 @@ class HapticDevice:
 
             return self
 
-        def update_enc_and_calculate(self):
+        def update_enc_and_calculate(self) -> Self:
             """
             Update the value of the gripper encoders and calculate the value of
             the gripper opening (in [m]) and gripper opening angle (in [rad]).
@@ -365,7 +371,7 @@ class HapticDevice:
 
             return self
 
-        def update_linear_velocity(self):
+        def update_linear_velocity(self) -> Self:
             """
             Computes the estimated instanteous linear velocity of the gripper
             (in [m/s]).
@@ -381,7 +387,7 @@ class HapticDevice:
 
             return self
 
-        def update_angular_velocity(self):
+        def update_angular_velocity(self) -> Self:
             """
             Computes the estimated instanteous linear velocity of the gripper
             (in [rad/s]).
@@ -397,7 +403,7 @@ class HapticDevice:
 
             return self
 
-        def update_angle(self):
+        def update_angle(self) -> Self:
             """
             Performs a blocking read to the HapticDevice, requesting the value
             of the gripper opening angle (in [rad]).
@@ -413,7 +419,7 @@ class HapticDevice:
 
             return self
 
-        def update_gap(self):
+        def update_gap(self) -> Self:
             """
             Performs a blocking read to the HapticDevice, requesting the value
             of the gripper opening (in [m]).
@@ -429,7 +435,7 @@ class HapticDevice:
 
             return self
 
-        def update_thumb_pos(self):
+        def update_thumb_pos(self) -> Self:
             """
             Performs a blocking read to the HapticDevice, requesting the value
             of the gripper thumb rest position (in [m]) about the X, Y, and Z axes.
@@ -445,7 +451,7 @@ class HapticDevice:
 
             return self
 
-        def update_finger_pos(self):
+        def update_finger_pos(self) -> Self:
             """
             Performs a blocking read to the HapticDevice, requesting the value
             of the gripper forefinger rest position (in [m]) about the X, Y,
@@ -478,12 +484,12 @@ class HapticDevice:
 
         def __init__(
             self,
-            parent,
+            parent: HapticDevice,
             config_file_data: Optional[Dict[str, Any]],
             config_data: Optional[Dict[str, Any]],
             restore: bool
         ):
-            self._parent: HapticDevice = parent
+            self._parent = parent
             self._haptic_daemon: Optional[HapticDaemon] = None
             self._stop_event = Event()
             self.pollers = {}
@@ -785,7 +791,7 @@ class HapticDevice:
         def is_filtering(self) -> bool:
             return drd.isFiltering(self._parent._id)
 
-        def update_control_freq(self):
+        def update_control_freq(self) -> Self:
             """
             Updates an internal buffer witht he average refresh rate of the
             control loop (in [kHz]) since this function was last called.
@@ -801,7 +807,7 @@ class HapticDevice:
 
             return self
 
-        def initialize(self, redo=False):
+        def initialize(self, redo=False) -> Self:
             """
             Performs automatic initialization by robotically moving to a
             known position and reseting encoder counters to their correct
@@ -838,7 +844,7 @@ class HapticDevice:
 
             return self
 
-        def precision_initialize(self):
+        def precision_initialize(self) -> Self:
             """
             Performs automatic initialization for supported devices by
             robotically moving each axis to a knokwn position and resetting its
@@ -873,7 +879,7 @@ class HapticDevice:
 
             return self
 
-        def regulate(self, enabled: bool = True):
+        def regulate(self, enabled: bool = True) -> Self:
             """
             Enable or disable regulation for position, rotation, and the force
             gripper. If regulation is disabled, the base
@@ -894,7 +900,7 @@ class HapticDevice:
 
             return self
 
-        def regulate_pos(self, enabled: bool = True):
+        def regulate_pos(self, enabled: bool = True) -> Self:
             """
             This function toggles robotic regulation of the device delta base,
             which provides translations. If regulation is disabled, the base
@@ -919,7 +925,7 @@ class HapticDevice:
 
             return self
 
-        def regulate_rot(self, enabled: bool = True):
+        def regulate_rot(self, enabled: bool = True) -> Self:
             """
             This function toggles robotic regulation of the device wrist. If
             regulation is disabled, the wrist can move freely and will display
@@ -942,7 +948,7 @@ class HapticDevice:
 
             return self
 
-        def regulate_grip(self, enabled: bool = True):
+        def regulate_grip(self, enabled: bool = True) -> Self:
             """
             This function toggles robotic regulation of the device gripper.
             If regulation is disabled, the gripper can move freely and will
@@ -966,7 +972,7 @@ class HapticDevice:
 
             return self
 
-        def enable_filter(self, enabled: bool = True):
+        def enable_filter(self, enabled: bool = True) -> Self:
             """
             This function controls the motion filtering for subsequent calls to
             :func:`HapticDevice.Regulator.track()`,
@@ -988,7 +994,7 @@ class HapticDevice:
 
             return self
 
-        def start_drd(self):
+        def start_drd(self) -> Self:
             """
             This function starts the robotic control loop for the given device.
             The device must be initialized either manually (by moving around
@@ -1009,7 +1015,7 @@ class HapticDevice:
 
             return self
 
-        def stop_drd(self):
+        def stop_drd(self) -> Self:
             """
             This function stops the robotic control loop for the given device.
             """
@@ -1038,11 +1044,13 @@ class HapticDevice:
                 return
 
 
-        def update(self):
+        def update(self) -> Self:
             self.update_position_and_orientation()
             self.update_velocity()
 
-        def update_position_and_orientation(self):
+            return self
+
+        def update_position_and_orientation(self) -> Self:
             if not self._is_drd_running:
                 raise RuntimeError("DRD is not running.")
 
@@ -1060,7 +1068,9 @@ class HapticDevice:
                     ID=self._parent._id
                 )
 
-        def update_velocity(self):
+            return self
+
+        def update_velocity(self) -> Self:
             if not self._is_drd_running:
                 raise RuntimeError("DRD is not running.")
 
@@ -1074,7 +1084,9 @@ class HapticDevice:
                     ID=self._parent._id
                 )
 
-        def set_mot_ratio_max(self, scale: float):
+            return self
+
+        def set_mot_ratio_max(self, scale: float) -> Self:
             """
             Sets the maximum joint torque applied to all regulated joints
             expressed as a fraction of the maximum torque available for each
@@ -1100,7 +1112,7 @@ class HapticDevice:
             vmax: Optional[float] = None,
             amax: Optional[float] = None,
             jerk: Optional[float] = None
-        ):
+        ) -> Self:
             """
             Sets the trajectory generation parameters for
             :func:`HapticDevice.Regulator.move_to_enc()`
@@ -1147,7 +1159,7 @@ class HapticDevice:
             vmax: Optional[float] = None,
             amax: Optional[float] = None,
             jerk: Optional[float] = None
-        ):
+        ) -> Self:
             """
             Sets the trajectory generation parameters for
             :func:`HapticDevice.Regulator.track_enc()` and
@@ -1193,7 +1205,7 @@ class HapticDevice:
             vmax: Optional[float] = None,
             amax: Optional[float] = None,
             jerk: Optional[float] = None
-        ):
+        ) -> Self:
             """
             Sets the trajectory generation parameters for
             :func:`HapticDevice.Regulator.move_to_pos()` and
@@ -1234,13 +1246,12 @@ class HapticDevice:
 
             return self
 
-
         def set_pos_track_param(
             self,
             vmax: Optional[float] = None,
             amax: Optional[float] = None,
             jerk: Optional[float] = None
-        ):
+        ) -> Self:
             """
             Sets the trajectory generation parameters for
             :func:`HapticDevice.Regulator.track_pos()` and
@@ -1281,13 +1292,12 @@ class HapticDevice:
 
             return self
 
-
         def set_rot_move_param(
             self,
             vmax: Optional[float] = None,
             amax: Optional[float] = None,
             jerk: Optional[float] = None
-        ):
+        ) -> Self:
             """
             Sets the trajectory generation parameters for
             :func:`HapticDevice.Regulator.move_to_rot()` and
@@ -1328,13 +1338,12 @@ class HapticDevice:
 
             return self
 
-
         def set_rot_track_param(
             self,
             vmax: Optional[float] = None,
             amax: Optional[float] = None,
             jerk: Optional[float] = None
-        ):
+        ) -> Self:
             """
             Sets the trajectory generation parameters for
             :func:`HapticDevice.Regulator.track_rot()` and
@@ -1380,7 +1389,7 @@ class HapticDevice:
             vmax: Optional[float] = None,
             amax: Optional[float] = None,
             jerk: Optional[float] = None
-        ):
+        ) -> Self:
             """
             Sets the trajectory generation parameters for
             :func:`HapticDevice.Regulator.move_to_grip()` and
@@ -1421,13 +1430,12 @@ class HapticDevice:
 
             return self
 
-
         def set_grip_track_param(
             self,
             vmax: Optional[float] = None,
             amax: Optional[float] = None,
             jerk: Optional[float] = None
-        ):
+        ) -> Self:
             """
             Sets the trajectory generation parameters for
             :func:`HapticDevice.Regulator.track_grip()` and
@@ -1468,7 +1476,7 @@ class HapticDevice:
 
             return self
 
-        def zero(self, block: bool = True):
+        def zero(self, block: bool = True) -> Self:
             """
             Simultaneously sends the device end-effector position and
             orientation to zero. The motion uses smooth
@@ -1487,7 +1495,7 @@ class HapticDevice:
 
             return self
 
-        def zero_pos(self, block: bool = True):
+        def zero_pos(self, block: bool = True) -> Self:
             """
             Sends the device end-effector position to the origin.
             The motion uses smooth acceleration/deceleration and follows a
@@ -1497,7 +1505,7 @@ class HapticDevice:
 
             return self.move_to_pos((0., 0., 0.), block=block)
 
-        def zero_rot(self, block: bool = True):
+        def zero_rot(self, block: bool = True) -> Self:
             """
             Sends the device end-effector to zero rotation about the first,
             second, and third joint angles The motion uses smooth
@@ -1507,7 +1515,9 @@ class HapticDevice:
             """
             return self.move_to_rot((0., 0., 0.), block=block)
 
-        def move_to_enc(self, *cmds: IntVectorLike, block: bool = True):
+        def move_to_enc(
+            self, *cmds: IntVectorLike, block: bool = True
+        ) -> Self:
             """
             Sequentially sends the device end-effector to a sequence desired
             delta encoder configurations. The motion uses smooth
@@ -1559,7 +1569,7 @@ class HapticDevice:
 
             return self
 
-        def track_enc(self, *cmds: IntVectorLike):
+        def track_enc(self, *cmds: IntVectorLike) -> Self:
             """
             Sequentially sends the device end-effector to a sequence of
             delta encoder configurations. This motion is guaunteed to be
@@ -1581,7 +1591,7 @@ class HapticDevice:
 
             return self
 
-        def move_to(self, *cmds: FloatVectorLike, block: bool = True):
+        def move_to(self, *cmds: FloatVectorLike, block: bool = True) -> Self:
             """
             Sends the device end-effector to a set of desired
             7-DOF configurations.  The motion uses smooth
@@ -1638,7 +1648,7 @@ class HapticDevice:
 
             return self
 
-        def track(self, *cmds: FloatVectorLike):
+        def track(self, *cmds: FloatVectorLike) -> Self:
             """
             This function sends the device end-effector to a desired Cartesian
             7-DOF configuration. If motion filters are enabled, the motion
@@ -1663,7 +1673,9 @@ class HapticDevice:
             return self
 
 
-        def move_to_all_enc(self, *cmds: IntVectorLike, block: bool = True):
+        def move_to_all_enc(
+            self, *cmds: IntVectorLike, block: bool = True
+        ) -> Self:
             """
             Sends the device end-effector to a set of desired encoder
             positions in each degree-of-freedom. The motion follows a straight
@@ -1716,7 +1728,7 @@ class HapticDevice:
 
             return self
 
-        def track_all_enc(self, *cmds: IntVectorLike):
+        def track_all_enc(self, *cmds: IntVectorLike) -> Self:
             """
             Sequentially sends the device end-effector to a set
             of desired encoder positions in each degree of freedom. If motion
@@ -1739,7 +1751,9 @@ class HapticDevice:
 
             return self
 
-        def move_to_pos(self, *cmds: FloatVectorLike, block: bool = True):
+        def move_to_pos(
+            self, *cmds: FloatVectorLike, block: bool = True
+        ) -> Self:
             """
             Sends the device end-effector to a set of desired
             positions. The motion follows a straight line in position space,
@@ -1793,7 +1807,7 @@ class HapticDevice:
             return self
 
 
-        def track_pos(self, *cmds: FloatVectorLike):
+        def track_pos(self, *cmds: FloatVectorLike) -> Self:
             """
             Sends the device end-effector to a set of desired
             positions. The motion follows a straight line in position space,
@@ -1819,7 +1833,9 @@ class HapticDevice:
 
             return self
 
-        def move_to_rot(self, *cmds: FloatVectorLike, block: bool = True):
+        def move_to_rot(
+            self, *cmds: FloatVectorLike, block: bool = True
+        ) -> Self:
             """
             Sequentially sends the device end-effector to a set of desired
             Cartesian rotations. The motion follows a straight curve between
@@ -1864,7 +1880,7 @@ class HapticDevice:
 
             return self
 
-        def track_rot(self, *cmds: FloatVectorLike):
+        def track_rot(self, *cmds: FloatVectorLike) -> Self:
             """
             Sequentially sends the device end-effector to a set of
             desired Cartesian orientation. If motion filters are enabled, the
@@ -1890,7 +1906,7 @@ class HapticDevice:
 
             return self
 
-        def move_to_grip(self, *cmds: float, block: bool = True):
+        def move_to_grip(self, *cmds: float, block: bool = True) -> Self:
             """
             Sequentially sends the device gripper to a set of desired opening
             distances. The motion is executed with smooth
@@ -1934,7 +1950,7 @@ class HapticDevice:
 
             return self
 
-        def track_grip(self, *cmds: float):
+        def track_grip(self, *cmds: float) -> Self:
             """
             This function sequentially sends the device gripper to a set of
             desired opening distances (in [m]). If motion filters are enabled,
@@ -1955,7 +1971,7 @@ class HapticDevice:
 
             return self
 
-        def hold(self):
+        def hold(self) -> Self:
             """
             This function immediately makes the device hold its current
             position. All motion commands are abandoned.
@@ -1968,7 +1984,7 @@ class HapticDevice:
 
             return self
 
-        def lock(self, enabled: bool = True):
+        def lock(self, enabled: bool = True) -> Self:
             """
                 If `enabled` is ``True``, the device moves to its park position
                 engages the mechanical locks. If `enabled` is ``False``, the
@@ -2041,10 +2057,12 @@ class HapticDevice:
         }
 
     class _Expert:
-        def __init__(self, parent):
-            self._parent: HapticDevice = parent
+        def __init__(self, parent: HapticDevice):
+            self._parent = parent
 
-        def set_timeguard(self, interval: int = dhd.DEFAULT_TIMEGUARD_US):
+        def set_timeguard(
+            self, interval: int = dhd.DEFAULT_TIMEGUARD_US
+        ) -> "HapticDevice":
             """
             Sets the arbitrary minimum period for the TimeGuard feature in the
             Force Dimension SDK. A value of
@@ -2066,7 +2084,9 @@ class HapticDevice:
 
             return self._parent
 
-        def set_com_mode(self, mode: dhd.ComMode = dhd.ComMode.ASYNC):
+        def set_com_mode(
+            self, mode: dhd.ComMode = dhd.ComMode.ASYNC
+        ) -> "HapticDevice":
             """
             Sets the COM operation mode on compatible devices.
 
@@ -2576,7 +2596,7 @@ class HapticDevice:
     # def set_config(self, config: HapticDeviceConfig):
         # ...
 
-    def set_config(self, config_data: Dict[str, Any]):
+    def set_config(self, config_data: Dict[str, Any]) -> Self:
         for key, value in config_data:
             HapticDevice._config_setters[key](self, value)
 
@@ -3476,7 +3496,7 @@ class HapticDevice:
         self.check_exception()
         return _cast(containers.Mat6x6, self._inertia_matrix_view)
 
-    def set_update_list(self, lst: List[Callable[..., Any]]):
+    def set_update_list(self, lst: List[Callable[..., Any]]) -> Self:
         """
         Sets the functions to be sequentially called in the default update
         function.
@@ -3497,7 +3517,7 @@ class HapticDevice:
 
         return self
 
-    def update(self):
+    def update(self) -> Self:
         """
         Sequentially calls the functions in the internal default update list.
 
@@ -3511,7 +3531,7 @@ class HapticDevice:
 
         return self
 
-    def calculate_pos(self):
+    def calculate_pos(self) -> Self:
         """
         Calculates and stores the position of the device given the current
         value of the delta encoders in the internal buffer.
@@ -3523,7 +3543,7 @@ class HapticDevice:
 
         return self
 
-    def calculate_delta_joint_angles(self):
+    def calculate_delta_joint_angles(self) -> Self:
         """
         Calculates and stores the joint angles of the DELTA structure given
         the current end-effector encoder readings in the internal buffer.
@@ -3535,7 +3555,7 @@ class HapticDevice:
 
         return self
 
-    def calculate_delta_jacobian(self):
+    def calculate_delta_jacobian(self) -> Self:
         """
         Calculates and stores the Jacobian matrix of the DELTA structure given
         current joint angle configuration in the internal buffer.
@@ -3549,7 +3569,7 @@ class HapticDevice:
 
         return self
 
-    def calculate_wrist_joint_angles(self):
+    def calculate_wrist_joint_angles(self) -> Self:
         """
         Calculates and stores the joint angles of the WRIST structure given
         the current end-effector encoder values in the internal buffer.
@@ -3561,7 +3581,7 @@ class HapticDevice:
 
         return self
 
-    def calculate_wrist_jacobian(self):
+    def calculate_wrist_jacobian(self) -> Self:
         """
         Calculates and stores the Jacobian matrix of the WRIST structure given
         current joint angle configuration in the internal buffer.
@@ -3573,7 +3593,7 @@ class HapticDevice:
 
         return self
 
-    def calculate_inertia_matrix(self):
+    def calculate_inertia_matrix(self) -> Self:
         """
         Calculates the 6x6 inertia matrix (with respect to the X, Y, and Z
         axes) given the current joint angles configuration in the internal
@@ -3586,7 +3606,7 @@ class HapticDevice:
 
         return self
 
-    def update_encs_and_calculate(self):
+    def update_encs_and_calculate(self) -> Self:
         """
         Updates the encoders for each degree-of-freedom and given those values,
         calculates the position of the end-effector, DELTA joint angles, the
@@ -3603,7 +3623,7 @@ class HapticDevice:
 
         return self
 
-    def update_delta_encs_and_calculate(self):
+    def update_delta_encs_and_calculate(self) -> Self:
         """
         Updates the DELTA encoders and given those values, calculates the
         position of the end-effector, DELTA joint angles, and the DELTA
@@ -3620,7 +3640,7 @@ class HapticDevice:
 
         return self
 
-    def update_wrist_encs_and_calculate(self):
+    def update_wrist_encs_and_calculate(self) -> Self:
         """
         Updates the WRIST encoders and given those values, calculates the wrist
         joint angles and the WRIST jacobian.
@@ -3635,7 +3655,7 @@ class HapticDevice:
 
         return self
 
-    def update_encs(self):
+    def update_encs(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         encoder readers of the DELTA structure that controls the end-effector
@@ -3658,7 +3678,7 @@ class HapticDevice:
         return self
 
 
-    def update_delta_encs(self):
+    def update_delta_encs(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         encoder readers of the DELTA structure that controls the end-effector
@@ -3680,7 +3700,7 @@ class HapticDevice:
 
         return self
 
-    def update_wrist_encs(self):
+    def update_wrist_encs(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         encoder readers of the DELTA structure that controls the end-effector
@@ -3702,7 +3722,7 @@ class HapticDevice:
 
         return self
 
-    def update_enc_velocities(self):
+    def update_enc_velocities(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         encoder readers of the DELTA structure that controls the end-effector
@@ -3724,13 +3744,13 @@ class HapticDevice:
 
         return self
 
-    def update_joint_state(self):
+    def update_joint_state(self) -> Self:
         self.update_joint_angles()
         self.update_joint_angle_velocities()
 
         return self
 
-    def update_joint_angles(self):
+    def update_joint_angles(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         joint angles for each degree-of-freedom (in [rad]). The requested
@@ -3751,7 +3771,7 @@ class HapticDevice:
 
         return self
 
-    def update_joint_angle_velocities(self):
+    def update_joint_angle_velocities(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         joint velocities for each degree-of-freedom (in [rad/s]). The requested
@@ -3774,13 +3794,13 @@ class HapticDevice:
 
         return self
 
-    def update_state(self):
+    def update_state(self) -> Self:
         self.update_delta_state()
         self.update_delta_state()
 
         return self
 
-    def update_delta_state(self):
+    def update_delta_state(self) -> Self:
         """
         Sequentially updates the position and the velocity of end-effectors
         (states affected by the DLETA structure).
@@ -3790,7 +3810,7 @@ class HapticDevice:
 
         return self
 
-    def update_position(self):
+    def update_position(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         position of the end-effector. The requested values are then loaded into
@@ -3810,7 +3830,7 @@ class HapticDevice:
 
         return self
 
-    def update_velocity(self):
+    def update_velocity(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         linear velocity of the end-effector. The requested values are then
@@ -3835,7 +3855,7 @@ class HapticDevice:
 
         return self
 
-    def update_wrist_state(self):
+    def update_wrist_state(self) -> Self:
         """
         Sequentially updates the position and the velocity of end-effectors
         (states affected by the DLETA structure).
@@ -3846,7 +3866,7 @@ class HapticDevice:
 
         return self
 
-    def update_orientation_angles(self):
+    def update_orientation_angles(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         angle of each joint (in [rad]), starting with the one located nearest
@@ -3872,7 +3892,9 @@ class HapticDevice:
                 op='forcedimension.dhd.getLinearVelocity()'
             )
 
-    def update_angular_velocity(self):
+        return self
+
+    def update_angular_velocity(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         angular velocity of the end-effector. The requested values are then
@@ -3897,7 +3919,7 @@ class HapticDevice:
 
         return self
 
-    def update_force(self):
+    def update_force(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting the current
         force the end end-effector is experiencing. The requested values are
@@ -3917,7 +3939,7 @@ class HapticDevice:
 
         return self
 
-    def update_force_and_torque(self):
+    def update_force_and_torque(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting in parallel
         the current force and torque applied to the end-effector. The requested
@@ -3935,7 +3957,7 @@ class HapticDevice:
 
         return self
 
-    def update_force_and_torque_and_gripper_force(self):
+    def update_force_and_torque_and_gripper_force(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting in parallel
         the force and torque applied to the end-effector as well as the force
@@ -3962,7 +3984,7 @@ class HapticDevice:
 
         return self
 
-    def update_orientation(self):
+    def update_orientation(self) -> Self:
         """
         Performs a blocking read to the HapticDevice,
         its orientation frame matrix and updates an internal buffer with those
@@ -3984,7 +4006,7 @@ class HapticDevice:
 
         return self
 
-    def update_position_and_orientation(self):
+    def update_position_and_orientation(self) -> Self:
         """
         Performs a blocking read to the HapticDevice, requesting in parallel
         the position of the end effector (in [m]) about the X, Y, and Z axes
@@ -4010,7 +4032,7 @@ class HapticDevice:
 
         return self
 
-    def update_buttons(self):
+    def update_buttons(self) -> Self:
         """
         Performs a blocking read and gets the state of all buttons on the
         device into a int bit vector buffer.
@@ -4024,7 +4046,7 @@ class HapticDevice:
 
         return self
 
-    def update_status(self):
+    def update_status(self) -> Self:
         """
         Perform a blocking read to the HapticDevice, requesting all pertinent
         status information.
@@ -4042,7 +4064,7 @@ class HapticDevice:
 
         return self
 
-    def submit(self, respect_neutral_stop: bool = True):
+    def submit(self, respect_neutral_stop: bool = True) -> Self:
         """
         Push the requested forces and torques to the device in a blocking send.
 
@@ -4055,7 +4077,7 @@ class HapticDevice:
         """
 
         if respect_neutral_stop and (self._is_neutral or self._is_stopped):
-            return
+            return self
 
         if (not respect_neutral_stop) and self._is_neutral:
             self._is_neutral = False
@@ -4077,7 +4099,7 @@ class HapticDevice:
 
         return self
 
-    def req(self, f: FloatVectorLike, t: FloatVectorLike = (0, 0, 0)):
+    def req(self, f: FloatVectorLike, t: FloatVectorLike = (0, 0, 0)) -> Self:
         """
         Load the requested force and request torque buffer for this device.
         This won't send the request to the device. This is used by the
@@ -4109,7 +4131,7 @@ class HapticDevice:
 
         return self
 
-    def req_vibration(self, freq: float, amplitude: float):
+    def req_vibration(self, freq: float, amplitude: float) -> Self:
         """
         Load the requested vibration into the vibration buffer. This won't
         send the request to the device. This is used by the HapticDaemon. This
@@ -4131,7 +4153,7 @@ class HapticDevice:
 
         return self
 
-    def submit_vibration(self):
+    def submit_vibration(self) -> Self:
         """
         Push the requested vibration to the device in a blocking send.
 
@@ -4155,7 +4177,7 @@ class HapticDevice:
 
         return self
 
-    def neutral(self):
+    def neutral(self) -> Self:
         """
         Disable electromagnetic braking and put the device in IDLE mode,
         consequently disabling forces. A call to
@@ -4169,7 +4191,7 @@ class HapticDevice:
 
         return self
 
-    def stop(self):
+    def stop(self) -> Self:
         """
         Disable force and put the device in BRAKE mode. You may feel a viscous
         force that keeps that device from moving too quickly in this mode if
@@ -4227,7 +4249,7 @@ class HapticDevice:
 
         return self._max_force
 
-    def set_max_force(self, limit: Optional[float]):
+    def set_max_force(self, limit: Optional[float]) -> Self:
         """
         Define or disable a limit (in [N]) to the force magnitude that can be
         applied by the haptic device.
@@ -4264,7 +4286,7 @@ class HapticDevice:
         return self._max_torque
 
 
-    def set_max_torque(self, limit: Optional[float]):
+    def set_max_torque(self, limit: Optional[float]) -> Self:
         """
         Define or disable a limit (in [N]) to the force magnitude that can be
         applied by the haptic device.
@@ -4319,7 +4341,7 @@ class HapticDevice:
         self._regulator.stop()
         drd.close(self._id)
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, t, value, traceback):
