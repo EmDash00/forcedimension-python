@@ -4560,6 +4560,10 @@ class HapticPoller(Thread):
             del self._target
 
 
+@typing_extensions.deprecated(
+    "HapticDaemon is deprecated as of Force Dimension Bindings "
+    "v0.2.0. Use HapticDevice.Regulator.poll() instead."
+)
 class HapticDaemon(Thread):
     def __init__(
         self,
@@ -4567,11 +4571,6 @@ class HapticDaemon(Thread):
         update_list: UpdateOpts = UpdateOpts(),
         forceon=False
     ):
-        warnings.warn(
-            "HapticDaemon is deprecated as of Force Dimension Bindings "
-            "v0.2.0. Use HapticDevice.Regulator.poll() instead.",
-            DeprecationWarning, stacklevel=2
-        )
 
         if not isinstance(dev, HapticDevice):
             raise TypeError("Daemon needs an instance of HapticDevice")
