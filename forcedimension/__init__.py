@@ -14,7 +14,6 @@ from typing import Any, Callable, Dict, List, Optional
 from typing import cast as _cast
 from typing_extensions import Self
 import typing_extensions
-import warnings
 from copy import copy
 import yaml
 
@@ -24,8 +23,6 @@ from forcedimension.dhd.adaptors import Handedness
 import forcedimension.drd as drd
 import forcedimension.util as __util
 from forcedimension.containers import (
-    DefaultDOFEncsType, DefaultDOFJointAnglesType, DefaultEnc3Type,
-    DefaultMat3x3Type, DefaultMat6x6Type, DefaultVecType,
     GripperUpdateOpts, UpdateOpts, _HapticPollerOptions
 )
 from forcedimension.serialization import (
