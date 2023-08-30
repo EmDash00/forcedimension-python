@@ -59,7 +59,7 @@ class HapticDevice:
             config_data: Optional[Dict[str, Any]],
             restore: bool
         ):
-            self._parent: HapticDevice = parent
+            self._parent = parent
             self._config = self._parent._config.gripper
             self._init_config(config_file_data, config_data, restore)
 
