@@ -785,6 +785,7 @@ class HapticDevice:
         def grip_track_param(self) -> TrajectoryGenParams:
             return self._config.grip_track_param
 
+        @property
         def is_filtering(self) -> bool:
             return drd.isFiltering(self._parent._id)
 
