@@ -925,6 +925,16 @@ class HapticDevice:
 
             return self
 
+        def wait_for_tick(self):
+            """
+            Puts the current thread to sleep until the next iteration of the
+            robotic control loop begins.
+            """
+            if not self.is_drd_running:
+                raise RuntimeError("DRD is not running.")
+
+            drd.waitForTick(self._parent._id)
+
         def regulate(self, enabled: bool = True) -> Self:
             """
             Enable or disable regulation for position, rotation, and the force
