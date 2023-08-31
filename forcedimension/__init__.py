@@ -3902,12 +3902,12 @@ class HapticDevice:
 
     def update_wrist_state(self) -> Self:
         """
-        Sequentially updates the position and the velocity of end-effectors
-        (states affected by the DLETA structure).
+        Sequentially updates the orientation and the angular velocity of end-effector
+        (states affected by the WRIST structure).
         """
 
         self.update_orientation_angles()
-        self.update_velocity()
+        self.update_angular_velocity()
 
         return self
 
