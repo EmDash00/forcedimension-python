@@ -744,7 +744,7 @@ class HapticDevice:
 
         @property
         def is_drd_running(self) -> bool:
-            return self._is_drd_running
+            return drd.isRunning(self._parent.ID)
 
         @property
         def control_freq(self) -> float:
