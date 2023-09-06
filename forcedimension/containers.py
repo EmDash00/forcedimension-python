@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import ctypes
-from array import array
 from ctypes import c_double, c_int, c_ushort
 import operator
-from typing import Any, NamedTuple, Optional, Tuple
+from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union
 from matplotlib.pyplot import functools
 
 import numpy as np
@@ -16,6 +17,7 @@ from forcedimension.typing import (
     c_double_ptr, c_int_ptr, c_ushort_ptr
 )
 
+from typing_extensions import NotRequired
 from typing import cast as _cast
 
 from forcedimension.runtime import VersionTuple

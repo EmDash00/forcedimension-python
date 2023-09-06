@@ -3,14 +3,13 @@ from __future__ import annotations
 __version__ = '0.2.0'
 
 import ctypes as ct
-from enum import Enum
 import math
 import time
 import json
 from math import nan
 import textwrap
 from threading import Condition, Lock, Thread, Event
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from typing import cast as _cast
 from typing_extensions import Self
 import typing_extensions
@@ -21,7 +20,7 @@ import forcedimension.containers as containers
 import forcedimension.dhd as dhd
 from forcedimension.dhd.adaptors import Handedness
 import forcedimension.drd as drd
-import forcedimension.util as __util
+import forcedimension.util as util
 from forcedimension.containers import (
     GripperUpdateOpts, UpdateOpts, _HapticPollerOptions
 )
@@ -40,7 +39,6 @@ class HapticDevice:
     A HapticDevice is a high-level wrapper for any compatible Force Dimension
     device.
     """
-
 
     class Gripper:
         """
@@ -503,6 +501,60 @@ class HapticDevice:
             self._is_drd_running = False
             self._specs.is_drd_supported = drd.isSupported(self._parent._id)
             self._is_initialized = drd.isInitialized(self._parent._id)
+            self._end_event = Event()
+
+            self._default_poller = containers.PollGroup(
+                [self.update_position_and_orientation, self.update_velocity],
+                self.wait_for_tick
+            )
+
+            self._polled_functions: Dict[Callable[[], Any], HapticPoller] = {}
+            self._polled_targets: Dict[Callable[[], Any], HapticPoller] = {}
+            self._poll_groups_dct: Dict[str, HapticPoller] = {}
+
+            self._polled_funcs_view = ImmutableWrapper(self._polled_functions)
+            self._polled_targets_view = ImmutableWrapper(self._polled_targets)
+            self._poll_groups_dct_view =  ImmutableWrapper(
+                self._poll_groups_dct
+            )
+
+            self._updaters = set([
+                self.update,
+                self.update_position_and_orientation,
+                self.update_velocity
+            ])
+
+            self._default_regulator_poll_groups = (
+                containers.PollGroup(
+                    targets=[
+                        self.update_position_and_orientation,
+                        self.update_velocity,
+                        self._parent.submit
+                    ],
+                    wait_for=self.wait_for_tick,
+                    high_precision=True,
+                    name="DEFAULT"
+                ),
+                containers.PollGroup(
+                    targets=[self._parent.update_buttons],
+                    wait_for=1e-2,
+                    high_precision=False,
+                    name="DEFAULT BUTTON"
+                )
+            )
+
+            self._default_poll_groups = (
+                containers.PollGroup(
+                    targets=[
+                        self._parent.update_position_and_orientation,
+                        self._parent.update_velocity,
+                        self._parent.update_buttons,
+                        self._parent.submit
+                    ],
+                    wait_for=1e-3,
+                    name="DEFAULT"
+                ),
+            )
 
             self._init_config(config_file_data, config_data, restore)
 
@@ -733,6 +785,24 @@ class HapticDevice:
                 HapticDevice.Regulator._config_initializers[config](
                     self, restore
                 )
+
+        @property
+        def DEFAULT_POLL_GROUPS(self) -> Tuple[containers.PollGroup]:
+            """
+            A tuple of default poll groups (without the use of DRD).
+            """
+
+            return self._default_poll_groups
+
+        @property
+        def DEFAULT_REGULATOR_POLL_GROUPS(self) -> Tuple[
+            containers.PollGroup, containers.PollGroup
+        ]:
+            """
+            A tuple of default poll groups (with the use of DRD).
+            """
+
+            return self._default_regulator_poll_groups
 
         @property
         def is_drd_supported(self) -> bool:
@@ -1092,18 +1162,107 @@ class HapticDevice:
 
             return self
 
+        def _register_polled_funcs(
+            self, *targets: Callable[[], Any], poller: HapticPoller
+        ):
+            for target in targets:
+                if target in self._updaters and not self.is_drd_running:
+                    raise ValueError(
+                        "Regulator updaters need DRD to be started."
+                    )
+
+                if target in self._parent._updater_dct:
+                    for func in self._parent._updater_dct[target]:
+                        if func in self._polled_functions:
+                            raise ValueError(
+                                f"{target.__name__} is already being polled"
+                                f" by {self._polled_functions[target].name}"
+                            )
+
+                        self._polled_functions[func] = poller
+
+                    self._polled_targets[target] = poller
+
+                    continue
+
+                if target in self._polled_functions:
+                    raise ValueError(
+                        f"{target.__name__} is already being polled"
+                        f" by {self._polled_functions[target].name}"
+                    )
+
+                self._polled_functions[target] = poller
+                self._polled_targets[target] = poller
+
+        def _poll_impl(self, *pollgrps: containers.PollGroup):
+            for pollgrp in pollgrps:
+
+                poller = HapticPoller(
+                    target=util.function_chain(*pollgrp.targets),
+                    wait_for=pollgrp.wait_for,
+                    high_precision=pollgrp.high_precision
+                )
+
+                if pollgrp.name is not None:
+                    poller.name = pollgrp.name
+
+                self._poll_groups_dct[poller.name] = poller
+                self._register_polled_funcs(*pollgrp.targets, poller=poller)
+
+                poller.start(self)
+
+        def poll(self, *pollgrps: containers.PollGroup) -> Self:
 
             if self._haptic_daemon is not None:
                 raise RuntimeError(
-                    "Mixed use of HapticDaemon and HapticDevice.Regulator is "
-                    "not supported."
+                    "Mixed use of HapticDaemon and "
+                    "HapticDevice.Regulator.poll() is not supported."
                 )
 
-        def stop(self):
+            # Default Behavior:
+            if len(pollgrps) == 0:
+                if self._is_drd_running:
+                    self._poll_impl(*self.DEFAULT_REGULATOR_POLL_GROUPS)
+                else:
+                    self._poll_impl(*self.DEFAULT_POLL_GROUPS)
+
+
+            self._poll_impl(*pollgrps)
+
+            return self
+
+        @property
+        def poll_group_names(self):
+            return self._poll_groups_dct.keys()
+
+        @property
+        def poll_groups_by_name(self) -> Dict[str, HapticPoller]:
+            return _cast(Dict[str, HapticPoller], self._poll_groups_dct_view)
+
+        @property
+        def poll_groups_by_target(self) -> Dict[
+            Callable[[], Any], HapticPoller
+        ]:
+            return _cast(
+                Dict[Callable[[], Any], HapticPoller],
+                self._polled_targets_view
+            )
+
+        def stop_poll(self):
+            """
+            Stop all polling.
+            """
+
             if self._haptic_daemon is not None:
                 self._haptic_daemon.stop()
-                return
+                return self
 
+            self._stop_event.set()
+
+            for poller in self.poll_groups_by_name.values():
+                poller.stop()
+
+            return self
 
         def update(self) -> Self:
             self.update_position_and_orientation()
@@ -2264,7 +2423,7 @@ class HapticDevice:
         self._serial_number = -1
         self._devtype = dhd.DeviceType.NONE
 
-        self._exception: Optional[dhd.DHDIOError] = None
+        self._exception: Optional[Exception] = None
 
         self._expert = HapticDevice._Expert(self)
 
@@ -2524,6 +2683,47 @@ class HapticDevice:
             self.update_buttons,
             self.update_status
         ]
+
+        self._updater_dct = {
+            self.update_state: set([
+                self.update_position, self.update_velocity
+            ]),
+
+            self.update_encs: set([
+                self.update_delta_encs,
+                self.update_wrist_encs,
+                self._mock_gripper.update_enc
+            ]),
+
+            self.update_encs_and_calculate: set([
+                self.update_delta_encs,
+                self.update_wrist_encs,
+                self._mock_gripper.update_enc
+            ]),
+
+            self.update_delta_encs_and_calculate: set([
+                self.update_delta_encs,
+            ]),
+
+            self.update_wrist_encs_and_calculate: set([
+                self.update_wrist_encs,
+            ]),
+
+            self.update_position_and_orientation: set([
+                self.update_position,
+                self.update_position_and_orientation,
+            ]),
+
+            self.update_wrist_state: set([
+                self.update_orientation_angles,
+                self.update_angular_velocity
+            ]),
+
+            self.regulator.update: set([
+                self.regulator.update_position_and_orientation,
+                self.regulator.update_velocity
+            ])
+        }
 
     def _init_force_enabled(self, restore: bool = False):
         if restore:
@@ -4457,7 +4657,7 @@ class HapticDevice:
         handle to the device.
         """
 
-        self._regulator.stop()
+        self._regulator.stop_poll()
         drd.close(self._id)
 
     def __enter__(self) -> Self:
@@ -4577,63 +4777,104 @@ class _Poller(Thread):
 
 class HapticPoller(Thread):
     def __init__(
-        self,  h: HapticDevice, interval: float, *args,
-        high_prec: bool = False, **kwargs
+        self,
+        *args,
+        wait_for: Union[Callable[[], Any], float],
+        high_precision: bool = True,
+        **kwargs
     ):
+        if not (
+            isinstance(wait_for, int) or
+            isinstance(wait_for, float) or
+            isinstance(wait_for, Callable)
+        ):
+            raise TypeError("'wait_for' must be numeric or Callable")
+
+
+        if isinstance(wait_for, float):
+            if wait_for < 0:
+                raise ValueError(
+                    "'wait_for' must be greater than 0 if it's numeric"
+                )
+            self._interval = wait_for
+
+        elif isinstance(wait_for, Callable):
+            self._wait_func = wait_for
+            self._interval = 0.
+
         super().__init__(*args, **kwargs)
 
-        self._h = h
+        self._regulator: HapticDevice.Regulator
 
-        self._interval = int(interval * 1E9)
+        if (target := kwargs.get('target')) is None:
+            raise ValueError("HapticPoller must have a target.")
 
-        self._stop_event = Event()
-        self._pause_event = Event()
+        self._target = target
+
+        self._unpause_event = Event()
         self._pause_sync = Event()
 
         self._target_args = kwargs.get('args', ())
         self._target_kwargs = kwargs.get('kwargs', {})
-        self._target = kwargs.get('target', None)
 
-        self._high_prec = high_prec
+        self._wait_func: Optional[Callable[[], Any]] = None
+        self._is_paused = False
+
+
+        self._high_precision = high_precision
+
+
+    def start(self, regulator: HapticDevice.Regulator):
+       self._regulator = regulator
+       self._stop_event = regulator._stop_event
+       super().start()
 
     def stop(self):
+        if self._is_paused:
+            self.unpause()
+
         self._stop_event.set()
         self.join()
 
-    def pause(self):
-        self._pause_event.set()
-        self._pause_sync.wait()
+    def pause(self, synchronized: bool = True):
+        self._unpause_event.clear()
+        self._is_paused = True
+
+        if synchronized:
+            self._pause_sync.wait()
 
     def unpause(self):
-        self._pause_event.clear()
+        self._unpause_event.set()
         self._pause_sync.clear()
 
     def _execute_target(self):
-        if self._target:
-            self._target(*self._target_args, **self._target_kwargs)
+        self._target(*self._target_args, **self._target_kwargs)
 
     def _run_zero_interval(self):
         while not self._stop_event.is_set():
-            if not self._pause_event.is_set():
+            if not self._is_paused:
+                self._execute_target()
+
+                if self._wait_func is not None:
+                    self._wait_func()
+            else:
+                self._pause_sync.set()
+                self._unpause_event.wait()
+
+    def _run_low_precision(self):
+        while not self._stop_event.wait(self._interval):
+
+            if not self._is_paused:
                 self._execute_target()
             else:
                 self._pause_sync.set()
-                time.sleep(0.001)
+                self._unpause_event.wait()
 
-    def _run_low_prec(self):
-        while not self._stop_event.wait(self._interval):
-
-            if not self._pause_event.is_set():
-                self._pause_sync.set()
-                time.sleep(0.001)
-                continue
-
-            self._execute_target()
-
-    def _run_high_prec(self):
+    def _run_high_precision(self):
         t0 = time.perf_counter()
 
         wait_period = self._interval
+
         if self._interval > 0.001:
             sleep_period = self._interval - 0.001
         else:
@@ -4643,20 +4884,41 @@ class HapticPoller(Thread):
             self._execute_target()
 
         t_sleep = time.perf_counter()
-        while not self._stop_event.wait(sleep_period):
-            spin(wait_period - (time.perf_counter() - t_sleep))
+
+        while not self._stop_event.is_set():
+            # Sleep if possible
+            if sleep_period > 0:
+                return self._stop_event.wait(sleep_period)
+
+            # Spin without holding the GIL the remaining time
+            spin_period = wait_period - (time.perf_counter() - t_sleep)
+            if spin_period > 0:
+                util.spin(spin_period)
 
             t0 = time.perf_counter()
-            if not self._pause_event.is_set():
+            if not self._is_paused:
                 self._execute_target()
             else:
                 self._pause_sync.set()
-                sleep_period = 0.001
-                wait_period = 0.001
+                self._unpause_event.wait()
+
+                sleep_period = 0.
+                wait_period = 0.
+
                 continue
 
-            wait_period = max(self._interval - (time.perf_counter() - t0), 0)
+            # Try to estimate how long the function takes to execute
+            wait_period = self._interval - (time.perf_counter() - t0)
 
+            # Function took longer than the interval.
+            # Schedule the next call ASAP.
+            if wait_period < 0:
+                wait_period = 0.
+                sleep_period = 0.
+
+                continue
+
+            # Never sleep less than 1ms, but sleep as much as you can.
             if wait_period > 0.001:
                 sleep_period = wait_period - 0.001
             else:
@@ -4670,11 +4932,14 @@ class HapticPoller(Thread):
                 self._run_zero_interval()
                 return
 
-            if self._high_prec:
-                self._run_high_prec()
+            if self._high_precision:
+                self._run_high_precision()
             else:
-                self._run_low_prec()
+                self._run_low_precision()
 
+        except Exception as ex:
+            self._regulator._parent._exception = ex
+            self._regulator.notify_end()
         finally:
             del self._target
 

@@ -43,6 +43,14 @@ def spin(time: float):
         pass
 
 
+def function_chain(*funcs: Callable[..., Any]) -> Callable[..., Any]:
+    def ret():
+        for func in funcs:
+            func()
+
+    return ret
+
+
 class ImmutableWrapper(Generic[T]):
     __slots__ = ['_data']
 
