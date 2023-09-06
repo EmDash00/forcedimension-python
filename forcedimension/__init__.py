@@ -146,6 +146,11 @@ class HapticDevice:
                     self, restore
                 )
 
+        def zero(self) -> Self:
+            self._fg_req = 0.
+
+            return self
+
         def req(self, fg: float) -> Self:
             """
             Loads the requested gripper force into the request buffer.
@@ -4250,6 +4255,44 @@ class HapticDevice:
                 ID=self._id,
                 op='forcedimension.dhd.setVibration()'
             )
+
+        return self
+
+    def zero_force(self) -> Self:
+        """
+        Sets the forces to 0. This makes the end-effector translationally
+        "transparent" (i.e. it will try to be close to frictionless and move
+        as though it was in free space).
+        """
+
+        self._f_req[0] = 0.0
+        self._f_req[1] = 0.0
+        self._f_req[2] = 0.0
+
+        return self
+
+    def zero_torque(self) -> Self:
+        """
+        Sets the torque to 0. This makes the end-effector rotationally
+        "transparent" (i.e. it will try to be close to frictionless and move
+        as though it was in free space).
+        """
+
+        self._t_req[0] = 0.0
+        self._t_req[1] = 0.0
+        self._t_req[2] = 0.0
+
+        return self
+
+    def zero(self) -> Self:
+        """
+        Sets the applied force and torque to 0. This makes the end-effector
+        rotationally and translationally  "transparent" (i.e. it will try to be
+        close to frictionless and move as though it was in free space).
+        """
+
+        self.zero_force()
+        self.zero_torque()
 
         return self
 
