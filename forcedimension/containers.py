@@ -46,6 +46,13 @@ class UpdateOpts(NamedTuple):
     gripper: Optional[GripperUpdateOpts] = None
 
 
+class PollGroup(NamedTuple):
+    targets: List[Callable[[], Any]]
+    wait_for: Union[Callable[[], Any], float]
+    high_precision: bool = True
+    name: Optional[str] = None
+
+
 class _HapticPollerOptions(NamedTuple):
     interval: float
     high_precision: bool
