@@ -345,10 +345,7 @@ class DHDErrorCom(DHDIOError):
         **kwargs
     ):
         return super().__init__(
-            err=(
-                "A communication error occured between the host and the "
-                "HapticDevice"
-            ),
+            err="A communication error between the host and the HapticDevice",
             ID=ID,
             **kwargs
         )
@@ -400,7 +397,7 @@ class DHDErrorConfiguration(DHDIOError):
 
 
 class DHDErrorGeometry(DHDError):
-    def __init__(self, ID: Optional[int] = None):
+    def __init__(self, ID: Optional[int] = None, *args, **kwargs):
 
         if (ID is not None):
             spec = f"device ID {ID}'s"
@@ -440,7 +437,7 @@ class DHDErrorDeprecated(DHDError):
 
 
 class DHDErrorInvalidIndex(DHDError, IndexError):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__(
             "An index passed to the function is outside the expected valid "
             "range. "
@@ -448,7 +445,7 @@ class DHDErrorInvalidIndex(DHDError, IndexError):
 
 
 class DHDErrorArgument(DHDError, ValueError):
-    def __init__(self, null=False):
+    def __init__(self, null: bool = False):
         if not null:
             super().__init__(
                 "The function producing this error was passed an invalid or "
@@ -462,15 +459,15 @@ class DHDErrorArgument(DHDError, ValueError):
 
 
 class DHDErrorNullArgument(DHDErrorArgument):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__(null=True)
 
 
 class DHDErrorNoRegulation(DHDError):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         super().__init__(
             "The robotic regulation thread is not running. This only applies "
-            "to functions from the robotics SDK."
+            "to functions from the robotic SDK (DRD)."
         )
 
 
