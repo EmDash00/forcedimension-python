@@ -496,12 +496,12 @@ class HapticDevice:
             self._stop_event = Event()
             self.pollers = {}
 
-            self._info = self._parent._specs
+            self._specs = self._parent._specs
             self._config = self._parent._config.regulator
 
             self._control_freq = nan
             self._is_drd_running = False
-            self._info.is_drd_supported = drd.isSupported(self._parent._id)
+            self._specs.is_drd_supported = drd.isSupported(self._parent._id)
             self._is_initialized = drd.isInitialized(self._parent._id)
 
             self._init_config(config_file_data, config_data, restore)
@@ -736,7 +736,7 @@ class HapticDevice:
 
         @property
         def is_drd_supported(self) -> bool:
-            return self._info.is_drd_supported
+            return self._specs.is_drd_supported
 
         @property
         def is_initialized(self) -> bool:
