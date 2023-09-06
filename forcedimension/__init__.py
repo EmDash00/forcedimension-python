@@ -4519,6 +4519,7 @@ class HapticDevice:
         `respect_neutral_stop=False` will re-enable forces.
         """
 
+        self._is_stopped = True
         if dhd.stop(self._id):
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
