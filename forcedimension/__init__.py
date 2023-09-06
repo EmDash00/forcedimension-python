@@ -45,8 +45,8 @@ class HapticDevice:
         A high-level wrapper for methods and kinematic data of a Gripper on a
         HapticDevice.
 
-        Certain kinds of HapticDevices opened will have grippers. If that is 
-        the case, a Gripper object will be instantiated as well containing 
+        Certain kinds of HapticDevices opened will have grippers. If that is
+        the case, a Gripper object will be instantiated as well containing
         methods to get kinematic information about the Gripper.
         """
 
@@ -492,7 +492,6 @@ class HapticDevice:
             self._parent = parent
             self._haptic_daemon: Optional[HapticDaemon] = None
             self._stop_event = Event()
-            self.pollers = {}
 
             self._specs = self._parent._specs
             self._config = self._parent._config.regulator
@@ -1002,7 +1001,7 @@ class HapticDevice:
 
         def wait_for_tick(self):
             """
-            Puts the current thread to sleep until the next iteration of the
+            Put the current thread to sleep until the next iteration of the
             robotic control loop begins.
             """
             if not self.is_drd_running:
@@ -4711,7 +4710,7 @@ class HapticDevice:
 class _Poller(Thread):
     def __init__(
         self,
-        f: Callable[[], None],
+        f: Callable[[], Any],
         min_period: Optional[float] = None,
         paused=False
     ):
