@@ -863,6 +863,24 @@ class HapticDevice:
         def is_filtering(self) -> bool:
             return drd.isFiltering(self._parent._id)
 
+        def wait_end(self) -> Self:
+            """
+            Puts the current thread to sleep until the end Event has been
+            signalled either gracefully or because exception has occured in a
+            polling thread.
+            """
+            self._end_event.wait()
+
+            if self._parent._exception is not None:
+                raise self._parent._exception
+
+            return self
+
+        def notify_end(self) -> Self:
+            self._end_event.set()
+
+            return self
+
         def update_control_freq(self) -> Self:
             """
             Updates an internal buffer witht he average refresh rate of the
