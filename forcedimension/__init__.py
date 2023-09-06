@@ -1131,10 +1131,13 @@ class HapticDevice:
                 raise RuntimeError("DRD is not running.")
 
             err = drd.direct.getVelocity(
-                self._parent._v, self._parent._w, self._parent._id
+                self._parent._v,
+                self._parent._w,
+                self._parent._mock_gripper._v,
+                self._parent._id
             )
 
-            if err:
+            if err == -1:
                 raise dhd.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getVelocity()',
                     ID=self._parent._id
@@ -2042,10 +2045,10 @@ class HapticDevice:
 
         def lock(self, enabled: bool = True) -> Self:
             """
-                If `enabled` is ``True``, the device moves to its park position
-                engages the mechanical locks. If `enabled` is ``False``, the
-                mechanical locks are disengaged. It is recommended to follow
-                engaging locks with
+                If ``enabled`` is ``True``, the device moves to its park
+                position engages the mechanical locks. If `enabled` is
+                ``False``, the mechanical locks are disengaged. It is
+                recommended to follow engaging locks with
                 `:func:forcedimension.HapticDevice.Regulator.stop()`.
 
                 :param bool enabled:
@@ -4080,7 +4083,7 @@ class HapticDevice:
             self._pos, self._frame, self._id
         )
 
-        if err:
+        if err == -1:
             raise dhd.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.getPositionAndOrientationFrame()'
@@ -4143,15 +4146,29 @@ class HapticDevice:
             self._is_neutral = False
             self.enable_force()
 
-        err = dhd.setForceAndTorqueAndGripperForce(
-            self._f_req, self._t_req, self._mock_gripper._fg_req, self._id
-        )
-
-        if err == -1:
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
-                ID=self._id,
-                op='forcedimension.dhd.setForceAndTorqueAndGripperForce()'
+        if self._regulator._is_drd_running:
+            err = drd.setForceAndTorqueAndGripperForce(
+                self._f_req,
+                self._t_req,
+                self._mock_gripper._fg_req,
+                self._id
             )
+
+            if err == -1:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    ID=self._id,
+                    op='forcedimension.drd.setForceAndTorqueAndGripperForce()'
+                )
+        else:
+            err = dhd.setForceAndTorqueAndGripperForce(
+                self._f_req, self._t_req, self._mock_gripper._fg_req, self._id
+            )
+
+            if err == -1:
+                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    ID=self._id,
+                    op='forcedimension.dhd.setForceAndTorqueAndGripperForce()'
+                )
 
         return self
 
