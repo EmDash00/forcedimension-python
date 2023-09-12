@@ -1,26 +1,25 @@
 from __future__ import annotations
 
 import ctypes
-from ctypes import c_double, c_int, c_ushort
+import functools
 import operator
+from ctypes import c_double, c_int, c_ushort
 from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union
-from matplotlib.pyplot import functools
+from typing import cast as _cast
 
 import numpy as np
 import numpy.typing as npt
-import pydantic
-import pydantic_core
+import pydantic as pyd
+import pydantic_core as pyd_core
+from typing_extensions import NotRequired
 
 from forcedimension.dhd.constants import MAX_DOF
-from forcedimension.typing import (
-    FloatArray, IntArray, SupportsPtr, SupportsPtrs3,
-    c_double_ptr, c_int_ptr, c_ushort_ptr
-)
-
-from typing_extensions import NotRequired
-from typing import cast as _cast
-
 from forcedimension.runtime import VersionTuple
+from forcedimension.typing import (
+    FloatArray, IntArray, SupportsPtr,
+    SupportsPtrs3, c_double_ptr, c_int_ptr,
+    c_ushort_ptr
+)
 from forcedimension.util import ImmutableWrapper
 
 
@@ -87,10 +86,14 @@ class Vector3(
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
-    ) -> pydantic_core.CoreSchema:
-        return pydantic_core.core_schema.no_info_after_validator_function(
-            cls, handler(cls.__init__)
+        cls, source_type: Any, handler: pyd.GetCoreSchemaHandler
+    ) -> pyd_core.CoreSchema:
+        return pyd_core.core_schema.no_info_after_validator_function(
+            cls,
+            handler(cls.__init__),
+            serialization=pyd_core.core_schema.plain_serializer_function_ser_schema(
+                lambda arr: arr.tolist()
+            )
         )
 
     @property
@@ -149,6 +152,15 @@ class State3(np.ndarray):
         self._y_view = ImmutableWrapper(self[:, 1])
         self._z_view = ImmutableWrapper(self[:, 2])
 
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: pyd.GetCoreSchemaHandler
+    ) -> pyd_core.CoreSchema:
+        return pyd_core.core_schema.no_info_after_validator_function(
+            cls, handler(cls.__init__)
+        )
+
+
     @property
     def pos(self) -> Vector3:
         return _cast(Vector3, self._pos_view)
@@ -195,10 +207,13 @@ class Enc3(np.ndarray, SupportsPtr[c_int], SupportsPtrs3[c_int]):
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
-    ) -> pydantic_core.CoreSchema:
-        return pydantic_core.core_schema.no_info_after_validator_function(
-            cls, handler(cls.__init__)
+        cls, source_type: Any, handler: pyd.GetCoreSchemaHandler
+    ) -> pyd_core.CoreSchema:
+        return pyd_core.core_schema.no_info_after_validator_function(
+            cls, handler(cls.__init__),
+            serialization=pyd_core.core_schema.plain_serializer_function_ser_schema(
+                lambda arr: arr.tolist()
+            )
         )
 
     @property
@@ -208,6 +223,7 @@ class Enc3(np.ndarray, SupportsPtr[c_int], SupportsPtrs3[c_int]):
     @property
     def ptrs(self) -> Tuple[c_int_ptr, c_int_ptr, c_int_ptr]:
         return self._ptrs
+
 
 class Enc4(np.ndarray, SupportsPtr[c_int]):
     """
@@ -229,15 +245,20 @@ class Enc4(np.ndarray, SupportsPtr[c_int]):
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
-    ) -> pydantic_core.CoreSchema:
-        return pydantic_core.core_schema.no_info_after_validator_function(
-            cls, handler(cls.__init__)
+        cls, source_type: Any, handler: pyd.GetCoreSchemaHandler
+    ) -> pyd_core.CoreSchema:
+        return pyd_core.core_schema.no_info_after_validator_function(
+            cls,
+            handler(cls.__init__),
+            serialization=pyd_core.core_schema.plain_serializer_function_ser_schema(
+                lambda arr: arr.tolist()
+            )
         )
 
     @property
     def ptr(self) -> c_int_ptr:
         return self._ptr
+
 
 class DOFIntArray(np.ndarray, SupportsPtr[c_int]):
     """
@@ -267,12 +288,15 @@ class DOFIntArray(np.ndarray, SupportsPtr[c_int]):
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
-    ) -> pydantic_core.CoreSchema:
-        return pydantic_core.core_schema.no_info_after_validator_function(
-            cls, handler(cls.__init__)
+        cls, source_type: Any, handler: pyd.GetCoreSchemaHandler
+    ) -> pyd_core.CoreSchema:
+        return pyd_core.core_schema.no_info_after_validator_function(
+            cls,
+            handler(cls.__init__),
+            serialization=pyd_core.core_schema.plain_serializer_function_ser_schema(
+                lambda arr: arr.tolist()
+            )
         )
-
     @property
     def ptr(self) -> c_int_ptr:
         return self._ptr
@@ -292,6 +316,7 @@ class DOFIntArray(np.ndarray, SupportsPtr[c_int]):
     @property
     def gripper(self) -> c_int:
         return self._gripper
+
 
 class DOFMotorArray(np.ndarray, SupportsPtr[c_ushort]):
     """
@@ -313,15 +338,20 @@ class DOFMotorArray(np.ndarray, SupportsPtr[c_ushort]):
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
-    ) -> pydantic_core.CoreSchema:
-        return pydantic_core.core_schema.no_info_after_validator_function(
-            cls, handler(cls.__init__)
+        cls, source_type: Any, handler: pyd.GetCoreSchemaHandler
+    ) -> pyd_core.CoreSchema:
+        return pyd_core.core_schema.no_info_after_validator_function(
+            cls,
+            handler(cls.__init__),
+            serialization=pyd_core.core_schema.plain_serializer_function_ser_schema(
+                lambda arr: arr.tolist()
+            )
         )
 
     @property
     def ptr(self) -> c_ushort_ptr:
         return self._ptr
+
 
 class DOFFloatArray(np.ndarray, SupportsPtr[c_double]):
     """
@@ -351,10 +381,14 @@ class DOFFloatArray(np.ndarray, SupportsPtr[c_double]):
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
-    ) -> pydantic_core.CoreSchema:
-        return pydantic_core.core_schema.no_info_after_validator_function(
-            cls, handler(cls.__init__)
+        cls, source_type: Any, handler: pyd.GetCoreSchemaHandler
+    ) -> pyd_core.CoreSchema:
+        return pyd_core.core_schema.no_info_after_validator_function(
+            cls,
+            handler(cls.__init__),
+            serialization=pyd_core.core_schema.plain_serializer_function_ser_schema(
+                lambda arr: arr.tolist()
+            )
         )
 
     @property
@@ -401,6 +435,19 @@ class DOFFloatState(np.ndarray):
         self._delta_view = ImmutableWrapper(self._delta)
         self._wrist_view = ImmutableWrapper(self._wrist)
 
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, source_type: Any, handler: pyd.GetCoreSchemaHandler
+    ) -> pyd_core.CoreSchema:
+        return pyd_core.core_schema.no_info_after_validator_function(
+            cls,
+            handler(cls.__init__),
+            serialization=pyd_core.core_schema.plain_serializer_function_ser_schema(
+                lambda arr: arr.tolist()
+            )
+        )
+
+
     @property
     def delta(self) -> np.ndarray:
         return _cast(np.ndarray, self._delta_view)
@@ -434,15 +481,20 @@ class Mat3x3(np.ndarray, SupportsPtr[c_double]):
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
-    ) -> pydantic_core.CoreSchema:
-        return pydantic_core.core_schema.no_info_after_validator_function(
-            cls, handler(cls.__init__)
+        cls, source_type: Any, handler: pyd.GetCoreSchemaHandler
+    ) -> pyd_core.CoreSchema:
+        return pyd_core.core_schema.no_info_after_validator_function(
+            cls,
+            handler(cls.__init__),
+            serialization=pyd_core.core_schema.plain_serializer_function_ser_schema(
+                lambda arr: arr.tolist()
+            )
         )
 
     @property
     def ptr(self) -> c_double_ptr:
         return self._ptr
+
 
 class Mat6x6(np.ndarray, SupportsPtr[c_double]):
     """
@@ -463,10 +515,14 @@ class Mat6x6(np.ndarray, SupportsPtr[c_double]):
 
     @classmethod
     def __get_pydantic_core_schema__(
-        cls, source_type: Any, handler: pydantic.GetCoreSchemaHandler
-    ) -> pydantic_core.CoreSchema:
-        return pydantic_core.core_schema.no_info_after_validator_function(
-            cls, handler(cls.__init__)
+        cls, source_type: Any, handler: pyd.GetCoreSchemaHandler
+    ) -> pyd_core.CoreSchema:
+        return pyd_core.core_schema.no_info_after_validator_function(
+            cls,
+            handler(cls.__init__),
+            serialization=pyd_core.core_schema.plain_serializer_function_ser_schema(
+                lambda arr: arr.tolist()
+            )
         )
 
     @property
