@@ -1,122 +1,47 @@
-from typing import List, NoReturn, Union, Any, MutableSequence, NamedTuple
-from typing import TypeVar, Generic, Optional
+import ctypes as ct
+import functools
+import inspect
+import sys
 from copy import deepcopy
+from ctypes import Structure
+from typing import Any, Callable, Generic, NoReturn, Optional, TypeVar, Union
+
+from forcedimension_core.runtime import _libdhd
+from forcedimension_core.typing import MutableArray
 
 T = TypeVar('T')
 
 
-class NamedSequence(type):
+if sys.platform == 'win32':
+    from ctypes import WINFUNCTYPE as _NATIVE_FUNCTYPE
+else:
+    from ctypes import CFUNCTYPE as _NATIVE_FUNCTYPE
+
+
+_libdhd.dhdGetTime.argtypes = []
+_libdhd.dhdGetTime.restype = ct.c_double
+
+
+@_NATIVE_FUNCTYPE(None, ct.c_double)
+def spin(time: float):
     """
-    Euclidian metaclass for MutableSequence types. Using this metaclass will
-    automatically create convience 3 read-write properties "x", "y", and "z",
-    which correspond to the 0th, 1st, and 2nd elements of an object of the
-    MutableSequence class.
+    Busy wait while minimally holding the Python GIL. Allows multiple Python
+    threads to busy wait simultaneously. For best results use time > 10 us.
+
+    :param float time:
+        Time (in [s]) to busy wait.
     """
-    def __new__(cls, name, bases, dct, names=['x', 'y', 'z']):
-
-        x = super().__new__(cls, name, bases, dct)
-
-        def mutable_accessor(i):
-            def getter(self):
-                return self.__getitem__(i)
-
-            def setter(self, value):
-                self.__setitem__(i, value)
-
-            return property(getter, setter)
-
-        for i, prop in enumerate(names):
-            setattr(x, prop, mutable_accessor(i))
-
-        return x
+    t0 = _libdhd.dhdGetTime()
+    while _libdhd.dhdGetTime() - t0 < time:
+        pass
 
 
-class EuclidianVector(List[float], metaclass=NamedSequence):
-    """
-    A List[float] providing convience "x", "y", "z" read-write accessor
-    properties. This class subclasses List[float]; therefore, for all intents
-    and purposes, you can treat it as a list. This allows for it to be
-    compatible with Python's standard library functions.
-    """
-    def __init__(self, data: List[float] = [0, 0, 0]):
-        if (len(data) != 3):
-            raise ValueError
+def function_chain(*funcs: Callable[..., Any]) -> Callable[..., Any]:
+    def ret():
+        for func in funcs:
+            func()
 
-        super().__init__(data)
-
-
-class EncoderVector(List[float], metaclass=NamedSequence,
-                    names=['enc1', 'enc2', 'enc3']):
-    """
-    A List[float] providing convience "x", "y", "z" read-write accessor
-    properties. This class subclasses List[float]; therefore, for all intents
-    and purposes, you can treat it as a list. This allows for it to be
-    compatible with Python's standard library functions.
-    """
-    def __init__(self, data: List[float] = [0, 0, 0]):
-        if (len(data) != 3):
-            raise ValueError
-
-        super().__init__(data)
-
-
-class JacobianMatrix(List[List[float]]):
-    """
-    Used by the library backend to create the default type of the
-    3x3 jacobian matrix.
-    """
-    def __init__(self):
-        super().__init__(
-            [
-                [0, 0, 0],
-                [0, 0, 0],
-                [0, 0, 0]
-            ]
-        )
-
-
-try:
-    from numpy import ndarray, asarray, zeros  # type: ignore
-
-    class NumpyVector(ndarray, metaclass=NamedSequence):
-        """
-        A view over a numpy ndarry, which provides convience "x", "y", and "z"
-        read-write accessor properties. This class subclasses ndarray;
-        therefore, for all intents and purposes you can treat it as an ndarray.
-        This allows you to simply pass in this class to any and all numpy
-        methods.
-        """
-        def __new__(cls, data: MutableSequence[float] = [0.0, 0.0, 0.0]):
-            if len(data) != 3:
-                raise ValueError
-
-            return asarray(data, dtype=float).view(cls)
-
-    # not sure why but throws a call-arg error in mypy
-    class NumpyEncVec(ndarray, metaclass=NamedSequence,  # type: ignore
-                      names=['enc0', 'enc1', 'enc2']):
-        """
-        A view over a numpy ndarry, which provides convience "enc0", "enc1",
-        and "enc2" read-write accessor properties. This class subclasses
-        ndarray; therefore, for all intents and purposes you can treat it as an
-        ndarray. This allows you to simply pass in this class to any and all
-        numpy methods.
-        """
-        def __new__(cls, data: MutableSequence[float] = [0.0, 0.0, 0.0]):
-            if len(data) != 3:
-                raise ValueError
-
-            return asarray(data, dtype=float).view(cls)
-
-    class NumpyJacobian(ndarray):
-        """
-        A view over a JacobianMatrix.
-        """
-        def __new__(cls):
-            return zeros(shape=(3, 3), dtype=float).view(cls)
-
-except ImportError:
-    pass
+    return ret
 
 
 class ImmutableWrapper(Generic[T]):
@@ -275,7 +200,7 @@ class ImmutableWrapper(Generic[T]):
 
         return instance
 
-    def __init__(self, data: MutableSequence[Any]):
+    def __init__(self, data: Union[MutableArray, Structure]):
         object.__setattr__(self, '_data', data)
 
     def __getattribute__(self, name: str):
@@ -317,19 +242,38 @@ class ImmutableWrapper(Generic[T]):
         return (object.__getattribute__(self, '_data')).__str__()
 
 
-class GripperUpdateOpts(NamedTuple):
-    enc: float = 1000
-    thumb_pos: float = 1000
-    finger_pos: float = 1000
-    v: float = 4000
-    w: float = 4000
+def full_method_name(method: Callable[..., Any]):
+    if (parent_class := _get_impl_class(method)) is None:
+        raise ValueError("Could not find parent class name.")
+
+    return f"{parent_class.__name__}.{method.__name__}"
 
 
-class UpdateOpts(NamedTuple):
-    enc: Optional[float] = 1000
-    v: Optional[float] = 4000
-    w: Optional[float] = None
-    buttons: Optional[float] = 100
-    ft: Optional[float] = 4000
-    req: Optional[float] = 4000
-    gripper: Optional[GripperUpdateOpts] = None
+def _get_impl_class(method) -> Optional[type]:
+    if isinstance(method, functools.partial):
+        return _get_impl_class(method.func)
+
+    if inspect.ismethod(method) or (
+        inspect.isbuiltin(method) and
+        getattr(method, '__self__', None) is not None and
+        getattr(method.__self__, '__class__', None)
+    ):
+        for cls in inspect.getmro(method.__self__.__class__):
+            if method.__name__ in cls.__dict__:
+                return cls
+
+        # fallback to __qualname__ parsing
+        method = getattr(method, '__func__', method)
+
+    if inspect.isfunction(method):
+        cls = getattr(
+            inspect.getmodule(method),
+            method.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0],
+            None
+        )
+
+        if isinstance(cls, type):
+            return cls
+
+    # handle special descriptor objects
+    return getattr(method, '__objclass__', None)
