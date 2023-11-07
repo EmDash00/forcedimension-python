@@ -1,34 +1,36 @@
-[build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[project]
+[tool.poetry]
 name = "forcedimension"
 version = "0.1.7"
-authors = [
-    { name="Ember Chow", email="emberchow.business@gmail.com" },
-]
-description = "Python Bindings for the ForceDimension SDK"
+description = "Unofficial, Experimental, High-Level Python Wrappers for the Force Dimension SDK"
+authors = ["Ember Chow <emberchow.business@gmail.com>"]
 readme = "README.md"
-requires-python = ">=3.8"
-license = {file="LICENSE"}
+license = "LGPL-3.0"
+documentation = "https://forcedimension-python-documentation.readthedocs.io/en/latest/"
+repository = "https://github.com/EmDash00/forcedimension-python"
+keywords = ["forcedimension", "haptics", "wrappers"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Development Status :: 3 - Alpha",
     "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Topic :: System :: Hardware :: Universal Serial Bus (USB) :: Human Interface Device (HID)"
 ]
 
-[project.optional-dependencies]
-numpy = [
-    "numpy>=1.20",
-]
-all = [
-    "numpy>=1.20"
-]
+[tool.poetry.dependencies]
+python = ">=3.8,<3.12"
+numpy = { version = "^1.20", optional = true }
 
-[project.urls]
-"Homepage" = "https://github.com/EmDash00/forcedimension-python"
+[tool.poetry.extras]
+numpy = ['numpy']
 
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+[virtualenvs]
+in-project = true
