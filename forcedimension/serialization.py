@@ -1,26 +1,38 @@
-from math import nan
-from typing import Any, Literal, Optional
+from typing import Literal, Optional
 
+import forcedimension_core as fdsdk
 import pydantic
-from forcedimension import containers
-
-from forcedimension.dhd import Handedness, VelocityEstimatorConfig
-from forcedimension.dhd.constants import (
-    DEFAULT_TIMEGUARD_US, DEFAULT_VELOCITY_WINDOW, DeviceType,
-    VelocityEstimatorMode
+from forcedimension_core.constants import (
+    DEFAULT_TIMEGUARD_US,
+    DEFAULT_VELOCITY_WINDOW, DeviceType,
+    Handedness, VelocityEstimatorMode
 )
-
-from forcedimension.drd import (
+from forcedimension_core.drd.adaptors import (
     DEFAULT_ENC_MOVE_PARAMS,
     DEFAULT_ENC_TRACK_PARAMS,
+    DEFAULT_GRIP_MOVE_PARAMS,
+    DEFAULT_GRIP_TRACK_PARAMS,
     DEFAULT_POS_MOVE_PARAMS,
     DEFAULT_POS_TRACK_PARAMS,
     DEFAULT_ROT_MOVE_PARAMS,
     DEFAULT_ROT_TRACK_PARAMS,
-    DEFAULT_GRIP_MOVE_PARAMS,
-    DEFAULT_GRIP_TRACK_PARAMS,
     TrajectoryGenParams
 )
+
+
+class VelocityEstimatorConfig(pydantic.BaseModel):
+    window_size: int = DEFAULT_VELOCITY_WINDOW
+    mode: VelocityEstimatorMode = VelocityEstimatorMode.WINDOWING
+
+    @pydantic.field_validator('window_size')
+    @classmethod
+    def validate_window(cls, val: Optional[int]):
+        if val is None:
+            return
+
+        if val < 0:
+            raise ValueError("window must be greater than 0")
+
 
 class HapticDeviceSpecs(pydantic.BaseModel):
     name: Optional[str]
@@ -70,43 +82,43 @@ class HapticDeviceConfig(pydantic.BaseModel):
         is_grip_regulated: bool = True
         max_motor_ratio: float = 1.0
         enc_move_param: TrajectoryGenParams = pydantic.Field(
-            default_factory = lambda: TrajectoryGenParams(
+            default_factory=lambda: TrajectoryGenParams(
                 vmax=2e4, amax=2e4, jerk=2e4
             )
         )
         enc_track_param: TrajectoryGenParams = pydantic.Field(
-            default_factory = lambda: TrajectoryGenParams(
+            default_factory=lambda: TrajectoryGenParams(
                 vmax=1.0, amax=1.0, jerk=1.0
             )
         )
         pos_move_param: TrajectoryGenParams = pydantic.Field(
-            default_factory = lambda: TrajectoryGenParams(
+            default_factory=lambda: TrajectoryGenParams(
                 vmax=1.0, amax=1.0, jerk=1.0
             )
         )
         pos_track_param: TrajectoryGenParams = pydantic.Field(
-            default_factory = lambda: TrajectoryGenParams(
+            default_factory=lambda: TrajectoryGenParams(
                 vmax=1.0, amax=1.0, jerk=1.0
             )
         )
         rot_move_param: TrajectoryGenParams = pydantic.Field(
-            default_factory = lambda: TrajectoryGenParams(
+            default_factory=lambda: TrajectoryGenParams(
                 vmax=30.0, amax=30.0, jerk=30.0
             )
         )
         rot_track_param: TrajectoryGenParams = pydantic.Field(
-            default_factory = lambda: TrajectoryGenParams(
+            default_factory=lambda: TrajectoryGenParams(
                 vmax=30.0, amax=30.0, jerk=30.0
             )
         )
         grip_move_param: TrajectoryGenParams = pydantic.Field(
-            default_factory = lambda: TrajectoryGenParams(
+            default_factory=lambda: TrajectoryGenParams(
                 vmax=1.0, amax=1.0, jerk=1.0
             )
 
         )
         grip_track_param: TrajectoryGenParams = pydantic.Field(
-            default_factory = lambda: TrajectoryGenParams(
+            default_factory=lambda: TrajectoryGenParams(
                 vmax=1.0, amax=1.0, jerk=1.0
             )
         )
@@ -124,8 +136,8 @@ class HapticDeviceConfig(pydantic.BaseModel):
     is_button_emulation_enabled: bool = False
     is_gravity_compensation_enabled: bool = False
 
-    base_angles: containers.Vector3 = pydantic.Field(  # type: ignore
-        default_factory=containers.Vector3
+    base_angles: fdsdk.containers.numpy.Vec3 = pydantic.Field(  # type: ignore
+        default_factory=fdsdk.containers.numpy.Vec3
     )
 
     com_mode: Literal['async', 'sync', 'virtual', 'network'] = 'async'

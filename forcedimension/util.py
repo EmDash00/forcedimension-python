@@ -6,17 +6,10 @@ from copy import deepcopy
 from ctypes import Structure
 from typing import Any, Callable, Generic, NoReturn, Optional, TypeVar, Union
 
-from forcedimension.typing import _MutableArray
-
-from .dhd import _libdhd
+from forcedimension_core.runtime import _libdhd
+from forcedimension_core.typing import MutableArray
 
 T = TypeVar('T')
-
-
-# Technically impossible if we were able to import dhd, but put this here
-# to make the typechecker happy.
-if _libdhd is None:
-    raise ImportError("There were problems loading libdhd.")
 
 
 if sys.platform == 'win32':
@@ -207,7 +200,7 @@ class ImmutableWrapper(Generic[T]):
 
         return instance
 
-    def __init__(self, data: Union[_MutableArray, Structure]):
+    def __init__(self, data: Union[MutableArray, Structure]):
         object.__setattr__(self, '_data', data)
 
     def __getattribute__(self, name: str):

@@ -3,36 +3,40 @@ from __future__ import annotations
 __version__ = '0.2.0rc1'
 
 import ctypes as ct
-import math
-import time
 import json
-from math import nan
+import math
 import textwrap
-from threading import Condition, Lock, Thread, Event
+import time
+from copy import copy
+from math import nan
+from threading import Condition, Event, Lock, Thread
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 from typing import cast as _cast
-from typing_extensions import Self
+
+import forcedimension_core as fdsdk
+import forcedimension_core.constants as constants
+import forcedimension_core.dhd as dhd
+import forcedimension_core.drd as drd
 import typing_extensions
-from copy import copy
 import yaml
+from forcedimension_core.constants import (
+    ErrorNum, Handedness, VelocityEstimatorMode
+)
+from forcedimension_core.typing import Array
+from typing_extensions import Self
 
 import forcedimension.containers as containers
-import forcedimension.dhd as dhd
-from forcedimension.dhd.adaptors import Handedness
-import forcedimension.drd as drd
 import forcedimension.util as util
 from forcedimension.containers import (
     GripperUpdateOpts, UpdateOpts, _HapticPollerOptions
 )
 from forcedimension.serialization import (
-    HapticDeviceSpecs, HapticDeviceConfig, TrajectoryGenParams
+    HapticDeviceConfig, HapticDeviceSpecs, TrajectoryGenParams
 )
-from forcedimension.dhd import ErrorNum, Status
-from forcedimension.typing import FloatVectorLike, IntVectorLike
 from forcedimension.util import ImmutableWrapper
 
-
 dhd.expert.enableExpertMode()
+
 
 class HapticDevice:
     """
@@ -73,8 +77,8 @@ class HapticDevice:
 
             self._fg = ct.c_double()
 
-            self._thumb_pos = containers.Vector3()
-            self._finger_pos = containers.Vector3()
+            self._thumb_pos = containers.Vec3()
+            self._finger_pos = containers.Vec3()
 
             self._thumb_pos_view = ImmutableWrapper(self._thumb_pos)
             self._finger_pos_view = ImmutableWrapper(self._finger_pos)
@@ -107,7 +111,7 @@ class HapticDevice:
         ):
 
             unset_configs = {
-               'velocity_estimator'
+                'velocity_estimator'
             }
 
             if config_file_data is not None and config_data is not None:
@@ -160,8 +164,8 @@ class HapticDevice:
 
         def config_velocity(
             self,
-            window_size: int = dhd.DEFAULT_VELOCITY_WINDOW,
-            mode: dhd.VelocityEstimatorMode = dhd.VelocityEstimatorMode.WINDOWING
+            window_size: int = constants.DEFAULT_VELOCITY_WINDOW,
+            mode: constants.VelocityEstimatorMode = constants.VelocityEstimatorMode.WINDOWING
         ) -> Self:
             """
             Configures the internal shared linear and angular velocity
@@ -174,11 +178,11 @@ class HapticDevice:
 
             :param VelocityEstimatorMode mode:
                 Velocity estimator mode. Currently only
-                :data:`forcedimension.dhd.VelocityEstimatorMode.WINDOWING` is
+                :data:`forcedimension.VelocityEsimatorMode.WINDOWING` is
             """
 
             if dhd.configGripperVelocity(window_size, mode, self._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.dhd.configGripperVelocity()',
                     ID=self._id
                 )
@@ -206,14 +210,14 @@ class HapticDevice:
                 limit = -1.0
 
             if dhd.setMaxGripperForce(limit, self._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             self._config.max_force = limit
 
             return self
 
         @property
-        def thumb_pos(self) -> containers.Vector3:
+        def thumb_pos(self) -> containers.Vec3:
             """
             A read-only reference to the position of the thumb rest position
             (in [m]) of the gripper about the X, Y, and Z axes at the time of
@@ -225,10 +229,10 @@ class HapticDevice:
             """
 
             self.check_exception()
-            return _cast(containers.Vector3, self._thumb_pos_view)
+            return _cast(containers.Vec3, self._thumb_pos_view)
 
         @property
-        def finger_pos(self) -> containers.Vector3:
+        def finger_pos(self) -> containers.Vec3:
             """
             A read-only reference to the position of the
             forefinger rest position of the gripper (in [m]) about the X, Y,
@@ -240,7 +244,7 @@ class HapticDevice:
             """
 
             self.check_exception()
-            return _cast(containers.Vector3, self._finger_pos_view)
+            return _cast(containers.Vec3, self._finger_pos_view)
 
         @property
         def gap(self) -> float:
@@ -323,7 +327,7 @@ class HapticDevice:
             )
 
             if err:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             return self
 
@@ -352,7 +356,7 @@ class HapticDevice:
             err = dhd.expert.getGripperEncoder(self._enc, self._id)
 
             if err == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             return self
 
@@ -383,7 +387,7 @@ class HapticDevice:
             err = dhd.getGripperLinearVelocity(self._v, self._id)
 
             if err == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             return self
 
@@ -399,7 +403,7 @@ class HapticDevice:
             err = dhd.getGripperAngularVelocityRad(self._w, self._id)
 
             if err == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             return self
 
@@ -415,7 +419,7 @@ class HapticDevice:
             err = dhd.getGripperAngleRad(self._angle, self._id)
 
             if err == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             return self
 
@@ -431,7 +435,7 @@ class HapticDevice:
             err = dhd.getGripperGap(self._gap, self._id)
 
             if err == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             return self
 
@@ -447,7 +451,7 @@ class HapticDevice:
             err = dhd.direct.getGripperThumbPos(self._thumb_pos, self._id)
 
             if err == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             return self
 
@@ -464,7 +468,7 @@ class HapticDevice:
             err = dhd.direct.getGripperFingerPos(self._finger_pos, self._id)
 
             if err == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             return self
 
@@ -513,7 +517,7 @@ class HapticDevice:
 
             self._polled_funcs_view = ImmutableWrapper(self._polled_functions)
             self._polled_targets_view = ImmutableWrapper(self._polled_targets)
-            self._poll_groups_dct_view =  ImmutableWrapper(
+            self._poll_groups_dct_view = ImmutableWrapper(
                 self._poll_groups_dct
             )
 
@@ -573,17 +577,17 @@ class HapticDevice:
                 )
                 return
 
-            enc_move_param, err = drd.getEncMoveParam()
+            vmax, amax, jerk, err = drd.getEncMoveParam()
 
             if err:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getEncMoveParam()',
                     ID=self._parent._id
                 )
 
-            self._config.enc_move_param.vmax = enc_move_param[0]
-            self._config.enc_move_param.amax = enc_move_param[1]
-            self._config.enc_move_param.jerk = enc_move_param[2]
+            self._config.enc_move_param.vmax = vmax
+            self._config.enc_move_param.amax = amax
+            self._config.enc_move_param.jerk = jerk
 
         def _init_enc_track_param(self, restore: bool):
             if restore:
@@ -594,17 +598,17 @@ class HapticDevice:
                 )
                 return
 
-            enc_track_param, err = drd.getEncTrackParam()
+            vmax, amax, jerk, err = drd.getEncTrackParam()
 
             if err:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getEncTrackParam()',
                     ID=self._parent._id
                 )
 
-            self._config.enc_track_param.vmax = enc_track_param[0]
-            self._config.enc_track_param.amax = enc_track_param[1]
-            self._config.enc_track_param.jerk = enc_track_param[2]
+            self._config.enc_track_param.vmax = vmax
+            self._config.enc_track_param.amax = amax
+            self._config.enc_track_param.jerk = jerk
 
         def _init_pos_move_param(self, restore: bool):
             if restore:
@@ -615,17 +619,17 @@ class HapticDevice:
                 )
                 return
 
-            pos_move_param, err = drd.getPosMoveParam()
+            vmax, amax, jerk, err = drd.getPosMoveParam()
 
             if err:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getPosMoveParam()',
                     ID=self._parent._id
                 )
 
-            self._config.pos_move_param.vmax = pos_move_param[0]
-            self._config.pos_move_param.amax = pos_move_param[1]
-            self._config.pos_move_param.jerk = pos_move_param[2]
+            self._config.pos_move_param.vmax = vmax
+            self._config.pos_move_param.amax = amax
+            self._config.pos_move_param.jerk = jerk
 
         def _init_pos_track_param(self, restore: bool):
             if restore:
@@ -636,17 +640,17 @@ class HapticDevice:
                 )
                 return
 
-            pos_track_param, err = drd.getPosTrackParam()
+            vmax, amax, jerk, err = drd.getPosTrackParam()
 
             if err:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getPosTrackParam()',
                     ID=self._parent._id
                 )
 
-            self._config.pos_track_param.vmax = pos_track_param[0]
-            self._config.pos_track_param.amax = pos_track_param[1]
-            self._config.pos_track_param.jerk = pos_track_param[2]
+            self._config.pos_track_param.vmax = vmax
+            self._config.pos_track_param.amax = amax
+            self._config.pos_track_param.jerk = jerk
 
         def _init_rot_move_param(self, restore: bool):
             if restore:
@@ -657,17 +661,17 @@ class HapticDevice:
                 )
                 return
 
-            rot_move_param, err = drd.getRotMoveParam()
+            vmax, amax, jerk, err = drd.getRotMoveParam()
 
             if err:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getRotMoveParam()',
                     ID=self._parent._id
                 )
 
-            self._config.rot_move_param.vmax = rot_move_param[0]
-            self._config.rot_move_param.amax = rot_move_param[1]
-            self._config.rot_move_param.jerk = rot_move_param[2]
+            self._config.rot_move_param.vmax = vmax
+            self._config.rot_move_param.amax = amax
+            self._config.rot_move_param.jerk = jerk
 
         def _init_rot_track_param(self, restore: bool):
             if restore:
@@ -678,18 +682,17 @@ class HapticDevice:
                 )
                 return
 
-            rot_track_param, err = drd.getRotTrackParam()
+            vmax, amax, jerk, err = drd.getRotTrackParam()
 
             if err:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getRotTrackParam()',
                     ID=self._parent._id
                 )
 
-            self._config.rot_track_param.vmax = rot_track_param[0]
-            self._config.rot_track_param.amax = rot_track_param[1]
-            self._config.rot_track_param.jerk = rot_track_param[2]
-
+            self._config.rot_track_param.vmax = vmax
+            self._config.rot_track_param.amax = amax
+            self._config.rot_track_param.jerk = jerk
 
         def _init_grip_move_param(self, restore: bool):
             if restore:
@@ -700,17 +703,17 @@ class HapticDevice:
                 )
                 return
 
-            grip_move_param, err = drd.getGripMoveParam()
+            vmax, amax, jerk, err = drd.getGripMoveParam()
 
             if err:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getGripMoveParam()',
                     ID=self._parent._id
                 )
 
-            self._config.grip_move_param.vmax = grip_move_param[0]
-            self._config.grip_move_param.amax = grip_move_param[1]
-            self._config.grip_move_param.jerk = grip_move_param[2]
+            self._config.grip_move_param.vmax = vmax
+            self._config.grip_move_param.amax = amax
+            self._config.grip_move_param.jerk = jerk
 
         def _init_grip_track_param(self, restore: bool):
             if restore:
@@ -721,17 +724,17 @@ class HapticDevice:
                 )
                 return
 
-            grip_track_param, err = drd.getGripTrackParam()
+            vmax, amax, jerk, err = drd.getGripTrackParam()
 
             if err:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getGripTrackParam()',
                     ID=self._parent._id
                 )
 
-            self._config.grip_track_param.vmax = grip_track_param[0]
-            self._config.grip_track_param.amax = grip_track_param[1]
-            self._config.grip_track_param.jerk = grip_track_param[2]
+            self._config.grip_track_param.vmax = vmax
+            self._config.grip_track_param.amax = amax
+            self._config.grip_track_param.jerk = jerk
 
         def _init_config(
             self,
@@ -740,15 +743,15 @@ class HapticDevice:
             restore: bool
         ):
             unset_configs = {
-               'motor_ratio_max',
-               'enc_move_param',
-               'enc_track_param',
-               'pos_move_param',
-               'pos_track_param',
-               'rot_move_param',
-               'rot_track_param',
-               'grip_move_param',
-               'grip_track_param',
+                'motor_ratio_max',
+                'enc_move_param',
+                'enc_track_param',
+                'pos_move_param',
+                'pos_track_param',
+                'rot_move_param',
+                'rot_track_param',
+                'grip_move_param',
+                'grip_track_param',
             }
 
             if config_file_data is not None and config_data is not None:
@@ -888,7 +891,7 @@ class HapticDevice:
             """
 
             if (control_freq := drd.getCtrlFreq(self._parent._id)) < 0:
-                dhd.errno_to_exception(dhd.errorGetLast())(
+                fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getCtrlFreq()',
                     ID=self._parent._id
                 )
@@ -957,26 +960,24 @@ class HapticDevice:
 
                 if drd.autoInit(self._parent._id):
                     if dhd.errorGetLast() != ErrorNum.NOT_AVAILABLE:
-                        raise dhd.errno_to_exception(dhd.errorGetLast())(
+                        raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                             op='forcedimension.drd.autoInit()',
                             ID=self._parent._id
                         )
 
                     self._manual_init(manual_init_wait)
 
-
             if self._is_initialized:
                 return self
 
             if drd.checkInit(self._parent._id):
                 if dhd.errorGetLast() != ErrorNum.NOT_AVAILABLE:
-                    raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.checkInit()',
                         ID=self._parent._id
                     )
 
                 self._manual_init(manual_init_wait)
-
 
             self._initialized = True
 
@@ -1008,7 +1009,7 @@ class HapticDevice:
             """
 
             if drd.precisionInit(self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.precisionInit()',
                     ID=self._parent._id
                 )
@@ -1066,7 +1067,7 @@ class HapticDevice:
             self._is_pos_regulated = enabled
 
             if drd.regulatePos(enabled, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.regulatePos()',
                     ID=self._parent._id
                 )
@@ -1089,7 +1090,7 @@ class HapticDevice:
             self._is_rot_regulated = enabled
 
             if drd.regulateRot(enabled, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.regulateRot()',
                     ID=self._parent._id
                 )
@@ -1113,7 +1114,7 @@ class HapticDevice:
             self._is_grip_regulated = enabled
 
             if drd.regulateGrip(enabled, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.regulateGrip()',
                     ID=self._parent._id
                 )
@@ -1135,7 +1136,7 @@ class HapticDevice:
             self._is_filter_enabled = enabled
 
             if drd.enableFilter(enabled, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.enableFilter()',
                     ID=self._parent._id
                 )
@@ -1154,7 +1155,7 @@ class HapticDevice:
 
             if not self._is_drd_running:
                 if drd.start(self._parent._id):
-                    raise dhd.errno_to_exception(dhd.errorGetLast())(
+                    raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.start()',
                         ID=self._parent._id
                     )
@@ -1169,8 +1170,8 @@ class HapticDevice:
             """
 
             if self._is_drd_running:
-                if drd.stop(self._parent._id):
-                    raise dhd.errno_to_exception(dhd.errorGetLast())(
+                if drd.stop(True, self._parent._id):
+                    raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.start()',
                         ID=self._parent._id
                     )
@@ -1243,7 +1244,6 @@ class HapticDevice:
                 else:
                     self._poll_impl(*self.DEFAULT_POLL_GROUPS)
 
-
             self._poll_impl(*pollgrps)
 
             return self
@@ -1300,7 +1300,7 @@ class HapticDevice:
             )
 
             if err:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getPositionAndOrientation()',
                     ID=self._parent._id
                 )
@@ -1319,7 +1319,7 @@ class HapticDevice:
             )
 
             if err == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.getVelocity()',
                     ID=self._parent._id
                 )
@@ -1338,7 +1338,7 @@ class HapticDevice:
             """
 
             if drd.setMotRatioMax(scale, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.setMotRatioMax()',
                     ID=self._parent._id
                 )
@@ -1382,7 +1382,7 @@ class HapticDevice:
                 jerk = self._config.enc_move_param.jerk
 
             if drd.setEncMoveParam(vmax, amax, jerk, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.setEncMoveParam()',
                     ID=self._parent._id
                 )
@@ -1392,7 +1392,6 @@ class HapticDevice:
             self._config.enc_move_param.jerk = jerk
 
             return self
-
 
         def set_enc_track_param(
             self,
@@ -1429,7 +1428,7 @@ class HapticDevice:
                 jerk = self._config.enc_track_param.jerk
 
             if drd.setEncMoveParam(vmax, amax, jerk, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.setEncTrackParam()',
                     ID=self._parent._id
                 )
@@ -1475,7 +1474,7 @@ class HapticDevice:
                 jerk = self._config.pos_move_param.jerk
 
             if drd.setPosMoveParam(vmax, amax, jerk, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.setPosMoveParam()',
                     ID=self._parent._id
                 )
@@ -1521,7 +1520,7 @@ class HapticDevice:
                 jerk = self._config.pos_track_param.jerk
 
             if drd.setPosTrackParam(vmax, amax, jerk, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.setPosTrackParam()',
                     ID=self._parent._id
                 )
@@ -1567,7 +1566,7 @@ class HapticDevice:
                 jerk = self._config.rot_move_param.jerk
 
             if drd.setRotMoveParam(vmax, amax, jerk, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.setRotMoveParam()',
                     ID=self._parent._id
                 )
@@ -1613,7 +1612,7 @@ class HapticDevice:
                 jerk = self._config.rot_track_param.jerk
 
             if drd.setRotTrackParam(vmax, amax, jerk, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.setRotTrackParam()',
                     ID=self._parent._id
                 )
@@ -1659,7 +1658,7 @@ class HapticDevice:
                 jerk = self._config.grip_move_param.jerk
 
             if drd.setGripMoveParam(vmax, amax, jerk, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.setGripMoveParam()',
                     ID=self._parent._id
                 )
@@ -1705,7 +1704,7 @@ class HapticDevice:
                 jerk = self._config.grip_track_param.jerk
 
             if drd.setGripTrackParam(vmax, amax, jerk, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.setGripTrackParam()',
                     ID=self._parent._id
                 )
@@ -1756,7 +1755,7 @@ class HapticDevice:
             return self.move_to_rot((0., 0., 0.), block=block)
 
         def move_to_enc(
-            self, *cmds: IntVectorLike, block: bool = True
+            self, *cmds: Array[int, int], block: bool = True
         ) -> Self:
             """
             Sequentially sends the device end-effector to a sequence desired
@@ -1765,7 +1764,7 @@ class HapticDevice:
             can be controlled by adjusting the trajectory generation
             parameters.
 
-            :param IntVectorLike *cmds:
+            :param Array[int, int] *cmds:
                 A sequence of target delta encoder configurations.
 
             :param bool block:
@@ -1802,14 +1801,14 @@ class HapticDevice:
 
             for cmd in cmds:
                 if drd.moveToEnc(cmd, block, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.moveToEnc()',
                         ID=self._parent._id
                     )
 
             return self
 
-        def track_enc(self, *cmds: IntVectorLike) -> Self:
+        def track_enc(self, *cmds: Array[int, int]) -> Self:
             """
             Sequentially sends the device end-effector to a sequence of
             delta encoder configurations. This motion is guaunteed to be
@@ -1818,20 +1817,20 @@ class HapticDevice:
             each encoder axis. The acceleration and velocity profiles can be
             controlled by adjusting the trajectory generation parameters.
 
-            :param Iterable[IntVectorLike] *cmds:
+            :param Iterable[Array[int, int]] *cmds:
                 A sequence of target delta encoder values.
             """
 
             for cmd in cmds:
                 if drd.trackEnc(cmd, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.trackEnc()',
                         ID=self._parent._id
                     )
 
             return self
 
-        def move_to(self, *cmds: FloatVectorLike, block: bool = True) -> Self:
+        def move_to(self, *cmds: Array[int, float], block: bool = True) -> Self:
             """
             Sends the device end-effector to a set of desired
             7-DOF configurations.  The motion uses smooth
@@ -1840,7 +1839,7 @@ class HapticDevice:
             acceleration and velocity profiles can be controlled by adjusting
             the trajectory generation parameters.
 
-            :param FloatVectorLike *cmds:
+            :param Array[int, float] *cmds:
                 An sequence of target 7 DOF configurat. DOFs 1-3 represent the
                 position about the X, Y, and Z axes, respectively (in [m]).
                 DOFs 4-6 represent the orientation about the first, second, and
@@ -1881,14 +1880,14 @@ class HapticDevice:
 
             for cmd in cmds:
                 if drd.moveTo(cmd, block, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.moveTo()',
                         ID=self._parent._id
                     )
 
             return self
 
-        def track(self, *cmds: FloatVectorLike) -> Self:
+        def track(self, *cmds: Array[int, float]) -> Self:
             """
             This function sends the device end-effector to a desired Cartesian
             7-DOF configuration. If motion filters are enabled, the motion
@@ -1896,7 +1895,7 @@ class HapticDevice:
             Cartesian axis. The acceleration and velocity profiles can be
             controlled by adjusting the trajectory generation parameters.
 
-            :param FloatVectorLike *cmds:
+            :param Array[int, float] *cmds:
                 An sequence of target 7 DOF configurat. DOFs 1-3 represent the
                 position about the X, Y, and Z axes, respectively (in [m]).
                 DOFs 4-6 represent the orientation about the first, second, and
@@ -1906,15 +1905,14 @@ class HapticDevice:
 
             for cmd in cmds:
                 if drd.track(cmd, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.track()', ID=self._parent._id
                     )
 
             return self
 
-
         def move_to_all_enc(
-            self, *cmds: IntVectorLike, block: bool = True
+            self, *cmds: Array[int, int], block: bool = True
         ) -> Self:
             """
             Sends the device end-effector to a set of desired encoder
@@ -1923,7 +1921,7 @@ class HapticDevice:
             The acceleration and velocity profiles can be controlled by
             adjusting the trajectory generation parameters.
 
-            :param IntVectorLike *cmds:
+            :param Array[int, int] *cmds:
                 A sequence of target encoder positions for each
                 degree-of-freedom.
 
@@ -1961,14 +1959,14 @@ class HapticDevice:
 
             for cmd in cmds:
                 if drd.moveToAllEnc(cmd, block, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.moveToAllEnc()',
                         ID=self._parent._id
                     )
 
             return self
 
-        def track_all_enc(self, *cmds: IntVectorLike) -> Self:
+        def track_all_enc(self, *cmds: Array[int, int]) -> Self:
             """
             Sequentially sends the device end-effector to a set
             of desired encoder positions in each degree of freedom. If motion
@@ -1977,14 +1975,14 @@ class HapticDevice:
             acceleration and velocity profiles can be controlled by adjusting
             the trajectory generation parameters.
 
-            :param IntVectorLike *cmds:
+            :param Array[int, int] *cmds:
                 A sequence of target encoder positions for each
                 degree-of-freedom.
             """
 
             for cmd in cmds:
                 if drd.trackAllEnc(cmd, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.trackAllEnc()',
                         ID=self._parent._id
                     )
@@ -1992,7 +1990,7 @@ class HapticDevice:
             return self
 
         def move_to_pos(
-            self, *cmds: FloatVectorLike, block: bool = True
+            self, *cmds: Array[int, float], block: bool = True
         ) -> Self:
             """
             Sends the device end-effector to a set of desired
@@ -2001,7 +1999,7 @@ class HapticDevice:
             velocity profiles can be controlled by adjusting the trajectory
             generation parameters.
 
-            :param FloatVectorLike *cmds:
+            :param Array[int, float] *cmds:
                 An is a sequence target positions of target positions
                 follow. Positions are about the X, Y, and Z axes (in [m]).
 
@@ -2039,15 +2037,14 @@ class HapticDevice:
 
             for cmd in cmds:
                 if drd.moveToPos(cmd, block, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.moveToPos()',
                         ID=self._parent._id
                     )
 
             return self
 
-
-        def track_pos(self, *cmds: FloatVectorLike) -> Self:
+        def track_pos(self, *cmds: Array[int, float]) -> Self:
             """
             Sends the device end-effector to a set of desired
             positions. The motion follows a straight line in position space,
@@ -2055,7 +2052,7 @@ class HapticDevice:
             velocity profiles can be controlled by adjusting the trajectory
             generation parameters.
 
-            :param FloatVectorLike *cmds:
+            :param Array[int, float] *cmds:
                 An is a sequence target positions of target positions
                 follow. Positions are about the X, Y, and Z axes (in [m]).
 
@@ -2066,7 +2063,7 @@ class HapticDevice:
 
             for cmd in cmds:
                 if drd.trackPos(cmd, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.trackPos()',
                         ID=self._parent._id
                     )
@@ -2074,7 +2071,7 @@ class HapticDevice:
             return self
 
         def move_to_rot(
-            self, *cmds: FloatVectorLike, block: bool = True
+            self, *cmds: Array[int, float], block: bool = True
         ) -> Self:
             """
             Sequentially sends the device end-effector to a set of desired
@@ -2083,7 +2080,7 @@ class HapticDevice:
             acceleration and velocity profiles can be controlled by adjusting
             the trajectory generation parameters.
 
-            :param FloatVectorLike *cmds:
+            :param Array[int, float] *cmds:
                 An sequence of target orientations. Orientations are
                 about the first, second, and third joint angles (in [rad]).
 
@@ -2113,14 +2110,14 @@ class HapticDevice:
 
             for cmd in cmds:
                 if drd.moveToRot(cmd, block, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.moveToRot()',
                         ID=self._parent._id
                     )
 
             return self
 
-        def track_rot(self, *cmds: FloatVectorLike) -> Self:
+        def track_rot(self, *cmds: Array[int, float]) -> Self:
             """
             Sequentially sends the device end-effector to a set of
             desired Cartesian orientation. If motion filters are enabled, the
@@ -2128,7 +2125,7 @@ class HapticDevice:
             Cartesian axis. The acceleration and velocity profiles can be
             controlled by adjusting the trajectory generation parameters.
 
-            :param FloatVectorLike *cmds:
+            :param Array[int, float] *cmds:
                 An sequence of target orientations. Orientations are
                 about the first, second, and third joint angles (in [rad]).
 
@@ -2139,7 +2136,7 @@ class HapticDevice:
 
             for cmd in cmds:
                 if drd.trackRot(cmd, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.trackRot()',
                         ID=self._parent._id
                     )
@@ -2183,7 +2180,7 @@ class HapticDevice:
 
             for cmd in cmds:
                 if drd.moveToGrip(cmd, block, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.moveToGrip()',
                         ID=self._parent._id
                     )
@@ -2204,7 +2201,7 @@ class HapticDevice:
 
             for cmd in cmds:
                 if drd.trackGrip(cmd, self._parent._id):
-                    dhd.errno_to_exception(dhd.errorGetLast())(
+                    fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                         op='forcedimension.drd.trackGrip()',
                         ID=self._parent._id
                     )
@@ -2218,7 +2215,7 @@ class HapticDevice:
             """
 
             if drd.hold(self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.hold()', ID=self._parent._id
                 )
 
@@ -2244,7 +2241,7 @@ class HapticDevice:
             """
 
             if drd.lock(enabled, False, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.drd.hold()', ID=self._parent._id
                 )
 
@@ -2301,7 +2298,7 @@ class HapticDevice:
             self._parent = parent
 
         def set_timeguard(
-            self, interval: int = dhd.DEFAULT_TIMEGUARD_US
+            self, interval: int = constants.DEFAULT_TIMEGUARD_US
         ) -> "HapticDevice":
             """
             Sets the arbitrary minimum period for the TimeGuard feature in the
@@ -2317,7 +2314,7 @@ class HapticDevice:
             """
 
             if dhd.expert.setTimeGuard(interval, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.dhd.expert.setTimeGuard()',
                     ID=self._parent._id
                 )
@@ -2335,12 +2332,12 @@ class HapticDevice:
             """
 
             if dhd.expert.setComMode(mode, self._parent._id):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.dhd.expert.setComMode()',
                     ID=self._parent._id
                 )
 
-            self._parent._config.com_mode = dhd.com_mode_str(mode)
+            self._parent._config.com_mode = fdsdk.util.com_mode_str(mode)
 
             return self._parent
 
@@ -2451,12 +2448,12 @@ class HapticDevice:
             # Open the first device we find.
 
             if (id := drd.open()) == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             self._id = id
 
             if (devtype_opened := dhd.getSystemType()) == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.getSystemType()'
                 )
@@ -2466,12 +2463,12 @@ class HapticDevice:
             # Open device of given ID.
 
             if (id := drd.openID(ID)) == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             self._id = id
 
             if (devtype_opened := dhd.getSystemType()) == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.getSystemType()'
                 )
@@ -2481,35 +2478,35 @@ class HapticDevice:
             # Open first device of given devtype.
 
             if (id := dhd.openType(devtype)) == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             self._id = id
 
             if dhd.close(self._id) == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.close()'
                 )
 
             if drd.openID(self._id) == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             self._devtype = devtype
         elif serial_number is not None:
             if (id := dhd.openSerial(serial_number)) == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             if dhd.close(self._id) == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.close()'
                 )
 
             if drd.openID(self._id) == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
             if (devtype_opened := dhd.getSystemType()) == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.getSystemType()'
                 )
@@ -2542,30 +2539,31 @@ class HapticDevice:
 
         # Load in the provided config
         if config is not None:
-            config_data =  config.model_dump(exclude_defaults=True)
+            config_data = config.model_dump(exclude_defaults=True)
 
         self._init_config(config_file_data, config_data, restore_defaults)
 
         self._mass = nan
         self._gripper = None
 
-        self._encs = containers.DOFIntArray()
-        self._encs_v = containers.DOFFloatArray()
+        self._encs = containers.DOFInt()
+        self._encs_v = containers.DOFFloat()
 
         self._joint_state = containers.DOFFloatState()
-        self._joint_angles = containers.DOFFloatArray(self._joint_state[0])
-        self._joint_v = containers.DOFFloatArray(self._joint_state[1])
+        self._joint_angles = containers.DOFFloat(
+            self._joint_state[0])
+        self._joint_v = containers.DOFFloat(self._joint_state[1])
 
         self._state = containers.DOFFloatState()
 
-        self._pos = containers.Vector3(self._state[0, :3])
-        self._v = containers.Vector3(self._state[1, :3])
+        self._pos = containers.Vec3(self._state[0, :3])
+        self._v = containers.Vec3(self._state[1, :3])
 
-        self._orientation_angles = containers.Vector3(self._state[0, 3:6])
-        self._w = containers.Vector3(self._state[1, 3:6])
+        self._orientation_angles = containers.Vec3(self._state[0, 3:6])
+        self._w = containers.Vec3(self._state[1, 3:6])
 
-        self._f = containers.Vector3()
-        self._t = containers.Vector3()
+        self._f = containers.Vec3()
+        self._t = containers.Vec3()
 
         self._delta_jacobian = containers.Mat3x3()
         self._wrist_jacobian = containers.Mat3x3()
@@ -2573,10 +2571,10 @@ class HapticDevice:
 
         self._inertia_matrix = containers.Mat6x6()
 
-        self._status = Status()
+        self._status = containers.Status()
 
-        self._f_req = containers.Vector3()
-        self._t_req = containers.Vector3()
+        self._f_req = containers.Vec3()
+        self._t_req = containers.Vec3()
         self._vibration_req: List[float] = [0.] * 2
         self._buttons = 0
 
@@ -2611,19 +2609,17 @@ class HapticDevice:
 
         # Get all device specs.
 
-        handedness = dhd.handedness(self._devtype)
+        handedness = fdsdk.util.handedness(self._devtype)
         has_base = dhd.hasBase(self._id)
         has_wrist = dhd.hasWrist(self._id)
         has_active_wrist = dhd.hasActiveWrist(self._id)
         has_gripper = True if self._gripper is not None else False
         has_active_gripper = dhd.hasActiveGripper(self._id)
-        num_dof = dhd.num_dof(self._devtype)
+        num_dof = fdsdk.util.num_dof(self._devtype)
 
-        serial_number, err = dhd.getSerialNumber(self._id)
-
-        if err:
+        if (serial_number := dhd.getSerialNumber(self._id)) < 0:
             if (errno := dhd.errorGetLast()) != ErrorNum.NOT_AVAILABLE:
-                raise dhd.errno_to_exception(errno)(
+                raise fdsdk.util.errno_to_exception(errno)(
                     op='forcedimension.dhd.getSerialNumber()',
                     ID=self._id
                 )
@@ -2658,7 +2654,7 @@ class HapticDevice:
             f"""\
             Name: {self._specs.name if self._specs.name is not None else ""}
             Device Model: {
-                dhd.devtype_str(self._specs.devtype)
+                fdsdk.util.devtype_str(self._specs.devtype, pretty=True)
             }
             Serial Number: {
                 self._specs.serial_number
@@ -2679,7 +2675,9 @@ class HapticDevice:
                 "Yes" if self._specs.has_active_wrist else "No"
             }
             Degrees of Freedom: {self._specs.num_dof}
-            Handedness: {dhd.handedness_str(self._specs.handedness)}
+            Handedness: {
+                fdsdk.util.handedness_str(self._specs.handedness, pretty= True)
+            }
             Supports DRD: {"Yes" if self._specs.is_drd_supported else "No"}\
             """
         )
@@ -2766,7 +2764,7 @@ class HapticDevice:
         if dhd.getBaseAngleXRad(
             self._config.base_angles.ptrs[0].contents, self._id
         ):
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 op='forcedimension.dhd.getBaseAngleXRad()',
                 ID=self._id
             )
@@ -2774,7 +2772,7 @@ class HapticDevice:
         if dhd.getDeviceAngleRad(
             self._config.base_angles.ptrs[1].contents, self._id
         ):
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 op='forcedimension.dhd.getDeviceAngleRad()',
                 ID=self._id
             )
@@ -2782,7 +2780,7 @@ class HapticDevice:
         if dhd.getBaseAngleZRad(
             self._config.base_angles.ptrs[2].contents, self._id
         ):
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 op='forcedimension.dhd.getBaseAngleZRad()',
                 ID=self._id
             )
@@ -2793,11 +2791,11 @@ class HapticDevice:
             return
 
         if (com_mode := dhd.getComMode(self._id)) == -1:
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id, op='forcedimension.dhd.getComMode()'
             )
 
-        self._config.com_mode = dhd.com_mode_str(com_mode)
+        self._config.com_mode = fdsdk.util.com_mode_str(com_mode)
 
     def _init_max_force(self, restore: bool = False):
         if restore:
@@ -2820,9 +2818,10 @@ class HapticDevice:
         self._config.max_torque = max_torque
 
     def _init_mass(self, restore: bool = False):
-        self._config.mass, err = dhd.getEffectorMass(self._id)
-        if err:
-            raise dhd.errno_to_exception(dhd.errorGetLast())()
+        if (mass := dhd.getEffectorMass(self._id)) < 0:
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+
+        self._config.mass = mass
 
     def _init_config(
         self,
@@ -2928,15 +2927,17 @@ class HapticDevice:
 
         return (textwrap.dedent(f"""\
             Force Enabled: {
-                "Yes (default)" if self._config.is_force_enabled else "No"
+                "Yes (default)" if self._config.is_force_enabled
+                else "No"
             }
             Brakes Enabled: {
-                "Yes (default)" if self._config.is_brake_enabled else "No"
+                "Yes (default)" if self._config.is_brake_enabled
+                else "No"
             }
             Gravity Compensation Enabled: {
                 "Yes"
-                if self._config.is_gravity_compensation_enabled else
-                "No (default)"
+                if self._config.is_gravity_compensation_enabled
+                else "No (default)"
             }
             Button Emulation Enabled: {
                 "Yes" if self._config.is_button_emulation_enabled
@@ -2944,25 +2945,25 @@ class HapticDevice:
             }
             Base Angles (rev): {base_angles}
             Communication Mode: {
-                "async (default)" if self._config.com_mode == 'async' else
-                self._config.com_mode
+                "async (default)" if self._config.com_mode == 'async'
+                else self._config.com_mode
             }
             Timeguard: {
-                'default' if self._config.timeguard == dhd.DEFAULT_TIMEGUARD_US
+                'default' if self._config.timeguard == constants.DEFAULT_TIMEGUARD_US
                 else (
-                    'None' if self._config.timeguard == 0 else
-                    self._config.timeguard
+                    'None' if self._config.timeguard == 0
+                    else self._config.timeguard
                 )
             }
             Linear Velocity Estimator:
                 mode: {
-                    dhd.velocity_estimator_mode_str(
+                    fdsdk.util.velocity_estimator_mode_str(
                         self._config.linear_velocity_estimator.mode
                     )
                 }{
                     " (default)"
                     if self._config.linear_velocity_estimator.mode ==
-                    dhd.VelocityEstimatorMode.WINDOWING
+                    VelocityEstimatorMode.WINDOWING
                     else ""
                 }
                 window size: {
@@ -2970,17 +2971,17 @@ class HapticDevice:
                 } us{
                     " (default)"
                     if self._config.linear_velocity_estimator.window_size ==
-                    dhd.DEFAULT_VELOCITY_WINDOW else ""
+                    constants.DEFAULT_VELOCITY_WINDOW else ""
                 }
             Angular Velocity Estimator:
                 mode: {
-                    dhd.velocity_estimator_mode_str(
+                    fdsdk.util.velocity_estimator_mode_str(
                         self._config.angular_velocity_estimator.mode
                     )
                 }{
                     " (default)"
                     if self._config.angular_velocity_estimator.mode ==
-                    dhd.VelocityEstimatorMode.WINDOWING
+                    VelocityEstimatorMode.WINDOWING
                     else ""
                 }
                 window size: {
@@ -2988,7 +2989,7 @@ class HapticDevice:
                 } us{
                     " (default)"
                     if self._config.angular_velocity_estimator.window_size ==
-                    dhd.DEFAULT_VELOCITY_WINDOW else ""
+                    constants.DEFAULT_VELOCITY_WINDOW else ""
                 }
             Max Force: {self._config.max_force}{
                 " N" if self._config.max_force is not None else ""
@@ -3012,13 +3013,13 @@ class HapticDevice:
             }
                 Velocity Estimator:
                     mode: {
-                        dhd.velocity_estimator_mode_str(
+                        fdsdk.util.velocity_estimator_mode_str(
                             self._config.gripper.velocity_estimator.mode
                         )
                     }{
                         " (default)" if
                         self._config.gripper.velocity_estimator.mode ==
-                        dhd.VelocityEstimatorMode.WINDOWING else ""
+                        VelocityEstimatorMode.WINDOWING else ""
                     }
                     window size: {
                         self._config.gripper.velocity_estimator.window_size
@@ -3111,7 +3112,7 @@ class HapticDevice:
                     }
             """
 
-        ))
+                                ))
 
     def get_summary_str(self) -> str:
         """
@@ -3145,7 +3146,6 @@ class HapticDevice:
         """
 
         print(self.get_summary_str())
-
 
     @property
     def expert(self) -> _Expert:
@@ -3212,7 +3212,7 @@ class HapticDevice:
             If `m` was not a valid value.
         """
         if dhd.setEffectorMass(m, ID=self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())()
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
     @property
     def standard_gravity(self) -> float:
@@ -3264,7 +3264,7 @@ class HapticDevice:
         Gets the COM operation mode of the device.
         """
 
-        return dhd.com_mode_from_str(self._config.com_mode)
+        return fdsdk.util.com_mode_from_str(self._config.com_mode)
 
     @property
     def is_neutral(self) -> bool:
@@ -3303,7 +3303,7 @@ class HapticDevice:
         return self._button_emulation_enabled
 
     @property
-    def status(self) -> Status:
+    def status(self) -> containers.Status:
         """
         Provides a read-only reference to the last-known status of the device.
         Thread-safe.
@@ -3313,16 +3313,16 @@ class HapticDevice:
             the last-known status of the device.
         """
 
-        return _cast(Status, self._status_view)
+        return _cast(containers.Status, self._status_view)
 
     @property
-    def base_angles(self) -> containers.Vector3:
+    def base_angles(self) -> containers.Vec3:
         """
         Provides a read-only reference of the device base plate angle
         (in [rad]) about the X, Y, and Z axes.
         """
 
-        return _cast(containers.Vector3, self._base_angles_view)
+        return _cast(containers.Vec3, self._base_angles_view)
 
     def set_base_angles(
         self,
@@ -3357,7 +3357,7 @@ class HapticDevice:
             self._config.base_angles[0] = x
 
             if dhd.setBaseAngleXRad(x):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.dhd.setBaseAngleXRad()',
                     ID=self._id
                 )
@@ -3366,7 +3366,7 @@ class HapticDevice:
             self._config.base_angles[1] = y
 
             if dhd.setDeviceAngleRad(y):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.dhd.setDeviceAngleRad()',
                     ID=self._id
                 )
@@ -3375,7 +3375,7 @@ class HapticDevice:
             self._config.base_angles[2] = z
 
             if dhd.setBaseAngleZRad(z):
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     op='forcedimension.dhd.setBaseAngleZRad()',
                     ID=self._id
                 )
@@ -3397,7 +3397,7 @@ class HapticDevice:
         """
 
         if dhd.setOutput(mask, self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
         return self
 
@@ -3414,7 +3414,7 @@ class HapticDevice:
         """
 
         if dhd.setStandardGravity(g, self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
         self._standard_gravity = g
 
@@ -3443,7 +3443,7 @@ class HapticDevice:
         self._button_emulation_enabled = enabled
 
         if dhd.emulateButton(enabled, self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
         return self
 
@@ -3456,13 +3456,12 @@ class HapticDevice:
         """
 
         if dhd.enableForce(enabled, ID=self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.enableForce()'
             )
 
         return self
-
 
     def enable_brakes(self, enabled: bool = True):
         """
@@ -3475,7 +3474,7 @@ class HapticDevice:
         """
 
         if dhd.setBrakes(enabled, self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.setBrakes()'
             )
@@ -3513,7 +3512,7 @@ class HapticDevice:
     def config_linear_velocity(
         self,
         window_size: int = dhd.DEFAULT_VELOCITY_WINDOW,
-        mode: dhd.VelocityEstimatorMode = dhd.VelocityEstimatorMode.WINDOWING
+        mode: VelocityEstimatorMode = VelocityEstimatorMode.WINDOWING
     ):
         """
         Configures the internal linear velocity estimator used by
@@ -3526,7 +3525,7 @@ class HapticDevice:
 
         :param VelocityEstimatorMode mode:
             Velocity estimator mode. Currently only
-            :data:`forcedimension.dhd.VelocityEstimatorMode.WINDOWING` is
+            :data:`forcedimension.VelocityEsimatorMode.WINDOWING` is
             supported by the Force Dimension SDK.
 
         :raises ArgumentError:
@@ -3538,7 +3537,7 @@ class HapticDevice:
         """
 
         if dhd.configLinearVelocity(window_size, mode, self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 op='forcedimension.dhd.configLinearVelocity()', ID=self._id
             )
 
@@ -3547,11 +3546,10 @@ class HapticDevice:
 
         return self
 
-
     def config_angular_velocity(
         self,
         window_size: int = dhd.DEFAULT_VELOCITY_WINDOW,
-        mode: dhd.VelocityEstimatorMode = dhd.VelocityEstimatorMode.WINDOWING
+        mode: VelocityEstimatorMode = VelocityEstimatorMode.WINDOWING
     ):
         """
         Configures the internal angular velocity estimator used by
@@ -3564,7 +3562,7 @@ class HapticDevice:
 
         :param VelocityEstimatorMode mode:
             Velocity estimator mode. Currently only
-            :data:`forcedimension.dhd.VelocityEstimatorMode.WINDOWING` is
+            :data:`forcedimension.VelocityEsimatorMode.WINDOWING` is
             supported by the Force Dimension SDK.
 
         :raises ArgumentError:
@@ -3576,7 +3574,7 @@ class HapticDevice:
         """
 
         if dhd.configAngularVelocity(window_size, mode, self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 op='forcedimension.dhd.configAngularVelocity()', ID=self._id
             )
 
@@ -3601,9 +3599,8 @@ class HapticDevice:
 
         return _cast(containers.DOFFloatState, self._joint_state)
 
-
     @property
-    def delta_joint_angles(self) -> containers.Vector3:
+    def delta_joint_angles(self) -> containers.Vec3:
         """
         A read-only reference to the DELTA joint angles about the first,
         second, and third DELTA joint angles, respectively (in [rad]) at
@@ -3615,10 +3612,10 @@ class HapticDevice:
         """
 
         self.check_exception()
-        return _cast(containers.Vector3, self._delta_joint_angles_view)
+        return _cast(containers.Vec3, self._delta_joint_angles_view)
 
     @property
-    def wrist_joint_angles(self) -> containers.Vector3:
+    def wrist_joint_angles(self) -> containers.Vec3:
         """
         A read-only reference to the DELTA joint angles about the first,
         second, and third WRIST joint angles, respectively (in [rad]) at
@@ -3630,7 +3627,7 @@ class HapticDevice:
         """
 
         self.check_exception()
-        return _cast(containers.Vector3, self._wrist_joint_angles_view)
+        return _cast(containers.Vec3, self._wrist_joint_angles_view)
 
     @property
     def state(self) -> containers.DOFFloatState:
@@ -3649,7 +3646,7 @@ class HapticDevice:
         return _cast(containers.DOFFloatState, self._state_view)
 
     @property
-    def pos(self) -> containers.Vector3:
+    def pos(self) -> containers.Vec3:
         """
         A read-only reference to the position of the
         HapticDevice's end-effector about the X, Y, and Z axes (in [m]) at
@@ -3661,10 +3658,10 @@ class HapticDevice:
         """
 
         self.check_exception()
-        return _cast(containers.Vector3, self._pos_view)
+        return _cast(containers.Vec3, self._pos_view)
 
     @property
-    def v(self) -> containers.Vector3:
+    def v(self) -> containers.Vec3:
         """
         A read-only reference to the linear velocity of the
         HapticDevice's end-effector (in [m/s]) at the time of the last update.
@@ -3676,10 +3673,10 @@ class HapticDevice:
         """
 
         self.check_exception()
-        return _cast(containers.Vector3, self._v_view)
+        return _cast(containers.Vec3, self._v_view)
 
     @property
-    def w(self) -> containers.Vector3:
+    def w(self) -> containers.Vec3:
         """
         A read-only reference angular velocity of
         the HapticDevice's end-effector (in [rad/s]) at the time of the last
@@ -3691,10 +3688,10 @@ class HapticDevice:
         """
 
         self.check_exception()
-        return _cast(containers.Vector3, self._w_view)
+        return _cast(containers.Vec3, self._w_view)
 
     @property
-    def t(self) -> containers.Vector3:
+    def t(self) -> containers.Vec3:
         """
         A read-only reference to the HapticDevice's end-effector
         (in [Nm]) at the time of the last update. Thread-safe.
@@ -3705,10 +3702,10 @@ class HapticDevice:
         """
 
         self.check_exception()
-        return _cast(containers.Vector3, self._t_view)
+        return _cast(containers.Vec3, self._t_view)
 
     @property
-    def f(self) -> containers.Vector3:
+    def f(self) -> containers.Vec3:
         """
         A read-only reference to the applied force of the HapticDevice's
         end-effector (in [N]) at the time of the last update. Thread-safe.
@@ -3719,7 +3716,7 @@ class HapticDevice:
         """
 
         self.check_exception()
-        return _cast(containers.Vector3, self._f_view)
+        return _cast(containers.Vec3, self._f_view)
 
     @property
     def delta_jacobian(self) -> containers.Mat3x3:
@@ -3950,14 +3947,13 @@ class HapticDevice:
         err = dhd.expert.direct.getEnc(self._encs, 0xff, self._id)
 
         if err == -1:
-            raise dhd.errno_to_exception(
+            raise fdsdk.util.errno_to_exception(
                 dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.expert.getEnc()'
             )
 
         return self
-
 
     def update_delta_encs(self) -> Self:
         """
@@ -3973,7 +3969,7 @@ class HapticDevice:
         err = dhd.expert.direct.getDeltaEncoders(self._encs.delta, self._id)
 
         if err == -1:
-            raise dhd.errno_to_exception(
+            raise fdsdk.util.errno_to_exception(
                 dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.expert.getDeltaEncoders()'
@@ -3995,7 +3991,7 @@ class HapticDevice:
         err = dhd.expert.direct.getWristEncoders(self._encs.wrist, self._id)
 
         if err == -1:
-            raise dhd.errno_to_exception(
+            raise fdsdk.util.errno_to_exception(
                 dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.expert.getWristEncoders()'
@@ -4017,7 +4013,7 @@ class HapticDevice:
         err = dhd.expert.direct.getEncVelocities(self._encs_v, self._id)
 
         if err == -1:
-            raise dhd.errno_to_exception(
+            raise fdsdk.util.errno_to_exception(
                 dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.expert.getEncVelocities()'
@@ -4044,7 +4040,7 @@ class HapticDevice:
         err = dhd.expert.direct.getJointAngles(self._joint_angles, self._id)
 
         if err == -1:
-            raise dhd.errno_to_exception(
+            raise fdsdk.util.errno_to_exception(
                 dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.expert.getJointAngles()'
@@ -4067,7 +4063,7 @@ class HapticDevice:
         )
 
         if err == -1:
-            raise dhd.errno_to_exception(
+            raise fdsdk.util.errno_to_exception(
                 dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.expert.getJointVelocities()'
@@ -4104,7 +4100,7 @@ class HapticDevice:
         err = dhd.direct.getPosition(self._pos, self._id)
 
         if err == -1:
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.getPosition()'
             )
@@ -4125,7 +4121,7 @@ class HapticDevice:
 
         if err == -1:
             if dhd.errorGetLast() != ErrorNum.TIMEOUT:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.getLinearVelocity()'
                 )
@@ -4168,7 +4164,7 @@ class HapticDevice:
         err = dhd.direct.getOrientationRad(self._orientation_angles, self._id)
 
         if err == -1:
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.getLinearVelocity()'
             )
@@ -4189,7 +4185,7 @@ class HapticDevice:
 
         if err:
             if dhd.errorGetLast() != ErrorNum.TIMEOUT:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.getAngularVelocityRad()'
                 )
@@ -4213,7 +4209,7 @@ class HapticDevice:
         err = dhd.getForce(self._f, self._id)
 
         if err == -1:
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.getForce()'
             )
@@ -4231,7 +4227,7 @@ class HapticDevice:
         """
 
         if dhd.direct.getForceAndTorque(self._f, self._t, self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.getForceAndTorque()'
             )
@@ -4258,7 +4254,7 @@ class HapticDevice:
         )
 
         if err:
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.getForceAndTorqueAndGripperForce()'
             )
@@ -4280,7 +4276,7 @@ class HapticDevice:
         """
 
         if dhd.direct.getOrientationFrame(self._frame, self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.getOrientationFrame()'
             )
@@ -4306,7 +4302,7 @@ class HapticDevice:
         )
 
         if err == -1:
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.getPositionAndOrientationFrame()'
             )
@@ -4341,7 +4337,7 @@ class HapticDevice:
         """
 
         if dhd.getStatus(self._status, ID=self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())()
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
         return self
 
@@ -4377,7 +4373,7 @@ class HapticDevice:
             )
 
             if err == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.drd.setForceAndTorqueAndGripperForce()'
                 )
@@ -4387,7 +4383,7 @@ class HapticDevice:
             )
 
             if err == -1:
-                raise dhd.errno_to_exception(dhd.errorGetLast())(
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                     ID=self._id,
                     op='forcedimension.dhd.setForceAndTorqueAndGripperForce()'
                 )
@@ -4395,18 +4391,18 @@ class HapticDevice:
         return self
 
     def req(
-        self, f: FloatVectorLike, t: Optional[FloatVectorLike] = None
+        self, f: Array[int, float], t: Optional[Array[int, float]] = None
     ) -> Self:
         """
         Load the requested force and request torque buffer for this device.
         This won't send the request to the device. This is used by the
         HapticDaemon.
 
-        :param IntVectorLike f:
+        :param Array[int, int] f:
             The force (in [N]) to apply to the end effector about
             the X, Y, and Z axes.
 
-        :param IntVectorLike t:
+        :param Array[int, int] t:
             The torque (in [Nm]) to apply to the end effector about the
             X, Y, and Z axes.
 
@@ -4468,7 +4464,7 @@ class HapticDevice:
         )
 
         if err == -1:
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.setVibration()'
             )
@@ -4539,7 +4535,7 @@ class HapticDevice:
 
         self._is_stopped = True
         if dhd.stop(self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())(
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
                 ID=self._id,
                 op='forcedimension.dhd.stop()'
             )
@@ -4609,7 +4605,7 @@ class HapticDevice:
             limit = -1.0
 
         if dhd.setMaxForce(limit, self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
         return self
 
@@ -4621,7 +4617,6 @@ class HapticDevice:
         """
 
         return self._max_torque
-
 
     def set_max_torque(self, limit: Optional[float]) -> Self:
         """
@@ -4646,10 +4641,9 @@ class HapticDevice:
             limit = -1.0
 
         if dhd.setMaxTorque(limit, self._id):
-            raise dhd.errno_to_exception(dhd.errorGetLast())()
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
 
         return self
-
 
     def get_button(self, button_id: int = 0) -> bool:
         """
@@ -4808,7 +4802,6 @@ class HapticPoller(Thread):
         ):
             raise TypeError("'wait_for' must be numeric or Callable")
 
-
         if isinstance(wait_for, float):
             if wait_for < 0:
                 raise ValueError(
@@ -4838,14 +4831,12 @@ class HapticPoller(Thread):
         self._wait_func: Optional[Callable[[], Any]] = None
         self._is_paused = False
 
-
         self._high_precision = high_precision
 
-
     def start(self, regulator: HapticDevice.Regulator):
-       self._regulator = regulator
-       self._stop_event = regulator._stop_event
-       super().start()
+        self._regulator = regulator
+        self._stop_event = regulator._stop_event
+        super().start()
 
     def stop(self):
         if self._is_paused:
@@ -5035,9 +5026,9 @@ class HapticDaemon(Thread):
                 if freq is not None
             )
 
-
         self._force_poller = (
-            _Poller(lambda: self._dev.submit(True), 1/update_list.req, self._forceon)
+            _Poller(lambda: self._dev.submit(True),
+                    1/update_list.req, self._forceon)
         )
 
         self._paused = False
@@ -5105,11 +5096,9 @@ class HapticDaemon(Thread):
 
                 time.sleep(0.01)
 
-        except dhd.DHDIOError as ex:
+        except fdsdk.dhd.adaptors.DHDIOError as ex:
             self._paused = True
 
             for poller in self._pollers:
                 poller.stop()
             self._dev._exception = ex
-
-
