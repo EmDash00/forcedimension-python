@@ -21,7 +21,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.13"
-forcedimension-core = { version = "1.0.0", extras = ["numpy"] }
+forcedimension-core = { version = "~1.0.0", extras = ["numpy"] }
 pyyaml = "^6.0"
 
 
