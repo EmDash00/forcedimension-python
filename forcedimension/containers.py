@@ -11,7 +11,7 @@ import numpy.typing as npt
 import pydantic as pyd
 import pydantic_core as pyd_core
 from forcedimension_core.constants import MAX_DOF
-from forcedimension_core.containers import Status
+from forcedimension_core.containers import Status, VersionTuple
 from forcedimension_core.containers.numpy import (
     DOFFloat, DOFInt, DOFMotor, Enc3, Enc4, Mat3x3, Mat6x6, Mot3, Vec3
 )
