@@ -2652,7 +2652,7 @@ class HapticDevice:
         # Pre-compute and cache the spec string since it doesn't change
         self._spec_str = textwrap.dedent(
             f"""\
-            Name: {self._specs.name if self._specs.name is not None else ""}
+            Name: "{self._specs.name if self._specs.name is not None else ""}"
             Device Model: {
                 fdsdk.util.devtype_str(self._specs.devtype, pretty=True)
             }
