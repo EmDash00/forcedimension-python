@@ -27,9 +27,7 @@ from typing_extensions import Self
 
 import forcedimension.containers as containers
 import forcedimension.util as util
-from forcedimension.containers import (
-    GripperUpdateOpts, UpdateOpts, _HapticPollerOptions
-)
+from forcedimension.containers import GripperUpdateOpts, UpdateOpts
 from forcedimension.serialization import (
     HapticDeviceConfig, HapticDeviceSpecs, TrajectoryGenParams
 )

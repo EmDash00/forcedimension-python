@@ -51,11 +51,6 @@ class PollGroup(NamedTuple):
     name: Optional[str] = None
 
 
-class _HapticPollerOptions(NamedTuple):
-    interval: float
-    high_precision: bool
-
-
 class State3(np.ndarray):
     """
     Represents a vector in Cartesian coordinates as a view over a
