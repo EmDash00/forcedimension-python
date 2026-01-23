@@ -1,11 +1,13 @@
-from typing import Literal, Optional
+from typing import Literal
 
 import forcedimension_core as fdsdk
 import pydantic
 from forcedimension_core.constants import (
     DEFAULT_TIMEGUARD_US,
-    DEFAULT_VELOCITY_WINDOW, DeviceType,
-    Handedness, VelocityEstimatorMode
+    DEFAULT_VELOCITY_WINDOW,
+    DeviceType,
+    Handedness,
+    VelocityEstimatorMode,
 )
 from forcedimension_core.drd.adaptors import (
     DEFAULT_ENC_MOVE_PARAMS,
@@ -16,17 +18,28 @@ from forcedimension_core.drd.adaptors import (
     DEFAULT_POS_TRACK_PARAMS,
     DEFAULT_ROT_MOVE_PARAMS,
     DEFAULT_ROT_TRACK_PARAMS,
-    TrajectoryGenParams
+    TrajectoryGenParams,
 )
+
+__all__ = [
+    "DEFAULT_ENC_MOVE_PARAMS",
+    "DEFAULT_ENC_TRACK_PARAMS",
+    "DEFAULT_GRIP_MOVE_PARAMS",
+    "DEFAULT_GRIP_TRACK_PARAMS",
+    "DEFAULT_POS_MOVE_PARAMS",
+    "DEFAULT_POS_TRACK_PARAMS",
+    "DEFAULT_ROT_MOVE_PARAMS",
+    "DEFAULT_ROT_TRACK_PARAMS",
+]
 
 
 class VelocityEstimatorConfig(pydantic.BaseModel):
     window_size: int = DEFAULT_VELOCITY_WINDOW
     mode: VelocityEstimatorMode = VelocityEstimatorMode.WINDOWING
 
-    @pydantic.field_validator('window_size')
+    @pydantic.field_validator("window_size")
     @classmethod
-    def validate_window(cls, val: Optional[int]):
+    def validate_window(cls, val: int | None):
         if val is None:
             return
 
@@ -35,7 +48,7 @@ class VelocityEstimatorConfig(pydantic.BaseModel):
 
 
 class HapticDeviceSpecs(pydantic.BaseModel):
-    name: Optional[str]
+    name: str | None
     devtype: DeviceType
     serial_number: int = 0
     has_base: bool
@@ -47,9 +60,9 @@ class HapticDeviceSpecs(pydantic.BaseModel):
     handedness: Handedness
     is_drd_supported: bool = False
 
-    @pydantic.field_validator('serial_number')
+    @pydantic.field_validator("serial_number")
     @classmethod
-    def validate_serial_number(cls, val: Optional[int]):
+    def validate_serial_number(cls, val: int | None):
         if val is None:
             return
 
@@ -59,21 +72,19 @@ class HapticDeviceSpecs(pydantic.BaseModel):
 
 class HapticDeviceConfig(pydantic.BaseModel):
     class GripperConfig(pydantic.BaseModel):
-        max_force: Optional[float] = None
+        max_force: float | None = None
         velocity_estimator: VelocityEstimatorConfig = pydantic.Field(
             default_factory=VelocityEstimatorConfig
         )
 
-        @pydantic.field_validator('max_force')
+        @pydantic.field_validator("max_force")
         @classmethod
-        def validate_max_force(cls, val: Optional[float]):
+        def validate_max_force(cls, val: float | None):
             if val is None:
                 return
 
             if val < 0:
-                raise ValueError(
-                    "max_force must be None or at least 0 [N]"
-                )
+                raise ValueError("max_force must be None or at least 0 [N]")
 
     class RegulatorConfig(pydantic.BaseModel):
         is_filtering_enabled: bool = True
@@ -82,48 +93,31 @@ class HapticDeviceConfig(pydantic.BaseModel):
         is_grip_regulated: bool = True
         max_motor_ratio: float = 1.0
         enc_move_param: TrajectoryGenParams = pydantic.Field(
-            default_factory=lambda: TrajectoryGenParams(
-                vmax=2e4, amax=2e4, jerk=2e4
-            )
+            default_factory=lambda: TrajectoryGenParams(vmax=2e4, amax=2e4, jerk=2e4)
         )
         enc_track_param: TrajectoryGenParams = pydantic.Field(
-            default_factory=lambda: TrajectoryGenParams(
-                vmax=1.0, amax=1.0, jerk=1.0
-            )
+            default_factory=lambda: TrajectoryGenParams(vmax=1.0, amax=1.0, jerk=1.0)
         )
         pos_move_param: TrajectoryGenParams = pydantic.Field(
-            default_factory=lambda: TrajectoryGenParams(
-                vmax=1.0, amax=1.0, jerk=1.0
-            )
+            default_factory=lambda: TrajectoryGenParams(vmax=1.0, amax=1.0, jerk=1.0)
         )
         pos_track_param: TrajectoryGenParams = pydantic.Field(
-            default_factory=lambda: TrajectoryGenParams(
-                vmax=1.0, amax=1.0, jerk=1.0
-            )
+            default_factory=lambda: TrajectoryGenParams(vmax=1.0, amax=1.0, jerk=1.0)
         )
         rot_move_param: TrajectoryGenParams = pydantic.Field(
-            default_factory=lambda: TrajectoryGenParams(
-                vmax=30.0, amax=30.0, jerk=30.0
-            )
+            default_factory=lambda: TrajectoryGenParams(vmax=30.0, amax=30.0, jerk=30.0)
         )
         rot_track_param: TrajectoryGenParams = pydantic.Field(
-            default_factory=lambda: TrajectoryGenParams(
-                vmax=30.0, amax=30.0, jerk=30.0
-            )
+            default_factory=lambda: TrajectoryGenParams(vmax=30.0, amax=30.0, jerk=30.0)
         )
         grip_move_param: TrajectoryGenParams = pydantic.Field(
-            default_factory=lambda: TrajectoryGenParams(
-                vmax=1.0, amax=1.0, jerk=1.0
-            )
-
+            default_factory=lambda: TrajectoryGenParams(vmax=1.0, amax=1.0, jerk=1.0)
         )
         grip_track_param: TrajectoryGenParams = pydantic.Field(
-            default_factory=lambda: TrajectoryGenParams(
-                vmax=1.0, amax=1.0, jerk=1.0
-            )
+            default_factory=lambda: TrajectoryGenParams(vmax=1.0, amax=1.0, jerk=1.0)
         )
 
-        @pydantic.field_validator('max_motor_ratio')
+        @pydantic.field_validator("max_motor_ratio")
         @classmethod
         def validate_motor_ratio_max(cls, val: float):
             if val < 0.0 or val > 1.0:
@@ -140,7 +134,7 @@ class HapticDeviceConfig(pydantic.BaseModel):
         default_factory=fdsdk.containers.numpy.Vec3
     )
 
-    com_mode: Literal['async', 'sync', 'virtual', 'network'] = 'async'
+    com_mode: Literal["async", "sync", "virtual", "network"] = "async"
     timeguard: int = DEFAULT_TIMEGUARD_US
 
     linear_velocity_estimator: VelocityEstimatorConfig = pydantic.Field(
@@ -149,21 +143,17 @@ class HapticDeviceConfig(pydantic.BaseModel):
     angular_velocity_estimator: VelocityEstimatorConfig = pydantic.Field(
         default_factory=VelocityEstimatorConfig
     )
-    max_force: Optional[float] = None
-    max_torque: Optional[float] = None
+    max_force: float | None = None
+    max_torque: float | None = None
     standard_gravity: float = 9.81
 
-    gripper: GripperConfig = pydantic.Field(
-        default_factory=GripperConfig
-    )
+    gripper: GripperConfig = pydantic.Field(default_factory=GripperConfig)
 
-    regulator: RegulatorConfig = pydantic.Field(
-        default_factory=RegulatorConfig
-    )
+    regulator: RegulatorConfig = pydantic.Field(default_factory=RegulatorConfig)
 
-    @pydantic.field_validator('timeguard')
+    @pydantic.field_validator("timeguard")
     @classmethod
-    def validate_timeguard(cls, val: Optional[float]):
+    def validate_timeguard(cls, val: float | None):
         if val is None:
             return
 
@@ -173,33 +163,26 @@ class HapticDeviceConfig(pydantic.BaseModel):
                 "(which sets it to its default value)."
             )
 
-    @pydantic.field_validator('max_force')
+    @pydantic.field_validator("max_force")
     @classmethod
-    def validate_max_force(cls, val: Optional[float]):
+    def validate_max_force(cls, val: float | None):
         if val is None:
             return
 
         if val < 0:
-            raise ValueError(
-                "max_force must be None or at least 0 [N]"
-            )
+            raise ValueError("max_force must be None or at least 0 [N]")
 
-    @pydantic.field_validator('max_torque')
+    @pydantic.field_validator("max_torque")
     @classmethod
-    def validate_max_torque(cls, val: Optional[float]):
+    def validate_max_torque(cls, val: float | None):
         if val is None:
             return
 
         if val < 0:
-            raise ValueError(
-                "max_torque must be None or at least 0 [Nm]"
-            )
+            raise ValueError("max_torque must be None or at least 0 [Nm]")
 
-    @pydantic.field_validator('standard_gravity')
+    @pydantic.field_validator("standard_gravity")
     @classmethod
     def validate_standard_gravity(cls, val: float):
-
         if val < 0:
-            raise ValueError(
-                "standard_gravity must be at least 0 [m/s^2]"
-            )
+            raise ValueError("standard_gravity must be at least 0 [m/s^2]")
