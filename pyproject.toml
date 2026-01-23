@@ -1,37 +1,156 @@
-[tool.poetry]
+[project]
 name = "forcedimension"
-version = "0.2.0b1"
+version = "0.3.0-dev"
 description = "Unofficial, Experimental, High-Level Python Wrappers for the Force Dimension SDK"
-authors = ["Ember Chow <emberchow.business@gmail.com>"]
+authors = [{ name = "Ember Chow", email = "emberchow.business@gmail.com" }]
+requires-python = ">=3.10,<3.15"
 readme = "README.md"
 license = "LGPL-3.0"
-documentation = "https://forcedimension-python-documentation.readthedocs.io/en/latest/"
-repository = "https://github.com/EmDash00/forcedimension-python"
-keywords = ["forcedimension", "haptics", "wrappers"]
+keywords = [
+    "forcedimension",
+    "haptics",
+    "wrappers",
+]
 classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
-    "Programming Language :: Python :: 3.12",
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
-    "Topic :: System :: Hardware :: Universal Serial Bus (USB) :: Human Interface Device (HID)"
+    "Topic :: System :: Hardware :: Universal Serial Bus (USB) :: Human Interface Device (HID)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
 
-[tool.poetry.dependencies]
-python = ">=3.8,<3.13"
-forcedimension-core = { version = "~1.0.0", extras = ["numpy"] }
-pyyaml = "^6.0"
+dependencies = [
+    "forcedimension-core[numpy]~=1.0.0",
+    "pyyaml>=6.0,<7",
+]
 
+[dependency-groups]
+dev = [
+    "ruff>=0.14.14",
+]
+docs = [
+    "sphinx>=6.2.1,<7",
+    "sphinx-rtd-theme>=1.3.0,<2",
+]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[project.urls]
+Repository = "https://github.com/EmDash00/forcedimension-python"
+Documentation = "https://forcedimension-python-documentation.readthedocs.io/en/latest/"
+
+[tool.ruff]
+# Assume Python 3.10
+target-version = "py310"
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Exclude a variety of commonly ignored directories.
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".git-rewrite",
+  ".hg",
+  ".ipynb_checkpoints",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pyenv",
+  ".pytest_cache",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  ".vscode",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "site-packages",
+  "venv",
+]
+
+# Like Black, indent with spaces, rather than tabs.
+format.indent-style = "space"
+# Like Black, use double quotes for strings.
+format.quote-style = "double"
+# Like Black, automatically detect the appropriate line ending.
+format.line-ending = "auto"
+# Like Black, respect magic trailing commas.
+format.skip-magic-trailing-comma = false
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+#
+# This only has an effect when the `docstring-code-format` setting is
+# enabled.
+format.docstring-code-line-length = 60
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+#
+# This is currently disabled by default, but it is planned for this
+# to be opt-out in the future.
+format.docstring-code-format = true
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+lint.select = [
+  "D",
+  "E",
+  "F",
+  "Q",
+  "FA",
+  "N",
+  "UP",
+  "DOC",
+  "PERF",
+  "RET",
+  "RSE",
+  "SIM",
+  "FIX",
+  "ICN",
+  "PIE",
+  "TID",
+  "I001",
+  "I002"
+]
+lint.ignore = [ "D205", "D105", "D107", "N818" ]
+# Allow fix for all enabled rules (when `--fix`) is provided.
+lint.fixable = [ "ALL" ]
+lint.unfixable = [  ]
+# Allow unused variables when underscore-prefixed.
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.docformatter]
+recursive = false
+wrap-summaries = 65
+wrap-descriptions = 65
+force-wrap = true
+blank = true
+
+[tool.pyproject-fmt]
+column_width = 55
+indent = 2
+keep_full_version = false
+max_supported_python = "3.14"
 
 [tool.pyright]
 venvPath = "."
 venv = ".venv"
 
-[virtualenvs]
-in-project = true
+typeCheckingMode = "standard"
+reportUnusedImport = "none"
+reportUnusedFunction = "none"
+reportUnusedVariable = "none"
+reportUndefinedVariable = "none"
