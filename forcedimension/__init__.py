@@ -7,10 +7,11 @@ import json
 import math
 import textwrap
 import time
+from collections.abc import Callable
 from copy import copy
 from math import nan
 from threading import Condition, Event, Lock, Thread
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 from typing import cast as _cast
 
 import forcedimension_core as fdsdk
@@ -32,6 +33,8 @@ from forcedimension.serialization import (
     TrajectoryGenParams,
 )
 from forcedimension.util import ImmutableWrapper
+
+__all__ = ["GripperUpdateOpts"]
 
 dhd.expert.enableExpertMode()
 
@@ -138,13 +141,13 @@ class HapticDevice:
                 HapticDevice.Gripper._config_initializers[config](self, restore)
 
         def zero(self) -> Self:
+            """Set the requested force to 0."""
             self._fg_req = 0.0
 
             return self
 
         def req(self, fg: float) -> Self:
-            """Loads the requested gripper force into the request buffer.
-            """
+            """Load the requested gripper force into the request buffer."""
             self._fg_req = fg
 
             return self
@@ -152,9 +155,11 @@ class HapticDevice:
         def config_velocity(
             self,
             window_size: int = constants.DEFAULT_VELOCITY_WINDOW,
-            mode: constants.VelocityEstimatorMode = constants.VelocityEstimatorMode.WINDOWING,
+            mode: constants.VelocityEstimatorMode = (
+                constants.VelocityEstimatorMode.WINDOWING
+            ),
         ) -> Self:
-            """Configures the internal shared linear and angular velocity
+            """Configure the internal shared linear and angular velocity
             estimator used by the Force Dimension SDK for the force gripper.
             Calling this without parameters resets the linear velocity
             estimator to its default settings.
@@ -177,22 +182,21 @@ class HapticDevice:
             return self
 
         def set_max_force(self, limit: float | None) -> Self:
-            """Define or disable a limit (in [N]) to the force magnitude that can be
-            applied by the haptic device.
+            """Define or disable a limit (in [N]) to the force magnitude that
+            can be applied by the haptic device.
 
-            :param Optional[float] limit:
+            :param float | None limit:
                 The desired limit (in [N]) to the force magnitude that can be
                 applied. If the limit is `None`, the force limit is disabled.
             """
-            if limit is not None:
-                if limit < 0:
-                    raise ValueError("limit must be greater than 0 or None.")
+            if limit is not None and limit < 0:
+                raise ValueError("limit must be greater than 0 or None.")
 
             if limit is None:
                 limit = -1.0
 
             if dhd.setMaxGripperForce(limit, self._id):
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             self._config.max_force = limit
 
@@ -205,7 +209,7 @@ class HapticDevice:
             the last update.
 
             :raises DHDError:
-                If an error has occured with the device, invalidating the
+                If an error has occurred with the device, invalidating the
                 device state.
             """
             self.check_exception()
@@ -218,7 +222,7 @@ class HapticDevice:
             and Z axes at the time of the last update.
 
             :raises DHDError:
-                If an error has occured with the device, invalidating the
+                If an error has occurred with the device, invalidating the
                 device state.
             """
             self.check_exception()
@@ -230,7 +234,7 @@ class HapticDevice:
             time of the last update.
 
             :raises DHDError:
-                If an error has occured with the device, invalidating the
+                If an error has occurred with the device, invalidating the
                 device state.
             """
             self.check_exception()
@@ -242,7 +246,7 @@ class HapticDevice:
             time of the last update.
 
             :raises DHDError:
-                If an error has occured with the device, invalidating the
+                If an error has occurred with the device, invalidating the
                 device state.
             """
             self.check_exception()
@@ -254,7 +258,7 @@ class HapticDevice:
             at the time of the last update.
 
             :raises DHDError:
-                If an error has occured with the device, invalidating the
+                If an error has occurred with the device, invalidating the
                 device state.
             """
             self.check_exception()
@@ -266,7 +270,7 @@ class HapticDevice:
             gripper (in [rad/s]).
 
             :raises DHDError:
-                If an error has occured with the device, invalidating the
+                If an error has occurred with the device, invalidating the
                 device state.
             """
             self.check_exception()
@@ -278,7 +282,7 @@ class HapticDevice:
             gripper (in [N]).
 
             :raises DHDError:
-                If an error has occured with the device, invalidating the
+                If an error has occurred with the device, invalidating the
                 device state.
             """
             self.check_exception()
@@ -291,7 +295,7 @@ class HapticDevice:
             err = dhd.expert.gripperEncoderToGap(self._enc.value, self._gap, self._id)
 
             if err:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             return self
 
@@ -305,16 +309,16 @@ class HapticDevice:
             return self
 
         def update_enc(self) -> Self:
-            """Performs a blocking read to the HapticDevice, requesting the value
+            """Perform a blocking read to the HapticDevice, requesting the value
             of the gripper encoder.
 
             :raises DHDErrorCom:
-                If a communication error has occured with the device.
+                If a communication error has occurred with the device.
             """
             err = dhd.expert.getGripperEncoder(self._enc, self._id)
 
             if err == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             return self
 
@@ -323,7 +327,7 @@ class HapticDevice:
             the gripper opening (in [m]) and gripper opening angle (in [rad]).
 
             :raises DHDErrorCom:
-                If an communication error has occured with the device.
+                If an communication error has occurred with the device.
             """
             self.update_enc()
             self.calculate_angle()
@@ -332,91 +336,94 @@ class HapticDevice:
             return self
 
         def update_linear_velocity(self) -> Self:
-            """Computes the estimated instanteous linear velocity of the gripper
+            """Compute the estimated instanteous linear velocity of the gripper
             (in [m/s]).
 
             :raises DHDErrorCom:
-                If an communication error has occured with the device.
+                If an communication error has occurred with the device.
             """
             err = dhd.getGripperLinearVelocity(self._v, self._id)
 
             if err == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             return self
 
         def update_angular_velocity(self) -> Self:
-            """Computes the estimated instanteous linear velocity of the gripper
+            """Compute the estimated instanteous linear velocity of the gripper
             (in [rad/s]).
 
             :raises DHDErrorCom:
-                If an communication error has occured with the device.
+                If an communication error has occurred with the device.
             """
             err = dhd.getGripperAngularVelocityRad(self._w, self._id)
 
             if err == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             return self
 
         def update_angle(self) -> Self:
-            """Performs a blocking read to the HapticDevice, requesting the value
+            """Perform a blocking read to the HapticDevice, requesting the value
             of the gripper opening angle (in [rad]).
 
             :raises DHDErrorCom:
-                If an communication error has occured with the device.
+                If an communication error has occurred with the device.
             """
             err = dhd.getGripperAngleRad(self._angle, self._id)
 
             if err == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             return self
 
         def update_gap(self) -> Self:
-            """Performs a blocking read to the HapticDevice, requesting the value
+            """Perform a blocking read to the HapticDevice, requesting the value
             of the gripper opening (in [m]).
 
             :raises DHDErrorCom:
-                If an communication error has occured with the device.
+                If an communication error has occurred with the device.
             """
             err = dhd.getGripperGap(self._gap, self._id)
 
             if err == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             return self
 
         def update_thumb_pos(self) -> Self:
-            """Performs a blocking read to the HapticDevice, requesting the value
+            """Perform a blocking read to the HapticDevice, requesting the value
             of the gripper thumb rest position (in [m]) about the X, Y, and Z axes.
 
             :raises DHDErrorCom:
-                If an communication error has occured with the device.
+                If an communication error has occurred with the device.
             """
             err = dhd.direct.getGripperThumbPos(self._thumb_pos, self._id)
 
             if err == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             return self
 
         def update_finger_pos(self) -> Self:
-            """Performs a blocking read to the HapticDevice, requesting the value
+            """Perform a blocking read to the HapticDevice, requesting the value
             of the gripper forefinger rest position (in [m]) about the X, Y,
             and Z axes.
 
             :raises DHDErrorCom:
-                If an communication error has occured with the device.
+                If an communication error has occurred with the device.
             """
             err = dhd.direct.getGripperFingerPos(self._finger_pos, self._id)
 
             if err == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             return self
 
         def check_exception(self):
+            """Check if an exception has occurred in an update function and raises it.
+            Most property functions implicitly check this.
+            """
             self._parent.check_exception()
 
         _config_setters = {
@@ -426,6 +433,37 @@ class HapticDevice:
         _config_initializers = {"velocity_estimator": _init_velocity_estimator}
 
     class Regulator:
+        """The Regulator provides a high-level interface for controlling haptic
+        devices either using Force Dimension's DRD (Direct Robotic Daemon) framework
+        or with Python threading. Most methods of this class are chainable.
+
+        It handles:
+        - Device initialization and calibration
+        - Position/orientation regulation
+        - Trajectory generation and motion control
+        - Force/torque polling and application
+        - Thread-safe polling of device state
+
+        Key Concepts:
+        - **DRD**: Direct Robotic Daemon - background control loop for robotic motion
+        - **Polling**: Periodic reading of device state (position, velocity, etc.)
+        - **Regulation**: Locking device degrees of freedom for robotic control
+        - **Trajectory Parameters**: Limits for velocity, acceleration, jerk during motion
+
+        Typical Usage:
+            >>> device = HapticDevice()
+            >>> regulator = device.regulator
+            >>> regulator.initialize()  # Calibrate device
+            >>> regulator.start_drd()  # Start control loop
+            >>> regulator.regulate(
+            ...     True
+            ... )  # Enable position/orientation locking
+            >>> regulator.poll()  # Start background polling
+            >>> regulator.move_to_pos([0.1, 0.2, 0.3])  # Move to position
+            >>> while regulator.is_moving():
+            ...    time.sleep(0.01)  # Wait for device to get to position.
+        """
+
         def __init__(
             self,
             parent: HapticDevice,
@@ -433,6 +471,15 @@ class HapticDevice:
             config_data: dict[str, Any] | None,
             restore: bool,
         ):
+            """Initialize the regulator with device configuration. Users should
+            avoid calling this function as each HapticDevice comes with its own
+            regulator.
+
+            :param HapticDevice parent: Parent haptic device instance
+            :param dict[str, Any] | None config_file_data: Configuration from file
+            :param dict[str, Any] | None config_data: Runtime configuration overrides
+            :param bool restore: If True, restore default parameters instead of reading from device
+            """
             self._parent = parent
             self._haptic_daemon: HapticDaemon | None = None
             self._stop_event = Event()
@@ -717,41 +764,66 @@ class HapticDevice:
                 HapticDevice.Regulator._config_initializers[config](self, restore)
 
         @property
-        def DEFAULT_POLL_GROUPS(self) -> tuple[containers.PollGroup]:
-            """A tuple of default poll groups (without the use of DRD).
-            """
+        def DEFAULT_POLL_GROUPS(self) -> tuple[containers.PollGroup]:  # noqa: N802
+            """A tuple of default poll groups (without the use of DRD)."""
             return self._default_poll_groups
 
         @property
-        def DEFAULT_REGULATOR_POLL_GROUPS(
+        def DEFAULT_REGULATOR_POLL_GROUPS(  # noqa: N802
             self,
         ) -> tuple[containers.PollGroup, containers.PollGroup]:
-            """A tuple of default poll groups (with the use of DRD).
-            """
+            """A tuple of default poll groups (with the use of DRD)."""
             return self._default_regulator_poll_groups
 
         @property
         def is_drd_supported(self) -> bool:
+            """Check if DRD (Direct Robotic Daemon) is supported by the device.
+
+            :returns:
+                True if device supports DRD robotic control, False otherwise.
+            """
             return self._specs.is_drd_supported
 
         @property
         def is_initialized(self) -> bool:
+            """Check if the device is initialized for robotic control.
+
+            :returns:
+                True if device is calibrated and ready for DRD, False otherwise.
+            """
             return self._is_initialized
 
         @property
         def is_drd_running(self) -> bool:
+            """Check if the DRD control loop is currently active.
+
+            :returns:
+                True if DRD is running, False otherwise.
+            """
             return drd.isRunning(self._parent.ID)
 
         @property
         def control_freq(self) -> float:
+            """Get the current control loop frequency.
+
+            :returns:
+                Control frequency in kHz (typically 1.0 for 1kHz update rate).
+            """
             return self._control_freq
 
         @property
         def is_moving(self) -> bool:
+            """Check if the device is currently executing a motion command with
+            the DRD.
+
+            :returns:
+                True if device is moving along a trajectory, False otherwise.
+            """
             return drd.isMoving(self._parent._id)
 
         @property
         def motor_ratio_max(self) -> float:
+            """Get the maximum motor torque ratio (0.0 to 1.0)."""
             return self._config.max_motor_ratio
 
         @property
@@ -791,8 +863,8 @@ class HapticDevice:
             return drd.isFiltering(self._parent._id)
 
         def wait_end(self) -> Self:
-            """Puts the current thread to sleep until the end Event has been
-            signalled either gracefully or because exception has occured in a
+            """Put the current thread to sleep until the end Event has been
+            signalled either gracefully or because exception has occurred in a
             polling thread.
             """
             self._end_event.wait()
@@ -808,7 +880,7 @@ class HapticDevice:
             return self
 
         def update_control_freq(self) -> Self:
-            """Updates an internal buffer witht he average refresh rate of the
+            """Update an internal buffer with the average refresh rate of the
             control loop (in [kHz]) since this function was last called.
             """
             if (control_freq := drd.getCtrlFreq(self._parent._id)) < 0:
@@ -843,7 +915,7 @@ class HapticDevice:
             return self
 
         def initialize(self, redo: bool = False, manual_init_wait: float = 5.0) -> Self:
-            """Initializes the haptic device. If the device supports
+            """Initialize the haptic device. If the device supports
             automatic initialization, it robotically moves to a
             known position and resets encoder counters to their correct
             values. It subsequently ensures that the initialization was
@@ -852,7 +924,7 @@ class HapticDevice:
             expected values (stored in each device internal memory).
 
             If the device does not support automatic initialization, you will
-            be prompted to perform manual initializaiton.
+            be prompted to perform manual initialization.
 
             :param bool redo:
                 ``True`` to reinitialize. If ``False`` and the device is
@@ -896,10 +968,10 @@ class HapticDevice:
             return self
 
         def precision_initialize(self) -> Self:
-            """Performs automatic initialization for supported devices by
+            """Perform automatic initialization for supported devices by
             robotically moving each axis to a knokwn position and resetting its
             encoder counter to the correct values. The initialization is
-            carreid out for each device axis in turn, and validates the
+            carried out for each device axis in turn, and validates the
             initialization by asserting the position of a validation reference
             for each axis. This is preferred to
             :func:`HapticDevice.initialize()` for devices that support it.
@@ -957,7 +1029,7 @@ class HapticDevice:
             return self
 
         def regulate_pos(self, enabled: bool = True) -> Self:
-            """This function toggles robotic regulation of the device delta base,
+            """Toggle robotic regulation of the device delta base,
             which provides translations. If regulation is disabled, the base
             can move freely and will display any force set using
             :func:`HapticDevice.req()` and :func:`HapticDevice.submit()`. If it
@@ -979,7 +1051,7 @@ class HapticDevice:
             return self
 
         def regulate_rot(self, enabled: bool = True) -> Self:
-            """This function toggles robotic regulation of the device wrist. If
+            """Toggle robotic regulation of the device wrist. If
             regulation is disabled, the wrist can move freely and will display
             any torque set using :func:`HapticDevice.req()` and
             :func:`HapticDevice.submit()`. If it is enabled, wrist orientation
@@ -1000,7 +1072,7 @@ class HapticDevice:
             return self
 
         def regulate_grip(self, enabled: bool = True) -> Self:
-            """This function toggles robotic regulation of the device gripper.
+            """Toggle robotic regulation of the device gripper.
             If regulation is disabled, the gripper can move freely and will
             display any force set using :func:`HapticDevice.req()` and
             :func:`HapticDevice.submit()`. If it is enabled, gripper
@@ -1021,7 +1093,7 @@ class HapticDevice:
             return self
 
         def enable_filter(self, enabled: bool = True) -> Self:
-            """This function controls the motion filtering for subsequent calls to
+            """Control the motion filtering for subsequent calls to
             :func:`HapticDevice.Regulator.track()`,
             :func:`HapticDevice.Regulator.track_all_enc()`,
             :func:`HapticDevice.Regulator.track_enc()`,
@@ -1040,7 +1112,7 @@ class HapticDevice:
             return self
 
         def start_drd(self) -> Self:
-            """This function starts the robotic control loop for the given device.
+            """Start the robotic control loop for the given device.
             The device must be initialized either manually (by moving around
             the device end-effector) with
             :func:`HapticDevice.Regulator.initialize()` or
@@ -1058,8 +1130,7 @@ class HapticDevice:
             return self
 
         def stop_drd(self) -> Self:
-            """This function stops the robotic control loop for the given device.
-            """
+            """Stop the robotic control loop for the given device."""
             if self._is_drd_running:
                 if drd.stop(True, self._parent._id):
                     raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
@@ -1117,6 +1188,18 @@ class HapticDevice:
                 poller.start(self)
 
         def poll(self, *pollgrps: containers.PollGroup) -> Self:
+            """Start polling device state with custom poll groups.
+
+            :param containers.PollGroup *pollgrps: Poll groups to activate
+            :returns: Self for method chaining
+            :raises RuntimeError: If mixing with HapticDaemon polling
+
+            Note
+            ----
+            If no poll groups provided, uses default groups based on DRD state.
+                - DRD running: Uses high-precision regulator poll groups
+                - DRD stopped: Uses standard device poll groups
+            """
             if self._haptic_daemon is not None:
                 raise RuntimeError(
                     "Mixed use of HapticDaemon and "
@@ -1136,21 +1219,23 @@ class HapticDevice:
 
         @property
         def poll_group_names(self):
+            """Get the name of all poll groups."""
             return self._poll_groups_dct.keys()
 
         @property
         def poll_groups_by_name(self) -> dict[str, HapticPoller]:
+            """Get dict of poll groups indexed by their assigned names."""
             return _cast(dict[str, HapticPoller], self._poll_groups_dct_view)
 
         @property
         def poll_groups_by_target(self) -> dict[Callable[[], Any], HapticPoller]:
+            """Get poll groups indexed by their target functions."""
             return _cast(
                 dict[Callable[[], Any], HapticPoller], self._polled_targets_view
             )
 
         def stop_poll(self):
-            """Stop all polling.
-            """
+            """Stop all active polling threads."""
             if self._haptic_daemon is not None:
                 self._haptic_daemon.stop()
                 return self
@@ -1163,12 +1248,23 @@ class HapticDevice:
             return self
 
         def update(self) -> Self:
+            """Update both position/orientation and velocity state.
+            Combines update_position_and_orientation() and update_velocity().
+
+            :raises RuntimeError: If DRD is not running
+            """
+
             self.update_position_and_orientation()
             self.update_velocity()
 
             return self
 
         def update_position_and_orientation(self) -> Self:
+            """Update internal buffer with current position and orientation.
+
+            :raises RuntimeError: If DRD is not running
+            """
+
             if not self._is_drd_running:
                 raise RuntimeError("DRD is not running.")
 
@@ -1189,6 +1285,11 @@ class HapticDevice:
             return self
 
         def update_velocity(self) -> Self:
+            """
+            Update internal buffers with the latest linear and angular
+            velocity.
+            """
+
             if not self._is_drd_running:
                 raise RuntimeError("DRD is not running.")
 
@@ -1207,7 +1308,7 @@ class HapticDevice:
             return self
 
         def set_mot_ratio_max(self, scale: float) -> Self:
-            """Sets the maximum joint torque applied to all regulated joints
+            """Set the maximum joint torque applied to all regulated joints
             expressed as a fraction of the maximum torque available for each
             joint.
 
@@ -1230,20 +1331,20 @@ class HapticDevice:
             amax: float | None = None,
             jerk: float | None = None,
         ) -> Self:
-            """Sets the trajectory generation parameters for
+            """Set the trajectory generation parameters for
             :func:`HapticDevice.Regulator.move_to_enc()`
             :func:`HapticDevice.Regulator.move_to_all_enc()`. Unset parameters
             will not be changed.
 
-            :param Optional[float] vmax:
+            :param float | None vmax:
                 Maximum allowable velocity during a generated trajectory
                 (in [inc/s]).
 
-            :param Optional[float] amax:
+            :param float | None amax:
                 Maximum allowable acceleration during a generated trajectory
                 (in [inc/s^2]).
 
-            :param Optional[float] jerk:
+            :param float | None jerk:
                 Maximum allowable jerk during the generated trajectory
                 (in [inc/s^3])
             """
@@ -1273,20 +1374,20 @@ class HapticDevice:
             amax: float | None = None,
             jerk: float | None = None,
         ) -> Self:
-            """Sets the trajectory generation parameters for
+            """Set the trajectory generation parameters for
             :func:`HapticDevice.Regulator.track_enc()` and
             :func:`HapticDevice.Regulator.track_all_enc()`. Unset parameters
             will not be changed.
 
-            :param Optional[float] vmax:
+            :param float | None vmax:
                 Maximum allowable velocity during a generated trajectory
                 (in [inc/s]).
 
-            :param Optional[float] amax:
+            :param float | None amax:
                 Maximum allowable acceleration during a generated trajectory
                 (in [inc/s^2]).
 
-            :param Optional[float] jerk:
+            :param float | None jerk:
                 Maximum allowable jerk during the generated trajectory
                 (in [inc/s^3])
             """
@@ -1316,20 +1417,20 @@ class HapticDevice:
             amax: float | None = None,
             jerk: float | None = None,
         ) -> Self:
-            """Sets the trajectory generation parameters for
+            """Set the trajectory generation parameters for
             :func:`HapticDevice.Regulator.move_to_pos()` and
             :func:`HapticDevice.Regulator.move_to()` (on DOFs 1-3). Unset
             parameters will not be changed.
 
-            :param Optional[float] vmax:
+            :param float | None vmax:
                 Maximum allowable velocity during a generated trajectory
                 (in [m/s]).
 
-            :param Optional[float] amax:
+            :param float | None amax:
                 Maximum allowable acceleration during a generated trajectory
                 (in [m/s^2]).
 
-            :param Optional[float] jerk:
+            :param float | None jerk:
                 Maximum allowable jerk during the generated trajectory
                 (in [m/s^3])
             """
@@ -1359,20 +1460,20 @@ class HapticDevice:
             amax: float | None = None,
             jerk: float | None = None,
         ) -> Self:
-            """Sets the trajectory generation parameters for
+            """Set the trajectory generation parameters for
             :func:`HapticDevice.Regulator.track_pos()` and
             :func:`HapticDevice.Regulator.track()` (on DOFs 1-3).
             Unset parameters will not be changed.
 
-            :param Optional[float] vmax:
+            :param float | None vmax:
                 Maximum allowable velocity during a generated trajectory
                 (in [m/s]).
 
-            :param Optional[float] amax:
+            :param float | None amax:
                 Maximum allowable acceleration during a generated trajectory
                 (in [m/s^2]).
 
-            :param Optional[float] jerk:
+            :param float | None jerk:
                 Maximum allowable jerk during the generated trajectory
                 (in [m/s^3])
             """
@@ -1402,20 +1503,20 @@ class HapticDevice:
             amax: float | None = None,
             jerk: float | None = None,
         ) -> Self:
-            """Sets the trajectory generation parameters for
+            """Set the trajectory generation parameters for
             :func:`HapticDevice.Regulator.move_to_rot()` and
             :func:`HapticDevice.Regulator.move_to()` (on DOFs 4-6).
             Unset parameters will not be changed.
 
-            :param Optional[float] vmax:
+            :param float | None vmax:
                 Maximum allowable velocity during a generated trajectory
                 (in [rad/s]).
 
-            :param Optional[float] amax:
+            :param float | None amax:
                 Maximum allowable acceleration during a generated trajectory
                 (in [rad/s^2]).
 
-            :param Optional[float] jerk:
+            :param float | None jerk:
                 Maximum allowable jerk during the generated trajectory
                 (in [rad/s^3])
             """
@@ -1445,20 +1546,20 @@ class HapticDevice:
             amax: float | None = None,
             jerk: float | None = None,
         ) -> Self:
-            """Sets the trajectory generation parameters for
+            """Set the trajectory generation parameters for
             :func:`HapticDevice.Regulator.track_rot()` and
             :func:`HapticDevice.Regulator.track()` (on DOFs 4-6).
             Unset parameters will not be changed.
 
-            :param Optional[float] vmax:
+            :param float | None vmax:
                 Maximum allowable velocity during a generated trajectory
                 (in [rad/s]).
 
-            :param Optional[float] amax:
+            :param float | None amax:
                 Maximum allowable acceleration during a generated trajectory
                 (in [rad/s^2]).
 
-            :param Optional[float] jerk:
+            :param float | None jerk:
                 Maximum allowable jerk during the generated trajectory
                 (in [rad/s^3])
             """
@@ -1488,20 +1589,20 @@ class HapticDevice:
             amax: float | None = None,
             jerk: float | None = None,
         ) -> Self:
-            """Sets the trajectory generation parameters for
+            """Set the trajectory generation parameters for
             :func:`HapticDevice.Regulator.move_to_grip()` and
             :func:`HapticDevice.Regulator.move_to()` (DOF 7).
             Unset parameters will not be changed.
 
-            :param Optional[float] vmax:
+            :param float | None vmax:
                 Maximum allowable velocity during a generated trajectory
                 (in [m/s]).
 
-            :param Optional[float] amax:
+            :param float | None amax:
                 Maximum allowable acceleration during a generated trajectory
                 (in [m/s^2]).
 
-            :param Optional[float] jerk:
+            :param float | None jerk:
                 Maximum allowable jerk during the generated trajectory
                 (in [m/s^3])
             """
@@ -1531,20 +1632,20 @@ class HapticDevice:
             amax: float | None = None,
             jerk: float | None = None,
         ) -> Self:
-            """Sets the trajectory generation parameters for
+            """Set the trajectory generation parameters for
             :func:`HapticDevice.Regulator.track_grip()` and
             :func:`HapticDevice.Regulator.track()` (DOF 7).
             Unset parameters will not be changed.
 
-            :param Optional[float] vmax:
+            :param float | None vmax:
                 Maximum allowable velocity during a generated trajectory
                 (in [m/s]).
 
-            :param Optional[float] amax:
+            :param float | None amax:
                 Maximum allowable acceleration during a generated trajectory
                 (in [m/s^2]).
 
-            :param Optional[float] jerk:
+            :param float | None jerk:
                 Maximum allowable jerk during the generated trajectory
                 (in [m/s^3])
             """
@@ -1586,7 +1687,7 @@ class HapticDevice:
             return self
 
         def zero_pos(self, block: bool = True) -> Self:
-            """Sends the device end-effector position to the origin.
+            """Send the device end-effector position to the origin.
             The motion uses smooth acceleration/deceleration and follows a
             straight line in space. The acceleration and velocity profiles can
             be controlled by adjusting the trajectory generation parameters.
@@ -1594,7 +1695,7 @@ class HapticDevice:
             return self.move_to_pos((0.0, 0.0, 0.0), block=block)
 
         def zero_rot(self, block: bool = True) -> Self:
-            """Sends the device end-effector to zero rotation about the first,
+            """Send the device end-effector to zero rotation about the first,
             second, and third joint angles The motion uses smooth
             acceleration/deceleration and follows a straight curve. The
             acceleration and velocity profiles can be controlled by adjusting
@@ -1624,11 +1725,11 @@ class HapticDevice:
 
             Warning:
             -------
-            Paths are NOT guarunteed to be continuous if a new command is
+            Paths are NOT guaranteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
             `block` is ``False`` and multiple commands are provided without
             proper synchronization. Setting `block` to ``False`` should be
-            reserved for use cases for iteratables which continously feed
+            reserved for use cases for iteratables which continuously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
 
@@ -1671,7 +1772,7 @@ class HapticDevice:
             return self
 
         def move_to(self, *cmds: Array[int, float], block: bool = True) -> Self:
-            """Sends the device end-effector to a set of desired
+            """Send the device end-effector to a set of desired
             7-DOF configurations.  The motion uses smooth
             acceleration/deceleration and will follow straight lines in
             position space as well as straight curves in orientation space. The
@@ -1697,11 +1798,11 @@ class HapticDevice:
 
             Warning:
             -------
-            Paths are NOT guarunteed to be continuous if a new command is
+            Paths are NOT guaranteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
             `block` is ``False`` and multiple commands are provided without
             proper synchronization. Setting `block` to ``False`` should be
-            reserved for use cases for iteratables which continously feed
+            reserved for use cases for iteratables which continuously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
 
@@ -1725,7 +1826,7 @@ class HapticDevice:
             return self
 
         def track(self, *cmds: Array[int, float]) -> Self:
-            """This function sends the device end-effector to a desired Cartesian
+            """Send the device end-effector to a desired Cartesian
             7-DOF configuration. If motion filters are enabled, the motion
             follows a smooth acceleration/deceleration constraint on each
             Cartesian axis. The acceleration and velocity profiles can be
@@ -1747,7 +1848,7 @@ class HapticDevice:
             return self
 
         def move_to_all_enc(self, *cmds: Array[int, int], block: bool = True) -> Self:
-            """Sends the device end-effector to a set of desired encoder
+            """Send the device end-effector to a set of desired encoder
             positions in each degree-of-freedom. The motion follows a straight
             line in the encoder space, with smooth acceleration/deceleration.
             The acceleration and velocity profiles can be controlled by
@@ -1769,11 +1870,11 @@ class HapticDevice:
 
             Warning:
             -------
-            Paths are NOT guarunteed to be continuous if a new command is
+            Paths are NOT guaranteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
             `block` is ``False`` and multiple commands are provided without
             proper synchronization. Setting `block` to ``False`` should be
-            reserved for use cases for iteratables which continously feed
+            reserved for use cases for iteratables which continuously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
 
@@ -1817,7 +1918,7 @@ class HapticDevice:
             return self
 
         def move_to_pos(self, *cmds: Array[int, float], block: bool = True) -> Self:
-            """Sends the device end-effector to a set of desired
+            """Send the device end-effector to a set of desired
             positions. The motion follows a straight line in position space,
             with smooth acceleration/deceleration. The acceleration and
             velocity profiles can be controlled by adjusting the trajectory
@@ -1839,11 +1940,11 @@ class HapticDevice:
 
             Warning:
             -------
-            Paths are NOT guarunteed to be continuous if a new command is
+            Paths are NOT guaranteed to be continuous if a new command is
             given before the previous command has ended. This can happen if
             `block` is ``False`` and multiple commands are provided without
             proper synchronization. Setting `block` to ``False`` should be
-            reserved for use cases for iteratables which continously feed
+            reserved for use cases for iteratables which continuously feed
             inputs spaced over time (i.e. reading from some stream which
             periodically sends commands).
 
@@ -1867,7 +1968,7 @@ class HapticDevice:
             return self
 
         def track_pos(self, *cmds: Array[int, float]) -> Self:
-            """Sends the device end-effector to a set of desired
+            """Send the device end-effector to a set of desired
             positions. The motion follows a straight line in position space,
             with smooth acceleration/deceleration. The acceleration and
             velocity profiles can be controlled by adjusting the trajectory
@@ -1912,7 +2013,7 @@ class HapticDevice:
 
             Info
             ----
-            Paths are NOT guarunteed to be continuous a sequence of calls where
+            Paths are NOT guaranteed to be continuous a sequence of calls where
             `block` is ``False``. Use
             :func:`forcedimension.HapticDevice.Regulator.track_rot()` for
             that instead.
@@ -1975,7 +2076,7 @@ class HapticDevice:
 
             Info
             ----
-            Paths are NOT guarunteed to be continuous a sequence of calls where
+            Paths are NOT guaranteed to be continuous a sequence of calls where
             `block` is ``False``. Use
             :func:`forcedimension.Regulator.HapticDevice.track_grip()` for that
             instead.
@@ -1994,7 +2095,7 @@ class HapticDevice:
             return self
 
         def track_grip(self, *cmds: float) -> Self:
-            """This function sequentially sends the device gripper to a set of
+            """Sequentially send the device gripper to a set of
             desired opening distances (in [m]). If motion filters are enabled,
             the motion follows a smooth acceleration/deceleration. The
             acceleration and velocity profiles can be controlled by adjusting
@@ -2012,8 +2113,8 @@ class HapticDevice:
             return self
 
         def hold(self) -> Self:
-            """This function immediately makes the device hold its current
-            position. All motion commands are abandoned.
+            """Immediately make the device hold its current position.
+            All motion commands are abandoned.
             """
             if drd.hold(self._parent._id):
                 raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
@@ -2034,7 +2135,7 @@ class HapticDevice:
                 disengage locks.
 
             :raises ArgumentError:
-                If enabled is not implicitly converitble to C uchar.
+                If enabled is not implicitly convertible to C uchar.
 
             :raises DHDErrorNotAvailable:
                 If the device is not equipped with mechanical locks.
@@ -2080,7 +2181,7 @@ class HapticDevice:
         def set_timeguard(
             self, interval: int = constants.DEFAULT_TIMEGUARD_US
         ) -> HapticDevice:
-            """Sets the arbitrary minimum period for the TimeGuard feature in the
+            """Set the arbitrary minimum period for the TimeGuard feature in the
             Force Dimension SDK. A value of
             :data:`forcedimension.dhd.DEFAULT_TIMEGUARD_US` will reset the
             period to its default value (recommended).
@@ -2099,7 +2200,7 @@ class HapticDevice:
             return self._parent
 
         def set_com_mode(self, mode: dhd.ComMode = dhd.ComMode.ASYNC) -> HapticDevice:
-            """Sets the COM operation mode on compatible devices.
+            """Set the COM operation mode on compatible devices.
 
             :raises forcedimension.dhd.adaptors.DHDErrorArgument:
                 If interval was an invalid value.
@@ -2116,7 +2217,7 @@ class HapticDevice:
     def __init__(
         self,
         *,
-        ID: int | None = None,
+        ID: int | None = None,  # noqa: N803
         devtype: dhd.DeviceType | None = None,
         serial_number: int | None = None,
         ensure_memory: bool = False,
@@ -2135,20 +2236,20 @@ class HapticDevice:
         in the class. Functions that update internal state of the Haptic Device
         do not allocate memory.
 
-        :param Optional[int] ID:
+        :param int | None ID:
             If specified, will open the device of the given ID.
 
-        :param Optional[DeviceType] devtype:
+        :param DeviceType | None devtype:
             If specified, will open the first device of the give type.
 
-        :param Optional[int] serial_number:
+        :param int | None serial_number:
             If specified, will open the device of the given serial number.
             This feature is only available on newer devices.
 
         :param int wait_for_reset:
             If specified, will call
             :func:`forcedimension.HapticDevice.wait_for_reset()` with
-            the value given. If None is given, will wait indefinetely. This
+            the value given. If None is given, will wait indefinitely. This
             ensures the device is calibrated before use.
 
         :param bool ensure_memory:
@@ -2190,9 +2291,8 @@ class HapticDevice:
                 "At most 1 of ID, devtype, or serial_number may be specified."
             )
 
-        if ID is not None:
-            if ID < 0:
-                raise ValueError("ID must be greater than 0.")
+        if ID is not None and ID < 0:
+            raise ValueError("ID must be greater than 0.")
 
         if config_file is not None:
             is_yaml = config_file.endswith(".yml")
@@ -2210,13 +2310,13 @@ class HapticDevice:
         self._expert = HapticDevice._Expert(self)
 
         if dhd.getDeviceCount() <= 0:
-            raise dhd.DHDErrorNoDeviceFound()
+            raise dhd.DHDErrorNoDeviceFound
 
         if (ID is None) and (devtype is None) and (serial_number is None):
             # Open the first device we find.
 
             if (id := drd.open()) == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             self._id = id
 
@@ -2230,7 +2330,7 @@ class HapticDevice:
             # Open device of given ID.
 
             if (id := drd.openID(ID)) == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             self._id = id
 
@@ -2244,7 +2344,7 @@ class HapticDevice:
             # Open first device of given devtype.
 
             if (id := dhd.openType(devtype)) == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             self._id = id
 
@@ -2254,12 +2354,12 @@ class HapticDevice:
                 )
 
             if drd.openID(self._id) == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             self._devtype = devtype
         elif serial_number is not None:
             if (id := dhd.openSerial(serial_number)) == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             if dhd.close(self._id) == -1:
                 raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
@@ -2267,7 +2367,7 @@ class HapticDevice:
                 )
 
             if drd.openID(self._id) == -1:
-                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+                raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
             if (devtype_opened := dhd.getSystemType()) == -1:
                 raise fdsdk.util.errno_to_exception(dhd.errorGetLast())(
@@ -2276,9 +2376,8 @@ class HapticDevice:
 
             self._devtype = devtype_opened
 
-        if ensure_memory:
-            if not self.check_controller_memory():
-                raise dhd.DHDErrorConfiguration(ID=self._id)
+        if ensure_memory and not self.check_controller_memory():
+            raise dhd.DHDErrorConfiguration(ID=self._id)
 
         if "wait_for_reset" in kwargs:
             self.wait_for_reset(kwargs["wait_for_reset"])
@@ -2371,7 +2470,7 @@ class HapticDevice:
         has_base = dhd.hasBase(self._id)
         has_wrist = dhd.hasWrist(self._id)
         has_active_wrist = dhd.hasActiveWrist(self._id)
-        has_gripper = True if self._gripper is not None else False
+        has_gripper = self._gripper is not None
         has_active_gripper = dhd.hasActiveGripper(self._id)
         num_dof = fdsdk.util.num_dof(self._devtype)
 
@@ -2552,7 +2651,7 @@ class HapticDevice:
 
     def _init_mass(self, restore: bool = False):
         if (mass := dhd.getEffectorMass(self._id)) < 0:
-            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
         self._config.mass = mass
 
@@ -2614,21 +2713,20 @@ class HapticDevice:
         return self
 
     def check_exception(self):
-        """Checks if an exception has occured in an update function and raises it.
+        """Check if an exception has occurred in an update function and raises it.
         Most property functions implicitly check this.
         """
         if self._exception is not None:
             raise self._exception
 
     def dump_specs(self):
-        """Dumps the specifictions of the Force Dimension Haptic Device to a
+        """Dump the specifications of the Force Dimension Haptic Device to a
         serializable Python dictionary.
         """
         return self._specs.model_dump()
 
     def dump_config(self, exclude_defaults: bool = False):
-        """Dumps the current configuration as a serializable Python dictionary.
-        """
+        """Dump the current configuration as a serializable Python dictionary."""
         return self._config.model_dump(exclude_defaults=exclude_defaults)
 
     @property
@@ -2639,7 +2737,7 @@ class HapticDevice:
         return self._spec_str
 
     def get_config_str(self):
-        """Constructs a human-readable string that summarizes the current
+        """Construct a human-readable string that summarizes the current
         configuration of the HapticDevice.
         """
         base_angles = copy(self._config.base_angles)
@@ -2818,8 +2916,8 @@ class HapticDevice:
             """)
 
     def get_summary_str(self) -> str:
-        """Constructs a human-readable string that summarizes the HapticDevice
-        (its specifications and configuration)
+        """Construct a human-readable string that summarizes the HapticDevice
+        (its specifications and configuration).
         """
         return (
             textwrap.dedent(
@@ -2841,8 +2939,8 @@ class HapticDevice:
         )
 
     def print_summary(self):
-        """Prints a human-readable string that summarizes the HapticDevice (its
-        specifications and configuration)
+        """Print a human-readable string that summarizes the HapticDevice (its
+        specifications and configuration).
         """
         print(self.get_summary_str())
 
@@ -2863,8 +2961,8 @@ class HapticDevice:
         return self._regulator
 
     @property
-    def ID(self) -> int:
-        """Provides a read-only copy of the ID of the HapticDevice.
+    def ID(self) -> int:  # noqa: N802
+        """Provide a read-only copy of the ID of the HapticDevice.
         Thread-safe.
         """
         self.check_exception()
@@ -2876,8 +2974,7 @@ class HapticDevice:
 
     @property
     def timeguard(self) -> int:
-        """The current value of the TimeGuard period (in [us]).
-        """
+        """The current value of the TimeGuard period (in [us])."""
         return self._config.timeguard
 
     @property
@@ -2886,7 +2983,7 @@ class HapticDevice:
         (in [kg]). Thread-safe.
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
 
         :returns: the set mass of the end-effector (in [kg])
@@ -2894,17 +2991,17 @@ class HapticDevice:
         return self._mass
 
     def set_mass(self, m: float):
-        """Sets the mass of the end-effector used for gravity compensation
+        """Set the mass of the end-effector used for gravity compensation
         (in [kg]). Thread-safe.
 
         :raises ArgumentError:
-            If `m` is not implicitly converitble to a C double.
+            If `m` is not implicitly convertible to a C double.
 
         :raises DHDErrorArgument:
             If `m` was not a valid value.
         """
         if dhd.setEffectorMass(m, ID=self._id):
-            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
     @property
     def standard_gravity(self) -> float:
@@ -2921,7 +3018,7 @@ class HapticDevice:
     def handedness(self) -> Handedness:
         """The handedness of the device. Some devices are not handed and the value
         of this property for those devices is
-        :data:`forcedimension.dhd.adaptors.Handedness.NONE`
+        :data:`forcedimension.dhd.adaptors.Handedness.NONE`.
         """
         return self._specs.handedness
 
@@ -2950,8 +3047,7 @@ class HapticDevice:
 
     @property
     def com_mode(self) -> dhd.ComMode:
-        """Gets the COM operation mode of the device.
-        """
+        """Gets the COM operation mode of the device."""
         return fdsdk.util.com_mode_from_str(self._config.com_mode)
 
     @property
@@ -3011,18 +3107,18 @@ class HapticDevice:
         y: float | None = None,
         z: float | None = None,
     ):
-        """Sets the device base plate angles (in [rad]) about the X, Y, and Z
+        """Set the device base plate angles (in [rad]) about the X, Y, and Z
         axes. If an angle is not specified, it is not set.
         I.E. set_base_angles(x=1) will set the base angle about the X axis to 1
         radian while keeping the Y and Z base angles unchanged.
 
-        :param Optional[float] x:
+        :param float | None x:
             Angle (in [rad]) to set the device plate angle about the X axis to.
 
-        :param Optional[float] y:
+        :param float | None y:
             Angle (in [rad]) to set the device plate angle about the Y axis to.
 
-        :param Optional[float] z:
+        :param float | None z:
             Angle (in [rad]) to set the device plate angle about the Z axis to.
 
         :raises ArgumentError:
@@ -3059,10 +3155,10 @@ class HapticDevice:
         return self
 
     def set_output_bits(self, mask: int):
-        """Sets the user programmable output bits on devices that support it.
+        """Set the user programmable output bits on devices that support it.
 
         :param int mask:
-            Bitwise mask that toggles the progammable output bits.
+            Bitwise mask that toggles the programmable output bits.
 
         :raises ArgumentError:
             If `mask` is not implicitly convertible to a C uint.
@@ -3076,8 +3172,8 @@ class HapticDevice:
         return self
 
     def set_standard_gravity(self, g: float = 9.81):
-        """Sets the standard gravity constant (in [m/s^2]) used in gravity compensation.
-        By default, the constant is set to 9.81 m/s^2
+        """Set the standard gravity constant (in [m/s^2]) used in gravity compensation.
+        By default, the constant is set to 9.81 m/s^2.
 
         :param float g:
             Standard gravity constant to set (in [m/s^2])
@@ -3093,7 +3189,7 @@ class HapticDevice:
         return self
 
     def enable_button_emulation(self, enabled: bool = True):
-        """Enables the button behavior emulation in devices that feature a
+        """Enable the button behavior emulation in devices that feature a
         gripper.
 
         :param bool enabled:
@@ -3177,7 +3273,7 @@ class HapticDevice:
         window_size: int = dhd.DEFAULT_VELOCITY_WINDOW,
         mode: VelocityEstimatorMode = VelocityEstimatorMode.WINDOWING,
     ):
-        """Configures the internal linear velocity estimator used by
+        """Configure the internal linear velocity estimator used by
         the Force Dimension SDK for the end-effector. Calling this without
         parameters resets the linear velocity estimator to its default
         settings.
@@ -3212,7 +3308,7 @@ class HapticDevice:
         window_size: int = dhd.DEFAULT_VELOCITY_WINDOW,
         mode: VelocityEstimatorMode = VelocityEstimatorMode.WINDOWING,
     ):
-        """Configures the internal angular velocity estimator used by
+        """Configure the internal angular velocity estimator used by
         the Force Dimension SDK for the end-effector. Calling this without
         parameters resets the angular velocity estimator to its default
         settings.
@@ -3250,7 +3346,7 @@ class HapticDevice:
         respectively).
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
 
         """
@@ -3263,7 +3359,7 @@ class HapticDevice:
         the time of the last update.
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
         """
         self.check_exception()
@@ -3276,7 +3372,7 @@ class HapticDevice:
         the time of the last update.
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
         """
         self.check_exception()
@@ -3290,7 +3386,7 @@ class HapticDevice:
         respectively).
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
 
         """
@@ -3303,7 +3399,7 @@ class HapticDevice:
         the time of the last update. Thread-safe.
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
         """
         self.check_exception()
@@ -3316,7 +3412,7 @@ class HapticDevice:
         Thread-safe.
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
         """
         self.check_exception()
@@ -3329,7 +3425,7 @@ class HapticDevice:
         update. Thread-safe.
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
         """
         self.check_exception()
@@ -3341,7 +3437,7 @@ class HapticDevice:
         (in [Nm]) at the time of the last update. Thread-safe.
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
         """
         self.check_exception()
@@ -3353,7 +3449,7 @@ class HapticDevice:
         end-effector (in [N]) at the time of the last update. Thread-safe.
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
         """
         self.check_exception()
@@ -3366,7 +3462,7 @@ class HapticDevice:
         last update. Thread-safe.
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
         """
         self.check_exception()
@@ -3379,7 +3475,7 @@ class HapticDevice:
         last update. Thread-safe.
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
         """
         self.check_exception()
@@ -3393,7 +3489,7 @@ class HapticDevice:
         Thread-safe.
 
         :raises DHDError:
-            If an error has occured with the device, invalidating the
+            If an error has occurred with the device, invalidating the
             device state.
         """
         self.check_exception()
@@ -3408,7 +3504,7 @@ class HapticDevice:
         return _cast(containers.Mat6x6, self._inertia_matrix_view)
 
     def set_update_list(self, lst: list[Callable[..., Any]]) -> Self:
-        """Sets the functions to be sequentially called in the default update
+        """Set the functions to be sequentially called in the default update
         function.
 
         See Also
@@ -3441,7 +3537,7 @@ class HapticDevice:
         return self
 
     def calculate_pos(self) -> Self:
-        """Calculates and stores the position of the device given the current
+        """Calculate and stores the position of the device given the current
         value of the delta encoders in the internal buffer.
         """
         dhd.expert.direct.deltaEncoderToPosition(self._encs.delta, self._pos, self._id)
@@ -3449,7 +3545,7 @@ class HapticDevice:
         return self
 
     def calculate_delta_joint_angles(self) -> Self:
-        """Calculates and stores the joint angles of the DELTA structure given
+        """Calculate and stores the joint angles of the DELTA structure given
         the current end-effector encoder readings in the internal buffer.
         """
         dhd.expert.direct.deltaEncodersToJointAngles(
@@ -3459,7 +3555,7 @@ class HapticDevice:
         return self
 
     def calculate_delta_jacobian(self) -> Self:
-        """Calculates and stores the Jacobian matrix of the DELTA structure given
+        """Calculate and stores the Jacobian matrix of the DELTA structure given
         current joint angle configuration in the internal buffer.
         """
         self.calculate_delta_joint_angles()
@@ -3471,7 +3567,7 @@ class HapticDevice:
         return self
 
     def calculate_wrist_joint_angles(self) -> Self:
-        """Calculates and stores the joint angles of the WRIST structure given
+        """Calculate and stores the joint angles of the WRIST structure given
         the current end-effector encoder values in the internal buffer.
         """
         dhd.expert.direct.wristEncodersToJointAngles(
@@ -3481,7 +3577,7 @@ class HapticDevice:
         return self
 
     def calculate_wrist_jacobian(self) -> Self:
-        """Calculates and stores the Jacobian matrix of the WRIST structure given
+        """Calculate and stores the Jacobian matrix of the WRIST structure given
         current joint angle configuration in the internal buffer.
         """
         dhd.expert.direct.wristJointAnglesToJacobian(
@@ -3491,7 +3587,7 @@ class HapticDevice:
         return self
 
     def calculate_inertia_matrix(self) -> Self:
-        """Calculates the 6x6 inertia matrix (with respect to the X, Y, and Z
+        """Calculate the 6x6 inertia matrix (with respect to the X, Y, and Z
         axes) given the current joint angles configuration in the internal
         buffer.
         """
@@ -3502,12 +3598,12 @@ class HapticDevice:
         return self
 
     def update_encs_and_calculate(self) -> Self:
-        """Updates the encoders for each degree-of-freedom and given those values,
+        """Update the encoders for each degree-of-freedom and given those values,
         calculates the position of the end-effector, DELTA joint angles, the
         DELTA jacobia, the WRIST joint angles, and the WRIST jacobian.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
         """
         self.update_encs()
         self.calculate_pos()
@@ -3518,12 +3614,12 @@ class HapticDevice:
         return self
 
     def update_delta_encs_and_calculate(self) -> Self:
-        """Updates the DELTA encoders and given those values, calculates the
+        """Update the DELTA encoders and given those values, calculates the
         position of the end-effector, DELTA joint angles, and the DELTA
         jacobian.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
         """
         self.update_delta_encs()
         self.calculate_pos()
@@ -3533,11 +3629,11 @@ class HapticDevice:
         return self
 
     def update_wrist_encs_and_calculate(self) -> Self:
-        """Updates the WRIST encoders and given those values, calculates the wrist
+        """Update the WRIST encoders and given those values, calculates the wrist
         joint angles and the WRIST jacobian.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
         """
         self.update_wrist_encs()
         self.calculate_wrist_joint_angles()
@@ -3546,13 +3642,13 @@ class HapticDevice:
         return self
 
     def update_encs(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting the current
+        """Perofrm a blocking read to the HapticDevice, requesting the current
         encoder readers of the DELTA structure that controls the end-effector
         and updates the last-known position with the response. The requested
         values are then loaded into an internal buffer.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
         """
         err = dhd.expert.direct.getEnc(self._encs, 0xFF, self._id)
 
@@ -3564,13 +3660,13 @@ class HapticDevice:
         return self
 
     def update_delta_encs(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting the current
+        """Perofrm a blocking read to the HapticDevice, requesting the current
         encoder readers of the DELTA structure that controls the end-effector
         and updates the last-known position with the response. The requested
         values are then loaded into an internal buffer.
 
         :raises DHDError:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
         """
         err = dhd.expert.direct.getDeltaEncoders(self._encs.delta, self._id)
 
@@ -3582,13 +3678,13 @@ class HapticDevice:
         return self
 
     def update_wrist_encs(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting the current
+        """Perofrm a blocking read to the HapticDevice, requesting the current
         encoder readers of the DELTA structure that controls the end-effector
         and updates the last-known position with the response. The requested
         values are then loaded into an internal buffer.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
         """
         err = dhd.expert.direct.getWristEncoders(self._encs.wrist, self._id)
 
@@ -3600,13 +3696,13 @@ class HapticDevice:
         return self
 
     def update_enc_velocities(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting the current
+        """Perofrm a blocking read to the HapticDevice, requesting the current
         encoder readers of the DELTA structure that controls the end-effector
         and updates the last-known position with the response. The requested
         values are then loaded into an internal buffer.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
         """
         err = dhd.expert.direct.getEncVelocities(self._encs_v, self._id)
 
@@ -3624,12 +3720,12 @@ class HapticDevice:
         return self
 
     def update_joint_angles(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting the current
+        """Perofrm a blocking read to the HapticDevice, requesting the current
         joint angles for each degree-of-freedom (in [rad]). The requested
         values  are then loaded into an internal buffer.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
         """
         err = dhd.expert.direct.getJointAngles(self._joint_angles, self._id)
 
@@ -3641,12 +3737,12 @@ class HapticDevice:
         return self
 
     def update_joint_angle_velocities(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting the current
+        """Perofrm a blocking read to the HapticDevice, requesting the current
         joint velocities for each degree-of-freedom (in [rad/s]). The requested
         values are then loaded into an internal buffer.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
         """
         err = dhd.expert.direct.getJointVelocities(self._joint_v, self._id)
 
@@ -3673,12 +3769,12 @@ class HapticDevice:
         return self
 
     def update_position(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting the current
+        """Perofrm a blocking read to the HapticDevice, requesting the current
         position of the end-effector. The requested values are then loaded into
         an internal buffer.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
         """
         err = dhd.direct.getPosition(self._pos, self._id)
 
@@ -3690,7 +3786,7 @@ class HapticDevice:
         return self
 
     def update_velocity(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting the current
+        """Perofrm a blocking read to the HapticDevice, requesting the current
         linear velocity of the end-effector. The requested values are then
         loaded into an internal buffer.
 
@@ -3720,7 +3816,7 @@ class HapticDevice:
         return self
 
     def update_orientation_angles(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting the current
+        """Perofrm a blocking read to the HapticDevice, requesting the current
         angle of each joint (in [rad]), starting with the one located nearest
         to the wrist base plate and stores it in an internal buffer. For the
         :data:`forcedimension.dhd.constants.DHD_DEVICE_OMEGA6_RIGHT` and
@@ -3745,7 +3841,7 @@ class HapticDevice:
         return self
 
     def update_angular_velocity(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting the current
+        """Perofrm a blocking read to the HapticDevice, requesting the current
         angular velocity of the end-effector. The requested values are then
         loaded into an internal buffer.
 
@@ -3766,7 +3862,7 @@ class HapticDevice:
         return self
 
     def update_force(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting the current
+        """Perofrm a blocking read to the HapticDevice, requesting the current
         force the end end-effector is experiencing. The requested values are
         then loaded into an internal buffer.
 
@@ -3783,7 +3879,7 @@ class HapticDevice:
         return self
 
     def update_force_and_torque(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting in parallel
+        """Perofrm a blocking read to the HapticDevice, requesting in parallel
         the current force and torque applied to the end-effector. The requested
         values are then loaded into internal buffers.
 
@@ -3798,7 +3894,7 @@ class HapticDevice:
         return self
 
     def update_force_and_torque_and_gripper_force(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting in parallel
+        """Perofrm a blocking read to the HapticDevice, requesting in parallel
         the force and torque applied to the end-effector as well as the force
         applied to the gripper. The requested values are then
         loaded into internal buffers.
@@ -3822,7 +3918,7 @@ class HapticDevice:
         return self
 
     def update_orientation(self) -> Self:
-        """Performs a blocking read to the HapticDevice,
+        """Perofrm a blocking read to the HapticDevice,
         its orientation frame matrix and updates an internal buffer with those
         values.
 
@@ -3841,7 +3937,7 @@ class HapticDevice:
         return self
 
     def update_position_and_orientation(self) -> Self:
-        """Performs a blocking read to the HapticDevice, requesting in parallel
+        """Perofrm a blocking read to the HapticDevice, requesting in parallel
         the position of the end effector (in [m]) about the X, Y, and Z axes
         as well as its orientation frame matrix. The requested values are then
         loaded into internal buffers.
@@ -3864,7 +3960,7 @@ class HapticDevice:
         return self
 
     def update_buttons(self) -> Self:
-        """Performs a blocking read and gets the state of all buttons on the
+        """Perofrm a blocking read and gets the state of all buttons on the
         device into a int bit vector buffer.
 
         See Also
@@ -3881,14 +3977,14 @@ class HapticDevice:
         status information.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
 
         :returns:
             :class:`forcedimension.dhd.adaptors.Status` object containing all
             status information.
         """
         if dhd.getStatus(self._status, ID=self._id):
-            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
         return self
 
@@ -3896,7 +3992,7 @@ class HapticDevice:
         """Push the requested forces and torques to the device in a blocking send.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
 
         See Also
         --------
@@ -3995,7 +4091,7 @@ class HapticDevice:
         """Push the requested vibration to the device in a blocking send.
 
         :raises DHDErrorCom:
-            If a communication error has occured with the device.
+            If a communication error has occurred with the device.
 
         See Also
         --------
@@ -4014,7 +4110,7 @@ class HapticDevice:
         return self
 
     def zero_force(self) -> Self:
-        """Sets the forces to 0. This makes the end-effector translationally
+        """Set the forces to 0. This makes the end-effector translationally
         "transparent" (i.e. it will try to be close to frictionless and move
         as though it was in free space).
         """
@@ -4025,7 +4121,7 @@ class HapticDevice:
         return self
 
     def zero_torque(self) -> Self:
-        """Sets the torque to 0. This makes the end-effector rotationally
+        """Set the torque to 0. This makes the end-effector rotationally
         "transparent" (i.e. it will try to be close to frictionless and move
         as though it was in free space).
         """
@@ -4036,7 +4132,7 @@ class HapticDevice:
         return self
 
     def zero(self) -> Self:
-        """Sets the applied force and torque to 0. This makes the end-effector
+        """Set the applied force and torque to 0. This makes the end-effector
         rotationally and translationally  "transparent" (i.e. it will try to be
         close to frictionless and move as though it was in free space).
         """
@@ -4074,13 +4170,13 @@ class HapticDevice:
         return self
 
     def wait_for_reset(self, timeout: int | None = None):
-        """Puts the device in RESET mode and waits
+        """Put the device in RESET mode and waits
         for the user to calibrate the device. To calibrate the device, the user
         must put the device  end-effector at its rest position.
 
-        :param Optional[int] timeout:
+        :param int | None timeout:
             Maximum amount of time to wait for the calibration (in [ms]). If it
-            is not specified, will wait indefinetely.
+            is not specified, will wait indefinitely.
 
         :raises DHDErrorTimeout:
             If the timeout was reached.
@@ -4092,7 +4188,7 @@ class HapticDevice:
             )
 
     def check_controller_memory(self) -> bool:
-        """Evalutes the integrity of the device controller firmware and internal
+        """Evaluate the integrity of the device controller firmware and internal
         configuration on supported device types.
 
         :returns:
@@ -4112,16 +4208,15 @@ class HapticDevice:
         """Define or disable a limit (in [N]) to the force magnitude that can be
         applied by the haptic device.
 
-        :param Optional[float] limit:
+        :param float | None limit:
             The desired limit (in [N]) to the force magnitude that can be
             applied. If the limit is None, the force limit is disabled.
 
         :raises DHDError:
-            If an error has occured with the device.
+            If an error has occurred with the device.
         """
-        if limit is not None:
-            if limit < 0:
-                raise ValueError("limit must be greater than 0 or None.")
+        if limit is not None and limit < 0:
+            raise ValueError("limit must be greater than 0 or None.")
 
         self._max_force = limit
 
@@ -4145,15 +4240,14 @@ class HapticDevice:
         applied by the haptic device.
 
         :raises DHDError:
-            If an error has occured with the device.
+            If an error has occurred with the device.
 
-        :param Optional[float] limit:
+        :param float | None limit:
             The desired limit (in [N]) to the force magnitude that can be
             applied. If the limit is None, the force limit is disabled.
         """
-        if limit is not None:
-            if limit < 0:
-                raise ValueError("limit must be greater than 0 or None.")
+        if limit is not None and limit < 0:
+            raise ValueError("limit must be greater than 0 or None.")
 
         self._max_torque = limit
 
@@ -4161,7 +4255,7 @@ class HapticDevice:
             limit = -1.0
 
         if dhd.setMaxTorque(limit, self._id):
-            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())()
+            raise fdsdk.util.errno_to_exception(dhd.errorGetLast())
 
         return self
 
@@ -4299,11 +4393,7 @@ class HapticPoller(Thread):
         high_precision: bool = True,
         **kwargs,
     ):
-        if not (
-            isinstance(wait_for, int)
-            or isinstance(wait_for, float)
-            or isinstance(wait_for, Callable)
-        ):
+        if not isinstance(wait_for, int | float | Callable):
             raise TypeError("'wait_for' must be numeric or Callable")
 
         if isinstance(wait_for, float):
@@ -4385,10 +4475,7 @@ class HapticPoller(Thread):
 
         wait_period = self._interval
 
-        if self._interval > 0.001:
-            sleep_period = self._interval - 0.001
-        else:
-            sleep_period = 0
+        sleep_period = self._interval - 0.001 if self._interval > 0.001 else 0
 
         if not self._stop_event.is_set():
             self._execute_target()
@@ -4429,10 +4516,7 @@ class HapticPoller(Thread):
                 continue
 
             # Never sleep less than 1ms, but sleep as much as you can.
-            if wait_period > 0.001:
-                sleep_period = wait_period - 0.001
-            else:
-                sleep_period = 0
+            sleep_period = wait_period - 0.001 if wait_period > 0.001 else 0
 
             t_sleep = time.perf_counter()
 
